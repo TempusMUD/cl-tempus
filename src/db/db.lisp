@@ -1,7 +1,5 @@
 (in-package :tempus)
 
-(enable-regex-reader-syntax)
-
 (defparameter +index-file+ "index")         ; index of world files
 (defparameter +mindex-file+ "index.mini") ; ... and for mini-mud-mode
 (defparameter +tindex-file+ "index.test") ; ... and for test-mud-mode
@@ -58,10 +56,6 @@
 (defparameter +wld-index+ nil)
 (defparameter +null-mob-shared+ nil)
 (defparameter +null-obj-shared+ nil)
-(defparameter +wld-prefix+ "wld")
-(defparameter +mob-prefix+ "mob")
-(defparameter +obj-prefix+ "obj")
-(defparameter +zon-prefix+ "zon")
 (defparameter +dummy-mob+ nil)
 
 (defvar *credits* "")
@@ -78,12 +72,18 @@
 (defvar *rooms* (make-hash-table))
 (defvar *mobile-prototypes* (make-hash-table))
 (defvar *object-prototypes* (make-hash-table))
+(defvar *character-list* nil)
 (defvar *zone-table* nil)
 (defvar *default-quad-zone*)
 (defvar *top-of-world* 0)
 (defvar *mini-mud* nil)
 (defvar *boot-time* nil)
 (defvar *reset-q* nil)
+(defvar *top-unique-id* 0)
+
+(defparameter *no-specials* nil)
+(defparameter *welcome-message
+* nil)
 
 ;; mud-life time
 (defparameter +secs-per-mud-hour+ 60)
@@ -111,7 +111,10 @@
         +obj-index+ nil
         +wld-index+ nil)
   (clrhash *rooms*)
-  
+  (clrhash *mobile-prototypes*)
+  (clrhash *object-prototypes*)
+  (setf *zone-table* nil)
+
   (slog "Loading zone table.")
   (index-boot :zon)
 
@@ -458,8 +461,8 @@
               (when (minusp flow-speed)
                 (error "Negative speed in room #~d flow field!~%" vnum-nr))
                
-              (unless (<= 0 flow-type 8)
-                (errlog "Illegal flow type in room #~d.~%" vnum-nr)
+              (unless (<= 0 flow-type 18)
+                (errlog "Illegal flow type ~a in room #~d.~%" flow-type vnum-nr)
                 (setf flow-type :none))
 
               (setf (flow-dir-of room) flow-dir
@@ -476,8 +479,8 @@
             (unless (setf line (get-line inf))
               (error "Search error in room #~d." vnum-nr))
 
-            (let ((result (scan #/^(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)/ line)))
-              (setf (command-of new-search) (parse-integer (regref result 6))
+            (let ((result (scan #/^(\d+)\s+([-0-9]+)\s+([-0-9]+)\s+([-0-9]+)\s+([-0-9]+)(?:\s+(\d+))?/ line)))
+              (setf (command-of new-search) (parse-integer (regref result 1))
                     (aref (arg-of new-search) 0) (parse-integer (regref result 2))
                     (aref (arg-of new-search) 1) (parse-integer (regref result 3))
                     (aref (arg-of new-search) 2) (parse-integer (regref result 4))
@@ -513,7 +516,7 @@
       (unless line
         (error "Format error room #~d, direction D~d." (number-of room) dir))
 
-      (let ((result (scan #/^(\S+)\s+([0-9-]+)\s+(\d+)/ line)))
+      (let ((result (scan #/^(\S+)\s+([0-9-]+)\s+([-0-9]+)/ line)))
         (setf (exit-info-of room-dir) (asciiflag-conv (regref result 1)))
         (setf (key-of room-dir) (parse-integer (regref result 2)))
         (setf (to-room-of room-dir) (parse-integer (regref result 3)))))))
@@ -577,7 +580,7 @@
     (string-case (regref result 1)
       ("BareHandAttack"
        (setf (attack-type-of (shared-of mobile)) (pin num-arg 0 99)))
-      ("Move-buf"
+      ("Move_buf"
        (setf (move-buf-of (shared-of mobile)) value))
       ("Str"
        (setf (str-of (real-abils-of mobile)) (pin num-arg 3 25)))
@@ -623,22 +626,70 @@
        (setf (current-tongue-of mobile) (pin num-arg 0 1000000)))
       ("KnownTongue"
        (setf (aref (tongues-of mobile) num-arg) 100))
+      ("CurLang"
+       ;; Deprecated conversion
+       (setf (current-tongue-of mobile) (1+ (pin num-arg 0 1000000))))
+      ("KnownLang"
+       ;; Deprecated conversion
+       (dotimes (bit 32)
+         (when (logtest num-arg bit)
+           (setf (aref (tongues-of mobile) (1+ bit)) 100))))
       (t
        (errlog "WARNING: Unrecognized espec keyword ~a in mobile #~d"
                (regref result 1)
                nr)))))
 
+(defun parse-enhanced-mobile (inf nr mobile)
+  (loop for line = (get-line inf)
+     until (and line (string= line "E")) do
+     (cond
+       ((string-equal line "SpecParam:")
+        (setf (func-param-of (shared-of mobile)) (fread-string inf)))
+       ((string-equal line "LoadParam:")
+        (setf (load-param-of (shared-of mobile)) (fread-string inf)))
+       ((string-equal line "Prog:")
+        (setf (prog-text-of (shared-of mobile)) (fread-string inf)))
+       ((string-equal line "#" :end2 1)
+        (error "Unterminated E section in mob #~d" nr))
+       (t
+        (parse-espec line mobile nr)))))
+
+(defun parse-simple-mobile (inf nr mobile)
+  (loop for line = (get-line inf)
+     until (and line (string= line "E")) do
+     (cond
+       ((string-equal line "SpecParam:")
+        (setf (func-param-of (shared-of mobile)) (fread-string inf)))
+       ((string-equal line "LoadParam:")
+        (setf (load-param-of (shared-of mobile)) (fread-string inf)))
+       ((string-equal line "Prog:")
+        (setf (prog-text-of (shared-of mobile)) (fread-string inf)))
+       ((string-equal line "#" :end2 1)
+        (error "Unterminated E section in mob #~d" nr))
+       (t
+        (parse-espec line mobile nr)))))
+
 (defun parse-mobile (inf nr)
   (declare (ignorable inf nr))
   (let ((mobile (make-instance 'mobile
-                               :shared (make-instance 'mob-shared-data))))
+                               :shared (make-instance 'mob-shared-data)))
+        (mob-type nil))
     (setf (vnum-of (shared-of mobile)) nr
           (number-of (shared-of mobile)) 0
           (proto-of (shared-of mobile)) mobile
           (name-of mobile) (fread-string inf)
           (short-descr-of mobile) (fread-string inf)
           (long-descr-of mobile) (fread-string inf)
-          (description-of mobile) (fread-string inf))
+          (description-of mobile) (fread-string inf)
+          (str-of (real-abils-of mobile)) 11
+          (str-add-of (real-abils-of mobile)) 0
+          (int-of (real-abils-of mobile)) 11
+          (wis-of (real-abils-of mobile)) 11
+          (dex-of (real-abils-of mobile)) 11
+          (con-of (real-abils-of mobile)) 11
+          (cha-of (real-abils-of mobile)) 11
+          (weight-of mobile) 200
+          (height-of mobile) 198)
 
     (let* ((line (get-line inf))
            (result (scan #/^(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+([\d-]+)\s+(.)/ line)))
@@ -648,16 +699,17 @@
             (aff-flags-of mobile) (asciiflag-conv (regref result 3))
             (aff2-flags-of mobile) (asciiflag-conv (regref result 4))
             (aff3-flags-of mobile) (asciiflag-conv (regref result 5))
-            (alignment-of mobile) (parse-integer (regref result 6)))
+            (alignment-of mobile) (parse-integer (regref result 6))
+            mob-type (char (regref result 7) 0)))
 
-      (assert (char= (char (regref result 7) 0) #\E) nil
-              "Unsupported mob type '~c' in mob #~d"
-              (char (regref result 7) 0)
-              nr))
+    (assert (or (eql mob-type #\S) (eql mob-type #\E)) nil
+            "Unsupported mob type '~c' in mob #~d"
+            mob-type
+            nr)
 
     (let* ((line (get-line inf))
-          (result (scan #/^(\d+)\s+([\d-]+)\s+([\d-]+)\s+(\d+)d(\d+)\+(\d+)\s+(\d+)d(\d+)\+(\d+)/ line)))
-      (assert result nil "Illegal numbers line of mobile ~d: ~s~%" nr line)
+           (result (scan #/^(\d+)\s+([\d-]+)\s+([\d-]+)\s+(\d+)d(\d+)\+(\d+)\s+(\d+)d(\d+)\+([-0-9]+)/ line)))
+      (assert result nil "Illegal numbers-1 line of mobile ~d: ~s~%" nr line)
       (setf (level-of mobile) (parse-integer (regref result 1))
             (hitroll-of mobile) (parse-integer (regref result 2))
             (armor-of mobile) (parse-integer (regref result 3))
@@ -673,32 +725,39 @@
             (damsizedice-of (shared-of mobile)) (parse-integer (regref result 8))
             (damroll-of mobile) (parse-integer (regref result 1))))
 
-    (let ((result (scan #/^(\d+)\s+(\d+)\s+(\d+)\s+(\d+)/ (get-line inf))))
-      (setf (char-class-of mobile) (parse-integer (regref result 4))
-            (race-of mobile) (parse-integer (regref result 3))
-            (gold-of mobile) (parse-integer (regref result 1))
+    (let* ((line (get-line inf))
+           (result (scan #/^(\d+)\s+(\d+)(?:\s+(\d+)\s+(\d+))?/ line)))
+      (assert result nil "Illegal numbers-2 line of mobile ~d: ~s~%" nr line)
+
+      (when (regref result 3)
+        (setf (char-class-of mobile) (parse-integer (regref result 4))
+              (race-of mobile) (parse-integer (regref result 3))))
+      (setf (gold-of mobile) (parse-integer (regref result 1))
             (exp-of mobile) (parse-integer (regref result 2))))
 
-    (let ((result (scan #/^(\d+)\s+(\d+)\s+(\d+)\s+(\d+)/ (get-line inf))))
-      (setf (attack-type-of (shared-of mobile)) (parse-integer (regref result 4))
-            (position-of mobile) (parse-integer (regref result 1))
+    (let* ((line (get-line inf))
+           (result (scan #/^(\d+)\s+(\d+)\s+(\d+)(?:\s+(\d+))?/ line)))
+      (assert result nil "Illegal numbers-3 line of mobile ~d: ~s~%" nr line)
+      (setf (position-of mobile) (parse-integer (regref result 1))
             (default-pos-of (shared-of mobile)) (parse-integer (regref result 2))
-            (sex-of mobile) (parse-integer (regref result 3))))
+            (sex-of mobile) (parse-integer (regref result 3)))
+      (when (regref result 4)
+        (attack-type-of (shared-of mobile)) (parse-integer (regref result 4))))
 
-    (loop for line = (get-line inf)
-          until (and line (string= line "E")) do
-          (cond
-            ((string-equal line "SpecParam:")
-             (setf (func-param-of (shared-of mobile)) (fread-string inf)))
-            ((string-equal line "LoadParam:")
-             (setf (load-param-of (shared-of mobile)) (fread-string inf)))
-            ((string-equal line "Prog:")
-             (setf (prog-text-of (shared-of mobile)) (fread-string inf)))
-            ((string-equal line "#" :end2 1)
-             (error "Unterminated E section in mob #~d" nr))
-            (t
-             (parse-espec line mobile nr))))
+  
+    (when (eql mob-type #\E)
+      (parse-enhanced-mobile inf nr mobile))
 
+    ;; Load reply structors until # or $ is reached
+    (loop for line = (get-line inf) do
+         (ecase (char line 0)
+           (#\R
+            (fread-string inf)
+            (fread-string inf))
+           ((#\$ #\#)
+            (file-position inf (- (file-position inf) (1+ (length line))))
+            (return))))
+         
     (setf (aff-abils-of mobile) (copy-abilities (real-abils-of mobile)))
     (setf (gethash nr *mobile-prototypes*) mobile)))
 
@@ -732,7 +791,7 @@
             (wear-flags-of obj) (asciiflag-conv (regref result 4))
             (extra3-flags-of obj) (asciiflag-conv (regref result 5))))
     
-    (let ((result (scan #/(\d+) (\d+) ([\d-]+) ?(\d+)?/ (get-line inf))))
+    (let ((result (scan #/(\d+) ([\d-]+) ([\d-]+)(?: (\d+))?/ (get-line inf))))
       (assert result nil "Expected 3 or 4 args in second numeric line, object ~d" nr)
       (setf (aref (value-of obj) 0) (parse-integer (regref result 1))
             (aref (value-of obj) 1) (parse-integer (regref result 2))
@@ -742,18 +801,19 @@
                 (parse-integer (regref result 4))
                 0)))
     
-    (let ((result (scan #/(\d+) (\d+) (\d+)/ (get-line inf))))
+    (let ((result (scan #/(\d+) ([-0-9]+) ([-0-9]+)/ (get-line inf))))
       (assert result nil "Expected 3 args in third numeric line, object ~d" nr)
       (setf (material-of obj) (parse-integer (regref result 1))
             (max-dam-of obj) (parse-integer (regref result 2))
             (damage-of obj) (parse-integer (regref result 3))))
     
-    (let ((result (scan #/(\d+) (\d+) (\d+) (\d+)/ (get-line inf))))
-      (assert result nil "Expected 4 args in fourth numeric line, object ~d" nr)
+    (let ((result (scan #/(\d+) ([\d-]+) ([\d-]+)(?: ([\d-]+))?/ (get-line inf))))
+      (assert result nil "Expected 3 or 4 args in fourth numeric line, object ~d" nr)
       (set-weight obj (parse-integer (regref result 1)))
       (setf (cost-of (shared-of obj)) (parse-integer (regref result 2))
-            (cost-per-day-of (shared-of obj)) (parse-integer (regref result 3))
-            (timer-of obj) (parse-integer (regref result 4))))
+            (cost-per-day-of (shared-of obj)) (parse-integer (regref result 3)))
+      (let ((timer-str (regref result 4)))
+        (setf (timer-of obj) (if timer-str (parse-integer timer-str) 0))))
 
     ;; Check to make sure that weight of containers exceeds current quantity
     (when (and (or (= (kind-of obj) +item-drinkcon+)
@@ -867,11 +927,13 @@
             (setf (public-desc-of new-zone) (fread-string inf)))
            ("private-desc"
             (setf (private-desc-of new-zone) (fread-string inf)))
+           ("author"
+            (setf (author-of new-zone) (second args)))
            (t
             (return))))
        (get-line-with-count inf))
 
-      (let ((result (scan #/^(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\S+)\s+(\d+)\s+(\d+)\s*(\d+)?/ line))) 
+      (let ((result (scan #/^(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\S+)\s+([-0-9]+)\s+([-0-9]+)\s*(\d+)?/ line))) 
 
         (unless result
           (error "Format error in 9-constant line of ~a~%Line was ~s" zonename line))
@@ -901,7 +963,7 @@
 
          (cond
            ((find (char line 0) "MOEPDIVW")
-            (let ((result (scan #/^. (\d+)\s+(\d+)\s+(\d+)\s+(\d+)/ line))) 
+            (let ((result (scan #/^. ([-01]+)\s+(\d+)\s+(\d+)\s+(\d+)/ line))) 
               (unless result
                 (error "Format error in ~a, line ~d (~a)" zonename line-num line))
               (setf (if-flag-of new-zonecmd) (parse-integer (regref result 1)))
@@ -909,7 +971,7 @@
               (setf (arg1-of new-zonecmd) (parse-integer (regref result 3)))
               (setf (arg2-of new-zonecmd) (parse-integer (regref result 4)))))
            ((char= (char line 0) #\D)
-            (let ((result (scan #/^. (\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\S+)/ line)))
+            (let ((result (scan #/^. ([-01]+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\S+)/ line)))
               (unless result
                 (error "Format error in ~a, line ~d" zonename line-num))
               (setf (if-flag-of new-zonecmd) (parse-integer (regref result 1)))
@@ -918,7 +980,7 @@
               (setf (arg2-of new-zonecmd) (parse-integer (regref result 4)))
               (setf (arg3-of new-zonecmd) (asciiflag-conv (regref result 5)))))
            (t
-            (let ((result (scan #/^. (\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)/ line))) 
+            (let ((result (scan #/^. ([-01]+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)/ line))) 
               (unless result
                 (error "Format error in ~a, line ~d" zonename line-num))
               (setf (if-flag-of new-zonecmd) (parse-integer (regref result 1)))
@@ -938,74 +1000,75 @@
   ;; Send +special-reset+ notification to all mobiles with specials
   (dolist (ch *character-list*)
     (when (and (eql (zone-of (in-room-of ch)) zone)
-               (mob-flagged ch +mob-spec+)
+               (mob-flagged ch +spec-mob+)
                (func-of ch))
       (funcall (func-of ch) ch ch 0 "" +special-reset+)))
 
-  (dolist (zone-cmd (cmds-of zone))
-    ;; if-flag
-    ;; 0 - "Do regardless of previous"
-    ;; 1 - "Do if previous succeeded"
-    ;; 2 - "Do if previous failed"
-    ;; last-cmd
-    ;; 1 - "Last command succeeded"
-    ;; 2 - "Last command had an error"
-    ;; -1 - "Last command's percentage failed"
+  (let ((last-cmd 0)
+        (prob-override nil))
+    (dolist (zone-cmd (cmds-of zone))
+      ;; if-flag
+      ;; 0 - "Do regardless of previous"
+      ;; 1 - "Do if previous succeeded"
+      ;; 2 - "Do if previous failed"
+      ;; last-cmd
+      ;; 1 - "Last command succeeded"
+      ;; 2 - "Last command had an error"
+      ;; -1 - "Last command's percentage failed"
 
-    (cond
-      ((and (= (if-flag-of zone-cmd) 1) (/= last-cmd 1))
-       ;; skip
-       nil)
-      ((and (= (if-flag-of zone-cmd) -1) (/= last-cmd -1))
-       ;; skip
-       nil)
-      ((and (not prob-override) (> (random-range 1 100) (prob-of zone-cmd)))
-       (setf prob-override nil))
-      (t
-       (case (command-of zone-cmd)
-         (#\*                           ; Ignore command
-          (setf last-cmd -1)))
-         (#\M                           ; Read a mobile
-          (let ((tmob (real-mobile-proto (arg1-of zone-cmd)))
-                (room (real-room (arg3-of zone-cmd))))
-            (cond
-              ((null tmob)
-               (setf last-cmd 0))
-              ((< (number-of (shared-of tmob)) (arg2-of zone-cmd))
-               (setf last-cmd 0))
-              ((null room)
-               (setf last-cmd 0))
-              (t
-               (let ((mob (read-mobile (arg1-of zone-cmd))))
-
-                       
-         (#\O
-          nil)
-         (#\P
-          nil)
-         (#\V
-          nil)
-         (#\G
-          nil)
-         (#\E
-          nil)
-         (#\I
-          nil)
-         (#\W
-          nil)
-         (#\R
-          nil)
-         (#\D
-          nil)
-         (t
-          (zone-error "Unknown cmd in reset table! cmd disabled")
-          (setf (command-of zone-cmd) #\*))))))
+      (cond
+        ((and (= (if-flag-of zone-cmd) 1) (/= last-cmd 1))
+         ;; skip
+         nil)
+        ((and (= (if-flag-of zone-cmd) -1) (/= last-cmd -1))
+         ;; skip
+         nil)
+        ((and (not prob-override) (> (random-range 1 100) (prob-of zone-cmd)))
+         (setf prob-override nil))
+        (t
+         (case (command-of zone-cmd)
+           (#\*                         ; Ignore command
+            (setf last-cmd -1))
+           (#\M                         ; Read a mobile
+            (let ((tmob (real-mobile-proto (arg1-of zone-cmd)))
+                  (room (real-room (arg3-of zone-cmd))))
+              (cond
+                ((null tmob)
+                 (setf last-cmd 0))
+                ((< (number-of (shared-of tmob)) (arg2-of zone-cmd))
+                 (setf last-cmd 0))
+                ((null room)
+                 (setf last-cmd 0))
+                (t
+                 (let ((mob (read-mobile (arg1-of zone-cmd))))
+                   nil)))))
+           (#\O
+            nil)
+           (#\P
+            nil)
+           (#\V
+            nil)
+           (#\G
+            nil)
+           (#\E
+            nil)
+           (#\I
+            nil)
+           (#\W
+            nil)
+           (#\R
+            nil)
+           (#\D
+            nil)
+           (t
+            (zone-error "Unknown cmd in reset table! cmd disabled")
+            (setf (command-of zone-cmd) #\*)))))))
   (setf (age-of zone) 0)
 
   (dolist (room (world-of zone))
     (dolist (search (searches-of room))
       (setf (flags-of search) (logand (flags-of search) (lognot +search-tripped+))))))
-  
+
 (defun fread-string (inf)
   (format nil "~{~a~^~%~}"
           (loop for line = (read-line inf nil nil)

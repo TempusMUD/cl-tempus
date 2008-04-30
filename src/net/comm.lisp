@@ -2,26 +2,6 @@
 
 (defconstant +num-save-cmds+ 30)
 
-(defvar *help* nil)
-(defvar *restrict* nil)
-(defvar *mini-mud* nil)
-(defvar *mud-moved* nil)
-(defvar *olc-lock* nil)
-(defvar *no-rent-check* nil)
-(defvar *no-initial-zreset* nil)
-(defvar *log-cmds* nil)
-(defvar *max-players* nil)
-(defvar *max-descriptors-available* nil)
-(defvar *cur-car* nil)
-(defvar *default-quad-zone* nil)
-(defvar *object-list* nil)
-(defvar *production-mode* nil)
-(defvar *nameserver-is-slow* nil)
-(defvar *auto-save* nil)
-(defvar *autosave-time* nil)
-(defparameter *default-port* 4040)
-(defparameter *default-dir* "lib/")
-
 ;; local globals
 (defparameter *descriptor-list* nil)
 (defparameter *buffer-pool* nil)
@@ -33,12 +13,13 @@
 (defparameter *no-specials* nil)          ; Suppress ass. of special routines
 (defparameter *avail-descs* 0)            ; max descriptors available
 (defparameter *tics* 0)                   ; for extern checkpointing
-(defparameter *scheck* 0)                 ; for syntax checking mode
+(defparameter *scheck* nil)                 ; for syntax checking mode
 (defparameter *log-cmds* nil)             ; log cmds
 (defparameter *shutdown-count* -1)        ; shutdown countdown
 (defparameter *shutdown-idnum* -1)        ; idnum of person calling shutdown
 (defparameter *shutdown-mode* 'none)  ; what type of shutdown
 (defparameter *suppress-output* nil)
+(defparameter *avail-descs* 0)          ; available descriptors
 
 (defparameter *last-cmd* (make-array +num-save-cmds+));
 
@@ -124,7 +105,50 @@
     0))
 
 (defun init-game (port)
-  (boot-db))
+  (setf *random-state* (make-random-state t))
+  (boot-db)
+
+  (slog "Testing internal integrity")
+  ;; FIXME: write these (if applicable)
+  #+nil (tmp-string-test)
+  #+nil (verify-tempus-integrity)
+
+  (slog "Opening mother connection.")
+  (cxn-listen port 'tempus-cxn)
+
+  (slog "Signal trapping.")
+
+  (slog "Entering game loop.")
+
+  (game-loop)
+
+  (slog "Closing all sockets.")
+  (close-all-cxns)
+  (disconnect-toplevel)
+
+  (when *circle-reboot*
+    (slog "Rebooting.")
+    (sb-ext:quit :unix-status 52))
+
+  (slog "Normal termination of game."))
+
+(defun game-loop ()
+  "The main loop of the program, it iterates here until *shutdown* is non-NIL."
+  (slog "Entering game loop")
+  (loop for pulse from 1
+        while (not *shutdown*) do
+        (when (> pulse 1000)
+          (setf pulse 0))
+        (sb-sys:ignore-interrupt sb-unix:sigpipe)
+        (let ((start-time (get-internal-real-time)))
+               (cxn-update-input)
+               (cxn-handle-commands)
+               (cxn-update-output)
+               (force-output)
+               (let ((elapsed (/ (- (get-internal-real-time) start-time)
+                                 internal-time-units-per-second)))
+                 (when (< elapsed 0.1)
+                   (sleep (- 0.1 elapsed)))))))
 
 (defun verify-environment ()
   (let ((+player-subdirs+ '("character" "equipment" "housing" "mail" "corpses")))

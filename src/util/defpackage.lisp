@@ -2,11 +2,10 @@
 	(:use :common-lisp
           :split-sequence
           :local-time
+          :postmodern
 		#+cmu :extensions
 		#+sbcl :sb-bsd-sockets)
 	(:export main))
-
-(clsql:enable-sql-reader-syntax)
 
 (shadowing-import
  #+sbcl '(sb-int:format-universal-time

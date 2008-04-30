@@ -1,12 +1,18 @@
 (in-package :tempus)
 
+(defparameter +special-cmd+ 0)          ; special command response
+(defparameter +special-tick+ 1)         ; special periodic action
+(defparameter +special-death+ 2)        ; special death notification
+(defparameter +special-fight+ 3)        ; special fight starting
+(defparameter +special-combat+ 4)       ; special in-combat ability
+(defparameter +special-enter+ 5)        ; special upon entrance
+(defparameter +special-leave+ 6)        ; special upon exit
+(defparameter +special-reset+ 7)        ; zone reset
+
 (defvar *spec-list*)
 
 (defun find-spec-index-arg (str)
-  (loop for tag in *spec-list*
-       as idx upfrom 0
-       until (string-equal tag str)
-       finally (return idx)))
+  (position str *spec-list* :test #'string-equal))
 
 (defun assign-specials (kind config-path retrieval-func setter-func)
   (with-open-file (inf config-path :direction :input)

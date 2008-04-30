@@ -30,6 +30,7 @@
    (plane :accessor plane-of :initarg :plane :initform nil)
    (owner-idnum :accessor owner-idnum-of :initarg :owner-idnum :initform nil)
    (co-owner-idnum :accessor co-owner-idnum-of :initarg :co-owner-idnum :initform nil)
+   (author :accessor author-of :initarg :author :initform nil)
    (enter-count :accessor enter-count-of :initarg :enter-count :initform nil)
    (flags :accessor flags-of :initarg :flags :initform nil)
    (hour-mod :accessor hour-mod-of :initarg :hour-mod :initform nil)
