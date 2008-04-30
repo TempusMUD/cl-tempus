@@ -124,3 +124,397 @@
               (floor secs +secs-per-mud-hour+)
             (declare (ignore secs))
             (values hours days months years)))))))
+
+(defparameter +mudlog-priorities+ '(emergency alert critical error warning notice info debug))
+
+(defun mudlog (priority write-to-file fmt &rest args)
+  "Logs the message given to file with a timestamp"
+  (let ((message (format nil "~?" fmt args))
+        (priority-num (position priority +mudlog-priorities+)))
+    (assert priority-num)
+	(dolist (cxn *cxns*)
+	  (when (and (typep cxn 'tempus-cxn)
+                 (eql (cxn-state cxn) 'playing)
+                 (cxn-actor cxn))
+		(cxn-write cxn "&g[ ~a ]&n~%"
+                   (string-replace "&" message "&&"))))
+	(when write-to-file
+      (syslog "~a" message))))
+
+
+(defun syslog (fmt &rest args)
+  "Logs a message to *STANDARD-OUTPUT* with a timestamp, and sends it to all immortals who aren't editing something."
+  (format t "(~s \"~?\")~%" (local-time:now) fmt args)
+  (force-output))
+
+#+nil (defun errlog (fmt &rest args)
+  "Logs an error to syslog with attached backtrace"
+  (let ((*standard-output* *error-output*))
+    (mudlog 'debug t "ERROR: ~?" fmt args)
+    (format t "~{:::: ~s~%~}"
+            (let ((backtrace (sb-debug:backtrace-as-list)))
+              (subseq backtrace 2
+                      (let ((bottom (position 'game-loop backtrace :key #'first)))
+                        (when bottom
+                          (1+ bottom))))))
+    (force-output)))
+
+
+(defun curry (function &rest args)
+  (lambda (&rest more-args)
+    (apply function (append args more-args))))
+
+(defun join-sequence (result-type delimiter seq-list)
+	"Conceptually the opposite of split-sequence, joins together the
+sequences in seq-list with the delimiter between each element"
+	(apply #'concatenate
+		result-type
+		(first seq-list)
+		(loop for elt in (rest seq-list) append (list delimiter elt))))
+
+(defun hash-to-assoc (hash)
+  (let ((result nil))
+	(maphash (lambda (key val)
+			   (push (list key val) result))
+			 hash)
+	(nreverse result)))
+
+(defun assoc-to-hash (assoc &rest options)
+  (let ((result (apply #'make-hash-table options)))
+    (dolist (tuple assoc result)
+      (setf (gethash (first tuple) result) (second tuple)))))
+
+(defun char-vowel-p (c)
+	(or (char= c #\a)
+		(char= c #\e)
+		(char= c #\i)
+		(char= c #\o)
+		(char= c #\u)
+		(char= c #\y)))
+
+(defun expand-dollar (c viewer subject target item pov)
+  (case c
+	(#\n
+	 (if (eql pov :self)
+		 "you"
+		 (desc viewer subject)))
+	(#\e
+	 (cond
+	   ((eql pov :self)
+		"you")
+	   ((eql (sex subject) 'male)
+		"he")
+	   ((eql (sex subject) 'female)
+		"she")
+	   (t
+		"it")))
+	(#\m
+	 (cond
+	   ((and (eql pov :self) (eql subject target))
+		"yourself")
+	   ((eql pov :self)
+		"you")
+	   ((eql (sex subject) 'male)
+		"him")
+	   ((eql (sex subject) 'female)
+		"her")
+	   (t
+		"it")))
+	(#\s
+	 (cond
+	   ((eql pov :self)
+		"your")
+	   ((eql (sex subject) 'male)
+		"his")
+	   ((eql (sex subject) 'female)
+		"her")
+	   (t
+		"its")))
+	(#\N
+	 (cond
+	   ((eql subject target)
+		(cond
+		  ((eql pov :self)
+		   "yourself")
+		  ((eql (sex target) 'male)
+		   "himself")
+		  ((eql (sex target) 'female)
+		   "herself")
+		  (t
+		   "itself")))
+	   ((eql pov :target)
+		"you")
+	   (t
+		(desc viewer target))))
+	(#\E
+	 (cond
+	   ((eql pov :target)
+		"you")
+	   ((eql (sex target) 'male)
+		"he")
+	   ((eql (sex target) 'female)
+		"she")
+	   (t
+		"it")))
+	(#\M
+	 (cond
+	   ((and (eql pov :target) (eql target target))
+		"yourself")
+	   ((eql pov :target)
+		"you")
+	   ((eql (sex target) 'male)
+		"him")
+	   ((eql (sex target) 'female)
+		"her")
+	   (t
+		"it")))
+	(#\S
+	 (cond
+	   ((eql pov :target)
+		"your")
+	   ((eql (sex target) 'male)
+		"his")
+	   ((eql (sex target) 'female)
+		"her")
+	   (t
+		"its")))
+	(#\p
+	 (name-of item))
+	(#\%
+	 (if (eql pov :self)
+		 ""
+		 "s"))
+	(#\^
+	 (if (eql pov :self)
+		 ""
+		 "es"))
+	(#\a
+	 (or (mood-of subject)
+	 	 ""))
+	(#\$
+	 "$")))
+
+(defun act-str (viewer fmt subject target item pov)
+  (with-output-to-string (result)
+	(loop for idx from 0 to (1- (length fmt)) do
+		  (princ
+		   (case (char fmt idx)
+			 (#\$
+			  (incf idx)
+			  (if (eql (char fmt idx) #\{)
+				  (let ((default-mood
+							(subseq fmt
+									(1+ idx)
+									(position #\} fmt :start  idx))))
+					(incf idx (1+ (length default-mood)))
+					(or
+					 (mood-of subject)
+					 default-mood))
+				  (expand-dollar (char fmt idx) viewer subject target item pov)))
+			 (#\&
+			  (incf idx)
+			  (concatenate 'string "&" (list (char fmt idx))))
+			 (t
+			  (char fmt idx)))
+		   result))))
+
+(defun send-act-str (viewer emit subject target item pov)
+  (when (or (can-see viewer subject)
+            (and target (can-see viewer target)))
+    (send-to-actor viewer "~a~%" (act-str viewer emit subject target item pov))))
+
+(defun act (subject &key (target nil) (item nil) (subject-emit nil) (target-emit nil) (not-target-emit nil) (place-emit nil) (all-emit nil))
+  ;; Handle "all" emit
+  (when all-emit
+    (send-act-str subject all-emit subject target item :self)
+	(when (and target (not (eql subject target)))
+	  (send-act-str target all-emit subject target item :target))
+	   (dolist (other (creatures (place subject)))
+		 (unless (or (eql other subject) (eql other target))
+		   (send-act-str other all-emit subject target item :other))))
+  (when subject-emit
+	(send-act-str subject subject-emit subject target item :self))
+  (when (and target-emit target)
+	(send-act-str target target-emit subject target item :target))
+  (when not-target-emit
+    (dolist (other (creatures (place subject)))
+      (unless (or (eql other subject) (eql other target))
+		(send-act-str other not-target-emit subject target item :other))))
+  (when place-emit
+    (dolist (other (creatures (place subject)))
+      (unless (eql other subject)
+		(send-act-str other place-emit subject target item
+					  (if (eql other target) :target :other))))))
+
+(defun act-event (subject &key (target nil) (item nil) (subject-emit nil) (target-emit nil) (not-target-emit nil) (place-emit nil) (all-emit nil))
+  "Enqueues an emit event that acts like act, except in event order instead
+of immediately."
+  (enqueue-event 'emit
+				 :kind 'emit
+				 :actor subject
+				 :target target
+				 :item item
+				 :subject-emit subject-emit
+				 :target-emit target-emit
+				 :not-target-emit not-target-emit
+				 :place-emit place-emit
+				 :all-emit all-emit))
+
+(defun colorize (cxn str)
+  (let ((ansi-level (if (cxn-account cxn)
+						(ansi-level-of (cxn-account cxn))
+						0)))
+	(with-output-to-string (result)
+	  (loop for idx from 0 to (1- (length str)) do
+		   (princ
+			(if (eql (char str idx) #\&)
+				(case ansi-level
+				  (0
+				   (case (char str (incf idx))
+					 (#\@ "[H[J")     (#\& "&")
+					 (t "")))
+				  (1
+				   (case (char str (incf idx))
+					 (#\n "[0m")    (#\r "[0;31m")
+					 (#\g "[0m") (#\y "[0m")
+					 (#\b "[0m") (#\m "[0m")
+					 (#\c "[0;36m") (#\w "[0m")
+					 (#\@ "[H[J")     (#\& "&")
+					 (t "")))
+				  (2
+				   (case (char str (incf idx))
+					 (#\n "[0m")    (#\r "[0;31m")
+					 (#\g "[0;32m") (#\y "[0;33m")
+					 (#\b "[0;34m") (#\m "[0;35m")
+					 (#\c "[0;36m") (#\w "[0;37m")
+					 (#\N "[0m")    (#\R "[0;31m")
+					 (#\G "[0;32m") (#\Y "[0;33m")
+					 (#\B "[0;34m") (#\M "[0;35m")
+					 (#\C "[0;36m") (#\W "[0;37m")
+					 (#\@ "[H[J")     (#\& "&")
+					 (t "<BUG PLEASE REPORT>")))
+				  (t
+				   (case (char str (incf idx))
+					 (#\n "[0m")    (#\r "[0;31m")
+					 (#\g "[0;32m") (#\y "[0;33m")
+					 (#\b "[0;34m") (#\m "[0;35m")
+					 (#\c "[0;36m") (#\w "[0;37m")
+					 (#\N "[1m")    (#\R "[1;31m")
+					 (#\G "[1;32m") (#\Y "[1;33m")
+					 (#\B "[1;34m") (#\M "[1;35m")
+					 (#\C "[1;36m") (#\W "[1;37m")
+					 (#\@ "[H[J")     (#\& "&")
+					 (t "<BUG PLEASE REPORT>"))))
+				(char str idx))
+			result)))))
+
+(defun act-escape (str)
+  "Given STR, returns a string, which has escaped the characters considered meaningful by the ACT and ACT-EVENT function"
+  (with-output-to-string (result)
+    (loop for idx from 0 to (1- (length str)) do
+          (princ
+           (case (char str idx)
+             (#\&
+              "&&")
+             (#\$
+              "$$")
+             (t
+              (char str idx)))
+           result))))
+						 
+(defun string-abbrev (abbrev str)
+  "Returns T if ABBREV is at least one character, and is an abbreviation of STR."
+  (unless (or (zerop (length abbrev))
+              (> (length abbrev) (length str)))
+    (string-equal abbrev str :end2 (min (length abbrev) (length str)))))
+
+(defun string-replace (needle haystack replacement)
+  "Returns a copy of HAYSTACK with all instances of NEEDLE replaced by REPLACMENT."
+  (format nil "~{~a~}"
+		  (loop with needle-length = (length needle)
+			 for left = 0 then (+ right needle-length)
+			 as right = (search needle haystack :start2 left)
+			 while right
+			 collect (subseq haystack left right) into result
+			 nconc (list replacement) into result
+			 finally (return (nconc result
+									(list (subseq haystack left)))))))
+
+(defun string-replace-func (needle haystack func)
+  "Returns a copy of HAYSTACK with all instances of NEEDLE replaced by the return value of FUNC"
+  (format nil "~{~a~}"
+		  (loop with needle-length = (length needle)
+			 for left = 0 then (+ right needle-length)
+			 as right = (search needle haystack :start2 left)
+			 while right
+			 collect (subseq haystack left right) into result
+			 nconc (list (funcall func needle)) into result
+			 finally (return (nconc result
+									(list (subseq haystack left)))))))
+
+(defun hash-table-keys (hash)
+  "Returns all the keys of the hash table HASH"
+  (with-hash-table-iterator (next-entry hash)
+	(loop for (more key value) = (multiple-value-list (next-entry))
+		 while more
+		 collect key)))
+
+(defun tempus-path (path)
+  "Returns the local pathname merged with the root tempus path."
+  (merge-pathnames path (asdf:component-pathname (asdf:find-system "tempus"))))
+
+(defun send-page (cxn)
+  "Sends a single buffered page to CXN.  If any of the page is left, displays the more prompt."
+  (let* ((buf (cxn-page-buf cxn))
+		 (buf-len (length buf)))
+	(loop
+	 for count = 1 then (1+ count)
+	 for line-begin = 0 then (1+ line-end)
+	 for line-end = (and (< line-begin buf-len)
+						 (position #\newline buf :start line-begin))
+	 while (and line-end (< count 22))
+	 finally
+	 (cond
+	  (line-end
+	   (cxn-write cxn "~a~a~%" (subseq buf 0 (1+ line-end))
+				  (colorize cxn
+				   "&r**** &nUse the 'more' command to continue. &r****&n"))
+	   (setf (cxn-page-buf cxn) (subseq buf (1+ line-end))))
+	  (t
+	   (cxn-write cxn "~a" buf)
+	   (setf (cxn-page-buf cxn) ""))))))
+
+(defun columnar-list-to-cxn (cxn cols width list)
+  (let ((col 0))
+	(dolist (element list)
+	  (cxn-write cxn "~VA~[~%~]" width element
+                 (rem (incf col) cols)))
+    (unless (zerop (rem col cols))
+      (cxn-write cxn "~%"))))
+
+(defun safe-parse-integer (str)
+  (ignore-errors (parse-integer str)))
+
+(defun parse-integer-range (str &key (minimum nil) (maximum nil))
+  (let* ((divider-pos (position #\- str))
+		 (min-str (and divider-pos (subseq str 0 divider-pos)))
+		 (max-str (and divider-pos (subseq str (1+ divider-pos)))))
+	(cond
+	  ((null divider-pos)
+	   ;; no divider - just a single number
+	   (let ((num (safe-parse-integer str)))
+		 (values
+		  (if minimum (max minimum num) num)
+		  (if maximum (min maximum num) num))))
+	  ((= (length str) 1)
+	   ;; only a divider - no range
+		(values nil nil))
+	  (t
+	   ;; either min-max -max or min-
+		(values
+		 (if (= divider-pos 0)
+			 minimum
+			 (max minimum (safe-parse-integer min-str)))
+		 (if (= divider-pos (length str))
+			 maximum
+			 (min maximum (safe-parse-integer max-str))))))))
