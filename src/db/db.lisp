@@ -143,21 +143,18 @@
   (slog "Resetting the game time:")
   (reset-time)
 
-#|
   (slog "Connecting to postgres.")
-  (setf *sql-cxn* (clsql:connect
-                   (if *production-mode*
-                       "user=realm dbname=tempus"
-                       "hostaddr=206.41.250.2 user=realm dbname=devtempus password=tarrasque")))
+  (connect-toplevel (if *production-mode*
+                     '("tempus" "realm" "" "localhost")
+                     '("devtempus" "realm" "tarrasque" "206.41.250.2")))
 
   (when *production-mode*
     (slog "Vacuuming old database transactions")
-    (clsql:exec *sql-cxn* "vacuum full analyze"))
+    (execute (:vacuum :full :analyze)))
 
-  (let ((res (clsql:select "select last-values from unique-id")))
+  (let ((res (query (:select 'last-values :from 'unique-id) :value)))
     (setf *top-unique-id* (parse-integer (caar res)))
     (slog "Top unique object id = ~d" *top-unique-id*))
-|#
 
   (account-boot)
   (load-bounty-data)

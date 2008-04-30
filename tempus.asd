@@ -1,9 +1,6 @@
 (defpackage #:tempus-system (:use #:asdf #:cl))
 (in-package #:tempus-system)
 
-#.(require :clsql-postgresql)
-#.(clsql-sys:enable-sql-reader-syntax)
-
 (declaim (optimize (debug 3) (speed 0) (safety 3) (space 2)))
 
 (defsystem tempus
@@ -11,10 +8,11 @@
   :version "1.0.d"
   :author "Daniel Lowe <dlowe@bitmuse.com>"
   :description "Tempus MUD Codebase"
-  :depends-on (clsql-postgresql
+  :depends-on (postmodern
                split-sequence
                local-time
                cl-ppcre
+               uffi
                #+sbcl sb-bsd-sockets
                #+sbcl sb-posix)
 	
