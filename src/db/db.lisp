@@ -88,8 +88,8 @@
 ;; mud-life time
 (defparameter +secs-per-mud-hour+ 60)
 (defparameter +secs-per-mud-day+ (* 24 +secs-per-mud-hour+))
-(defparameter +secs-per-mud-month+ (* 35 +secs-per-mud-hour+))
-(defparameter +secs-per-mud-year+ (* 16 +secs-per-mud-hour+))
+(defparameter +secs-per-mud-month+ (* 35 +secs-per-mud-day+))
+(defparameter +secs-per-mud-year+ (* 16 +secs-per-mud-month+))
 
 (defvar *room-nr* 0)
 
