@@ -106,10 +106,13 @@
 
 (defun snarf-file (path)
   "Returns a string with the contents of the file at PATH."
-  (with-open-file (inf path :direction :input)
-    (let ((buf (make-string (file-length inf))))
-      (read-sequence buf inf)
-      buf)))
+  (handler-case
+      (with-open-file (inf path :direction :input)
+        (let ((buf (make-string (file-length inf))))
+          (read-sequence buf inf)
+          buf))
+    (error ()
+      "")))
 
 (defun mud-time-passed (t2 t1)
   "Calculate the MUD time passed over the last t2-t1 centuries (secs)"
