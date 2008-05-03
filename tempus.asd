@@ -81,6 +81,8 @@
              (:file "quest" :pathname "quest/quest"
                     :depends-on ("defs"
                                  "utils"))
+             (:file "weather" :pathname "util/weather"
+                    :depends-on ("zone-data"))
              (:file "artisan" :pathname "mobiles/artisan"
                     :depends-on ("creature"))
              (:file "creature" :pathname "structs/creature" :depends-on ("defs"))
