@@ -255,10 +255,15 @@
 (defun reset-time ()
   "Reset the time in the game"
   (let* ((epoch 650336715)
-         (now (get-universal-time))
-         (lunar-day (mod (/ (- now epoch) +secs-per-mud-day+) 24)))
+         (now (unix-time (now)))
+         (lunar-day (mod (floor (- now epoch) +secs-per-mud-day+) 24)))
     (multiple-value-bind (hour day mon year)
         (mud-time-passed now epoch)
+      (setf *time-info* (make-instance 'mud-time
+                                       :hour hour
+                                       :day day
+                                       :month mon
+                                       :year year))
       (slog "   Current Gametime (global): ~dH ~dD ~dM ~dY."
             hour day mon year))
     (slog "   Current lunar day: ~d (~a)"
