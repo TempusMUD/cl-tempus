@@ -113,7 +113,6 @@
   (clrhash *rooms*)
   (clrhash *mobile-prototypes*)
   (clrhash *object-prototypes*)
-  (setf *zone-table* nil)
 
   (slog "Loading zone table.")
   (index-boot :zon)
