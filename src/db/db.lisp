@@ -156,9 +156,8 @@
     (slog "Vacuuming old database transactions")
     (execute (:vacuum :full :analyze)))
 
-  (let ((res (query (:select 'last-values :from 'unique-id) :value)))
-    (setf *top-unique-id* (parse-integer (caar res)))
-    (slog "Top unique object id = ~d" *top-unique-id*))
+  (setf *top-unique-id*  (query (:select 'last-value :from 'unique-id) :single))
+  (slog "Top unique object id = ~d" *top-unique-id*)
 
   (account-boot)
   (load-bounty-data)
