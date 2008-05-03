@@ -145,10 +145,12 @@
   (slog "Resetting the game time:")
   (reset-time)
 
-  (slog "Connecting to postgres.")
-  (connect-toplevel (if *production-mode*
-                     '("tempus" "realm" "" "localhost")
-                     '("devtempus" "realm" "tarrasque" "206.41.250.2")))
+  (unless (connected-p *database*)
+    (slog "Connecting to postgres.")
+    (apply 'connect-toplevel
+           (if *production-mode*
+               '("tempus" "realm" "" "localhost")
+               '("devtempus" "realm" "tarrasque" "localhost"))))
 
   (when *production-mode*
     (slog "Vacuuming old database transactions")
