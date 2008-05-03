@@ -23,86 +23,72 @@
 
 (defparameter *last-cmd* (make-array +num-save-cmds+));
 
-(defun main (argc argv)
-  (let ((port *default-port*)
-        (dir *default-dir*)
-        (pos 1))
-    (tmp-string-init)
-    (acc-string-init)
-    (loop while (and (< pos argc) (char= (char (elt argv pos) 1) #\-)) do
-          (case (char (elt argv pos) 2)
-            (#\b
-             (setf *restrict* 50)
-             (slog "Wizlock 50"))
-            (#\d
-             (cond
-               ((> (length (elt argv pos)) 3)
-                (setf dir (subseq (elt argv pos) 3)))
-               ((< (incf pos) argc)
-                (setf dir (elt argv pos)))
-               (t
-                (slog "Directory arg expected after option -d.")
-                (return-from main))))
-            (#\m
-             (setf *mini-mud* t)
-             (setf *no-rent-check* t)
-             (slog "Running in minimized mode & with no rent check and olc lock."))
-            (#\c
-             (setf *scheck* t)
-             (slog "Syntax check mode enabled."))
-            (#\q
-             (setf *no-rent-check* t)
-             (slog "Quick boot mode -- rent check suppressed."))
-            (#\r
-             (setf *restrict* t)
-             (slog "Restricting game -- no new players allowed."))
-            (#\s
-             (setf *no-specials* t)
-             (slog "Suppressing assignment of special routines."))
-            (#\o
-             (setf *olc-lock* t)
-             (slog "Locking olc."))
-            (#\z
-             (setf *no-initial-zreset* t)
-             (slog "Bypassing initial zone resets."))
-            (#\n
-             (setf *nameserver-is-slow* t)
-             (slog "Disabling nameserver."))
-            (#\l
-             (setf *log-cmds* t)
-             (slog "Enabling log_cmds."))
-            (#\p
-             (setf *production-mode* t)
-             (slog "Running in production mode"))
-            (t
-             (errlog "Unknown option -~c in argument string." (char (elt argv pos) 2)))))
+(defun main (&key
+             (port *default-port*)
+             (dir *default-dir*)
+             (no-nameserver t)
+             wizlock
+             minimud
+             check-only
+             no-rent
+             no-newbies
+             no-specials
+             no-olc
+             no-zresets
+             log-all
+             production)
+  (tmp-string-init)
+  (acc-string-init)
+  (when wizlock
+    (setf *restrict* 50)
+    (slog "Wizlocked to level 50"))
+  (when minimud
+    (setf *mini-mud* t)
+    (setf *no-rent-check* t)
+    (slog "Running in minimized mode & with no rent check and olc lock."))
+  (when syntax-check
+    (setf *scheck* t)
+    (slog "Syntax check mode enabled."))
+  (when no-rent
+    (setf *no-rent-check* t)
+    (slog "Quick boot mode -- rent check suppressed."))
+  (when no-newbies
+    (setf *restrict* t)
+    (slog "Restricting game -- no new players allowed."))
+  (when no-specials
+    (setf *no-specials* t)
+    (slog "Suppressing assignment of special routines."))
+  (when no-olc
+    (setf *olc-lock* t)
+    (slog "Locking olc."))
+  (when no-zreset
+    (setf *no-initial-zreset* t)
+    (slog "Bypassing initial zone resets."))
+  (when no-nameserver
+    (setf *nameserver-is-slow* t)
+    (slog "Disabling nameserver."))
+  (when log-all
+    (setf *log-cmds* t)
+    (slog "Enabling log_cmds."))
+  (when production
+    (setf *production-mode* t)
+    (slog "Running in production mode"))
 
-    (when (< pos argc)
-      (cond
-        ((not (digit-char-p (char (elt argv pos) 1)))
-         (format *error-output*
-                 "Usage: ~a [-c] [-m] [-q] [-r] [-s] [-d pathname] [port #]~%"
-                 (elt argv 0))
-         (return-from main))
-        ((<= (setf port (parse-integer (elt argv pos))) 1024)
-         (format *error-output* "Illegal port number ~d.~%" (elt argv 0))
-         (return-from main))))
+  (let ((*default-pathname-defaults* (merge-pathnames dir)))
+    (slog "Using ~a as data directory."
+          (truename *default-pathname-defaults*))
 
-    (let ((*default-pathname-defaults* (merge-pathnames dir)))
-      (slog "Using ~a as data directory."
-            (truename *default-pathname-defaults*))
+    (verify-environment)
 
-      (verify-environment)
-
-      (cond
-        (*scheck*
-         (boot-world)
-         (slog "Done.")
-         (return-from main 0))
-        (t
-         (slog "Running game on port ~d." port)
-         (init-game port))))
-    0))
+    (cond
+      (*scheck*
+       (boot-world)
+       (slog "Done.")
+       (return-from main 0))
+      (t
+       (slog "Running game on port ~d." port)
+       (init-game port))))
+  (values))
 
 (defun init-game (port)
   (setf *random-state* (make-random-state t))
