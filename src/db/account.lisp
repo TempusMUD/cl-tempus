@@ -25,6 +25,7 @@
    (bank-past :accessor past-bank-of :initform 0)
    (bank-future :accessor future-bank-of :initform 0)))
 
+(defvar *account-max-idnum* 0)
 (defvar *account-idnum-cache* (make-hash-table))
 (defvar *account-name-cache* (make-hash-table :test 'equal))
 
@@ -44,6 +45,16 @@ md5 hash."
 the password."
   (setf (slot-value account 'password)
 		(crypt-password password (random-salt))))
+
+(defun account-boot ()
+  (slog "Getting max account idnum")
+  (setf *account-max-idnum* (max-account-id))
+
+  (slog "Getting character count")
+  (let ((player-count (query (:select (:count '*) :from 'players) :single)))
+    (if (zerop player-count)
+        (slog "WARNING: No characters loaded")
+        (slog "... ~d character~p in db" player-count player-count))))
 
 (defun max-account-id ()
   "Returns the maximum account id in the database"
