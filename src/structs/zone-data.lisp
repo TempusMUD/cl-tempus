@@ -46,7 +46,7 @@
    (num-players :accessor num-players-of :initarg :num-players :initform 0)
    (idle-time :accessor idle-time-of :initarg :idle-time :initform 0)
    (world :accessor world-of :initarg :world :initform nil)
-   (cmd :accessor cmd-of :initarg :cmd :initform nil)
+   (cmds :accessor cmds-of :initarg :cmd :initform nil)
    (weather :accessor weather-of :initarg :weather :initform nil)))
 
  
