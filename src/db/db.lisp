@@ -72,7 +72,7 @@
 (defvar *rooms* (make-hash-table))
 (defvar *mobile-prototypes* (make-hash-table))
 (defvar *object-prototypes* (make-hash-table))
-(defvar *character-list* nil)
+(defvar *characters* nil)
 (defvar *zone-table* nil)
 (defvar *default-quad-zone*)
 (defvar *top-of-world* 0)
@@ -80,10 +80,10 @@
 (defvar *boot-time* nil)
 (defvar *reset-q* nil)
 (defvar *top-unique-id* 0)
+(defvar *time-info* nil)
 
 (defparameter *no-specials* nil)
-(defparameter *welcome-message
-* nil)
+(defparameter *welcome-message* nil)
 
 ;; mud-life time
 (defparameter +secs-per-mud-hour+ 60)
@@ -995,8 +995,11 @@
               (setf (arg3-of new-zonecmd) (parse-integer (regref result 5))))))
 
          (setf (line-of new-zonecmd) cmd-num)
-         (push new-zonecmd (cmd-of new-zone))
+         (push new-zonecmd (cmds-of new-zone))
          (incf cmd-num)))
+
+      ;; Reverse the commands so they're in the proper execution order
+      (setf (cmds-of new-zone) (nreverse (cmds-of new-zone)))
 
       ;; Now we add the new zone to the zone-table linked list
       (push new-zone *zone-table*))))
