@@ -46,7 +46,7 @@
     (setf *mini-mud* t)
     (setf *no-rent-check* t)
     (slog "Running in minimized mode & with no rent check and olc lock."))
-  (when syntax-check
+  (when check-only
     (setf *scheck* t)
     (slog "Syntax check mode enabled."))
   (when no-rent
@@ -61,7 +61,7 @@
   (when no-olc
     (setf *olc-lock* t)
     (slog "Locking olc."))
-  (when no-zreset
+  (when no-zresets
     (setf *no-initial-zreset* t)
     (slog "Bypassing initial zone resets."))
   (when no-nameserver
@@ -120,7 +120,6 @@
 
 (defun game-loop ()
   "The main loop of the program, it iterates here until *shutdown* is non-NIL."
-  (slog "Entering game loop")
   (loop for pulse from 1
         while (not *shutdown*) do
         (when (> pulse 1000)
