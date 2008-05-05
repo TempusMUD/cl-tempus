@@ -98,8 +98,10 @@
 
 (defun renum-world ()
   nil)
+
 (defun renum-zone-table ()
-  nil)
+  (setf *zone-table* (sort *zone-table* #'< :key 'number-of)))
+
 (defun xml-boot ()
   nil)
 
