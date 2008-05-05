@@ -149,8 +149,8 @@
    ;; Originally from char_point_data
    (mana :accessor mana-of :initarg :mana :initform 100)
    (max-mana :accessor max-mana-of :initarg :max-mana :initform 100)
-   (hit :accessor hit-of :initarg :hit :initform 100)
-   (max-hit :accessor max-hit-of :initarg :max-hit :initform 100)
+   (hitp :accessor hitp-of :initarg :hitp :initform 100)
+   (max-hitp :accessor max-hitp-of :initarg :max-hitp :initform 100)
    (move :accessor move-of :initarg :move :initform 100)
    (max-move :accessor max-move-of :initarg :max-move :initform 100)
    (armor :accessor armor-of :initarg :armor :initform 100)
