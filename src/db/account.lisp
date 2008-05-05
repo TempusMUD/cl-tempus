@@ -4,13 +4,13 @@
   ((idnum :accessor idnum-of :initarg :idnum)
    (account :accessor account-of :initarg :account)
    (name :accessor name-of :initarg :name)
-   (birth-time :accessor birth-time-of :initarg :birthtime)
-   (login-time :accessor login-time-of :initarg :logintime)))
+   (birth-time :accessor birth-time-of :initarg :birth-time)
+   (login-time :accessor login-time-of :initarg :login-time)))
 
 (defclass account ()
   ((idnum :accessor idnum-of :initarg :idnum)
    (name :accessor name-of :initarg :name)
-   (password :accessor password-of :initarg :password)
+   (password :reader password-of :initarg :password)
    (email :accessor email-of :initarg :email)
    (creation-time :accessor creation-time-of :initarg :creation-time)
    (creation-addr :accessor creation-addr-of :initarg :creation-addr)
@@ -21,9 +21,14 @@
    (compact-level :accessor compact-level-of :initform 0)
    (term-height :accessor term-height-of :initarg :term-height :initform 22)
    (term-width :accessor term-width-of :initarg :term-width :initform 80)
-   (players :accessor players-of)
+   (trust :accessor trust-of :initarg :trust :initform 0)
+   (reputation :accessor reputation-of :initarg :reputation :initform 0)
+   (quest-points :accessor quest-points-of :initarg :quest-points :initform 0)
+   (banned :accessor banned-of :initarg :banned :initform nil)
+   (quest-banned :accessor quest-banned-of :initarg :quest-banned :initform nil)
    (bank-past :accessor past-bank-of :initform 0)
-   (bank-future :accessor future-bank-of :initform 0)))
+   (bank-future :accessor future-bank-of :initform 0)
+   (players :accessor players-of :initform nil)))
 
 (defvar *account-max-idnum* 0)
 (defvar *account-idnum-cache* (make-hash-table))
@@ -47,6 +52,8 @@ the password."
 		(crypt-password password (random-salt))))
 
 (defun account-boot ()
+  (clrhash *account-idnum-cache*)
+  (clrhash *account-name-cache*)
   (slog "Getting max account idnum")
   (setf *account-max-idnum* (max-account-id))
 
@@ -81,25 +88,25 @@ be loaded from the database or it may be retrieved from a cache."
 	(if cached
 		cached
 		(let ((result (query (:select '*
-                                 :from 'accounts
-                                 :where (:= (:lower 'name) canonical-name))
-                                :alist))
-              (retrieved (make-instance 'account)))
-          (loop for (field value) in retrieved
-               do (setf (slot-value account field) value))
-		  (cond
-			(retrieved
-			 (setf (gethash (name-of retrieved) *account-name-cache*)
-				   retrieved)
-			 (setf (gethash (idnum-of retrieved) *account-idnum-cache*)
-				   retrieved)
-			 (setf (players-of retrieved)
-				   (sort (players-of retrieved)
-						 #'<
-						 :key #'idnum-of))
-			 retrieved)
-			(t
-			 nil))))))
+                              :from 'accounts
+                              :where (:= (:lower 'name) canonical-name))
+                             :alist))
+              (account (make-instance 'account)))
+		  (when result
+            (loop for tuple in result
+               do (setf (slot-value account (intern (symbol-name (car tuple)))) (cdr tuple)))
+            (setf (gethash canonical-name *account-name-cache*) account)
+            (setf (gethash (idnum-of account) *account-idnum-cache*) account)
+            (setf (players-of account)
+                  (mapcar (lambda (info)
+                            (make-instance 'player-record
+                                           :idnum (cdr (assoc :idnum info))
+                                           :account (idnum-of account)
+                                           :name (cdr (assoc :name info))
+                                           :birth-time (if (eql (cdr (assoc :birth-time info)) :null) (now) (cdr (assoc :birth-time info)))
+                                           :login-time (if (eql (cdr (assoc :login-time info)) :null) (now) (cdr (assoc :login-time info)))))
+                           (query (:order-by (:select 'idnum 'name 'birth-time 'login-time :from 'players :where (:= 'account 2)) 'idnum) :alists)))
+            account)))))
 
 (defun save-account (account)
   "Saves the account information into the database."
@@ -124,7 +131,6 @@ be loaded from the database or it may be retrieved from a cache."
 
 ;;; Support for encrypted password transmission
 
-#-sbcl
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (defvar *crypt-library-loaded* nil)
 
@@ -143,8 +149,8 @@ be loaded from the database or it may be retrieved from a cache."
 
 (defun crypt-password (password salt)
   "Encrypt a password with a hash"
-  (uffi:with-cstring (password-cstring password)
-    (uffi:with-cstring (salt-cstring salt)
+  (uffi:with-cstring (password-cstring (coerce password 'simple-string))
+    (uffi:with-cstring (salt-cstring (coerce salt 'simple-string))
       (uffi:convert-from-cstring 
        (crypt password-cstring salt-cstring)))))
 
