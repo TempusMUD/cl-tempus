@@ -147,7 +147,8 @@
   (slog "Resetting the game time:")
   (reset-time)
 
-  (unless (connected-p *database*)
+  (unless (and *database*
+               (connected-p *database*))
     (slog "Connecting to postgres.")
     (apply 'connect-toplevel
            (if *production-mode*
