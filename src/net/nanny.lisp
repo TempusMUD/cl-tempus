@@ -37,51 +37,37 @@
     new-account-ansi
     new-account-compact
     new-account-email
+    view-policy
     set-password-auth
     set-password-new
+    set-password-verify
     new-player-name
-	new-player-species
+	new-player-class
+    new-player-race
 	new-player-sex
-	new-player-eyes
-	new-player-hair
-	new-player-overall
-	wait-for-menu
+    new-player-align
+    new-player-stats
     main-menu
+	wait-for-menu
+    remort-class
+    delete-character
+    delete-verify
+    delete-password
+    describe-character
+    describe-editing
     playing
 	afterlife
     disconnecting))
 
-(defparameter +eye-descriptions+ 
-  '("nondescript" "red" "green" "blue" "yellow" "purple" "hazel" "cheerful"
-	"sad" "sinister" "slotted" "slitted" "searching" "probing" "hard" "soft"
-	"smiling" "striking"))
-
-(defparameter +hair-descriptions+ 
-  '("bald" "blonde" "brown" "crimson" "curly" "grey" "flowing"
-    "nondescript" "platinum" "red" "silver" "white"))
-
-(defparameter +overall-descriptions+
-  '("arrogant" "bitter" "bold" "calm" "careful" "cautious" "cheerful"
-	"contented" "crazy" "cunning" "curious" "defiant" "desperate"
-	"dreamy" "evil" "fearful" "fierce" "fond" "gallant" "gentle"
-	"gracious" "happy" "hateful" "icy" "impatient" "innocent" "kind"
-	"knowing" "language" "lazy" "longing" "loud" "loving" "lusty"
-	"malicious" "merry" "mocking" "morbid" "nervous" "nice" "outrageous"
-	"passionate" "patient" "pious" "playful" "polite" "proud" "quick" "quiet"
-	"rude" "ruthless" "sad" "sarcastic" "savage" "seductive" "sheepish"
-	"shy" "silent" "skeptical" "slow" "sly" "soft" "solemn" "stoic"
-	"sweet" "vicious" "wary" "warm" "weary" "wild" "wishful" "wistful"
-	"valiant"))
-
 (defvar *cxn-paginate* nil)
 
 (defclass tempus-cxn (data-cxn)
-  ((state :accessor cxn-state :initform 'login :type symbol)
-   (need-prompt :accessor cxn-need-prompt :initform t)
-   (account :accessor cxn-account :type (or null account) :initform nil)
-   (actor :accessor cxn-actor :initform nil)
-   (page-buf :accessor cxn-page-buf :initform "")
-   (mode-data :accessor cxn-mode-data :initform nil)))
+  ((state :accessor state-of :initform 'login :type symbol)
+   (need-prompt :accessor need-prompt-p :initform t)
+   (account :accessor account-of :type (or null account) :initform nil)
+   (actor :accessor actor-of :initform nil)
+   (page-buf :accessor page-buf-of :initform "")
+   (mode-data :accessor mode-data-of :initform nil)))
 
 (defmethod send-state-menu ((cxn tempus-cxn) state)
   (declare (ignore cxn state))
@@ -100,9 +86,9 @@
 	  (eql state 'set-password-auth)
 	  (eql state 'set-password-new)))
 
-(defmethod (setf cxn-state) :around (state (cxn tempus-cxn))
+(defmethod (setf state-of) :around (state (cxn tempus-cxn))
   ;;; send telnet DO ECHO when the new state isn't a password state
-  (when (password-state-p (cxn-state cxn))
+  (when (password-state-p (state-of cxn))
 	(cxn-write cxn "~c~c~c"
 			   (code-char #xff)
 			   (code-char #xfc)
@@ -115,7 +101,7 @@
      (mudlog 'warning t "attempt to set cxn to state ~a" state)))
 
   ;;; send telnet DONT ECHO when the new state is a password state
-  (when (password-state-p (cxn-state cxn))
+  (when (password-state-p (state-of cxn))
 	(cxn-write cxn "~c~c~c"
 			   (code-char #xff)
 			   (code-char #xfb)
@@ -125,51 +111,51 @@
   (cond
 	((eql *cxn-paginate* cxn)
      ;; Queue up text to be paginated later
-	 (setf (cxn-page-buf cxn)
-		   (concatenate 'string (cxn-page-buf cxn)
+	 (setf (page-buf-of cxn)
+		   (concatenate 'string (page-buf-of cxn)
 						(colorize cxn (format nil "~?" fmt args)))))
 	(t
      ;; Normal writing to connection
-	 (unless (or (cxn-need-prompt cxn)
-				 (and (cxn-actor cxn)
-					  (not (autoprompt-p (prefs (cxn-actor cxn))))))
+	 (unless (or (need-prompt-p cxn)
+				 (and (actor-of cxn)
+					  (not (autoprompt-p (prefs (actor-of cxn))))))
 	   (when (or (null (cxn-account cxn))
 				 (oddp (compact-level-of (cxn-account cxn))))
 		 (setf (cxn-output-buf cxn)
 			   (concatenate '(vector (unsigned-byte 8))
 							(cxn-output-buf cxn)
 							'(#x0d #x0a))))
-	   (when (or (null (cxn-actor cxn))
-				 (autoprompt-p (prefs (cxn-actor cxn))))
-		 (setf (cxn-need-prompt cxn) t)))
+	   (when (or (null (actor-of cxn))
+				 (autoprompt-p (prefs (actor-of cxn))))
+		 (setf (need-prompt-p cxn) t)))
 	 (call-next-method cxn "~a"
 					   (colorize cxn (format nil "~?" fmt args))))))
 
 (defmethod handle-accept ((cxn tempus-cxn))
   (mudlog 'info t "New connection received from ~a" (peer-addr cxn))
-  (setf (cxn-state cxn) 'login))
+  (setf (state-of cxn) 'login))
 
 (defmethod handle-flush :before ((cxn tempus-cxn))
-  (when (cxn-need-prompt cxn)
-	(when (and (eql (cxn-state cxn) 'playing)
+  (when (need-prompt-p cxn)
+	(when (and (eql (state-of cxn) 'playing)
 			   (< (compact-level-of (cxn-account cxn)) 2))
 	  (cxn-write cxn "~%"))
-    (send-state-prompt cxn (cxn-state cxn))
-	(when (and (eql (cxn-state cxn) 'playing)
+    (send-state-prompt cxn (state-of cxn))
+	(when (and (eql (state-of cxn) 'playing)
 			   (evenp (compact-level-of (cxn-account cxn))))
 	  (cxn-write cxn "~%"))
-	(setf (cxn-need-prompt cxn) nil)))
+	(setf (need-prompt-p cxn) nil)))
 
 (defmethod handle-close ((cxn tempus-cxn))
   (cond
 	((null (cxn-account cxn))
 	 (mudlog 'info t "Closing connection without account"))
-	((and (eql (cxn-state cxn) 'playing) (cxn-actor cxn))
+	((and (eql (state-of cxn) 'playing) (actor-of cxn))
 	 (mudlog 'notice t "~a has lost link; ~a logged out"
-			 (name-of (cxn-actor cxn))
+			 (name-of (actor-of cxn))
 			 (name-of (cxn-account cxn)))
-	 (act (cxn-actor cxn) :place-emit "$n has lost $s link.")
-	 (setf (link (cxn-actor cxn)) nil))
+	 (act (actor-of cxn) :place-emit "$n has lost $s link.")
+	 (setf (link-of (actor-of cxn)) nil))
 	(t
 	 (mudlog 'notice t "~a logged out" (name-of (cxn-account cxn))))))
 
@@ -183,9 +169,9 @@
                          "\\"
                          (string-left-trim '(#\space #\tab)
                                            (string-replace "$*" cmd-line args)))
-            (cxn-commands (link actor))))
+            (cxn-commands (link-of actor))))
     ;; return the first command string
-    (string-left-trim '(#\\) (pop (cxn-commands (link actor))))))
+    (string-left-trim '(#\\) (pop (cxn-commands (link-of actor))))))
 
 (defun expand-aliases (actor str)
   (cond
@@ -231,51 +217,26 @@
 								  (asdf:component-pathname
 								   (asdf:find-system "tempus")))))
 
-(defun load-player-actor (idnum)
-  "Given the player id number, loads the player's actor into memory
-and returns it."
-  (let ((*package* (find-package 'tempus)))
-	(with-open-file (inf (player-pathname idnum) :direction :input)
-	  (let* ((new-player (apply #'make-instance (read inf)))
-			 (alias (string-downcase (name-of new-player))))
-		(setf (line-desc-of new-player)
-			  (if (title new-player)
-				  (concatenate 'string (name-of new-player) " " (title new-player))
-				  (name-of new-player)))
-        (setf (aliases-of new-player)
-              (list alias (concatenate 'string "." alias)))
-        (setf (short-desc-of new-player)
-              (format nil "~:[a~;an~] ~a, ~a-eyed ~(~a~)"
-                      (char-vowel-p (char (overall-desc-of new-player) 0))
-                      (overall-desc-of new-player)
-                      (eye-desc-of new-player)
-                      (name-of (get-species (species new-player)))))
-		(setf (prefs new-player)
-			  (apply 'make-player-prefs (prefs new-player)))
-		(setf (private-names-of new-player)
-			  (assoc-to-hash (private-names-of new-player)))
-		new-player))))
-
 (defun player-to-game (player)
   (mudlog 'notice t "~a entering game as ~a"
-		  (name-of (cxn-account (link player)))
+		  (name-of (cxn-account (link-of player)))
 		  (name-of player))
   (actor-to-place player
-				  (get-place (or (loadplace player)
-								 (home player)
+				  (get-place (or (load-room-of player)
+								 (home-room-of player)
 								 10002)))
-  (setf (loadplace player) nil)
+  (setf (load-room-of player) nil)
   (dolist (equip (load-equipment (idnum-of player)))
 	(item-to-actor equip player))
-  (unless (plusp (hitp player))
-	(setf (hitp player) 1))
+  (unless (plusp (hitp-of player))
+	(setf (hitp-of player) 1))
   (act player :all-emit "$n enter$% the game.")
   (push player *characters*)
-  (display-contents (place player) player (brief-p (prefs player)))
+  (display-contents (place player) player (brief-p (prefs-of player)))
   (when (probe-file (mail-pathname (idnum-of player)))
 	(send-to-actor player "You have new mail.~%"))
   (save-player player)
-  (setf (cxn-state (link player)) 'playing))
+  (setf (state-of (link-of player)) 'playing))
 
 (defun send-section-header (cxn str)
   (if (string= str "")
@@ -294,12 +255,12 @@ and returns it."
    (cond
      ((string= line "")
       (setf (cxn-connected cxn) nil)
-      (setf (cxn-state cxn) 'disconnecting))
+      (setf (state-of cxn) 'disconnecting))
      ((string-equal line "new")
-      (setf (cxn-state cxn) 'new-account))
+      (setf (state-of cxn) 'new-account))
      ((account-exists line)
       (setf (cxn-account cxn) (load-account line))
-      (setf (cxn-state cxn) 'authenticate))
+      (setf (state-of cxn) 'authenticate))
      (t
       (cxn-write cxn
                  "Sorry, that account does not exist.  Type 'new' to create another account.~%"))))
@@ -316,13 +277,13 @@ and returns it."
               (idnum-of (cxn-account cxn))
               (name-of (cxn-account cxn)))
       (cxn-write cxn "~%Invalid password.~%~%")
-      (setf (cxn-state cxn) 'login))
+      (setf (state-of cxn) 'login))
      ((players-of (cxn-account cxn))
       (account-login (cxn-account cxn))
-      (setf (cxn-state cxn) 'main-menu))
+      (setf (state-of cxn) 'main-menu))
      (t
       (account-login (cxn-account cxn))
-      (setf (cxn-state cxn) 'new-player-name)))))
+      (setf (state-of cxn) 'new-player-name)))))
 
 (define-connection-state new-account
   (menu (cxn)
@@ -340,12 +301,12 @@ have received mail.  Quest points are also shared by all your characters.
   (input (cxn line)
    (cond
      ((zerop (length line))
-      (setf (cxn-state cxn) 'login))
+      (setf (state-of cxn) 'login))
      ((account-exists line)
       (cxn-write cxn "~%Sorry, that account name is already taken.~%"))
      ((validate-name line)
-      (setf (cxn-mode-data cxn) line)
-      (setf (cxn-state cxn) 'new-account-verify))
+      (setf (mode-data-of cxn) line)
+      (setf (state-of cxn) 'new-account-verify))
      (t
       nil))))
 
@@ -356,13 +317,13 @@ have received mail.  Quest points are also shared by all your characters.
    (case (char-downcase (char line 0))
      (#\y
       (setf (cxn-account cxn)
-            (make-instance 'account :name (cxn-mode-data cxn)))
+            (make-instance 'account :name (mode-data-of cxn)))
       (setf (idnum-of (cxn-account cxn))
             (1+ (max-account-id)))
       (save-account (cxn-account cxn))
-      (setf (cxn-state cxn) 'new-account-ansi))
+      (setf (state-of cxn) 'new-account-ansi))
      (#\n
-      (setf (cxn-state cxn) 'new-account))
+      (setf (state-of cxn) 'new-account))
      (t
       (cxn-write cxn "Please enter Y or N.~%")))))
 
@@ -395,7 +356,7 @@ some color is HIGHLY recommended, as it improves gameplay dramatically.
        (pos
         (setf (ansi-level-of (cxn-account cxn)) pos)
         (save-account (cxn-account cxn))
-        (setf (cxn-state cxn) 'new-account-compact))
+        (setf (state-of cxn) 'new-account-compact))
        (t
         (cxn-write cxn "~%Please enter one of the selections.~%~%"))))))
 
@@ -431,7 +392,7 @@ kill goblin
        (pos
         (setf (compact-level-of (cxn-account cxn)) pos)
         (save-account (cxn-account cxn))
-        (setf (cxn-state cxn) 'new-account-email))
+        (setf (state-of cxn) 'new-account-email))
        (t
         (cxn-write cxn "~%Please enter one of the selections.~%~%"))))))
 
@@ -450,7 +411,7 @@ password reminders.
   (input (cxn line)
    (setf (email-of (cxn-account cxn)) line)
    (save-account (cxn-account cxn))
-   (setf (cxn-state cxn) 'new-account-password)))
+   (setf (state-of cxn) 'new-account-password)))
 
 (define-connection-state new-account-password
   (menu (cxn)
@@ -465,7 +426,7 @@ choose a password to use on this system.
   (input (cxn line)
    (setf (password-of (cxn-account cxn)) line)
    (save-account (cxn-account cxn))
-   (setf (cxn-state cxn) 'verify-password)))
+   (setf (state-of cxn) 'verify-password)))
 
 (define-connection-state verify-password
   (prompt (cxn)
@@ -476,11 +437,11 @@ choose a password to use on this system.
   (input (cxn line)
    (cond
      ((check-password (cxn-account cxn) line)
-      (setf (cxn-state cxn) 'main-menu))
+      (setf (state-of cxn) 'main-menu))
      (t
       (cxn-write cxn "~%The passwords did not match!  Try again!~%")
       (setf (password-of (cxn-account cxn)) nil)
-      (setf (cxn-state cxn) 'new-account-password)))))
+      (setf (state-of cxn) 'new-account-password)))))
 
 (define-connection-state new-player-name
   (menu (cxn)
@@ -491,17 +452,16 @@ choose a password to use on this system.
   (input (cxn line)
    (cond
      ((string= line "")
-      (setf (cxn-state cxn) 'main-menu))
+      (setf (state-of cxn) 'main-menu))
      ((player-name-exists line)
       (cxn-write cxn "~%Sorry, that name is already taken.~%"))
      ((validate-name line)
-      (setf (cxn-actor cxn)
+      (setf (actor-of cxn)
             (make-instance 'player
                            :idnum (1+ (max-player-id))
                            :name (string-capitalize line)
-                           :prefs (make-player-prefs)
-                           :private-names (make-hash-table)))
-      (setf (cxn-state cxn) 'new-player-species))
+                           :prefs (make-player-prefs)))
+      (setf (state-of cxn) 'new-player-species))
      (t
       (cxn-write cxn "~%You have entered an invalid name.  Try again.~%")))))
 
@@ -523,8 +483,8 @@ choose a password to use on this system.
            (null (species-by-name line)))
        (cxn-write cxn "~%You need to enter one of the listed species.~%~%"))
       (t
-       (setf (species (cxn-actor cxn)) (idnum-of (species-by-name line)))
-       (setf (cxn-state cxn) 'new-player-sex)))))
+       (setf (species (actor-of cxn)) (idnum-of (species-by-name line)))
+       (setf (state-of cxn) 'new-player-sex)))))
 
 (define-connection-state new-player-sex
   (menu (cxn)
@@ -540,65 +500,9 @@ choose a password to use on this system.
       (cxn-write cxn "~%You can only be a male or a female!~%~%"))
      (t
       (if (eql (char-downcase (char line 0)) #\m)
-          (setf (sex (cxn-actor cxn)) 'male)
-          (setf (sex (cxn-actor cxn)) 'female))
-      (setf (cxn-state cxn) 'new-player-eyes)))))
-
-(define-connection-state new-player-eyes
-  (menu (cxn)
-    (cxn-write cxn "&@")
-	(send-section-header cxn "eye color")
-    (columnar-list-to-cxn
-     cxn 5 14
-     (sort +eye-descriptions+ #'string<)))
-  (prompt (cxn)
-    (cxn-write cxn "What is your character's eye color: "))
-  (input (cxn line)
-   (cond
-     ((or (string= line "")
-          (not (member line +eye-descriptions+ :test 'string-equal)))
-      (cxn-write cxn "~%Please select a listed eye description.~%~%"))
-     (t
-      (setf (eye-desc-of (cxn-actor cxn)) line)
-      (setf (cxn-state cxn) 'new-player-hair)))))
-
-(define-connection-state new-player-hair
-  (menu (cxn)
-    (cxn-write cxn "&@")
-	(send-section-header cxn "hair description")
-    (columnar-list-to-cxn
-     cxn 5 14
-     (sort +hair-descriptions+ #'string<)))
-  (prompt (cxn)
-    (cxn-write cxn "What is your character's hair color?"))
-  (input (cxn line)
-   (cond
-     ((or (string= line "")
-          (not (member line +hair-descriptions+ :test 'string-equal)))
-      (cxn-write cxn "~%Please selected a listed hair description.~%~%"))
-     (t
-      (setf (hair-desc-of (cxn-actor cxn)) line)
-      (setf (cxn-state cxn) 'new-player-overall)))))
-
-(define-connection-state new-player-overall
-  (menu (cxn)
-    (cxn-write cxn "&@")
-	(send-section-header cxn "overall description")
-    (columnar-list-to-cxn
-     cxn 5 14
-     (sort +overall-descriptions+ #'string<)))
-  (prompt (cxn)
-    (cxn-write cxn "Select an overall adjective for your character: "))
-  (input (cxn line)
-   (cond
-     ((or (string= line "")
-          (not (member line +overall-descriptions+ :test 'string-equal)))
-      (cxn-write cxn "~%Please selected a listed overall description.~%~%"))
-     (t
-      (setf (overall-desc-of (cxn-actor cxn)) line)
-      (create-new-player (cxn-actor cxn) (cxn-account cxn))
-      (setf (cxn-actor cxn) nil)
-      (setf (cxn-state cxn) 'main-menu)))))
+          (setf (sex (actor-of cxn)) 'male)
+          (setf (sex (actor-of cxn)) 'female))
+      (setf (state-of cxn) 'new-player-eyes)))))
 
 (define-connection-state set-password-auth
   (menu (cxn)
@@ -610,12 +514,12 @@ choose a password to use on this system.
    (cond
      ((string= line "")
       (cxn-write cxn "~%Password change aborted.~%")
-      (setf (cxn-state cxn) 'wait-for-menu))
+      (setf (state-of cxn) 'wait-for-menu))
      ((check-password (cxn-account cxn) line)
-      (setf (cxn-state cxn) 'set-password-new))
+      (setf (state-of cxn) 'set-password-new))
      (t
       (cxn-write cxn "~%Wrong password!  Password change cancelled.~%")
-      (setf (cxn-state cxn) 'wait-for-menu)))))
+      (setf (state-of cxn) 'wait-for-menu)))))
 
 (define-connection-state set-password-new
   (prompt (cxn)
@@ -627,13 +531,13 @@ choose a password to use on this system.
      (t
       (cxn-write cxn "~%~%Your password has been set.~%")
       (setf (password-of (cxn-account cxn)) line)
-      (setf (cxn-state cxn) 'wait-for-menu)))))
+      (setf (state-of cxn) 'wait-for-menu)))))
 
 (define-connection-state wait-for-menu
   (prompt (cxn)
     (cxn-write cxn "~%Press RETURN to return to the main menu.~%"))
   (input (cxn line)
-   (setf (cxn-state cxn) 'main-menu)))
+   (setf (state-of cxn) 'main-menu)))
 
 (define-connection-state main-menu
   (menu (cxn)
@@ -647,7 +551,7 @@ choose a password to use on this system.
                  idx
                  (name-of player)
                  (multiple-value-bind (ms second minute hour day month year dow)
-                     (decode-time (login-time-of player))
+                     (decode-timestamp (login-time-of player))
                    (declare (ignorable ms second minute hour dow))
                    (format nil "~d/~2,'0d/~2,'0d" year month day))))
    (cxn-write cxn "~%~5tPast bank: ~d~50tFuture bank: ~d~%"
@@ -665,11 +569,11 @@ choose a password to use on this system.
      ((or (char-equal (char line 0) #\l) (eql (char line 0) #\0))
       (cxn-write cxn "Goodbye!~%")
       (setf (cxn-connected cxn) nil)
-      (setf (cxn-state cxn) 'disconnecting))
+      (setf (state-of cxn) 'disconnecting))
      ((char-equal (char line 0) #\c)
-      (setf (cxn-state cxn) 'new-player-name))
+      (setf (state-of cxn) 'new-player-name))
      ((char-equal (char line 0) #\p)
-      (setf (cxn-state cxn) 'set-password-auth))
+      (setf (state-of cxn) 'set-password-auth))
      ((every #'digit-char-p line)
       (let* ((player (nth (1- (parse-integer line)) (players-of (cxn-account cxn))))
              (prev-actor (and player (player-in-world (idnum-of player)))))
@@ -677,20 +581,20 @@ choose a password to use on this system.
           ((null player)
            (cxn-write cxn "That character selection does not exist!~%~%"))
           ((null prev-actor)
-           (setf (cxn-actor cxn) (load-player-actor (idnum-of player)))
+           (setf (actor-of cxn) (load-player (idnum-of player)))
            (setf (login-time-of player) (now))
            (execute (:update 'players :set
                              'login-time (login-time-of player)))
-           (setf (link (cxn-actor cxn)) cxn)
-           (player-to-game (cxn-actor cxn)))
-          ((link prev-actor)
+           (setf (link-of (actor-of cxn)) cxn)
+           (player-to-game (actor-of cxn)))
+          ((link-of prev-actor)
            (send-to-actor prev-actor "You have logged on from another location!~%")
-           (setf (cxn-actor (link prev-actor)) nil)
-           (setf (cxn-state (link prev-actor)) 'disconnecting)
-           (setf (cxn-connected (link prev-actor)) nil)
-           (setf (link prev-actor) cxn)
-           (setf (cxn-actor cxn) prev-actor)
-           (setf (cxn-state cxn) 'playing)
+           (setf (actor-of (link-of prev-actor)) nil)
+           (setf (state-of (link-of prev-actor)) 'disconnecting)
+           (setf (cxn-connected (link-of prev-actor)) nil)
+           (setf (link-of prev-actor) cxn)
+           (setf (actor-of cxn) prev-actor)
+           (setf (state-of cxn) 'playing)
            (act prev-actor
 			   	:subject-emit "You take over your own body, already in use!"
 				:place-emit "$n has reconnected.")
@@ -711,52 +615,52 @@ choose a password to use on this system.
     (cxn-write cxn "~%Press RETURN to reincarnate.~%"))
   (input (cxn line)
    ;; hitting return causes re-entry into the game
-   (player-to-game (cxn-actor cxn))))
+   (player-to-game (actor-of cxn))))
 
 (define-connection-state playing
   (prompt (cxn)
    (cond
-     ((and (action (cxn-actor cxn))
-           (send-action-prompt (action (cxn-actor cxn))))
+     ((and (action (actor-of cxn))
+           (send-action-prompt (action (actor-of cxn))))
       ;; if send-action-prompt returns t, we don't need to send the
       ;; standard prompt
       nil)
-     ((not (or (display-hitp-p (prefs (cxn-actor cxn)))
-               (display-mana-p (prefs (cxn-actor cxn)))
-               (display-move-p (prefs (cxn-actor cxn)))))
+     ((not (or (display-hitp-p (prefs-of (actor-of cxn)))
+               (display-mana-p (prefs-of (actor-of cxn)))
+               (display-move-p (prefs-of (actor-of cxn)))))
       (cxn-write cxn "&W>&n "))
      (t
       (cxn-write cxn "&W< ~@[&G~a&YH ~]~@[&M~a&YM ~]~@[&C~a&YV ~]&W>&n "
-                 (when (display-hitp-p (prefs (cxn-actor cxn)))
-                   (hitp (cxn-actor cxn)))
-                 (when (display-mana-p (prefs (cxn-actor cxn)))
-                   (mana (cxn-actor cxn)))
-                 (when (display-move-p (prefs (cxn-actor cxn)))
-                   (move (cxn-actor cxn)))))))
+                 (when (display-hitp-p (prefs-of (actor-of cxn)))
+                   (hitp-of (actor-of cxn)))
+                 (when (display-mana-p (prefs-of (actor-of cxn)))
+                   (mana-of (actor-of cxn)))
+                 (when (display-move-p (prefs-of (actor-of cxn)))
+                   (move-of (actor-of cxn)))))))
   (input (cxn line)
-   (unless (and (action (cxn-actor cxn))
-                (interpret (action (cxn-actor cxn)) line))
+   (unless (and (action (actor-of cxn))
+                (interpret (action (actor-of cxn)) line))
      (let ((trimmed-line (string-left-trim '(#\/ #\space #\tab) line)))
        (when (plusp (length trimmed-line))
-         (interpret-command (cxn-actor cxn)
-                            (expand-aliases (cxn-actor cxn)
+         (interpret-command (actor-of cxn)
+                            (expand-aliases (actor-of cxn)
                                             trimmed-line)))))))
 
 (defun send-menu (cxn state)
   (send-state-menu cxn state))
 
 (defun send-prompt (cxn)
-  (send-state-prompt cxn (cxn-state cxn)))
+  (send-state-prompt cxn (state-of cxn)))
 
 (defun cxn-do-command (cxn line)
   (restart-case
-      (handle-state-input cxn (cxn-state cxn) line)
+      (handle-state-input cxn (state-of cxn) line)
    (continue () nil)))
 
 (defun cxn-handle-commands ()
   (dolist (cxn *cxns*)
 	(when (cxn-commands cxn)
-	  (setf (cxn-need-prompt cxn) t)
+	  (setf (need-prompt-p cxn) t)
 	  (let ((cmd (pop (cxn-commands cxn))))
 		(handler-bind ((error (lambda (str)
                                (cxn-write cxn "You become mildly queasy as reality distorts momentarily.~%")
