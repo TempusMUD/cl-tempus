@@ -18,81 +18,72 @@
 	
   :components
   ((:module :src :components
-            ((:file "db"
-                    :pathname "db/db"
-                    :depends-on ("defs"
-                                 "creature"
-                                 "obj-data"
-                                 "zone-data"
-                                 "room-data"
-                                 "search"
-                                 "artisan"
-                                 "account"
-                                 "spec-assign"
-                                 "clan"
-                                 "help"
-                                 "act-social"
-                                 "tongues"
-                                 "act-physic"
-                                 "dyntext"
-                                 "spell-parser"
-                                 "quest"
-                                 "artisan"
-                                 "utils"))
+            ((:file "defpackage" :pathname "util/defpackage")
+             (:file "defs" :pathname "util/defs"
+                           :depends-on ("defpackage"))
+             (:file "db" :pathname "db/db"
+                         :depends-on ("defs" "creature" "obj-data" "zone-data" "room-data" "search" "artisan" "account" "spec-assign" "clan" "help" "act-social" "tongues" "act-physic" "dyntext" "spell-parser" "combat-messages" "quest" "artisan" "utils"))
              (:file "account" :pathname "db/account"
-                    :depends-on ("defs"
-                                 "utils"))
-             (:file "spec-assign" :pathname "specials/spec-assign"
-                    :depends-on ("defs"
-                                 "utils"))
-             (:file "network" :pathname "net/network"
-                    :depends-on ("defs"
-                                 "utils"))
-             (:file "nanny" :pathname "net/nanny"
-                    :depends-on ("defs"
-                                 "utils"
-                                 "network"))
-             (:file "comm" :pathname "net/comm"
-                    :depends-on ("defs"
-                                 "utils"
-                                 "network"
-                                 "nanny"))
-             (:file "clan" :pathname "clan/clan"
-                    :depends-on ("defs"
-                                 "utils"))
-             (:file "help" :pathname "help/help"
-                    :depends-on ("defs"
-                                 "utils"))
-             (:file "act-social" :pathname "social/act-social"
-                    :depends-on ("defs"
-                                 "utils"))
-             (:file "tongues" :pathname "social/tongues"
-                    :depends-on ("defs"
-                                 "utils"))
+                              :depends-on ("defs" "utils"))
+             (:file "accstr" :pathname "util/accstr"
+                             :depends-on ("defs"))
              (:file "act-physic" :pathname "classes/act-physic"
-                    :depends-on ("defs"
-                                 "utils"))
-             (:file "dyntext" :pathname "dyntext/dyntext"
-                    :depends-on ("defs"
-                                 "utils"))
-             (:file "spell-parser" :pathname "magic/spell-parser"
-                    :depends-on ("defs"
-                                 "utils"))
-             (:file "quest" :pathname "quest/quest"
-                    :depends-on ("defs"
-                                 "utils"))
-             (:file "weather" :pathname "util/weather"
-                    :depends-on ("zone-data"))
+                                 :depends-on ("defs" "utils"))
+             (:file "act-social" :pathname "social/act-social"
+                                 :depends-on ("defs" "utils"))
              (:file "artisan" :pathname "mobiles/artisan"
-                    :depends-on ("creature"))
-             (:file "creature" :pathname "structs/creature" :depends-on ("defs"))
-             (:file "obj-data" :pathname "structs/obj-data" :depends-on ("defs"))
-             (:file "zone-data" :pathname "structs/zone-data" :depends-on ("defs"))
-             (:file "room-data" :pathname "structs/room-data" :depends-on ("defs"))
-             (:file "search" :pathname "structs/search" :depends-on ("defs"))
-             (:file "structs" :pathname "structs/structs" :depends-on ("defs"))
-             (:file "tmpstr" :pathname "util/tmpstr" :depends-on ("defs"))
-             (:file "accstr" :pathname "util/accstr" :depends-on ("defs"))
-             (:file "utils" :pathname "util/utils" :depends-on ("defs"))
-             (:file "defs" :pathname "util/defs" :depends-on ("defpackage"))
-             (:file "defpackage" :pathname "util/defpackage")))))
+                              :depends-on ("creature"))
+             (:file "ban" :pathname "net/ban"
+                          :depends-on ("defs" "utils"))
+             (:file "clan" :pathname "clan/clan"
+                           :depends-on ("defs" "utils"))
+             (:file "combat-messages" :pathname "combat/combat-messages"
+                                      :depends-on ("defs" "utils"))
+             (:file "comm" :pathname "net/comm"
+                           :depends-on ("defs" "utils" "network" "nanny"))
+             (:file "creature" :pathname "structs/creature"
+                               :depends-on ("defs"))
+             (:file "dyntext" :pathname "dyntext/dyntext"
+                              :depends-on ("defs" "utils"))
+             (:file "groups" :pathname "interpreter/groups"
+                              :depends-on ("defs" "utils"))
+             (:file "help" :pathname "help/help"
+                           :depends-on ("defs" "utils"))
+             (:file "house" :pathname "house/house"
+                            :depends-on ("defs" "utils"))
+             (:file "interpreter" :pathname "interpreter/interpreter"
+                              :depends-on ("defs" "utils"))
+             (:file "nanny" :pathname "net/nanny"
+                            :depends-on ("defs" "utils" "network"))
+             (:file "network" :pathname "net/network"
+                              :depends-on ("defs" "utils"))
+             (:file "obj-data" :pathname "structs/obj-data"
+                               :depends-on ("defs"))
+             (:file "paths" :pathname "objects/paths"
+                            :depends-on ("defs" "utils"))
+             (:file "prog-compile" :pathname "search/prog-compile"
+                                   :depends-on ("defs" "utils"))
+             (:file "quest" :pathname "quest/quest"
+                            :depends-on ("defs" "utils"))
+             (:file "room-data" :pathname "structs/room-data"
+                                :depends-on ("defs"))
+             (:file "search" :pathname "structs/search"
+                             :depends-on ("defs"))
+             (:file "spec-assign" :pathname "specials/spec-assign"
+                                  :depends-on ("defs" "utils"))
+             (:file "spec-procs" :pathname "specials/spec-procs"
+                                 :depends-on ("defs" "utils"))
+             (:file "spell-parser" :pathname "magic/spell-parser"
+                                   :depends-on ("defs" "utils"))
+             (:file "structs" :pathname "structs/structs"
+                              :depends-on ("defs"))
+             (:file "tmpstr" :pathname "util/tmpstr"
+                             :depends-on ("defs"))
+             (:file "tongues" :pathname "social/tongues"
+                              :depends-on ("defs" "utils"))
+             (:file "utils" :pathname "util/utils"
+                            :depends-on ("defs"))
+             (:file "weather" :pathname "util/weather"
+                              :depends-on ("zone-data"))
+             (:file "zone-data" :pathname "structs/zone-data"
+                                :depends-on ("defs"))))))
