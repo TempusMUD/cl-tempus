@@ -163,7 +163,7 @@
   (slog "Top unique object id = ~d" *top-unique-id*)
 
   (account-boot)
-  (load-bounty-data)
+#+nil  (load-bounty-data)
   (slog "Reading credits, bground, info & motds.")
   (setf *credits* (snarf-file +credits-file+)
         *motd* (snarf-file +motd-file+)
@@ -258,7 +258,7 @@
 (defun reset-time ()
   "Reset the time in the game"
   (let* ((epoch 650336715)
-         (now (unix-time (now)))
+         (now (timestamp-to-unix (now)))
          (lunar-day (mod (floor (- now epoch) +secs-per-mud-day+) 24)))
     (multiple-value-bind (hour day mon year)
         (mud-time-passed now epoch)
@@ -721,8 +721,8 @@
       (setf (level-of mobile) (parse-integer (regref result 1))
             (hitroll-of mobile) (parse-integer (regref result 2))
             (armor-of mobile) (parse-integer (regref result 3))
-            (max-hit-of mobile) 0
-            (hit-of mobile) (parse-integer (regref result 4))
+            (max-hitp-of mobile) 0
+            (hitp-of mobile) (parse-integer (regref result 4))
             (mana-of mobile) (parse-integer (regref result 5))
             (move-of mobile) (parse-integer (regref result 6))
 
@@ -1008,6 +1008,7 @@
       (push new-zone *zone-table*))))
 
 (defun reset-zone (zone)
+  (return)
   ;; Send +special-reset+ notification to all mobiles with specials
   (dolist (ch *character-list*)
     (when (and (eql (zone-of (in-room-of ch)) zone)

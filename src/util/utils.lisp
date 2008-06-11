@@ -43,10 +43,8 @@
 (defun mlog (message &key group level type write-to-file)
   (declare (ignorable group level type))
   (when write-to-file
-    (let ((time-string (sb-int:format-universal-time nil (get-universal-time)
-                                                     :style :short)))
-      (format *standard-output* "~19a :: ~a~%" time-string message)
-      (force-output)))
+    (format *standard-output* "(~s ~s)~%" (local-time:now) message)
+    (force-output))
 
   (unless (and group level)
     (return-from mlog))
@@ -135,8 +133,8 @@
     (assert priority-num)
 	(dolist (cxn *cxns*)
 	  (when (and (typep cxn 'tempus-cxn)
-                 (eql (cxn-state cxn) 'playing)
-                 (cxn-actor cxn))
+                 (eql (state-of cxn) 'playing)
+                 (actor-of cxn))
 		(cxn-write cxn "&g[ ~a ]&n~%"
                    (string-replace "&" message "&&"))))
 	(when write-to-file

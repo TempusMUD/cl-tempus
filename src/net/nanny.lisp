@@ -119,8 +119,8 @@
 	 (unless (or (need-prompt-p cxn)
 				 (and (actor-of cxn)
 					  (not (autoprompt-p (prefs (actor-of cxn))))))
-	   (when (or (null (cxn-account cxn))
-				 (oddp (compact-level-of (cxn-account cxn))))
+	   (when (or (null (account-of cxn))
+				 (oddp (compact-level-of (account-of cxn))))
 		 (setf (cxn-output-buf cxn)
 			   (concatenate '(vector (unsigned-byte 8))
 							(cxn-output-buf cxn)
@@ -138,26 +138,26 @@
 (defmethod handle-flush :before ((cxn tempus-cxn))
   (when (need-prompt-p cxn)
 	(when (and (eql (state-of cxn) 'playing)
-			   (< (compact-level-of (cxn-account cxn)) 2))
+			   (< (compact-level-of (account-of cxn)) 2))
 	  (cxn-write cxn "~%"))
     (send-state-prompt cxn (state-of cxn))
 	(when (and (eql (state-of cxn) 'playing)
-			   (evenp (compact-level-of (cxn-account cxn))))
+			   (evenp (compact-level-of (account-of cxn))))
 	  (cxn-write cxn "~%"))
 	(setf (need-prompt-p cxn) nil)))
 
 (defmethod handle-close ((cxn tempus-cxn))
   (cond
-	((null (cxn-account cxn))
+	((null (account-of cxn))
 	 (mudlog 'info t "Closing connection without account"))
 	((and (eql (state-of cxn) 'playing) (actor-of cxn))
 	 (mudlog 'notice t "~a has lost link; ~a logged out"
 			 (name-of (actor-of cxn))
-			 (name-of (cxn-account cxn)))
+			 (name-of (account-of cxn)))
 	 (act (actor-of cxn) :place-emit "$n has lost $s link.")
 	 (setf (link-of (actor-of cxn)) nil))
 	(t
-	 (mudlog 'notice t "~a logged out" (name-of (cxn-account cxn))))))
+	 (mudlog 'notice t "~a logged out" (name-of (account-of cxn))))))
 
 (defun apply-player-alias (actor alias args)
   ;; split replacements into lines
@@ -219,7 +219,7 @@
 
 (defun player-to-game (player)
   (mudlog 'notice t "~a entering game as ~a"
-		  (name-of (cxn-account (link-of player)))
+		  (name-of (account-of (link-of player)))
 		  (name-of player))
   (actor-to-place player
 				  (get-place (or (load-room-of player)
@@ -259,7 +259,7 @@
      ((string-equal line "new")
       (setf (state-of cxn) 'new-account))
      ((account-exists line)
-      (setf (cxn-account cxn) (load-account line))
+      (setf (account-of cxn) (load-account line))
       (setf (state-of cxn) 'authenticate))
      (t
       (cxn-write cxn
@@ -272,17 +272,17 @@
     (cxn-write cxn "Password: "))
   (input (cxn line)
    (cond
-     ((not (check-password (cxn-account cxn) line))
+     ((not (check-password (account-of cxn) line))
       (mudlog 'warning t "PASSWORD: account ~d (~a) failed to authenticate."
-              (idnum-of (cxn-account cxn))
-              (name-of (cxn-account cxn)))
+              (idnum-of (account-of cxn))
+              (name-of (account-of cxn)))
       (cxn-write cxn "~%Invalid password.~%~%")
       (setf (state-of cxn) 'login))
-     ((players-of (cxn-account cxn))
-      (account-login (cxn-account cxn))
+     ((players-of (account-of cxn))
+      (account-login (account-of cxn))
       (setf (state-of cxn) 'main-menu))
      (t
-      (account-login (cxn-account cxn))
+      (account-login (account-of cxn))
       (setf (state-of cxn) 'new-player-name)))))
 
 (define-connection-state new-account
@@ -316,11 +316,11 @@ have received mail.  Quest points are also shared by all your characters.
   (input (cxn line)
    (case (char-downcase (char line 0))
      (#\y
-      (setf (cxn-account cxn)
+      (setf (account-of cxn)
             (make-instance 'account :name (mode-data-of cxn)))
-      (setf (idnum-of (cxn-account cxn))
+      (setf (idnum-of (account-of cxn))
             (1+ (max-account-id)))
-      (save-account (cxn-account cxn))
+      (save-account (account-of cxn))
       (setf (state-of cxn) 'new-account-ansi))
      (#\n
       (setf (state-of cxn) 'new-account))
@@ -354,8 +354,8 @@ some color is HIGHLY recommended, as it improves gameplay dramatically.
                         :test #'string-abbrev)))
      (cond
        (pos
-        (setf (ansi-level-of (cxn-account cxn)) pos)
-        (save-account (cxn-account cxn))
+        (setf (ansi-level-of (account-of cxn)) pos)
+        (save-account (account-of cxn))
         (setf (state-of cxn) 'new-account-compact))
        (t
         (cxn-write cxn "~%Please enter one of the selections.~%~%"))))))
@@ -390,8 +390,8 @@ kill goblin
                         :test #'string-abbrev)))
      (cond
        (pos
-        (setf (compact-level-of (cxn-account cxn)) pos)
-        (save-account (cxn-account cxn))
+        (setf (compact-level-of (account-of cxn)) pos)
+        (save-account (account-of cxn))
         (setf (state-of cxn) 'new-account-email))
        (t
         (cxn-write cxn "~%Please enter one of the selections.~%~%"))))))
@@ -409,8 +409,8 @@ password reminders.
   (prompt (cxn)
     (cxn-write cxn "Please enter your email address:"))
   (input (cxn line)
-   (setf (email-of (cxn-account cxn)) line)
-   (save-account (cxn-account cxn))
+   (setf (email-of (account-of cxn)) line)
+   (save-account (account-of cxn))
    (setf (state-of cxn) 'new-account-password)))
 
 (define-connection-state new-account-password
@@ -424,8 +424,8 @@ choose a password to use on this system.
   (prompt (cxn)
     (cxn-write cxn "        Enter your desired password:"))
   (input (cxn line)
-   (setf (password-of (cxn-account cxn)) line)
-   (save-account (cxn-account cxn))
+   (setf (password-of (account-of cxn)) line)
+   (save-account (account-of cxn))
    (setf (state-of cxn) 'verify-password)))
 
 (define-connection-state verify-password
@@ -436,11 +436,11 @@ choose a password to use on this system.
                "        Enter it again to verify your password:"))
   (input (cxn line)
    (cond
-     ((check-password (cxn-account cxn) line)
+     ((check-password (account-of cxn) line)
       (setf (state-of cxn) 'main-menu))
      (t
       (cxn-write cxn "~%The passwords did not match!  Try again!~%")
-      (setf (password-of (cxn-account cxn)) nil)
+      (setf (password-of (account-of cxn)) nil)
       (setf (state-of cxn) 'new-account-password)))))
 
 (define-connection-state new-player-name
@@ -515,7 +515,7 @@ choose a password to use on this system.
      ((string= line "")
       (cxn-write cxn "~%Password change aborted.~%")
       (setf (state-of cxn) 'wait-for-menu))
-     ((check-password (cxn-account cxn) line)
+     ((check-password (account-of cxn) line)
       (setf (state-of cxn) 'set-password-new))
      (t
       (cxn-write cxn "~%Wrong password!  Password change cancelled.~%")
@@ -530,7 +530,7 @@ choose a password to use on this system.
       (cxn-write cxn "~%You may not have a blank password.~%~%"))
      (t
       (cxn-write cxn "~%~%Your password has been set.~%")
-      (setf (password-of (cxn-account cxn)) line)
+      (setf (password-of (account-of cxn)) line)
       (setf (state-of cxn) 'wait-for-menu)))))
 
 (define-connection-state wait-for-menu
@@ -545,7 +545,7 @@ choose a password to use on this system.
    (send-section-header cxn "")
    (send-section-header cxn "main menu")
    (send-section-header cxn "")
-   (loop for player in (players-of (cxn-account cxn))
+   (loop for player in (players-of (account-of cxn))
       for idx from 1 do
       (cxn-write cxn " &b[&y~2,' d&b]&n  ~10a ~a~%"
                  idx
@@ -555,8 +555,8 @@ choose a password to use on this system.
                    (declare (ignorable ms second minute hour dow))
                    (format nil "~d/~2,'0d/~2,'0d" year month day))))
    (cxn-write cxn "~%~5tPast bank: ~d~50tFuture bank: ~d~%"
-              (past-bank-of (cxn-account cxn))
-              (future-bank-of (cxn-account cxn)))
+              (past-bank-of (account-of cxn))
+              (future-bank-of (account-of cxn)))
    (cxn-write cxn "~%~23t&b[&yC&b]&n &cCreate a new character")
    (cxn-write cxn "~%~23t&b[&yP&b]&n &cChange your password")
    (cxn-write cxn "~%~23t&b[&yL&b]&n &cLog out of the game&n~%~%"))
@@ -575,7 +575,7 @@ choose a password to use on this system.
      ((char-equal (char line 0) #\p)
       (setf (state-of cxn) 'set-password-auth))
      ((every #'digit-char-p line)
-      (let* ((player (nth (1- (parse-integer line)) (players-of (cxn-account cxn))))
+      (let* ((player (nth (1- (parse-integer line)) (players-of (account-of cxn))))
              (prev-actor (and player (player-in-world (idnum-of player)))))
         (cond
           ((null player)
