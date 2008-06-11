@@ -65,6 +65,67 @@
 (defparameter +sex-male+ 1)
 (defparameter +sex-female+ 2)
 
+(defparameter +pref-brief+ 0) ; Room descs won't normally be shown
+(defparameter +pref-nohaggle+ 1) ;
+(defparameter +pref-deaf+ 2)     ; Can't hear shouts
+(defparameter +pref-notell+ 3)   ; Can't receive tells
+(defparameter +pref-disphp+ 4)	; Display hit points in prompt
+(defparameter +pref-dispmana+ 5) ; Display mana points in prompt
+(defparameter +pref-dispmove+ 6) ; Display move points in prompt
+(defparameter +pref-autoexit+ 7) ; Display exits in a room
+(defparameter +pref-nohassle+ 8) ; Aggr mobs won't attack
+(defparameter +pref-nasty+ 9) ; Can hear nasty words on channel
+(defparameter +pref-summonable+ 10)	; Can be summoned
+(defparameter +pref-unused-2+ 11) ; No repetition of comm commands
+(defparameter +pref-holylight+ 12)	; Can see in dark
+(defparameter +pref-color-1+ 13)	; Color (low bit)
+(defparameter +pref-color-2+ 14)	; Color (high bit)
+(defparameter +pref-nowiz+ 15)      ; Can't hear wizline
+(defparameter +pref-log1+ 16)	; On-line System Log (low bit)
+(defparameter +pref-log2+ 17)  ; On-line System Log (high bit)
+(defparameter +pref-noauct+ 18)	; Can't hear auction channel
+(defparameter +pref-nogoss+ 19)	; Can't hear gossip channel
+(defparameter +pref-nogratz+ 20)	; Can't hear grats channel
+(defparameter +pref-roomflags+ 21) ; Can see room flags (ROOM-x)
+(defparameter +pref-nosnoop+ 22) ; Can not be snooped by immortals
+(defparameter +pref-nomusic+ 23) ; Can't hear music channel
+(defparameter +pref-nospew+ 24)  ; Can't hear spews
+(defparameter +pref-gagmiss+ 25) ; Doesn't see misses during fight
+(defparameter +pref-noproject+ 26) ; Cannot hear the remort channel
+(defparameter +pref-nopetition+ 27) ;
+(defparameter +pref-noclansay+ 28) ; Doesnt hear clan says and such
+(defparameter +pref-noidentify+ 29)	; Saving throw is made when id'd
+(defparameter +pref-nodream+ 30)
+
+;; PREF 2 Flags
+
+(defparameter +pref-debug+ 31)          ; Sees info on fight.
+(defparameter +pref-newbie-helper+ 32)	; sees newbie arrivals
+(defparameter +pref-auto-diagnose+ 33) ; automatically see condition of enemy
+(defparameter +pref-autopage+ 34) ; Beeps when ch receives a tell
+(defparameter +pref-noaffects+ 35) ; Affects are not shown in score
+(defparameter +pref-noholler+ 36)  ; Gods only
+(defparameter +pref-noimmchat+ 37) ; Gods only
+(defparameter +pref-unused-1+ 38) ; auto-sets title to clan stuff
+(defparameter +pref-clan-hide+ 39) ; don't show badge in who list
+(defparameter +pref-unused-2+ 40) ; interrupts while d->showstr-point
+(defparameter +pref-autoprompt+ 41)	; always draw new prompt
+(defparameter +pref-nowho+ 42)      ; don't show in who
+(defparameter +pref-anonymous+ 43) ; don't show char-class, level
+(defparameter +pref-notrailers+ 44)	; don't show trailer affects
+(defparameter +pref-vt100+ 45)	; Players uses VT100 inferface
+(defparameter +pref-autosplit+ 46) ;
+(defparameter +pref-autoloot+ 47)  ;
+(defparameter +pref-pkiller+ 48) ; player can attack other players
+(defparameter +pref-nogecho+ 49) ; Silly Gecho things
+(defparameter +pref-nowrap+ 50)	; turns off autowrap temporarily.
+(defparameter +pref-dispalign+ 51)  ;
+(defparameter +pref-worldwrite+ 52) ; allows worldwrite to work
+(defparameter +pref-noguildsay+ 53) ;
+(defparameter +pref-disptime+ 54) ; show localtime in the prompt
+(defparameter +pref-disp-vnums+ 55) ; show vnums after items ldesc
+(defparameter +pref-count+ 56)
+
 (defun is-race (ch race)
   (= (race-of ch) race))
 (defun is-goblin (ch)
@@ -141,7 +202,7 @@
    (implants :accessor implants-of :initarg :implants :initform nil)
    (tattoos :accessor tattoos-of :initarg :tattoos :initform nil)
    (carrying :accessor carrying-of :initarg :carrying :initform nil)
-   (desc :accessor desc-of :initarg :desc :initform nil)
+   (link :accessor link-of :initform nil)
    (account :accessor account-of :initarg :account :initform nil)
    (followers :accessor followers-of :initarg :followers :initform nil)
    (master :accessor master-of :initarg :master :initform nil)
@@ -187,6 +248,10 @@
    (level :accessor level-of :initarg :level :initform nil)
    (age-adjust :accessor age-adjust-of :initarg :age-adjust :initform nil)
    (age :accessor age-of :initarg :age :initform nil)
+   (birth-time :accessor birth-time-of :initarg :birth-time :initform nil)
+   (login-time :accessor login-time-of :initarg :birth-time :initform nil)
+   (death-time :accessor death-time-of :initarg :birth-time :initform nil)
+   (played-time :accessor played-time-of :initarg :birth-time :initform nil)
 
    ;; Originally from char_special_data
    (defending :accessor defending-of :initarg :defending :initform nil)
@@ -252,8 +317,7 @@
    (invis-level :accessor invis-level-of :initarg :invis-level :initform nil)
    (load-room :accessor load-room-of :initarg :load-room :initform nil)
    (home-room :accessor home-room-of :initarg :home-room :initform nil)
-   (pref :accessor pref-of :initarg :pref :initform nil)
-   (pref2 :accessor pref2-of :initarg :pref2 :initform nil)
+   (prefs :accessor prefs-of :initarg :pref :initform nil)
    (conditions :accessor conditions-of :initarg :conditions :initform nil)
    (clan :accessor clan-of :initarg :clan :initform nil)
    (broken-component :accessor broken-component-of :initarg :broken-component :initform nil)
@@ -311,3 +375,6 @@
 
 (defmethod modify-worn-weight ((ch creature) mod-weight)
   (incf (worn-weight-of ch) mod-weight))
+
+(defun pref-flagged (ch pref)
+  (not (zerop (bit (prefs-of ch) pref))))

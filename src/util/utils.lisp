@@ -56,7 +56,7 @@
   (let ((msg (format nil "SYSERR: ~?" fmt args))
         (backtrace (format nil "~{TRACE: ~s~%~}"
                            (let ((backt (sb-debug:backtrace-as-list)))
-                             (subseq backt 2 (min 12 (length backt)))))))
+                             (subseq backt 2 (min 20 (length backt)))))))
     (mlog msg :group "coder" :level +level-ambassador+ :level :normal :write-to-file t)
     (mlog backtrace :group "coder" :level +level-ambassador+ :level :normal :write-to-file t)))
 
@@ -191,6 +191,10 @@ sequences in seq-list with the delimiter between each element"
 		(char= c #\u)
 		(char= c #\y)))
 
+(defun desc (viewer subject)
+  (declare (ignore viewer))
+  (name-of subject))
+
 (defun expand-dollar (c viewer subject target item pov)
   (case c
 	(#\n
@@ -320,7 +324,7 @@ sequences in seq-list with the delimiter between each element"
 (defun send-act-str (viewer emit subject target item pov)
   (when (or (can-see viewer subject)
             (and target (can-see viewer target)))
-    (send-to-actor viewer "~a~%" (act-str viewer emit subject target item pov))))
+    (send-to-char viewer "~a~%" (act-str viewer emit subject target item pov))))
 
 (defun act (subject &key (target nil) (item nil) (subject-emit nil) (target-emit nil) (not-target-emit nil) (place-emit nil) (all-emit nil))
   ;; Handle "all" emit
@@ -328,7 +332,7 @@ sequences in seq-list with the delimiter between each element"
     (send-act-str subject all-emit subject target item :self)
 	(when (and target (not (eql subject target)))
 	  (send-act-str target all-emit subject target item :target))
-	   (dolist (other (creatures (place subject)))
+	   (dolist (other (people-of (in-room-of subject)))
 		 (unless (or (eql other subject) (eql other target))
 		   (send-act-str other all-emit subject target item :other))))
   (when subject-emit
@@ -336,11 +340,11 @@ sequences in seq-list with the delimiter between each element"
   (when (and target-emit target)
 	(send-act-str target target-emit subject target item :target))
   (when not-target-emit
-    (dolist (other (creatures (place subject)))
+    (dolist (other (people-of (in-room-of subject)))
       (unless (or (eql other subject) (eql other target))
 		(send-act-str other not-target-emit subject target item :other))))
   (when place-emit
-    (dolist (other (creatures (place subject)))
+    (dolist (other (people-of (in-room-of subject)))
       (unless (eql other subject)
 		(send-act-str other place-emit subject target item
 					  (if (eql other target) :target :other))))))
@@ -360,8 +364,8 @@ of immediately."
 				 :all-emit all-emit))
 
 (defun colorize (cxn str)
-  (let ((ansi-level (if (cxn-account cxn)
-						(ansi-level-of (cxn-account cxn))
+  (let ((ansi-level (if (account-of cxn)
+						(ansi-level-of (account-of cxn))
 						0)))
 	(with-output-to-string (result)
 	  (loop for idx from 0 to (1- (length str)) do
@@ -517,3 +521,6 @@ of immediately."
 		 (if (= divider-pos (length str))
 			 maximum
 			 (min maximum (safe-parse-integer max-str))))))))
+
+(defun player-in-world (idnum)
+  (find idnum *characters* :key #'idnum-of))

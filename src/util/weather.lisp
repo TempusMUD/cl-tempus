@@ -37,44 +37,44 @@
      +moon-wane-crescent+)))
 
 (defun local-time-of (zone)
-  (let ((local-time (make-instance 'mud-time
-                                   :hour (+ (hour-of *time-info*) (hour-mod-of zone))
-                                   :day (day-of *time-info*)
-                                   :month (month-of *time-info*)
-                                   :year (+ (year-of *time-info*) (year-mod-of zone)))))
-    (loop while (> (hour-of local-time) 23) do
-         (decf (hour-of local-time) 24)
-         (incf (day-of local-time)))
-    (loop while (< (hour-of local-time) 0) do
-         (incf (hour-of local-time) 24)
-         (decf (day-of local-time)))
-    (loop while (> (day-of local-time) 34) do
-         (decf (day-of local-time) 35)
-         (incf (month-of local-time)))
-    (loop while (> (month-of local-time) 15) do
-         (decf (hour-of local-time) 16)
-         (incf (year-of local-time)))
-    local-time))
+  (let ((hour (+ (hour-of *time-info*) (hour-mod-of zone)))
+        (day (day-of *time-info*))
+        (month (month-of *time-info*))
+        (year (+ (year-of *time-info*) (year-mod-of zone))))
+    (loop while (> hour 23) do
+         (decf hour 24)
+         (incf day))
+    (loop while (< hour 0) do
+         (incf hour 24)
+         (decf day))
+    (loop while (> day 34) do
+         (decf day 35)
+         (incf month))
+    (loop while (> month 15) do
+         (decf month 16)
+         (incf year))
+    (values hour day month year)))
 
 (defun reset-zone-weather ()
   (dolist (zone *zone-table*)
-    (let* ((local-time (local-time-of zone))
-           (pressure (if (and (>= (month-of local-time) 7)
-                              (<= (month-of local-time) 12))
-                         (+ 960 (random 50))
-                         (+ 960 (random 80)))))
-           (setf (weather-of zone)
-             (make-instance 'weather-data
-                            :pressure pressure
-                            :sunlight (cond
-                                        ((<= (hour-of local-time) 4)  :dark)
-                                        ((= (hour-of local-time) 5)   :rise)
-                                        ((<= (hour-of local-time) 20) :light)
-                                        ((= (hour-of local-time) 21)  :set)
-                                        (t                             :dark))
-                            :sky (cond
-                                   ((<= pressure 980) :lightning)
-                                   ((<= pressure 1000) :raining)
-                                   ((<= pressure 1020) :cloudy)
-                                   (t                               :cloudless))))))
+    (multiple-value-bind (hour day month year) (local-time-of zone)
+      (declare (ignore day year))
+      (let* ((pressure (if (and (>= month 7)
+                                (<= month 12))
+                           (+ 960 (random 50))
+                           (+ 960 (random 80)))))
+        (setf (weather-of zone)
+              (make-instance 'weather-data
+                             :pressure pressure
+                             :sunlight (cond
+                                         ((<= hour 4)  :dark)
+                                         ((= hour 5)   :rise)
+                                         ((<= hour 20) :light)
+                                         ((= hour 21)  :set)
+                                         (t                             :dark))
+                             :sky (cond
+                                    ((<= pressure 980) :lightning)
+                                    ((<= pressure 1000) :raining)
+                                    ((<= pressure 1020) :cloudy)
+                                    (t                               :cloudless)))))))
     (slog "Zone weather set."))

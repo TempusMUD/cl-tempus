@@ -118,7 +118,7 @@
      ;; Normal writing to connection
 	 (unless (or (need-prompt-p cxn)
 				 (and (actor-of cxn)
-					  (not (autoprompt-p (prefs (actor-of cxn))))))
+					  (not (pref-flagged (actor-of cxn) +pref-autoprompt+))))
 	   (when (or (null (account-of cxn))
 				 (oddp (compact-level-of (account-of cxn))))
 		 (setf (cxn-output-buf cxn)
@@ -126,7 +126,7 @@
 							(cxn-output-buf cxn)
 							'(#x0d #x0a))))
 	   (when (or (null (actor-of cxn))
-				 (autoprompt-p (prefs (actor-of cxn))))
+                 (pref-flagged (actor-of cxn) +pref-autoprompt+))
 		 (setf (need-prompt-p cxn) t)))
 	 (call-next-method cxn "~a"
 					   (colorize cxn (format nil "~?" fmt args))))))
@@ -192,9 +192,9 @@
 
 (defun player-pathname (idnum)
   (make-pathname :name (princ-to-string idnum)
-				 :type "plyr"
+				 :type "dat"
 				 :defaults
-				 (merge-pathnames (format nil "data/players/~d/"
+				 (merge-pathnames (format nil "lib/players/character/~d/"
 										  (mod idnum 10))
 								  (asdf:component-pathname
 								   (asdf:find-system "tempus")))))
@@ -203,7 +203,7 @@
   (make-pathname :name (princ-to-string idnum)
 				 :type "mail"
 				 :defaults
-				 (merge-pathnames (format nil "data/mail/~d/"
+				 (merge-pathnames (format nil "lib/players/mail/~d/"
 										  (mod idnum 10))
 								  (asdf:component-pathname
 								   (asdf:find-system "tempus")))))
@@ -217,24 +217,28 @@
 								  (asdf:component-pathname
 								   (asdf:find-system "tempus")))))
 
+(defun send-to-char (ch fmt &rest args)
+  (when (link-of ch)
+    (cxn-write (link-of ch) "~?" fmt args)))
+
 (defun player-to-game (player)
   (mudlog 'notice t "~a entering game as ~a"
 		  (name-of (account-of (link-of player)))
 		  (name-of player))
-  (actor-to-place player
-				  (get-place (or (load-room-of player)
-								 (home-room-of player)
-								 10002)))
+  (char-to-room player
+                (real-room (or (load-room-of player)
+                               (home-room-of player)
+                               3001)))
   (setf (load-room-of player) nil)
-  (dolist (equip (load-equipment (idnum-of player)))
+#+nil  (dolist (equip (load-equipment (idnum-of player)))
 	(item-to-actor equip player))
   (unless (plusp (hitp-of player))
 	(setf (hitp-of player) 1))
   (act player :all-emit "$n enter$% the game.")
   (push player *characters*)
-  (display-contents (place player) player (brief-p (prefs-of player)))
+#+nil  (display-contents (place player) player (brief-p (prefs-of player)))
   (when (probe-file (mail-pathname (idnum-of player)))
-	(send-to-actor player "You have new mail.~%"))
+	(send-to-char player "You have new mail.~%"))
   (save-player player)
   (setf (state-of (link-of player)) 'playing))
 
@@ -581,14 +585,14 @@ choose a password to use on this system.
           ((null player)
            (cxn-write cxn "That character selection does not exist!~%~%"))
           ((null prev-actor)
-           (setf (actor-of cxn) (load-player (idnum-of player)))
+           (setf (actor-of cxn) (load-player-from-xml (idnum-of player)))
            (setf (login-time-of player) (now))
            (execute (:update 'players :set
                              'login-time (login-time-of player)))
            (setf (link-of (actor-of cxn)) cxn)
            (player-to-game (actor-of cxn)))
           ((link-of prev-actor)
-           (send-to-actor prev-actor "You have logged on from another location!~%")
+           (send-to-char prev-actor "You have logged on from another location!~%")
            (setf (actor-of (link-of prev-actor)) nil)
            (setf (state-of (link-of prev-actor)) 'disconnecting)
            (setf (cxn-connected (link-of prev-actor)) nil)
@@ -620,31 +624,32 @@ choose a password to use on this system.
 (define-connection-state playing
   (prompt (cxn)
    (cond
-     ((and (action (actor-of cxn))
-           (send-action-prompt (action (actor-of cxn))))
+#+nil     ((and (action-of (actor-of cxn))
+           (send-action-prompt (action-of (actor-of cxn))))
       ;; if send-action-prompt returns t, we don't need to send the
       ;; standard prompt
       nil)
-     ((not (or (display-hitp-p (prefs-of (actor-of cxn)))
+#+nil     ((not (or (display-hitp-p (prefs-of (actor-of cxn)))
                (display-mana-p (prefs-of (actor-of cxn)))
                (display-move-p (prefs-of (actor-of cxn)))))
       (cxn-write cxn "&W>&n "))
      (t
       (cxn-write cxn "&W< ~@[&G~a&YH ~]~@[&M~a&YM ~]~@[&C~a&YV ~]&W>&n "
-                 (when (display-hitp-p (prefs-of (actor-of cxn)))
-                   (hitp-of (actor-of cxn)))
-                 (when (display-mana-p (prefs-of (actor-of cxn)))
-                   (mana-of (actor-of cxn)))
-                 (when (display-move-p (prefs-of (actor-of cxn)))
-                   (move-of (actor-of cxn)))))))
+;                 (when (display-hitp-p (prefs-of (actor-of cxn)))
+                   (hitp-of (actor-of cxn))
+;                 (when (display-mana-p (prefs-of (actor-of cxn)))
+                   (mana-of (actor-of cxn))
+;                 (when (display-move-p (prefs-of (actor-of cxn)))
+                   (move-of (actor-of cxn))))))
   (input (cxn line)
-   (unless (and (action (actor-of cxn))
-                (interpret (action (actor-of cxn)) line))
+;;   (unless (and (action (actor-of cxn))
+;;                (interpret (action (actor-of cxn)) line))
      (let ((trimmed-line (string-left-trim '(#\/ #\space #\tab) line)))
        (when (plusp (length trimmed-line))
          (interpret-command (actor-of cxn)
                             (expand-aliases (actor-of cxn)
-                                            trimmed-line)))))))
+                                            trimmed-line))))))
+;;)
 
 (defun send-menu (cxn state)
   (send-state-menu cxn state))

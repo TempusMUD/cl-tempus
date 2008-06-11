@@ -251,7 +251,7 @@
       (slog "Help system boot FAILED."))
 
   (setf *reset-q* nil)
-  (setf *boot-time* (get-universal-time))
+  (setf *boot-time* (now))
 
   (slog "Boot db -- DONE."))
 
@@ -1008,9 +1008,9 @@
       (push new-zone *zone-table*))))
 
 (defun reset-zone (zone)
-  (return)
+  (return-from reset-zone)
   ;; Send +special-reset+ notification to all mobiles with specials
-  (dolist (ch *character-list*)
+  (dolist (ch *characters*)
     (when (and (eql (zone-of (in-room-of ch)) zone)
                (mob-flagged ch +spec-mob+)
                (func-of ch))

@@ -13,6 +13,7 @@
                local-time
                cl-ppcre
                uffi
+               xmls
                #+sbcl sb-bsd-sockets
                #+sbcl sb-posix)
 	
@@ -43,10 +44,14 @@
                            :depends-on ("defs" "utils" "network" "nanny"))
              (:file "creature" :pathname "structs/creature"
                                :depends-on ("defs"))
+             (:file "creature-io" :pathname "structs/creature-io"
+                               :depends-on ("creature"))
              (:file "dyntext" :pathname "dyntext/dyntext"
                               :depends-on ("defs" "utils"))
              (:file "groups" :pathname "interpreter/groups"
                               :depends-on ("defs" "utils"))
+             (:file "handler" :pathname "util/handler"
+                            :depends-on ("defs"))
              (:file "help" :pathname "help/help"
                            :depends-on ("defs" "utils"))
              (:file "house" :pathname "house/house"
@@ -69,6 +74,8 @@
                                 :depends-on ("defs"))
              (:file "search" :pathname "structs/search"
                              :depends-on ("defs"))
+             (:file "sight" :pathname "util/sight"
+                            :depends-on ("defs"))
              (:file "spec-assign" :pathname "specials/spec-assign"
                                   :depends-on ("defs" "utils"))
              (:file "spec-procs" :pathname "specials/spec-procs"

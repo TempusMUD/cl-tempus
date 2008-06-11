@@ -213,6 +213,7 @@ file."
 (defun save-player (player)
   "Saves the player into the player file and its equipment into its
 equipment file."
+  (return-from save-player)
   (with-open-file (ouf (player-pathname (idnum-of player))
 				   :direction :output
 				   :if-exists :supersede
