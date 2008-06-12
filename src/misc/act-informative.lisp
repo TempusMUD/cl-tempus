@@ -44,9 +44,9 @@
         (send-to-char ch "&c[~5d] ~a [ ~a ] [ ~a ]"
                       (number-of room)
                       (name-of room)
-                      (if (flags-of room)
-                          (printbits (flags-of room) +room-bits+)
-                          "NONE")
+                      (if (zerop (flags-of room))
+                          "NONE"
+                          (printbits (flags-of room) +room-bits+))
                       (aref +sector-types+ (terrain-of room)))
         #+nil        (when (< (max-occupancy-of room) 256)
                        (send-to-char ch " [ Max: ~d ]" (max-occupancy-of room)))
