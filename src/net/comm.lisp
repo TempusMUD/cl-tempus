@@ -135,6 +135,10 @@
                  (when (< elapsed 0.1)
                    (sleep (- 0.1 elapsed)))))))
 
+(defun send-to-char (ch fmt &rest args)
+  (when (link-of ch)
+    (cxn-write (link-of ch) "~?" fmt args)))
+
 (defun verify-environment ()
   (let ((+player-subdirs+ '("character" "equipment" "housing" "mail" "corpses")))
     (dolist (subdir +player-subdirs+)

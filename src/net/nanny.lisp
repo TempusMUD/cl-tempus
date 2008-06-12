@@ -217,10 +217,6 @@
 								  (asdf:component-pathname
 								   (asdf:find-system "tempus")))))
 
-(defun send-to-char (ch fmt &rest args)
-  (when (link-of ch)
-    (cxn-write (link-of ch) "~?" fmt args)))
-
 (defun player-to-game (player)
   (mudlog 'notice t "~a entering game as ~a"
 		  (name-of (account-of (link-of player)))
