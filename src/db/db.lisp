@@ -428,7 +428,7 @@
             (error "Format error in room #~d~%" vnum-nr))
 
           (setf (flags-of room) (asciiflag-conv (regref result 2)))
-          (setf (sector-kind-of room) (parse-integer (regref result 3)))
+          (setf (terrain-of room) (parse-integer (regref result 3)))
           (setf zone (real-zone (parse-integer (regref result 1)))))
 
       (unless zone

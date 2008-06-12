@@ -167,7 +167,7 @@
 ;;; Memory structure for room
 (defclass room-data ()
   ((number :accessor number-of :initarg :number :initform nil)
-   (sector-kind :accessor sector-kind-of :initarg :sector-kind :initform nil)
+   (terrain :accessor terrain-of :initarg :terrain :initform nil)
    (name :accessor name-of :initarg :name :initform nil)
    (description :accessor description-of :initarg :description :initform nil)
    (sounds :accessor sounds-of :initarg :sounds :initform nil)
@@ -177,7 +177,7 @@
    (prog-marker :accessor prog-marker-of :initarg :prog-marker :initform nil)
    (prog-state :accessor prog-state-of :initarg :prog-state :initform nil)
    (ex-description :accessor ex-description-of :initarg :ex-description :initform nil)
-   (dir-option :accessor dir-option-of :initarg :dir-option :initform (make-array +num-dirs+))
+   (dir-option :accessor dir-option-of :initarg :dir-option :initform (make-array +num-dirs+ :initial-element nil))
    (searches :accessor searches-of :initarg :search :initform nil)
    (affects :accessor affects-of :initarg :affects :initform nil)
    (trail :accessor trail-of :initarg :trail :initform nil)
@@ -192,3 +192,6 @@
    (zone :accessor zone-of :initarg :zone :initform nil)
    (contents :accessor contents-of :initarg :contents :initform nil)
    (people :accessor people-of :initarg :people :initform nil)))
+
+(defun room-flagged (room flag)
+  (logtest flag (flags-of room)))

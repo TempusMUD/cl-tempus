@@ -173,3 +173,7 @@ Understands the &rest qualifier."
 						 `((,my-rest-var (subseq ,my-str ,my-rest-pos)))))
 			   ,@body))))))
 
+(defun bitp (bitv idx)
+  (plusp (bit bitv idx)))
+(defsetf bitp (bitv idx) (val)
+`(setf (bit ,bitv ,idx) (if ,val 1 0)))

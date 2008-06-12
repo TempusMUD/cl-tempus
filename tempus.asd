@@ -28,6 +28,8 @@
                               :depends-on ("defs" "utils"))
              (:file "accstr" :pathname "util/accstr"
                              :depends-on ("defs"))
+             (:file "act-informative" :pathname "misc/act-informative"
+                                 :depends-on ("defs" "utils"))
              (:file "act-physic" :pathname "classes/act-physic"
                                  :depends-on ("defs" "utils"))
              (:file "act-social" :pathname "social/act-social"
@@ -36,6 +38,7 @@
                               :depends-on ("creature"))
              (:file "ban" :pathname "net/ban"
                           :depends-on ("defs" "utils"))
+             (:file "constants" :pathname "db/constants")
              (:file "clan" :pathname "clan/clan"
                            :depends-on ("defs" "utils"))
              (:file "combat-messages" :pathname "combat/combat-messages"
