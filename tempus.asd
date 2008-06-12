@@ -10,6 +10,7 @@
   :description "Tempus MUD Codebase"
   :depends-on (postmodern
                split-sequence
+               asdf-system-connections
                local-time
                cl-ppcre
                uffi
@@ -28,11 +29,17 @@
                               :depends-on ("defs" "utils"))
              (:file "accstr" :pathname "util/accstr"
                              :depends-on ("defs"))
+             (:file "act-comm" :pathname "misc/act-comm"
+                                 :depends-on ("defs" "utils"))
              (:file "act-informative" :pathname "misc/act-informative"
+                                 :depends-on ("defs" "utils"))
+             (:file "act-movement" :pathname "misc/act-movement"
                                  :depends-on ("defs" "utils"))
              (:file "act-physic" :pathname "classes/act-physic"
                                  :depends-on ("defs" "utils"))
              (:file "act-social" :pathname "social/act-social"
+                                 :depends-on ("defs" "utils"))
+             (:file "act-wizard" :pathname "misc/act-wizard"
                                  :depends-on ("defs" "utils"))
              (:file "artisan" :pathname "mobiles/artisan"
                               :depends-on ("creature"))

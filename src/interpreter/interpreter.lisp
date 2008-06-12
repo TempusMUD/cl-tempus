@@ -66,10 +66,18 @@
        (setf (state-of (link-of ch)) 'main-menu))
       ("look"
        (look-at-room ch (in-room-of ch) t))
+      ("'"
+       (perform-say ch "say" args))
+      ("say"
+       (perform-say ch command-str args))
+      (":"
+       (perform-emote ch args))
+      ("emote"
+       (perform-emote ch args))
       ("roomflags"
        (setf (bit (prefs-of ch) +pref-roomflags+)
              (if (zerop (bit (prefs-of ch) +pref-roomflags+)) 1 0)))
       ("shutdown"
        (setf *shutdown* t))
       (t
-       (send-to-char ch "You typed: ~a~%" arg)))))
+       (send-to-char ch "You typed: '~a'~%" arg)))))

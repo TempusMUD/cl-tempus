@@ -202,9 +202,9 @@ sequences in seq-list with the delimiter between each element"
 	 (cond
 	   ((eql pov :self)
 		"you")
-	   ((eql (sex subject) 'male)
+	   ((eql (sex-of subject) 'male)
 		"he")
-	   ((eql (sex subject) 'female)
+	   ((eql (sex-of subject) 'female)
 		"she")
 	   (t
 		"it")))
@@ -214,9 +214,9 @@ sequences in seq-list with the delimiter between each element"
 		"yourself")
 	   ((eql pov :self)
 		"you")
-	   ((eql (sex subject) 'male)
+	   ((eql (sex-of subject) 'male)
 		"him")
-	   ((eql (sex subject) 'female)
+	   ((eql (sex-of subject) 'female)
 		"her")
 	   (t
 		"it")))
@@ -224,9 +224,9 @@ sequences in seq-list with the delimiter between each element"
 	 (cond
 	   ((eql pov :self)
 		"your")
-	   ((eql (sex subject) 'male)
+	   ((eql (sex-of subject) 'male)
 		"his")
-	   ((eql (sex subject) 'female)
+	   ((eql (sex-of subject) 'female)
 		"her")
 	   (t
 		"its")))
@@ -236,9 +236,9 @@ sequences in seq-list with the delimiter between each element"
 		(cond
 		  ((eql pov :self)
 		   "yourself")
-		  ((eql (sex target) 'male)
+		  ((eql (sex-of target) 'male)
 		   "himself")
-		  ((eql (sex target) 'female)
+		  ((eql (sex-of target) 'female)
 		   "herself")
 		  (t
 		   "itself")))
@@ -250,9 +250,9 @@ sequences in seq-list with the delimiter between each element"
 	 (cond
 	   ((eql pov :target)
 		"you")
-	   ((eql (sex target) 'male)
+	   ((eql (sex-of target) 'male)
 		"he")
-	   ((eql (sex target) 'female)
+	   ((eql (sex-of target) 'female)
 		"she")
 	   (t
 		"it")))
@@ -262,9 +262,9 @@ sequences in seq-list with the delimiter between each element"
 		"yourself")
 	   ((eql pov :target)
 		"you")
-	   ((eql (sex target) 'male)
+	   ((eql (sex-of target) 'male)
 		"him")
-	   ((eql (sex target) 'female)
+	   ((eql (sex-of target) 'female)
 		"her")
 	   (t
 		"it")))
@@ -272,9 +272,9 @@ sequences in seq-list with the delimiter between each element"
 	 (cond
 	   ((eql pov :target)
 		"your")
-	   ((eql (sex target) 'male)
+	   ((eql (sex-of target) 'male)
 		"his")
-	   ((eql (sex target) 'female)
+	   ((eql (sex-of target) 'female)
 		"her")
 	   (t
 		"its")))
@@ -301,7 +301,8 @@ sequences in seq-list with the delimiter between each element"
 		   (case (char fmt idx)
 			 (#\$
 			  (incf idx)
-			  (if (eql (char fmt idx) #\{)
+			  (cond
+                ((eql (char fmt idx) #\{)
 				  (let ((default-mood
 							(subseq fmt
 									(1+ idx)
@@ -309,8 +310,14 @@ sequences in seq-list with the delimiter between each element"
 					(incf idx (1+ (length default-mood)))
 					(or
 					 (mood-of subject)
-					 default-mood))
-				  (expand-dollar (char fmt idx) viewer subject target item pov)))
+					 default-mood)))
+                ((eql (char fmt idx) #\[)
+                 (let ((end-brace-pos (position #\] fmt :start idx)))
+                   (prog1
+                       (subseq fmt (1+ idx) end-brace-pos)
+                     (setf idx end-brace-pos))))
+                (t
+				  (expand-dollar (char fmt idx) viewer subject target item pov))))
 			 (#\&
 			  (incf idx)
 			  (concatenate 'string "&" (list (char fmt idx))))

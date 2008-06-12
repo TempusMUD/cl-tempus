@@ -309,7 +309,7 @@
    (position :accessor position-of :initarg :position :initform nil)
    (carry-items :accessor carry-items-of :initarg :carry-items :initform nil)
    (weapon-proficiency :accessor weapon-proficiency-of :initarg :weapon-proficiency :initform nil)
-   (mood-str :accessor mood-str-of :initarg :mood-str :initform nil)
+   (mood :accessor mood-of :initarg :mood :initform nil)
    (saved :accessor saved-of :initarg :saved :initform nil)
 
    ;; Originally from char_language_data
