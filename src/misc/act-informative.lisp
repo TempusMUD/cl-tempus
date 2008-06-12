@@ -3,7 +3,8 @@
 (defparameter +blood-vnum+ 1579)
 (defparameter +ice-vnum+ 1580)
 
-(defparameter +dirs+ #("n" "e" "s" "w" "u" "d" "p" "f"))
+(defparameter +dirs+ #("n" "e" "s" "w" "u" "d" "f" "p"))
+(defparameter +num-of-dirs+ (length +dirs+))
 
 (defun do-auto-exits (ch room)
   (send-to-char ch "&c[ Exits: ~:[None obvious~;~:*~{~a~^ ~}~] ]"

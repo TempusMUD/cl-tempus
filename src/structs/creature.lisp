@@ -429,3 +429,6 @@
 
 (defun immortalp (ch)
   (>= (level-of ch) 50))
+
+(defun noncorporealp (ch)
+  nil)
