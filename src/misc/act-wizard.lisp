@@ -8,4 +8,5 @@
       (t
        (when (in-room-of ch)
          (char-from-room ch))
-       (char-to-room ch destination)))))
+       (char-to-room ch destination)
+       (look-at-room ch destination nil)))))

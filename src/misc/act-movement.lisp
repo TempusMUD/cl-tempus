@@ -10,7 +10,9 @@
   (declare (ignore mode need-specials-check))
   (let ((destination (real-room (to-room-of (exit ch dir)))))
     (char-from-room ch)
-    (char-to-room ch destination)))
+    (char-to-room ch destination))
+
+  (look-at-room ch (in-room-of ch) nil))
 
 (defun perform-move (ch dir mode need-specials-check)
   (when (or (null ch)
