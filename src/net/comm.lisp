@@ -120,6 +120,8 @@
 
 (defun game-loop ()
   "The main loop of the program, it iterates here until *shutdown* is non-NIL."
+  (setf *shutdown* nil)
+
   (loop for pulse from 1
         while (not *shutdown*) do
         (when (> pulse 1000)
