@@ -584,7 +584,8 @@ choose a password to use on this system.
            (setf (actor-of cxn) (load-player-from-xml (idnum-of player)))
            (setf (login-time-of player) (now))
            (execute (:update 'players :set
-                             'login-time (login-time-of player)))
+                             'login-time (login-time-of player)
+                             :where (:= 'idnum (idnum-of player))))
            (setf (link-of (actor-of cxn)) cxn)
            (player-to-game (actor-of cxn)))
           ((link-of prev-actor)
