@@ -58,7 +58,7 @@
 
   (send-to-char ch "&n~%")
 
-  (when (or (pref-flagged ch +pref-brief+)
+  (when (or (not (pref-flagged ch +pref-brief+))
             ignore-brief
             (room-flagged room +room-death+))
     (if (and (room-flagged room +room-smoke-filled+)
