@@ -3,7 +3,7 @@
 (define-condition invalid-creature-file (error)
   ())
 
-(defun xml-attr (node name &key numeric default numeric-with-nil)
+(defun xml-attr (node name &key numeric default numeric-with-nil hex)
   (let ((val (assoc name (second node) :test #'string=)))
     (cond
       ((null (second val))
@@ -15,6 +15,8 @@
              i)))
       (numeric
        (parse-integer (second val)))
+      (hex
+       (parse-integer (second val) :radix 16))
       (t
        (second val)))))
 
@@ -66,15 +68,17 @@
         ("rent" nil)
         ("home"
          (setf (home-room-of ch) (xml-attr node "homeroom" :numeric-with-nil t))
-         (setf (load-room-of ch) (xml-attr node "loadroom" :numeric-with-nil t)))
+         (setf (load-room-of ch) (xml-attr node "loadroom" :numeric-with-nil t))
+         (when (= (home-room-of ch) -1)
+           (setf (home-room-of ch) nil)))
         ("quest" nil)
         ("bits" nil)
         ("prefs"
          (let ((prefs (make-array 64 :element-type 'bit)))
-           (let ((num (xml-attr node "flag1" :numeric t)))
+           (let ((num (xml-attr node "flag1" :hex t)))
              (dotimes (bit-index 32)
                (setf (bit prefs bit-index) (if (logbitp bit-index num) 1 0))))
-           (let ((num (xml-attr node "flag2" :numeric t)))
+           (let ((num (xml-attr node "flag2" :hex t)))
              (dotimes (bit-index 32)
                (setf (bit prefs (+ 30 bit-index)) (if (logbitp bit-index num) 1 0))))
            (setf (prefs-of ch) prefs)))
