@@ -20,9 +20,7 @@
 
 (defun load-player-from-xml (idnum)
   (let ((ch (make-instance 'player))
-        (xml (with-open-file (inf (format nil "lib/players/character/~d/~d.dat"
-                                          (mod idnum 10)
-                                          idnum))
+        (xml (with-open-file (inf (player-pathname idnum))
                (xmls:parse inf))))
     (assert (string= (first xml) "creature") nil 'invalid-creature-file)
     (setf (idnum-of ch) (xml-attr xml "idnum" :numeric t))
