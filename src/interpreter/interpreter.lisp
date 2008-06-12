@@ -43,7 +43,7 @@
          (args (if space-pos
                    (subseq arg (position #\space arg :test-not #'eql :start space-pos))
                    "")))
-    (string-case command-str
+    (string-abbrev-case command-str
       ("north"
        (perform-move ch 0 nil t))
       ("east"
