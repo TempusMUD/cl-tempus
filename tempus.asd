@@ -70,6 +70,8 @@
                                    :depends-on ("defs" "utils"))
              (:file "quest" :pathname "quest/quest"
                             :depends-on ("defs" "utils"))
+             (:file "random" :pathname "util/random"
+                                :depends-on ("defs"))
              (:file "room-data" :pathname "structs/room-data"
                                 :depends-on ("defs"))
              (:file "search" :pathname "structs/search"

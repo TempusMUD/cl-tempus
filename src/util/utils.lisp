@@ -99,9 +99,6 @@
                      :reg-starts reg-starts
                      :reg-ends reg-ends))))
 
-(defun random-range (min max)
-  (+ min (random max)))
-
 (defun snarf-file (path)
   "Returns a string with the contents of the file at PATH."
   (handler-case
