@@ -81,6 +81,7 @@
 (defvar *reset-q* nil)
 (defvar *top-unique-id* 0)
 (defvar *time-info* nil)
+(defvar *current-mob-idnum* 1)
 
 (defparameter *no-specials* nil)
 (defparameter *welcome-message* nil)
@@ -1007,12 +1008,50 @@
       ;; Now we add the new zone to the zone-table linked list
       (push new-zone *zone-table*))))
 
+(defun read-mobile (vnum)
+  "Create a new mobile from a prototype"
+  (let ((proto (real-mobile-proto vnum)))
+    (unless proto
+      (signal 'mobile-prototype-not-found vnum))
+    (let ((mob (clone-mobile-proto proto)))
+      (incf (number-of (shared-of proto)))
+      (incf (loaded-of (shared-of proto)))
+
+      (if (zerop (max-hitp-of mob))
+          (setf (max-hitp-of mob) (+ (dice (hitp-of mob) (mana-of mob))
+                                     (move-of mob)))
+          (setf (max-hitp-of mob) (random-range (hitp-of mob) (mana-of mob))))
+
+      (setf (hitp-of mob) (max-hitp-of mob))
+      (setf (mana-of mob) (max-mana-of mob))
+      (setf (move-of mob) (max-move-of mob))
+      (setf (birth-time-of mob) (now))
+      (incf *current-mob-idnum*)
+      (setf (mob-idnum-of mob) *current-mob-idnum*)
+
+      (cond
+        ((mob2-flagged mob +mob2-unapproved+)
+         (setf (gold-of mob) 0)
+         (setf (cash-of mob) 0)
+         (setf (exp-of mob) 0))
+        (t
+         (setf (gold-of mob) (rand-value (gold-of mob)
+                                         (truncate (* (gold-of mob) 0.15))
+                                         -1 -1))
+         (setf (cash-of mob) (rand-value (cash-of mob)
+                                         (truncate (* (cash-of mob) 0.15))
+                                         -1 -1))))
+
+      (push mob *characters*)
+      (setf (gethash (- (mob-idnum-of mob)) *character-map*) mob)
+
+      mob)))
+
 (defun reset-zone (zone)
-  (return-from reset-zone)
   ;; Send +special-reset+ notification to all mobiles with specials
   (dolist (ch *characters*)
     (when (and (eql (zone-of (in-room-of ch)) zone)
-               (mob-flagged ch +spec-mob+)
+               (mob-flagged ch +mob-spec+)
                (func-of ch))
       (funcall (func-of ch) ch ch 0 "" +special-reset+)))
 
@@ -1053,7 +1092,9 @@
                  (setf last-cmd 0))
                 (t
                  (let ((mob (read-mobile (arg1-of zone-cmd))))
-                   nil)))))
+                   (if mob
+                       (char-to-room mob room)
+                       (setf last-cmd 0)))))))
            (#\O
             nil)
            (#\P
@@ -1073,7 +1114,7 @@
            (#\D
             nil)
            (t
-            (zone-error "Unknown cmd in reset table! cmd disabled")
+            (slog "Unknown cmd in reset table! cmd disabled")
             (setf (command-of zone-cmd) #\*)))))))
   (setf (age-of zone) 0)
 

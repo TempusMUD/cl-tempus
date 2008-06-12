@@ -65,6 +65,48 @@
 (defparameter +sex-male+ 1)
 (defparameter +sex-female+ 2)
 
+(defparameter +mob-spec+ (ash 1 0))	; Mob has a callable spec-proc
+(defparameter +mob-sentinel+ (ash 1 1))	; Mob should not move
+(defparameter +mob-scavenger+ (ash 1 2))	; Mob picks up stuff on the ground
+(defparameter +mob-isnpc+ (ash 1 3))	; (R) Automatically set on all Mobs
+(defparameter +mob-aware+ (ash 1 4))	; Mob can't be backstabbed
+(defparameter +mob-aggressive+ (ash 1 5))	; Mob hits players in the room
+(defparameter +mob-stay-zone+ (ash 1 6))	; Mob shouldn't wander out of zone
+(defparameter +mob-wimpy+ (ash 1 7))	; Mob flees if severely injured
+(defparameter +mob-aggr-evil+ (ash 1 8))	; auto attack evil PC's
+(defparameter +mob-aggr-good+ (ash 1 9))	; auto attack good PC's
+(defparameter +mob-aggr-neutral+ (ash 1 10))	; auto attack neutral PC's
+(defparameter +mob-memory+ (ash 1 11))	; remember attackers if attacked
+(defparameter +mob-helper+ (ash 1 12))	; attack PCs fighting other NPCs
+(defparameter +mob-nocharm+ (ash 1 13))	; Mob can't be charmed
+(defparameter +mob-nosummon+ (ash 1 14))	; Mob can't be summoned
+(defparameter +mob-nosleep+ (ash 1 15))	; Mob can't be slept
+(defparameter +mob-nobash+ (ash 1 16))	; Mob can't be bashed (e.g. trees)
+(defparameter +mob-noblind+ (ash 1 17))	; Mob can't be blinded
+(defparameter +mob-noturn+ (ash 1 18))	; Hard to turn
+(defparameter +mob-nopetri+ (ash 1 19))	; Cannot be petrified
+(defparameter +mob-pet+ (ash 1 20))	; Mob is a conjured pet and shouldn't
+										 ; get nor give any xp in any way.
+(defparameter +mob-soulless+ (ash 1 21))	; Mobile is Soulless - Unholy compact.
+(defparameter +mob-spirit-tracker+ (ash 1 22))	; Can track through !track
+(defparameter +mob-utility+ (ash 1 23)) ; Can't be seen, hit, etc...
+
+(defparameter +mob2-script+ (ash 1 0))
+(defparameter +mob2-mount+ (ash 1 1))
+(defparameter +mob2-stay-sect+ (ash 1 2))	; Can't leave SECT-type.
+(defparameter +mob2-atk-mobs+ (ash 1 3))	; Aggro Mobs will attack other mobs
+(defparameter +mob2-hunt+ (ash 1 4))	; Mob will hunt attacker
+(defparameter +mob2-looter+ (ash 1 5))	; Loots corpses
+(defparameter +mob2-nostun+ (ash 1 6))
+(defparameter +mob2-seller+ (ash 1 7))	; If shopkeeper, sells anywhere.
+(defparameter +mob2-wont-wear+ (ash 1 8))	; Wont wear shit it picks up (SHPKPER)
+(defparameter +mob2-silent-hunter+ (ash 1 9))
+(defparameter +mob2-familiar+ (ash 1 10))	; mages familiar
+(defparameter +mob2-no-flow+ (ash 1 11))	; Mob doesn't flow
+(defparameter +mob2-unapproved+ (ash 1 12))	; Mobile not approved for game play
+(defparameter +mob2-renamed+ (ash 1 13))	; Mobile renamed
+(defparameter +mob2-noaggro-race+ (ash 1 14))	; wont attack members of own race
+
 (defparameter +pref-brief+ 0) ; Room descs won't normally be shown
 (defparameter +pref-nohaggle+ 1) ;
 (defparameter +pref-deaf+ 2)     ; Can't hear shouts
@@ -377,4 +419,13 @@
   (incf (worn-weight-of ch) mod-weight))
 
 (defun pref-flagged (ch pref)
-  (not (zerop (bit (prefs-of ch) pref))))
+  (bitp (prefs-of ch) pref))
+
+(defun mob-flagged (ch flag)
+  (logtest flag (mob-flags-of ch)))
+
+(defun mob2-flagged (ch flag)
+  (logtest flag (mob2-flags-of ch)))
+
+(defun immortalp (ch)
+  (>= (level-of ch) 50))
