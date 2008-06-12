@@ -626,18 +626,18 @@ choose a password to use on this system.
       ;; if send-action-prompt returns t, we don't need to send the
       ;; standard prompt
       nil)
-#+nil     ((not (or (display-hitp-p (prefs-of (actor-of cxn)))
-               (display-mana-p (prefs-of (actor-of cxn)))
-               (display-move-p (prefs-of (actor-of cxn)))))
+     ((not (or (pref-flagged (actor-of cxn) +pref-disphp+)
+               (pref-flagged (actor-of cxn) +pref-dispmana+)
+               (pref-flagged (actor-of cxn) +pref-dispmove+)))
       (cxn-write cxn "&W>&n "))
      (t
       (cxn-write cxn "&W< ~@[&G~a&YH ~]~@[&M~a&YM ~]~@[&C~a&YV ~]&W>&n "
-;                 (when (display-hitp-p (prefs-of (actor-of cxn)))
+                 (when (pref-flagged (actor-of cxn) +pref-disphp+)
                    (hitp-of (actor-of cxn))
-;                 (when (display-mana-p (prefs-of (actor-of cxn)))
+                 (when (pref-flagged (actor-of cxn) +pref-dispmana+)
                    (mana-of (actor-of cxn))
-;                 (when (display-move-p (prefs-of (actor-of cxn)))
-                   (move-of (actor-of cxn))))))
+                 (when (pref-flagged (actor-of cxn) +pref-dispmove+)
+                   (move-of (actor-of cxn)))))))))
   (input (cxn line)
 ;;   (unless (and (action (actor-of cxn))
 ;;                (interpret (action (actor-of cxn)) line))
