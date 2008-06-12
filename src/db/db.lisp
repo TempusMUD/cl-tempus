@@ -151,6 +151,7 @@
 
   (unless (and *database*
                (connected-p *database*))
+    (set-local-time-cl-postgres-readers)
     (slog "Connecting to postgres.")
     (apply 'connect-toplevel
            (if *production-mode*
