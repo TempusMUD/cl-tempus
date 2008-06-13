@@ -8,3 +8,6 @@
 
 (defun has-dark-sight (ch)
   nil)
+
+(defun can-see-object (ch object)
+  t)
