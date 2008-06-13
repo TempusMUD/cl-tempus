@@ -30,6 +30,17 @@
   (setf (people-of (in-room-of ch)) (delete ch (people-of (in-room-of ch))))
   (setf (in-room-of ch) nil))
 
+(defun obj-to-room (obj room)
+  (assert (null (in-room-of obj)) nil 'invalid-obj-to-room obj)
+  (push obj (contents-of room))
+  (setf (in-room-of obj) room))
+
+(defun obj-from-room (obj)
+  (assert (in-room-of obj) nil 'invalid-obj-from-room obj)
+  (setf (contents-of (in-room-of obj))
+        (delete obj (contents-of (in-room-of obj))))
+  (setf (in-room-of obj) nil))
+
 (defun printbits (bits descriptions)
   (format nil "~{~a~^ ~}"
           (loop for idx from 0
