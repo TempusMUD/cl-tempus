@@ -73,6 +73,7 @@
 (defvar *mobile-prototypes* (make-hash-table))
 (defvar *object-prototypes* (make-hash-table))
 (defvar *characters* nil)
+(defvar *character-map* (make-hash-table))
 (defvar *zone-table* nil)
 (defvar *default-quad-zone*)
 (defvar *top-of-world* 0)
@@ -80,6 +81,7 @@
 (defvar *boot-time* nil)
 (defvar *reset-q* nil)
 (defvar *top-unique-id* 0)
+(defvar *unique-id-changed* t)
 (defvar *time-info* nil)
 (defvar *current-mob-idnum* 1)
 
@@ -117,6 +119,7 @@
   (clrhash *mobile-prototypes*)
   (clrhash *object-prototypes*)
   (setf *characters* nil)
+  (sb-ext:gc)
 
   (slog "Loading zone table.")
   (index-boot :zon)
@@ -142,6 +145,14 @@
   ;; For quad damage bamfing
   (unless (setf *default-quad-zone* (real-zone 25))
     (setf *default-quad-zone* *zone-table*)))
+
+(defun reset-all-zones ()
+    (dolist (zone *zone-table*)
+      (slog "Resetting ~a (rms ~d-~d)"
+            (name-of zone)
+            (* (number-of zone) 100)
+            (top-of zone))
+      (reset-zone zone)))
 
 (defun boot-db ()
   (slog "Boot db -- BEGIN.")
@@ -241,12 +252,7 @@
         (housing-count-objects)))
 
   (unless *no-initial-zreset*
-    (dolist (zone *zone-table*)
-      (slog "Resetting ~a (rms ~d-~d)"
-            (name-of zone)
-            (* (number-of zone) 100)
-            (top-of zone))
-      (reset-zone zone)))
+    (reset-all-zones))
 
   (slog "Booting help system.")
   (if (boot-help-system)
@@ -791,9 +797,11 @@
       (slog "Fixed name capitalization in object ~d" nr)
       (setf (char (name-of obj) 0) (char-downcase (char (name-of obj) 0))))
     
-    (setf (line-desc-of obj) (string-capitalize (fread-string inf))
+    (setf (line-desc-of obj) (fread-string inf)
           (action-desc-of obj) (fread-string inf))
-    
+    (when (> (length (line-desc-of obj)) 1)
+      (setf (line-desc-of obj) (string-upcase (line-desc-of obj) :end 1)))
+
     (let ((result (scan #/(\d+) (\S+) (\S+) (\S+) (\S+)/ (get-line inf))))
       (assert result nil "Expected 5 args in first numeric line, object ~d" nr)
       (setf (kind-of obj) (parse-integer (regref result 1))
@@ -973,32 +981,32 @@
          (setf (command-of new-zonecmd) (char line 0))
 
          (cond
-           ((find (char line 0) "MOEPDIVW")
-            (let ((result (scan #/^. ([-01]+)\s+(\d+)\s+(\d+)\s+(\d+)/ line))) 
+           ((find (char line 0) "MOEPIVW")
+            (let ((result (scan #/^. ([-01]+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)/ line))) 
               (unless result
-                (error "Format error in ~a, line ~d (~a)" zonename line-num line))
+                (error "Format error in ~a, line ~d: ~s" zonename line-num line))
               (setf (if-flag-of new-zonecmd) (parse-integer (regref result 1)))
               (setf (prob-of new-zonecmd) (parse-integer (regref result 2)))
               (setf (arg1-of new-zonecmd) (parse-integer (regref result 3)))
-              (setf (arg2-of new-zonecmd) (parse-integer (regref result 4)))))
+              (setf (arg2-of new-zonecmd) (parse-integer (regref result 4)))
+              (setf (arg3-of new-zonecmd) (parse-integer (regref result 5)))))
            ((char= (char line 0) #\D)
             (let ((result (scan #/^. ([-01]+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\S+)/ line)))
               (unless result
-                (error "Format error in ~a, line ~d" zonename line-num))
+                (error "Format error in ~a, line ~d: ~s" zonename line-num line))
               (setf (if-flag-of new-zonecmd) (parse-integer (regref result 1)))
               (setf (prob-of new-zonecmd) (parse-integer (regref result 2)))
               (setf (arg1-of new-zonecmd) (parse-integer (regref result 3)))
               (setf (arg2-of new-zonecmd) (parse-integer (regref result 4)))
               (setf (arg3-of new-zonecmd) (asciiflag-conv (regref result 5)))))
            (t
-            (let ((result (scan #/^. ([-01]+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)/ line))) 
+            (let ((result (scan #/^. ([-01]+)\s+(\d+)\s+(\d+)\s+(\d+)/ line))) 
               (unless result
-                (error "Format error in ~a, line ~d" zonename line-num))
+                (error "Format error in ~a, line ~d (~s)" zonename line-num line))
               (setf (if-flag-of new-zonecmd) (parse-integer (regref result 1)))
               (setf (prob-of new-zonecmd) (parse-integer (regref result 2)))
               (setf (arg1-of new-zonecmd) (parse-integer (regref result 3)))
-              (setf (arg2-of new-zonecmd) (parse-integer (regref result 4)))
-              (setf (arg3-of new-zonecmd) (parse-integer (regref result 5))))))
+              (setf (arg2-of new-zonecmd) (parse-integer (regref result 4))))))
 
          (setf (line-of new-zonecmd) cmd-num)
          (push new-zonecmd (cmds-of new-zone))
@@ -1018,15 +1026,6 @@
     (let ((mob (clone-mobile-proto proto)))
       (incf (number-of (shared-of proto)))
       (incf (loaded-of (shared-of proto)))
-
-      (if (zerop (max-hitp-of mob))
-          (setf (max-hitp-of mob) (+ (dice (hitp-of mob) (mana-of mob))
-                                     (move-of mob)))
-          (setf (max-hitp-of mob) (random-range (hitp-of mob) (mana-of mob))))
-
-      (setf (hitp-of mob) (max-hitp-of mob))
-      (setf (mana-of mob) (max-mana-of mob))
-      (setf (move-of mob) (max-move-of mob))
       (setf (birth-time-of mob) (now))
       (incf *current-mob-idnum*)
       (setf (mob-idnum-of mob) *current-mob-idnum*)
@@ -1048,6 +1047,20 @@
       (setf (gethash (- (mob-idnum-of mob)) *character-map*) mob)
 
       mob)))
+
+(defun read-object (vnum)
+  (let ((proto (real-object-proto vnum)))
+    (unless proto
+      (signal 'object-prototype-not-found vnum))
+    (let ((obj (clone-object-proto proto)))
+      (incf (number-of (shared-of proto)))
+      (incf *top-unique-id*)
+      (setf *unique-id-changed* t)
+
+      (push obj *object-list*)
+      (when (is-obj-stat2 obj +item2-unapproved+)
+        (setf (timer-of obj) 60))
+      obj)))
 
 (defun reset-zone (zone)
   ;; Send +special-reset+ notification to all mobiles with specials
@@ -1097,8 +1110,21 @@
                    (if mob
                        (char-to-room mob room)
                        (setf last-cmd 0)))))))
-           (#\O
-            nil)
+           (#\O                         ; Read an object
+            (let ((tobj (real-object-proto (arg1-of zone-cmd)))
+                  (room (real-room (arg3-of zone-cmd))))
+              (cond
+                ((null tobj)
+                 (setf last-cmd 0))
+                ((> (number-of (shared-of tobj)) (arg2-of zone-cmd))
+                 (setf last-cmd 0))
+                ((null room)
+                 (setf last-cmd 0))
+                (t
+                 (let ((obj (read-object (arg1-of zone-cmd))))
+                   (if obj
+                       (obj-to-room obj room)
+                       (setf last-cmd 0)))))))
            (#\P
             nil)
            (#\V
