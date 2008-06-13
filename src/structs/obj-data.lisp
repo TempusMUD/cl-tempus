@@ -1,5 +1,8 @@
 (in-package :tempus)
 
+(defparameter +blood-vnum+ 1579)
+(defparameter +ice-vnum+ 1580)
+
 (defparameter +item-light+ 1)           ; Item is a light source
 (defparameter +item-scroll+ 2)          ; Item is a scroll
 (defparameter +item-wand+ 3)            ; Item is a wand
@@ -123,6 +126,125 @@
 (defparameter +apply-speed+ 50)
 (defparameter +num-applies+ 51)
 
+;;; Take/Wear flags: used by obj_data.obj_flags.wear_flags
+(defparameter +item-wear-take+ (ash 1 0))	; Item can be takes
+(defparameter +item-wear-finger+ (ash 1 1))	; Can be worn on finger
+(defparameter +item-wear-neck+ (ash 1 2))	; Can be worn around neck
+(defparameter +item-wear-body+ (ash 1 3))	; Can be worn on body
+(defparameter +item-wear-head+ (ash 1 4))	; Can be worn on head
+(defparameter +item-wear-legs+ (ash 1 5))	; Can be worn on legs
+(defparameter +item-wear-feet+ (ash 1 6))	; Can be worn on feet
+(defparameter +item-wear-hands+ (ash 1 7))	; Can be worn on hands
+(defparameter +item-wear-arms+ (ash 1 8))	; Can be worn on arms
+(defparameter +item-wear-shield+ (ash 1 9))	; Can be used as a shield
+(defparameter +item-wear-about+ (ash 1 10))	; Can be worn about body
+(defparameter +item-wear-waist+ (ash 1 11))	; Can be worn around waist
+(defparameter +item-wear-wrist+ (ash 1 12))	; Can be worn on wrist
+(defparameter +item-wear-wield+ (ash 1 13))	; Can be wielded
+(defparameter +item-wear-hold+ (ash 1 14))	; Can be held
+(defparameter +item-wear-crotch+ (ash 1 15))	; guess where
+(defparameter +item-wear-eyes+ (ash 1 16))	; eyes
+(defparameter +item-wear-back+ (ash 1 17))	;Worn on back
+(defparameter +item-wear-belt+ (ash 1 18))	; Worn on a belt(ie, pouch)
+(defparameter +item-wear-face+ (ash 1 19))
+(defparameter +item-wear-ear+ (ash 1 20))
+(defparameter +item-wear-ass+ (ash 1 21))	;Can be RAMMED up an asshole
+(defparameter +num-wear-flags+ 22)
+
+;;; Extra object flags: used by obj_data.obj_flags.extra_flags
+(defparameter +item-glow+ (ash 1 0))	; Item is glowing
+(defparameter +item-hum+ (ash 1 1))	; Item is humming
+(defparameter +item-norent+ (ash 1 2))	; Item cannot be rented
+(defparameter +item-nodonate+ (ash 1 3))	; Item cannot be donated
+(defparameter +item-noinvis+ (ash 1 4))	; Item cannot be made invis
+(defparameter +item-invisible+ (ash 1 5))	; Item is invisible
+(defparameter +item-magic+ (ash 1 6))	; Item is magical
+(defparameter +item-nodrop+ (ash 1 7))	; Item is cursed: can't drop
+(defparameter +item-bless+ (ash 1 8))	; Item is blessed
+(defparameter +item-anti-good+ (ash 1 9))	; Not usable by good people
+(defparameter +item-anti-evil+ (ash 1 10))	; Not usable by evil people
+(defparameter +item-anti-neutral+ (ash 1 11))	; Not usable by neutral people
+(defparameter +item-anti-magic-user+ (ash 1 12))	; Not usable by mages
+(defparameter +item-anti-cleric+ (ash 1 13))	; Not usable by clerics
+(defparameter +item-anti-thief+ (ash 1 14))	; Not usable by thieves
+(defparameter +item-anti-warrior+ (ash 1 15))	; Not usable by warriors
+(defparameter +item-nosell+ (ash 1 16))	; Shopkeepers won't touch it
+(defparameter +item-anti-barb+ (ash 1 17))	; no barb
+(defparameter +item-anti-psychic+ (ash 1 18))	; no psychic
+(defparameter +item-anti-physic+ (ash 1 19))	; no physic
+(defparameter +item-anti-cyborg+ (ash 1 20))
+(defparameter +item-anti-knight+ (ash 1 21))
+(defparameter +item-anti-ranger+ (ash 1 22))
+(defparameter +item-anti-bard+ (ash 1 23))
+(defparameter +item-anti-monk+ (ash 1 24))
+(defparameter +item-blurred+ (ash 1 25))
+(defparameter +item-magic-nodispel+ (ash 1 26))
+(defparameter +item-unused+ (ash 1 27))
+(defparameter +item-repulsion-field+ (ash 1 28))
+(defparameter +item-transparent+ (ash 1 29))
+(defparameter +item-damned+ (ash 1 30))	; Evil equivalent to Bless
+(defparameter +num-extra-flags+ 31)
+
+(defparameter +item2-radioactive+ (ash 1 0))
+(defparameter +item2-anti-merc+ (ash 1 1))
+(defparameter +item2-anti-spare1+ (ash 1 2))
+(defparameter +item2-anti-spare2+ (ash 1 3))
+(defparameter +item2-anti-spare3+ (ash 1 4))
+(defparameter +item2-hidden+ (ash 1 5))
+(defparameter +item2-trapped+ (ash 1 6))
+(defparameter +item2-singular+ (ash 1 7))
+(defparameter +item2-nolocate+ (ash 1 8))
+(defparameter +item2-nosoil+ (ash 1 9))
+(defparameter +item2-cast-weapon+ (ash 1 10))
+(defparameter +item2-two-handed+ (ash 1 11))
+(defparameter +item2-body-part+ (ash 1 12))
+(defparameter +item2-ablaze+ (ash 1 13))
+(defparameter +item2-cursed-perm+ (ash 1 14))
+(defparameter +item2-noremove+ (ash 1 15))
+(defparameter +item2-thrown-weapon+ (ash 1 16))
+(defparameter +item2-godeq+ (ash 1 17))
+(defparameter +item2-no-mort+ (ash 1 18))
+(defparameter +item2-broken+ (ash 1 19))
+(defparameter +item2-implant+ (ash 1 20))
+(defparameter +item2-reinforced+ (ash 1 21))
+(defparameter +item2-enhanced+ (ash 1 22))
+(defparameter +item2-req-mort+ (ash 1 23))
+(defparameter +item2-protected-hunt+ (ash 1 28))
+(defparameter +item2-renamed+ (ash 1 29))
+(defparameter +item2-unapproved+ (ash 1 30))
+(defparameter +num-extra2-flags+ 31)
+
+;;; extra3 flags
+
+(defparameter +item3-req-mage+ (ash 1 0))
+(defparameter +item3-req-cleric+ (ash 1 1))
+(defparameter +item3-req-thief+ (ash 1 2))
+(defparameter +item3-req-warrior+ (ash 1 3))
+(defparameter +item3-req-barb+ (ash 1 4))
+(defparameter +item3-req-psionic+ (ash 1 5))
+(defparameter +item3-req-physic+ (ash 1 6))
+(defparameter +item3-req-cyborg+ (ash 1 7))
+(defparameter +item3-req-knight+ (ash 1 8))
+(defparameter +item3-req-ranger+ (ash 1 9))
+(defparameter +item3-req-bard+ (ash 1 10))
+(defparameter +item3-req-monk+ (ash 1 11))
+(defparameter +item3-req-vampire+ (ash 1 12))
+(defparameter +item3-req-mercenary+ (ash 1 13))
+(defparameter +item3-req-spare1+ (ash 1 14))
+(defparameter +item3-req-spare2+ (ash 1 15))
+(defparameter +item3-req-spare3+ (ash 1 16))
+(defparameter +item3-lattice-hardened+ (ash 1 17))
+(defparameter +item3-stay-zone+ (ash 1 18))
+(defparameter +item3-hunted+ (ash 1 19))
+(defparameter +item3-nomag+ (ash 1 20))
+(defparameter +item3-nosci+ (ash 1 21))
+(defparameter +num-extra3-flags+ 22)
+
+(defparameter +cont-closeable+ (ash 1 0))
+(defparameter +cont-pickproof+ (ash 1 1))
+(defparameter +cont-closed+ (ash 1 2))
+(defparameter +cont-locked+ (ash 1 3))
+
 (defclass obj-affected-type ()
   ((location :accessor location-of :initarg :location :initform nil)
    (modifier :accessor modifier-of :initarg :modifier :initform nil)))
@@ -157,20 +279,19 @@
 (defclass obj-data ()
   ((shared :accessor shared-of :initarg :shared)
    (in-room :accessor in-room-of :initarg :in-room :initform nil)
-   (cur-flow-pulse :accessor cur-flow-pulse-of :initarg :cur-flow-pulse)
-   (obj-flags :accessor obj-flags-of :initarg :obj-flags)
+   (cur-flow-pulse :accessor cur-flow-pulse-of :initform 0)
    (affected :accessor affected-of :initarg :affected
              :initform (make-array +max-obj-affect+ :initial-element nil))
    (name :accessor name-of :initarg :name)
    (aliases :accessor aliases-of :initarg :aliases)
    (line-desc :accessor line-desc-of :initarg :line-desc)
    (action-desc :accessor action-desc-of :initarg :action-desc)
-   (plrtext-len :accessor plrtext-len-of :initarg :plrtext-len)
+   (plrtext-len :accessor plrtext-len-of :initarg :plrtext-len :initform 0)
    (ex-description :accessor ex-description-of :initarg :ex-description :initform nil)
    (carried-by :accessor carried-by-of :initarg :carried-by :initform nil)
    (worn-by :accessor worn-by-of :initarg :worn-by :initform nil)
-   (worn-on :accessor worn-on-of :initarg :worn-on)
-   (soilage :accessor soilage-of :initarg :soilage)
+   (worn-on :accessor worn-on-of :initarg :worn-on :initform 0)
+   (soilage :accessor soilage-of :initarg :soilage :initform 0)
    (func-data :accessor func-data-of :initarg :func-data)
    (unique-id :accessor unique-id-of :initarg :unique-id)
    (creation-time :accessor creation-time-of :initarg :creation-time)
@@ -196,8 +317,37 @@
    (material :accessor material-of :initarg :material)
    (max-dam :accessor max-dam-of :initarg :max-dam)
    (damage :accessor damage-of :initarg :damage)
-   (sigil-idnum :accessor sigil-idnum-of :initarg :sigil-idnum)
-   (sigil-level :accessor sigil-level-of :initarg :sigil-level)))
+   (sigil-idnum :accessor sigil-idnum-of :initarg :sigil-idnum :initform 0)
+   (sigil-level :accessor sigil-level-of :initarg :sigil-level :initform 0)))
+
+(defun clone-object-proto (proto)
+  (make-instance 'obj-data
+                 :shared (shared-of proto)
+                 :name (name-of proto)
+                 :aliases (aliases-of proto)
+                 :line-desc (line-desc-of proto)
+                 :action-desc (action-desc-of proto)
+                 :plrtext-len (plrtext-len-of proto)
+                 :ex-description (ex-description-of proto)
+                 :worn-on (worn-on-of proto)
+                 :soilage (soilage-of proto)
+                 :creation-time (now)
+                 :creation-method 'unknown
+                 :creator 0
+                 :value (make-array 4 :initial-contents (value-of proto))
+                 :kind (kind-of proto)
+                 :wear-flags (wear-flags-of proto)
+                 :extra-flags (extra-flags-of proto)
+                 :extra2-flags (extra2-flags-of proto)
+                 :extra3-flags (extra3-flags-of proto)
+                 :weight (weight-of proto)
+                 :timer (timer-of proto)
+                 :bitvector (bitvector-of proto)
+                 :material (material-of proto)
+                 :max-dam (max-dam-of proto)
+                 :damage (damage-of proto)
+                 :sigil-idnum (sigil-idnum-of proto)
+                 :sigil-level (sigil-level-of proto)))
 
 (defmethod get-weight ((obj obj-data))
   (weight-of obj))
@@ -222,3 +372,38 @@
 
   (setf (weight-of obj) (+ (get-weight obj) mod-weight)))
 
+(defun is-obj-stat (obj flag)
+  (logtest (extra-flags-of obj) flag))
+(defun is-obj-stat2 (obj flag)
+  (logtest (extra2-flags-of obj) flag))
+(defun is-obj-stat3 (obj flag)
+  (logtest (extra3-flags-of obj) flag))
+
+(defun is-corpse (obj)
+  (and (= (kind-of obj) +item-container+)
+       (plusp (aref (value-of obj) 3))))
+(defun is-implant (obj)
+  (is-obj-stat2 obj +item2-implant+))
+(defun is-soilage (obj)
+  (or (= (vnum-of (shared-of obj)) +blood-vnum+)
+      (= (vnum-of (shared-of obj)) +ice-vnum+)))
+(defun same-obj (obj-a obj-b)
+  (= (vnum-of (shared-of obj-a)) (vnum-of (shared-of obj-b))))
+(defun can-wear (obj pos)
+  (logtest (worn-on-of obj) pos))
+
+(defun hidden-obj-prob (ch obj)
+  (+ (level-of ch)
+     (int-of ch)
+     (if (affected-by-spell ch +skill-hyperscan+) 40 0)
+     (if (aff3-flagged ch +aff3-sonic-imagery+) 30 0)
+     (if (aff2-flagged ch +aff2-true-seeing+) 60 0)
+     (if (pref-flagged ch +pref-holylight+) 500 0)
+     (if (is-obj-stat obj +item-glow+) -20 0)
+     (if (is-obj-stat obj +item-hum+) -20 0)
+     (if (and (is-cigarette obj) (smoke-lit obj)) 10 0)
+     (if (and (is-obj-stat obj +item-magic+)
+              (aff-flagged ch +aff-detect-magic+)) 20 0)))
+
+(defun is-cigarette (obj)
+  (= (kind-of obj) +item-cigarette+))

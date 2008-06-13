@@ -168,6 +168,244 @@
 (defparameter +pref-disp-vnums+ 55) ; show vnums after items ldesc
 (defparameter +pref-count+ 56)
 
+;;; Affect bits: used in Creature.char_specials.saved.affected_by
+;;; WARNING: In the world files, NEVER set the bits marked "R" ("Reserved")
+(defparameter +aff-blind+ (ash 1 0))	; (R) Char is blind
+(defparameter +aff-invisible+ (ash 1 1))	; Char is invisible
+(defparameter +aff-detect-align+ (ash 1 2))	; Char is sensitive to align
+(defparameter +aff-detect-invis+ (ash 1 3))	; Char can see invis chars
+(defparameter +aff-detect-magic+ (ash 1 4))	; Char is sensitive to magic
+(defparameter +aff-sense-life+ (ash 1 5))	; Char can sense hidden life
+(defparameter +aff-waterwalk+ (ash 1 6))	; Char can walk on water
+(defparameter +aff-sanctuary+ (ash 1 7))	; Char protected by sanct.
+(defparameter +aff-group+ (ash 1 8))	; (R) Char is grouped
+(defparameter +aff-curse+ (ash 1 9))	; Char is cursed
+(defparameter +aff-infravision+ (ash 1 10))	; Char can see in dark
+(defparameter +aff-poison+ (ash 1 11))	; (R) Char is poisoned
+(defparameter +aff-protect-evil+ (ash 1 12))	; Char protected from evil
+(defparameter +aff-protect-good+ (ash 1 13))	; Char protected from good
+(defparameter +aff-sleep+ (ash 1 14))	; (R) Char magically asleep
+(defparameter +aff-notrack+ (ash 1 15))	; Char can't be tracked
+(defparameter +aff-inflight+ (ash 1 16))	; Room for future expansion
+(defparameter +aff-time-warp+ (ash 1 17))	; Room for future expansion
+(defparameter +aff-sneak+ (ash 1 18))	; Char can move quietly
+(defparameter +aff-hide+ (ash 1 19))	; Char is hidden
+(defparameter +aff-waterbreath+ (ash 1 20))	; Room for future expansion
+(defparameter +aff-charm+ (ash 1 21))	; Char is charmed
+(defparameter +aff-confusion+ (ash 1 22))	; Char is confused
+(defparameter +aff-nopain+ (ash 1 23))	; Char feels no pain
+(defparameter +aff-retina+ (ash 1 24))	; Char's retina is stimulated
+(defparameter +aff-adrenaline+ (ash 1 25))	; Char's adrenaline is pumping
+(defparameter +aff-confidence+ (ash 1 26))	; Char is confident
+(defparameter +aff-rejuv+ (ash 1 27))	; Char is rejuvenating
+(defparameter +aff-regen+ (ash 1 28))	; Body is regenerating
+(defparameter +aff-glowlight+ (ash 1 29))	; Light spell is operating
+(defparameter +aff-blur+ (ash 1 30))	; Blurry image
+(defparameter +num-aff-flags+ 31)
+
+(defparameter +aff2-fluorescent+ (ash 1 0))
+(defparameter +aff2-transparent+ (ash 1 1))
+(defparameter +aff2-slow+ (ash 1 2))
+(defparameter +aff2-haste+ (ash 1 3))
+(defparameter +aff2-mounted+ (ash 1 4))	;DO NOT SET THIS IN MOB FILE
+(defparameter +aff2-fire-shield+ (ash 1 5))	; affected by Fire Shield
+(defparameter +aff2-berserk+ (ash 1 6))
+(defparameter +aff2-intimidated+ (ash 1 7))
+(defparameter +aff2-true-seeing+ (ash 1 8))
+(defparameter +aff2-divine-illumination+ (ash 1 9))
+(defparameter +aff2-protect-undead+ (ash 1 10))
+(defparameter +aff2-invis-to-undead+ (ash 1 11))
+(defparameter +aff2-animal-kin+ (ash 1 12))
+(defparameter +aff2-endure-cold+ (ash 1 13))
+(defparameter +aff2-paralyzed+ (ash 1 14))
+(defparameter +aff2-prot-lightning+ (ash 1 15))
+(defparameter +aff2-prot-fire+ (ash 1 16))
+(defparameter +aff2-telekinesis+ (ash 1 17))	; Char can carry more stuff
+(defparameter +aff2-prot-rad+ (ash 1 18))	; Enables Autoexits ! :)
+(defparameter +aff2-ablaze+ (ash 1 19))
+(defparameter +aff2-neck-protected+ (ash 1 20))	; Can't be beheaded
+(defparameter +aff2-displacement+ (ash 1 21))
+(defparameter +aff2-prot-devils+ (ash 1 22))
+(defparameter +aff2-meditate+ (ash 1 23))
+(defparameter +aff2-evade+ (ash 1 24))
+(defparameter +aff2-blade-barrier+ (ash 1 25))
+(defparameter +aff2-oblivity+ (ash 1 26))
+(defparameter +aff2-energy-field+ (ash 1 27))
+(defparameter +aff2-petrified+ (ash 1 28))
+(defparameter +aff2-vertigo+ (ash 1 29))
+(defparameter +aff2-prot-demons+ (ash 1 30))
+(defparameter +num-aff2-flags+ 31)
+
+(defparameter +aff3-attraction-field+ (ash 1 0))
+(defparameter +aff3-energy-leak+ (ash 1 1))
+(defparameter +aff3-poison-2+ (ash 1 2))
+(defparameter +aff3-poison-3+ (ash 1 3))
+(defparameter +aff3-sickness+ (ash 1 4))
+(defparameter +aff3-self-destruct+ (ash 1 5))	; Self-destruct sequence init
+(defparameter +aff3-damage-control+ (ash 1 6))	; Damage control for cyborgs
+(defparameter +aff3-stasis+ (ash 1 7))	; Borg is in static state
+(defparameter +aff3-prismatic-sphere+ (ash 1 8))	; Defensive
+(defparameter +aff3-radioactive+ (ash 1 9))
+(defparameter +aff3-detect-poison+ (ash 1 10))
+(defparameter +aff3-mana-tap+ (ash 1 11))
+(defparameter +aff3-energy-tap+ (ash 1 12))
+(defparameter +aff3-sonic-imagery+ (ash 1 13))
+(defparameter +aff3-shroud-obscurement+ (ash 1 14))
+(defparameter +aff3-nobreathe+ (ash 1 15))
+(defparameter +aff3-prot-heat+ (ash 1 16))
+(defparameter +aff3-psishield+ (ash 1 17))
+(defparameter +aff3-psychic-crush+ (ash 1 18))
+(defparameter +aff3-double-damage+ (ash 1 19))
+(defparameter +aff3-acidity+ (ash 1 20))
+(defparameter +aff3-hamstrung+ (ash 1 21))	; Bleeding badly from the leg
+(defparameter +aff3-gravity-well+ (ash 1 22))	; Pissed off a phyz and got hit by gravity well
+(defparameter +aff3-symbol-of-pain+ (ash 1 23))	; Char's mind is burning with pain
+(defparameter +aff3-emp-shield+ (ash 1 24))	; EMP SHIELDING
+(defparameter +aff3-inst-aff+ (ash 1 25))	; Affected by an instant affect
+(defparameter +aff3-tainted+ (ash 1 27))	; Knight spell, "taint"
+(defparameter +aff3-infiltrate+ (ash 1 28))	; Merc skill infiltrate
+(defparameter +aff3-divine-power+ (ash 1 29))
+(defparameter +aff3-mana-leak+ (ash 1 30))
+(defparameter +num-aff3-flags+ 31)
+
+(defparameter +array-aff-1+ 1)
+(defparameter +array-aff-2+ 2)
+(defparameter +array-aff-3+ 3)
+
+;;; Character equipment positions: used as index for Creature.equipment[]
+
+;; NOTE: Don't confuse these constants with the ITEM_ bitvectors
+;; which control the valid places you can wear a piece of equipment
+(defparameter +wear-light+ 0)
+(defparameter +wear-finger-r+ 1)
+(defparameter +wear-finger-l+ 2)
+(defparameter +wear-neck-1+ 3)
+(defparameter +wear-neck-2+ 4)
+(defparameter +wear-body+ 5)
+(defparameter +wear-head+ 6)
+(defparameter +wear-legs+ 7)
+(defparameter +wear-feet+ 8)
+(defparameter +wear-hands+ 9)
+(defparameter +wear-arms+ 10)
+(defparameter +wear-shield+ 11)
+(defparameter +wear-about+ 12)
+(defparameter +wear-waist+ 13)
+(defparameter +wear-wrist-r+ 14)
+(defparameter +wear-wrist-l+ 15)
+(defparameter +wear-wield+ 16)
+(defparameter +wear-hold+ 17)
+(defparameter +wear-crotch+ 18)
+(defparameter +wear-eyes+ 19)
+(defparameter +wear-back+ 20)
+(defparameter +wear-belt+ 21)
+(defparameter +wear-face+ 22)
+(defparameter +wear-ear-l+ 23)
+(defparameter +wear-ear-r+ 24)
+(defparameter +wear-wield-2+ 25)
+(defparameter +wear-ass+ 26)
+(defparameter +num-wears+ 27)	; This must be the # of eq positions!!
+(defparameter +wear-random+ 28)
+(defparameter +wear-mshield+ 29) ; This is for mana shield messages just increase it if new wear positions are added
+
+
+;;; Modifier constants used with obj affects ('A' fields)
+(defparameter +apply-none+ 0)	; No effect
+(defparameter +apply-str+ 1)	; Apply to strength
+(defparameter +apply-dex+ 2)	; Apply to dexterity
+(defparameter +apply-int+ 3)	; Apply to intellegence
+(defparameter +apply-wis+ 4)	; Apply to wisdom
+(defparameter +apply-con+ 5)	; Apply to constitution
+(defparameter +apply-cha+ 6)	; Apply to charisma
+(defparameter +apply-class+ 7)	; Reserved
+(defparameter +apply-level+ 8)	; Reserved
+(defparameter +apply-age+ 9)	; Apply to age
+(defparameter +apply-char-weight+ 10)	; Apply to weight
+(defparameter +apply-char-height+ 11)	; Apply to height
+(defparameter +apply-mana+ 12)	; Apply to max mana
+(defparameter +apply-hit+ 13)	; Apply to max hit points
+(defparameter +apply-move+ 14)	; Apply to max move points
+(defparameter +apply-gold+ 15)	; Reserved
+(defparameter +apply-exp+ 16)	; Reserved
+(defparameter +apply-ac+ 17)	; Apply to Armor Class
+(defparameter +apply-hitroll+ 18)	; Apply to hitroll
+(defparameter +apply-damroll+ 19)	; Apply to damage roll
+(defparameter +apply-saving-para+ 20)	; Apply to save throw: paralz
+(defparameter +apply-saving-rod+ 21)	; Apply to save throw: rods
+(defparameter +apply-saving-petri+ 22)	; Apply to save throw: petrif
+(defparameter +apply-saving-breath+ 23)	; Apply to save throw: breath
+(defparameter +apply-saving-spell+ 24)	; Apply to save throw: spells
+(defparameter +apply-sneak+ 25)
+(defparameter +apply-hide+ 26)
+(defparameter +apply-race+ 27)
+(defparameter +apply-sex+ 28)
+(defparameter +apply-backstab+ 29)
+(defparameter +apply-pick-lock+ 30)
+(defparameter +apply-punch+ 31)
+(defparameter +apply-shoot+ 32)
+(defparameter +apply-kick+ 33)
+(defparameter +apply-track+ 34)
+(defparameter +apply-impale+ 35)
+(defparameter +apply-behead+ 36)
+(defparameter +apply-throwing+ 37)
+(defparameter +apply-riding+ 38)
+(defparameter +apply-turn+ 39)
+(defparameter +apply-saving-chem+ 40)
+(defparameter +apply-saving-psi+ 41)
+(defparameter +apply-align+ 42)
+(defparameter +apply-saving-phy+ 43)
+(defparameter +apply-caster+ 44)	; special usage
+(defparameter +apply-weaponspeed+ 45)
+(defparameter +apply-disguise+ 46)
+(defparameter +apply-nothirst+ 47)
+(defparameter +apply-nohunger+ 48)
+(defparameter +apply-nodrunk+ 49)
+(defparameter +apply-speed+ 50)
+(defparameter +num-applies+ 51)
+
+
+;;; other miscellaneous defines ******************************************
+
+
+;;; Player conditions
+(defparameter +drunk+ 0)
+(defparameter +full+ 1)
+(defparameter +thirst+ 2)
+
+
+
+;;; other #defined constants *********************************************
+
+(defparameter +lvl-grimp+ 72)
+(defparameter +lvl-fishbone+ 71)
+(defparameter +lvl-lucifer+ 70)
+(defparameter +lvl-impl+ 69)
+(defparameter +lvl-entity+ 68)
+(defparameter +lvl-ancient+ +lvl-entity+)
+(defparameter +lvl-creator+ 67)
+(defparameter +lvl-grgod+ 66)
+(defparameter +lvl-timegod+ 65)
+(defparameter +lvl-deity+ 64)
+(defparameter +lvl-god+ 63)	; Lesser God
+(defparameter +lvl-energy+ 62)
+(defparameter +lvl-force+ 61)
+(defparameter +lvl-power+ 60)
+(defparameter +lvl-being+ 59)
+(defparameter +lvl-spirit+ 58)
+(defparameter +lvl-element+ 57)
+(defparameter +lvl-demi+ 56)
+(defparameter +lvl-eternal+ 55)
+(defparameter +lvl-ethereal+ 54)
+(defparameter +lvl-luminary+ 53)
+(defparameter +lvl-builder+ 52)
+(defparameter +lvl-immort+ 51)
+(defparameter +lvl-ambassador+ 50)
+
+(defparameter +lvl-freeze+ +lvl-immort+)
+(defparameter +lvl-can-ban+ +lvl-god+)
+(defparameter +lvl-violence+ +lvl-creator+)
+(defparameter +lvl-logall+ +lvl-creator+)
+(defparameter +lvl-can-return+ 10)
+
 (defun is-race (ch race)
   (= (race-of ch) race))
 (defun is-goblin (ch)
@@ -202,12 +440,12 @@
 (defclass mob-shared-data ()
   ((vnum :accessor vnum-of :initarg :vnum :initform nil)
    (svnum :accessor svnum-of :initarg :svnum :initform nil)
-   (number :accessor number-of :initarg :number :initform nil)
+   (number :accessor number-of :initarg :number :initform 0)
    (attack-type :accessor attack-type-of :initarg :attack-type :initform nil)
    (lair :accessor lair-of :initarg :lair :initform nil)
    (leader :accessor leader-of :initarg :leader :initform nil)
    (kills :accessor kills-of :initarg :kills :initform nil)
-   (loaded :accessor loaded-of :initarg :loaded :initform nil)
+   (loaded :accessor loaded-of :initarg :loaded :initform 0)
    (default-pos :accessor default-pos-of :initarg :default-pos :initform nil)
    (damnodice :accessor damnodice-of :initarg :damnodice :initform nil)
    (damsizedice :accessor damsizedice-of :initarg :damsizedice :initform nil)
@@ -245,7 +483,6 @@
    (tattoos :accessor tattoos-of :initarg :tattoos :initform nil)
    (carrying :accessor carrying-of :initarg :carrying :initform nil)
    (link :accessor link-of :initform nil)
-   (account :accessor account-of :initarg :account :initform nil)
    (followers :accessor followers-of :initarg :followers :initform nil)
    (master :accessor master-of :initarg :master :initform nil)
 
@@ -279,12 +516,10 @@
    (short-descr :accessor short-descr-of :initarg :short-descr :initform nil)
    (long-descr :accessor long-descr-of :initarg :long-descr :initform nil)
    (description :accessor description-of :initarg :description :initform nil)
-   (title :accessor title-of :initarg :title :initform nil)
    (char-class :accessor char-class-of :initarg :char-class :initform nil)
    (remort-char-class :accessor remort-char-class-of :initarg :remort-char-class :initform nil)
    (weight :accessor weight-of :initarg :weight :initform nil)
    (height :accessor height-of :initarg :height :initform nil)
-   (hometown :accessor hometown-of :initarg :hometown :initform nil)
    (sex :accessor sex-of :initarg :sex :initform nil)
    (race :accessor race-of :initarg :race :initform nil)
    (level :accessor level-of :initarg :level :initform nil)
@@ -313,7 +548,6 @@
    (saved :accessor saved-of :initarg :saved :initform nil)
 
    ;; Originally from char_language_data
-   (tongues-heard :accessor tongues-heard-of :initarg :tongues-heard :initform nil)
    (tongues :accessor tongues-of :initarg :tongues
             :initform (make-array +max-tongues+ :initial-element nil))
    (current-tongue :accessor current-tongue-of :initarg :current-tongue :initform nil)
@@ -331,9 +565,13 @@
 
 (defclass player (creature)
   ((saved :accessor saved-of :initarg :saved :initform nil)
+   (account :accessor account-of :initarg :account :initform nil)
+   (title :accessor title-of :initarg :title :initform nil)
+   (hometown :accessor hometown-of :initarg :hometown :initform nil)
    (poofin :accessor poofin-of :initarg :poofin :initform nil)
    (poofout :accessor poofout-of :initarg :poofout :initform nil)
    (aliases :accessor aliases-of :initarg :aliases :initform nil)
+   (tongues-heard :accessor tongues-heard-of :initarg :tongues-heard :initform nil)
    (last-tell-from :accessor last-tell-from-of :initarg :last-tell-from :initform nil)
    (last-tell-to :accessor last-tell-to-of :initarg :last-tell-to :initform nil)
    (imprint-rooms :accessor imprint-rooms-of :initarg :imprint-rooms :initform nil)
@@ -352,7 +590,7 @@
    (rent-per-day :accessor rent-per-day-of :initarg :rent-per-day :initform nil)
    (desc-mode :accessor desc-mode-of :initarg :desc-mode :initform nil)
    (rent-currency :accessor rent-currency-of :initarg :rent-currency :initform nil)
-   (skills :accessor skills-of :initarg :skills :initform nil)
+   (skills :accessor skills-of :initarg :skills :initform (make-array 1000 :element-type '(integer 0 127)))
    (weap-spec :accessor weap-spec-of :initarg :weap-spec :initform nil)
    (wimp-level :accessor wimp-level-of :initarg :wimp-level :initform nil)
    (freeze-level :accessor freeze-level-of :initarg :freeze-level :initform nil)
@@ -409,6 +647,60 @@
 (defmethod cha-of ((ch creature))
   (cha-of (aff-abils-of ch)))
 
+(defun clone-mobile-proto (proto)
+  (let ((maxhitp (if (zerop (max-hitp-of proto))
+                     (+ (dice (hitp-of proto) (mana-of proto)) (move-of proto))
+                     (random-range (hitp-of proto) (mana-of proto)))))
+  (make-instance 'mobile
+                 :shared (shared-of proto)
+                 :real-abils (copy-abilities (real-abils-of proto))
+                 :aff-abils (copy-abilities (aff-abils-of proto))
+                 :mana (max-mana-of proto)
+                 :max-mana (max-mana-of proto)
+                 :hitp maxhitp
+                 :max-hitp maxhitp
+                 :move (max-move-of proto)
+                 :max-move (max-move-of proto)
+                 :armor (armor-of proto)
+                 :gold (if (mob2-flagged proto +mob2-unapproved+)
+                           0 (rand-value (gold-of proto)
+                                         (* (gold-of proto) 0.15)
+                                         nil nil))
+                 :cash (if (mob2-flagged proto +mob2-unapproved+)
+                           0 (rand-value (cash-of proto)
+                                         (* (cash-of proto) 0.15)
+                                         nil nil))
+                 :exp (if (mob2-flagged proto +mob2-unapproved+)
+                           0 (exp-of proto))
+                 :hitroll (hitroll-of proto)
+                 :damroll (damroll-of proto)
+                 :remort-gen (remort-gen-of proto)
+                 :saves (saves-of proto)
+                 :aff-flags (aff-flags-of proto)
+                 :aff2-flags (aff2-flags-of proto)
+                 :aff3-flags (aff3-flags-of proto)
+                 :mob-flags (logior (mob-flags-of proto) +mob-isnpc+)
+                 :mob2-flags (mob2-flags-of proto)
+                 :alignment (alignment-of proto)
+                 :name (name-of proto)
+                 :short-descr (short-descr-of proto)
+                 :long-descr (long-descr-of proto)
+                 :description (description-of proto)
+                 :char-class (char-class-of proto)
+                 :remort-char-class (remort-char-class-of proto)
+                 :weight (weight-of proto)
+                 :height (height-of proto)
+                 :sex (sex-of proto)
+                 :race (race-of proto)
+                 :level (level-of proto)
+                 :birth-time (birth-time-of proto)
+                 :timer (timer-of proto)
+                 :meditate-timer (meditate-timer-of proto)
+                 :position (position-of proto)
+                 :weapon-proficiency (weapon-proficiency-of proto)
+                 :tongues (tongues-of proto)
+                 :current-tongue (current-tongue-of proto))))
+
 (defmethod modify-weight ((ch creature) mod-weight)
   (incf (weight-of ch) mod-weight))
 
@@ -422,13 +714,29 @@
   (bitp (prefs-of ch) pref))
 
 (defun mob-flagged (ch flag)
-  (logtest flag (mob-flags-of ch)))
+  (and (not (typep ch 'player))
+       (logtest (mob-flags-of ch) flag)))
 
 (defun mob2-flagged (ch flag)
-  (logtest flag (mob2-flags-of ch)))
+  (and (not (typep ch 'player))
+       (logtest flag (mob2-flags-of ch))))
 
 (defun immortalp (ch)
   (>= (level-of ch) 50))
 
 (defun noncorporealp (ch)
+  nil)
+
+(defun check-skill (ch skill)
+  (aref (skills-of ch) skill))
+
+(defun aff-flagged (ch flag)
+  (logtest (aff-flags-of ch) flag))
+(defun aff2-flagged (ch flag)
+  (logtest (aff2-flags-of ch) flag))
+(defun aff3-flagged (ch flag)
+  (logtest (aff3-flags-of ch) flag))
+
+
+(defun affected-by-spell (ch spell)
   nil)
