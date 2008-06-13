@@ -14,5 +14,7 @@
 (defun rand-value (val variance min max)
   (let ((variance-min (- val variance))
         (variance-max (+ val variance)))
-    (random-range (if min (max min variance-min) variance-min)
-                  (if max (min max variance-max) variance-max))))
+    (if (zerop variance)
+        val
+        (random-range (if min (max min variance-min) variance-min)
+                      (if max (min max variance-max) variance-max)))))
