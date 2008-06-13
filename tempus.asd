@@ -1,7 +1,7 @@
 (defpackage #:tempus-system (:use #:asdf #:cl))
 (in-package #:tempus-system)
 
-(declaim (optimize (debug 3) (speed 0) (safety 3) (space 2)))
+#.(declaim (optimize (debug 3) (speed 0) (safety 3) (space 2)))
 
 (defsystem tempus
   :name "Tempus"
@@ -88,6 +88,8 @@
                              :depends-on ("defs"))
              (:file "sight" :pathname "util/sight"
                             :depends-on ("defs"))
+             (:file "smokes" :pathname "objects/smokes"
+                            :depends-on ("defs"))
              (:file "spec-assign" :pathname "specials/spec-assign"
                                   :depends-on ("defs" "utils"))
              (:file "spec-procs" :pathname "specials/spec-procs"
@@ -102,6 +104,8 @@
                               :depends-on ("defs" "utils"))
              (:file "utils" :pathname "util/utils"
                             :depends-on ("defs"))
+             (:file "vehicle" :pathname "objects/vehicle"
+                              :depends-on ("zone-data"))
              (:file "weather" :pathname "util/weather"
                               :depends-on ("zone-data"))
              (:file "zone-data" :pathname "structs/zone-data"
