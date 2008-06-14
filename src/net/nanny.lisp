@@ -235,7 +235,7 @@
 #+nil  (display-contents (place player) player (brief-p (prefs-of player)))
   (when (probe-file (mail-pathname (idnum-of player)))
 	(send-to-char player "You have new mail.~%"))
-  (save-player player)
+  (save-player-to-xml player)
   (setf (state-of (link-of player)) 'playing))
 
 (defun send-section-header (cxn str)

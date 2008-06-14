@@ -88,4 +88,6 @@
         ("poofout" nil)
         ("alias" nil)))
     ch))
-    
+
+(defun save-player-to-xml (ch)
+  nil)
