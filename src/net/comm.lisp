@@ -137,9 +137,24 @@
                  (when (< elapsed 0.1)
                    (sleep (- 0.1 elapsed)))))))
 
+(defun get-first-printed-char (str)
+  "Returns the position of the first character that isn't a terminal
+control code."
+  (loop for idx = 0 then (+ 2 idx)
+		while (and (< idx (length str))
+				   (eql (char str idx) #\&))
+		finally (when (< idx (length str)) (return idx))))
+
 (defun send-to-char (ch fmt &rest args)
   (when (link-of ch)
-    (cxn-write (link-of ch) "~?" fmt args)))
+    (let* ((str (format nil "~?" fmt args))
+           (first-char-pos (get-first-printed-char str)))
+      (cxn-write (link-of ch) "~a"
+                 (if first-char-pos
+                     (string-upcase str
+                                    :start first-char-pos
+                                    :end (1+ first-char-pos))
+                     str)))))
 
 (defun verify-environment ()
   (let ((+player-subdirs+ '("character" "equipment" "housing" "mail" "corpses")))

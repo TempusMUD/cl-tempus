@@ -296,34 +296,37 @@ sequences in seq-list with the delimiter between each element"
 
 (defun act-str (viewer fmt subject target item pov)
   (with-output-to-string (result)
-	(loop for idx from 0 to (1- (length fmt)) do
-		  (princ
-		   (case (char fmt idx)
-			 (#\$
-			  (incf idx)
-			  (cond
-                ((eql (char fmt idx) #\{)
-				  (let ((default-mood
-							(subseq fmt
-									(1+ idx)
-									(position #\} fmt :start  idx))))
-					(incf idx (1+ (length default-mood)))
-					(or
-					 (mood-of subject)
-					 default-mood)))
-                ((eql (char fmt idx) #\[)
-                 (let ((end-brace-pos (position #\] fmt :start idx)))
-                   (prog1
-                       (subseq fmt (1+ idx) end-brace-pos)
-                     (setf idx end-brace-pos))))
-                (t
-				  (expand-dollar (char fmt idx) viewer subject target item pov))))
-			 (#\&
-			  (incf idx)
-			  (concatenate 'string "&" (list (char fmt idx))))
-			 (t
-			  (char fmt idx)))
-		   result))))
+	(loop 
+       with initial-printable = t
+       for idx from 0 to (1- (length fmt))
+       do
+       (princ
+        (case (char fmt idx)
+          (#\$
+           (incf idx)
+           (cond
+             ((eql (char fmt idx) #\{)
+              (let ((default-mood
+                     (subseq fmt
+                             (1+ idx)
+                             (position #\} fmt :start idx))))
+                (incf idx (1+ (length default-mood)))
+                (or
+                 (mood-of subject)
+                 default-mood)))
+             ((eql (char fmt idx) #\[)
+              (let ((end-brace-pos (position #\] fmt :start idx)))
+                (prog1
+                    (subseq fmt (1+ idx) end-brace-pos)
+                  (setf idx end-brace-pos))))
+             (t
+              (expand-dollar (char fmt idx) viewer subject target item pov))))
+          (#\&
+           (incf idx)
+           (concatenate 'string "&" (list (char fmt idx))))
+          (t
+           (char fmt idx)))
+        result))))
 
 (defun send-act-str (viewer emit subject target item pov)
   (when (or (can-see viewer subject)
