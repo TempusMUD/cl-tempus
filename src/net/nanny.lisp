@@ -178,7 +178,7 @@
     ((eql (char str 0) #\\)
      ;; Backslashes reference a literal command
      (string-left-trim '(#\\) str))
-    ((not (player-p actor))
+    ((not (typep actor 'player))
      ;; Mobiles don't have aliases
      str)
     (t
@@ -188,7 +188,6 @@
          (if alias
              (apply-player-alias actor alias args)
              str))))))
-
 
 (defun player-pathname (idnum)
   (make-pathname :name (princ-to-string idnum)
@@ -459,16 +458,15 @@ choose a password to use on this system.
       (setf (actor-of cxn)
             (make-instance 'player
                            :idnum (1+ (max-player-id))
-                           :name (string-capitalize line)
-                           :prefs (make-player-prefs)))
-      (setf (state-of cxn) 'new-player-species))
+                           :name (string-capitalize line)))
+      (setf (state-of cxn) 'new-player-race))
      (t
       (cxn-write cxn "~%You have entered an invalid name.  Try again.~%")))))
 
-(define-connection-state new-player-species
+(define-connection-state new-player-race
   (menu (cxn)
    (cxn-write cxn "&@")
-   (send-section-header cxn "species")
+   (send-section-header cxn "race")
    (cxn-write cxn "
              Human                       Elf
              Dwarf                       Halfling
@@ -476,14 +474,14 @@ choose a password to use on this system.
 
 "))
   (prompt (cxn)
-    (cxn-write cxn "Enter the species you want for this character: "))
+    (cxn-write cxn "Enter the race you want for this character: "))
   (input (cxn line)
     (cond
       ((or (string= line "")
-           (null (species-by-name line)))
-       (cxn-write cxn "~%You need to enter one of the listed species.~%~%"))
+           (null (race-by-name line)))
+       (cxn-write cxn "~%You need to enter one of the listed races.~%~%"))
       (t
-       (setf (species (actor-of cxn)) (idnum-of (species-by-name line)))
+       (setf (race-of (actor-of cxn)) (idnum-of (race-by-name line)))
        (setf (state-of cxn) 'new-player-sex)))))
 
 (define-connection-state new-player-sex
@@ -500,8 +498,8 @@ choose a password to use on this system.
       (cxn-write cxn "~%You can only be a male or a female!~%~%"))
      (t
       (if (eql (char-downcase (char line 0)) #\m)
-          (setf (sex (actor-of cxn)) 'male)
-          (setf (sex (actor-of cxn)) 'female))
+          (setf (sex-of (actor-of cxn)) 'male)
+          (setf (sex-of (actor-of cxn)) 'female))
       (setf (state-of cxn) 'new-player-eyes)))))
 
 (define-connection-state set-password-auth

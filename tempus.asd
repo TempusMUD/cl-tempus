@@ -68,8 +68,10 @@
                             :depends-on ("defs" "utils"))
              (:file "interpreter" :pathname "interpreter/interpreter"
                               :depends-on ("defs" "utils"))
+             (:file "login" :pathname "misc/login"
+                            :depends-on ("defs"))
              (:file "nanny" :pathname "net/nanny"
-                            :depends-on ("defs" "utils" "network"))
+                            :depends-on ("defs" "utils" "network" "login"))
              (:file "network" :pathname "net/network"
                               :depends-on ("defs" "utils"))
              (:file "obj-data" :pathname "structs/obj-data"
