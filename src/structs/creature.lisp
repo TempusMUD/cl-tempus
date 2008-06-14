@@ -513,6 +513,7 @@
 
    ;; Originally from char_player_data
    (name :accessor name-of :initarg :name :initform nil)
+   (aliases :accessor aliases-of :initarg :aliases :initform nil)
    (short-descr :accessor short-descr-of :initarg :short-descr :initform nil)
    (long-descr :accessor long-descr-of :initarg :long-descr :initform nil)
    (description :accessor description-of :initarg :description :initform nil)
@@ -570,7 +571,7 @@
    (hometown :accessor hometown-of :initarg :hometown :initform nil)
    (poofin :accessor poofin-of :initarg :poofin :initform nil)
    (poofout :accessor poofout-of :initarg :poofout :initform nil)
-   (aliases :accessor aliases-of :initarg :aliases :initform nil)
+   (command-aliases :accessor command-aliases-of :initarg :command-aliases :initform nil)
    (tongues-heard :accessor tongues-heard-of :initarg :tongues-heard :initform nil)
    (last-tell-from :accessor last-tell-from-of :initarg :last-tell-from :initform nil)
    (last-tell-to :accessor last-tell-to-of :initarg :last-tell-to :initform nil)

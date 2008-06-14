@@ -184,7 +184,7 @@
     (t
      ;; Find any alias and apply it
      (with-words str (cmd &rest args)
-       (let ((alias (assoc cmd (player-aliases actor) :test #'string-equal)))
+       (let ((alias (assoc cmd (command-aliases-of actor) :test #'string-equal)))
          (if alias
              (apply-player-alias actor alias args)
              str))))))
