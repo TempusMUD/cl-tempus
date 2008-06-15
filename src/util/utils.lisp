@@ -531,3 +531,12 @@ of immediately."
 
 (defun player-in-world (idnum)
   (find idnum *characters* :key #'idnum-of))
+
+(defun describe-char (viewer subject)
+  (cond
+    ((can-see-creature viewer subject)
+     (get-disguised-name subject viewer))
+    ((immortalp subject)
+     "a divine presence")
+    (t
+     "someone")))

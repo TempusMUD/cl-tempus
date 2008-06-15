@@ -195,3 +195,9 @@
 
 (defun room-flagged (room flag)
   (logtest flag (flags-of room)))
+
+(defun room-is-underwater (room)
+  (let ((terrain (terrain-of room)))
+    (or (= terrain +sect-underwater+)
+        (= terrain +sect-elemental-water+)
+        (= terrain +sect-deep-ocean+))))

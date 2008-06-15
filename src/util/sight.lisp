@@ -11,3 +11,6 @@
 
 (defun can-see-object (ch object)
   t)
+
+(defun can-see-creature (ch target)
+  t)
