@@ -1,5 +1,112 @@
 (in-package :tempus)
 
+;;; PC char_classes
+(defparameter +class-help+ -2)
+(defparameter +class-undefined+ -1)
+(defparameter +class-none+ -1)
+(defparameter +class-magic-user+ 0)
+(defparameter +class-mage+ +class-magic-user+)
+(defparameter +class-cleric+ 1)
+(defparameter +class-thief+ 2)
+(defparameter +class-warrior+ 3)
+(defparameter +class-barb+ 4)
+(defparameter +class-psionic+ 5)	; F
+(defparameter +class-physic+ 6)	; F
+(defparameter +class-cyborg+ 7)	; F
+(defparameter +class-knight+ 8)
+(defparameter +class-ranger+ 9)
+(defparameter +class-bard+ 10)	; N
+(defparameter +class-monk+ 11)
+(defparameter +class-vampire+ 12)
+(defparameter +class-mercenary+ 13)
+(defparameter +class-spare1+ 14)
+(defparameter +class-spare2+ 15)
+(defparameter +class-spare3+ 16)
+
+(defparameter +num-classes+ 17)	; This must be the number of char_classes!!
+(defparameter +class-normal+ 50)
+(defparameter +class-bird+ 51)
+(defparameter +class-predator+ 52)
+(defparameter +class-snake+ 53)
+(defparameter +class-horse+ 54)
+(defparameter +class-small+ 55)
+(defparameter +class-medium+ 56)
+(defparameter +class-large+ 57)
+(defparameter +class-scientist+ 58)
+(defparameter +class-skeleton+ 60)
+(defparameter +class-ghoul+ 61)
+(defparameter +class-shadow+ 62)
+(defparameter +class-wight+ 63)
+(defparameter +class-wraith+ 64)
+(defparameter +class-mummy+ 65)
+(defparameter +class-spectre+ 66)
+(defparameter +class-npc-vampire+ 67)
+(defparameter +class-ghost+ 68)
+(defparameter +class-lich+ 69)
+(defparameter +class-zombie+ 70)
+
+(defparameter +class-earth+ 81)	; Elementals
+(defparameter +class-fire+ 82)
+(defparameter +class-water+ 83)
+(defparameter +class-air+ 84)
+(defparameter +class-lightning+ 85)
+(defparameter +class-green+ 91)	; Dragons
+(defparameter +class-white+ 92)
+(defparameter +class-black+ 93)
+(defparameter +class-blue+ 94)
+(defparameter +class-red+ 95)
+(defparameter +class-silver+ 96)
+(defparameter +class-shadow-d+ 97)
+(defparameter +class-deep+ 98)
+(defparameter +class-turtle+ 99)
+(defparameter +class-least+ 101)	; Devils
+(defparameter +class-lesser+ 102)
+(defparameter +class-greater+ 103)
+(defparameter +class-duke+ 104)
+(defparameter +class-arch+ 105)
+(defparameter +class-hill+ 111)
+(defparameter +class-stone+ 112)
+(defparameter +class-frost+ 113)
+(defparameter +class-fire-g+ 114)
+(defparameter +class-cloud+ 115)
+(defparameter +class-storm+ 116)
+(defparameter +class-slaad-red+ 120)	; Slaad
+(defparameter +class-slaad-blue+ 121)
+(defparameter +class-slaad-green+ 122)
+(defparameter +class-slaad-grey+ 123)
+(defparameter +class-slaad-death+ 124)
+(defparameter +class-slaad-lord+ 125)
+(defparameter +class-demon-i+ 130)	; Demons of the Abyss
+(defparameter +class-demon-ii+ 131)
+(defparameter +class-demon-iii+ 132)
+(defparameter +class-demon-iv+ 133)
+(defparameter +class-demon-v+ 134)
+(defparameter +class-demon-vi+ 135)
+(defparameter +class-demon-semi+ 136)
+(defparameter +class-demon-minor+ 137)
+(defparameter +class-demon-major+ 138)
+(defparameter +class-demon-lord+ 139)
+(defparameter +class-demon-prince+ 140)
+(defparameter +class-deva-astral+ 150)
+(defparameter +class-deva-monadic+ 151)
+(defparameter +class-deva-movanic+ 152)
+(defparameter +class-mephit-fire+ 160)
+(defparameter +class-mephit-lava+ 161)
+(defparameter +class-mephit-smoke+ 162)
+(defparameter +class-mephit-steam+ 163)
+(defparameter +class-daemon-arcana+ 170)	// daemons
+(defparameter +class-daemon-charona+ 171)
+(defparameter +class-daemon-dergho+ 172)
+(defparameter +class-daemon-hydro+ 173)
+(defparameter +class-daemon-pisco+ 174)
+(defparameter +class-daemon-ultro+ 175)
+(defparameter +class-daemon-yagno+ 176)
+(defparameter +class-daemon-pyro+ 177)
+(defparameter +class-godling+ 178)
+(defparameter +class-diety+ 179)
+
+(defparameter +top-class+ 180)
+
 (defparameter +race-human+ 0)
 (defparameter +race-elf+ 1)
 (defparameter +race-dwarf+ 2)
@@ -64,6 +171,60 @@
 (defparameter +sex-neuter+ 0)
 (defparameter +sex-male+ 1)
 (defparameter +sex-female+ 2)
+
+;;; Positions
+(defparameter +bottom-pos+ 0)
+(defparameter +pos-dead+ 0)	; dead
+(defparameter +pos-mortallyw+ 1)	; mortally wounded
+(defparameter +pos-incap+ 2)	; incapacitated
+(defparameter +pos-stunned+ 3)	; stunned
+(defparameter +pos-sleeping+ 4)	; sleeping
+(defparameter +pos-resting+ 5)	; resting
+(defparameter +pos-sitting+ 6)	; sitting
+(defparameter +pos-fighting+ 7)	; fighting
+(defparameter +pos-standing+ 8)	; standing
+(defparameter +pos-flying+ 9)	; flying around
+(defparameter +pos-mounted+ 10)
+(defparameter +pos-swimming+ 11)
+(defparameter +top-pos+ 11)
+
+;;; Player flags: used by Creature.char_specials.act
+(defparameter +plr-killer+ (ash 1 0))	; Player is a player-killer
+(defparameter +plr-thief+ (ash 1 1))	; Player is a player-thief
+(defparameter +plr-frozen+ (ash 1 2))	; Player is frozen
+(defparameter +plr-dontset+ (ash 1 3))	; Don't EVER set (ISNPC bit)
+(defparameter +plr-writing+ (ash 1 4))	; Player writing (board/mail/olc)
+(defparameter +plr-mailing+ (ash 1 5))	; Player is writing mail
+(defparameter +plr-crash+ (ash 1 6))	; Player needs to be crash-saved
+(defparameter +plr-siteok+ (ash 1 7))	; Player has been site-cleared
+(defparameter +plr-noshout+ (ash 1 8))	; Player not allowed to shout/goss
+(defparameter +plr-notitle+ (ash 1 9))	; Player not allowed to set title
+(defparameter +plr-deleted+ (ash 1 10))	; Player deleted - space reusable
+(defparameter +plr-loadroom+ (ash 1 11))	; Player uses nonstandard loadroom
+(defparameter +plr-noclanmail+ (ash 1 12))	; Player doesn't get clanmail
+(defparameter +plr-nodelete+ (ash 1 13))	; Player shouldn't be deleted
+(defparameter +plr-invstart+ (ash 1 14))	; Player should enter game wizinvis
+(defparameter +plr-cryo+ (ash 1 15))	; Player is cryo-saved (purge prog)
+(defparameter +plr-afk+ (ash 1 16))	; Player is away from keyboard
+(defparameter +plr-clan-leader+ (ash 1 17))	; The head of the respective clan
+(defparameter +plr-unused2+ (ash 1 18))
+(defparameter +plr-olc+ (ash 1 19))	; Player is descripting olc
+(defparameter +plr-halt+ (ash 1 20))	; Player is halted
+(defparameter +plr-olcgod+ (ash 1 21))	; Player can edit at will
+(defparameter +plr-tester+ (ash 1 22))	; Player is a tester
+(defparameter +plr-unused3+ (ash 1 23))	; Quest god
+(defparameter +plr-mortalized+ (ash 1 24))	; God can be killed
+(defparameter +plr-unused4+ (ash 1 25))
+(defparameter +plr-unused6+ (ash 1 26))
+(defparameter +plr-nopost+ (ash 1 27))
+(defparameter +plr-log+ (ash 1 28))	; log all cmds
+(defparameter +plr-unused5+ (ash 1 29))	; player approved for port olc
+(defparameter +plr-nopk+ (ash 1 30))	; player cannot pk
+
+;; Player Flags Mark II
+(defparameter +plr2-soulless+ (ash 1 0))	; Signing the Unholy Compact.
+(defparameter +plr2-buried+ (ash 1 1))	; Player has died way too many times.
+(defparameter +plr2-in-combat+ (ash 1 2))
 
 (defparameter +mob-spec+ (ash 1 0))	; Mob has a callable spec-proc
 (defparameter +mob-sentinel+ (ash 1 1))	; Mob should not move
@@ -565,14 +726,14 @@
    (prog-marker :accessor prog-marker-of :initarg :prog-marker :initform nil)))
 
 (defclass player (creature)
-  ((saved :accessor saved-of :initarg :saved :initform nil)
-   (account :accessor account-of :initarg :account :initform nil)
+  ((account :accessor account-of :initarg :account :initform nil)
    (title :accessor title-of :initarg :title :initform nil)
    (hometown :accessor hometown-of :initarg :hometown :initform nil)
    (poofin :accessor poofin-of :initarg :poofin :initform nil)
    (poofout :accessor poofout-of :initarg :poofout :initform nil)
    (command-aliases :accessor command-aliases-of :initarg :command-aliases :initform nil)
    (tongues-heard :accessor tongues-heard-of :initarg :tongues-heard :initform nil)
+   (afk-reason :accessor afk-reason-of :initarg :afk-reason :initform nil)
    (last-tell-from :accessor last-tell-from-of :initarg :last-tell-from :initform nil)
    (last-tell-to :accessor last-tell-to-of :initarg :last-tell-to :initform nil)
    (imprint-rooms :accessor imprint-rooms-of :initarg :imprint-rooms :initform nil)
@@ -617,6 +778,7 @@
    (total-dam :accessor total-dam-of :initarg :total-dam :initform nil)
    (hold-load-room :accessor hold-load-room-of :initarg :hold-load-room :initform nil)
    (quest-id :accessor quest-id-of :initarg :quest-id :initform nil)
+   (plr-bits :accessor plr-bits-of :initarg :plr-bits :initform nil)
    (plr2-bits :accessor plr2-bits-of :initarg :plr2-bits :initform nil)
    (reputation :accessor reputation-of :initarg :reputation :initform nil)
    (killer-severity :accessor killer-severity-of :initarg :killer-severity :initform nil)
@@ -737,7 +899,56 @@
   (logtest (aff2-flags-of ch) flag))
 (defun aff3-flagged (ch flag)
   (logtest (aff3-flags-of ch) flag))
+(defun plr-flagged (ch flag)
+  (and (typep ch 'player)
+       (logtest (plr-bits-of ch) flag)))
+(defun plr2-flagged (ch flag)
+  (and (typep ch 'player)
+       (logtest (plr2-bits-of ch) flag)))
+(defun is-good (ch) (>= (alignment-of ch) 350))
+(defun is-evil (ch) (<= (alignment-of ch) -350))
+(defun is-neutral (ch) (< -350 (alignment-of ch) 350))
+(defun is-sick (ch) (aff3-flagged ch +aff3-sickness+))
+(defun is-hamstrung (ch) (aff3-flagged ch +aff3-hamstrung+))
+(defun has-poison-1 (ch) (aff-flagged ch +aff-poison+))
+(defun has-poison-2 (ch) (aff3-flagged ch +aff3-poison-2+))
+(defun has-poison-3 (ch) (aff3-flagged ch +aff3-poison-2+))
 
+(defun is-npc (ch) (typep ch 'mobile))
+(defun is-cleric (ch) (or (eql (char-class-of ch) +class-cleric+)
+                          (eql (remort-char-class-of ch) +class-cleric+)))
+
+(defun can-detect-disguise (ch vict level)
+  (or (pref-flagged ch +pref-holylight+)
+      (aff2-flagged ch +aff2-true-seeing+)
+      (> (+ (int-of ch) (wis-of ch))
+         (+ level (cha-of vict)))))
+(defun get-disguised-name (ch tch)
+  (let* ((af (affected-by-spell tch +skill-disguise+))
+         (mob (when af (real-mobile-proto (modifier-of af)))))
+    (cond
+      ((or (is-npc tch)
+           (null af)
+           (null mob))
+       (short-descr-of tch))
+      ((can-detect-disguise ch tch (duration-of af))
+       (format nil "~a (disguised as ~a)"
+               (short-descr-of tch)
+               (short-descr-of mob)))
+      (t
+       (short-descr-of mob)))))
+(defun testerp (ch)
+  nil)
+
+(defun get-level-bonus (ch)
+  0)
+
+(defun in-same-group-p (ch tch)
+  (and (aff-flagged ch +aff-group+)
+       (aff-flagged tch +aff-group+)
+       (or (eql ch (master-of tch))
+           (eql tch (master-of ch))
+           (eql (master-of ch) (master-of tch)))))
 
 (defun affected-by-spell (ch spell)
   nil)
