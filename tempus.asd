@@ -73,7 +73,7 @@
              (:file "nanny" :pathname "net/nanny"
                             :depends-on ("defs" "utils" "network" "login"))
              (:file "network" :pathname "net/network"
-                              :depends-on ("defs" "utils"))
+                              :depends-on ("defs"))
              (:file "obj-data" :pathname "structs/obj-data"
                                :depends-on ("defs"))
              (:file "paths" :pathname "objects/paths"
@@ -105,7 +105,7 @@
              (:file "tongues" :pathname "social/tongues"
                               :depends-on ("defs" "utils"))
              (:file "utils" :pathname "util/utils"
-                            :depends-on ("defs"))
+                            :depends-on ("defs" "network"))
              (:file "vehicle" :pathname "objects/vehicle"
                               :depends-on ("zone-data"))
              (:file "weather" :pathname "util/weather"

@@ -307,3 +307,12 @@ if cxn disconnected"
 	(dolist (cxn *cxns*)
 	  (unless (eql cxn not-cxn)
 		(cxn-write cxn "~a" str)))))
+
+(defclass tempus-cxn (data-cxn)
+  ((state :accessor state-of :initform 'login :type symbol)
+   (need-prompt :accessor need-prompt-p :initform t)
+   (account :accessor account-of :type (or null account) :initform nil)
+   (actor :accessor actor-of :initform nil)
+   (page-buf :accessor page-buf-of :initform "")
+   (mode-data :accessor mode-data-of :initform nil)))
+

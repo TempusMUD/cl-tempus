@@ -61,14 +61,6 @@
 
 (defvar *cxn-paginate* nil)
 
-(defclass tempus-cxn (data-cxn)
-  ((state :accessor state-of :initform 'login :type symbol)
-   (need-prompt :accessor need-prompt-p :initform t)
-   (account :accessor account-of :type (or null account) :initform nil)
-   (actor :accessor actor-of :initform nil)
-   (page-buf :accessor page-buf-of :initform "")
-   (mode-data :accessor mode-data-of :initform nil)))
-
 (defmethod send-state-menu ((cxn tempus-cxn) state)
   (declare (ignore cxn state))
   nil)
