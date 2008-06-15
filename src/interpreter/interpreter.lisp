@@ -63,6 +63,8 @@
       ("goto"
        (perform-goto ch (parse-integer args)))
       ("quit"
+       (char-from-room ch)
+       (setf *characters* (delete ch *characters*))
        (setf (state-of (link-of ch)) 'main-menu))
       ("look"
        (look-at-room ch (in-room-of ch) t))
