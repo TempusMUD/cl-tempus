@@ -72,7 +72,9 @@
          (when (= (home-room-of ch) -1)
            (setf (home-room-of ch) nil)))
         ("quest" nil)
-        ("bits" nil)
+        ("bits"
+         (setf (plr-bits-of ch) (xml-attr node "flag1" :hex t))
+         (setf (plr2-bits-of ch) (xml-attr node "flag2" :hex t)))
         ("prefs"
          (let ((prefs (make-array 64 :element-type 'bit)))
            (let ((num (xml-attr node "flag1" :hex t)))
@@ -82,7 +84,10 @@
              (dotimes (bit-index 32)
                (setf (bit prefs (+ 30 bit-index)) (if (logbitp bit-index num) 1 0))))
            (setf (prefs-of ch) prefs)))
-        ("affects" nil)
+        ("affects"
+         (setf (aff-flags-of ch) (xml-attr node "flag1" :hex t))
+         (setf (aff2-flags-of ch) (xml-attr node "flag2" :hex t))
+         (setf (aff3-flags-of ch) (xml-attr node "flag2" :hex t)))
         ("immort" nil)
         ("poofin" nil)
         ("poofout" nil)
