@@ -696,7 +696,8 @@
           (proto-of (shared-of mobile)) mobile
           (name-of mobile) (fread-string inf)
           (short-descr-of mobile) (fread-string inf)
-          (long-descr-of mobile) (fread-string inf)
+          (long-descr-of mobile) (string-right-trim '(#\return #\newline)
+                                                    (fread-string inf))
           (description-of mobile) (fread-string inf)
           (str-of (real-abils-of mobile)) 11
           (str-add-of (real-abils-of mobile)) 0
@@ -1038,10 +1039,10 @@
         (t
          (setf (gold-of mob) (rand-value (gold-of mob)
                                          (truncate (* (gold-of mob) 0.15))
-                                         -1 -1))
+                                         nil nil))
          (setf (cash-of mob) (rand-value (cash-of mob)
                                          (truncate (* (cash-of mob) 0.15))
-                                         -1 -1))))
+                                         nil nil))))
 
       (push mob *characters*)
       (setf (gethash (- (mob-idnum-of mob)) *character-map*) mob)
@@ -1067,8 +1068,8 @@
   (dolist (ch *characters*)
     (when (and (eql (zone-of (in-room-of ch)) zone)
                (mob-flagged ch +mob-spec+)
-               (func-of ch))
-      (funcall (func-of ch) ch ch 0 "" +special-reset+)))
+               (func-of (shared-of ch)))
+      (funcall (func-of (shared-of ch)) ch ch 0 "" +special-reset+)))
 
   (let ((last-cmd 0)
         (prob-override nil))
@@ -1101,7 +1102,7 @@
               (cond
                 ((null tmob)
                  (setf last-cmd 0))
-                ((< (number-of (shared-of tmob)) (arg2-of zone-cmd))
+                ((> (number-of (shared-of tmob)) (arg2-of zone-cmd))
                  (setf last-cmd 0))
                 ((null room)
                  (setf last-cmd 0))
