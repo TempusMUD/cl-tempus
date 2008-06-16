@@ -131,7 +131,8 @@
 	(dolist (cxn *cxns*)
 	  (when (and (typep cxn 'tempus-cxn)
                  (eql (state-of cxn) 'playing)
-                 (actor-of cxn))
+                 (actor-of cxn)
+                 (immortalp (actor-of cxn)))
 		(cxn-write cxn "&g[ ~a - ~a ]&n~%"
                    (string-replace "&" message "&&")
                    (format-timestring nil (now)
