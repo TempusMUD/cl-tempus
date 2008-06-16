@@ -623,11 +623,11 @@ choose a password to use on this system.
      (t
       (cxn-write cxn "&W< ~@[&G~a&YH ~]~@[&M~a&YM ~]~@[&C~a&YV ~]&W>&n "
                  (when (pref-flagged (actor-of cxn) +pref-disphp+)
-                   (hitp-of (actor-of cxn))
+                   (hitp-of (actor-of cxn)))
                  (when (pref-flagged (actor-of cxn) +pref-dispmana+)
-                   (mana-of (actor-of cxn))
+                   (mana-of (actor-of cxn)))
                  (when (pref-flagged (actor-of cxn) +pref-dispmove+)
-                   (move-of (actor-of cxn)))))))))
+                   (move-of (actor-of cxn)))))))
   (input (cxn line)
 ;;   (unless (and (action (actor-of cxn))
 ;;                (interpret (action (actor-of cxn)) line))
