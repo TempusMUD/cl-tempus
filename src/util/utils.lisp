@@ -132,8 +132,14 @@
 	  (when (and (typep cxn 'tempus-cxn)
                  (eql (state-of cxn) 'playing)
                  (actor-of cxn))
-		(cxn-write cxn "&g[ ~a ]&n~%"
-                   (string-replace "&" message "&&"))))
+		(cxn-write cxn "&g[ ~a - ~a ]&n~%"
+                   (string-replace "&" message "&&")
+                   (format-timestring nil (now)
+                                      :format '(:short-month #\space
+                                                (:day 2 #\space) #\space
+                                                :hour #\:
+                                                (:min 2) #\:
+                                                (:sec 2))))))
 	(when write-to-file
       (syslog "~a" message))))
 
