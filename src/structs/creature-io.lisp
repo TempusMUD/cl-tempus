@@ -82,7 +82,8 @@
                (setf (bit prefs bit-index) (if (logbitp bit-index num) 1 0))))
            (let ((num (xml-attr node "flag2" :hex t)))
              (dotimes (bit-index 32)
-               (setf (bit prefs (+ 30 bit-index)) (if (logbitp bit-index num) 1 0))))
+               (setf (bit prefs (+ 31 bit-index))
+                     (if (logbitp bit-index num) 1 0))))
            (setf (prefs-of ch) prefs)))
         ("affects"
          (setf (aff-flags-of ch) (xml-attr node "flag1" :hex t))
