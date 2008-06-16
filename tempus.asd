@@ -45,6 +45,8 @@
                               :depends-on ("creature"))
              (:file "ban" :pathname "net/ban"
                           :depends-on ("defs" "utils"))
+             (:file "bomb" :pathname "objects/bomb"
+                          :depends-on ("defs" "utils"))
              (:file "constants" :pathname "db/constants")
              (:file "clan" :pathname "clan/clan"
                            :depends-on ("defs" "utils"))
