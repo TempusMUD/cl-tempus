@@ -703,7 +703,7 @@
    (cur-flow-pulse :accessor cur-flow-pulse-of :initarg :cur-flow-pulse :initform nil)
    (breath-count :accessor breath-count-of :initarg :breath-count :initform nil)
    (fall-count :accessor fall-count-of :initarg :fall-count :initform nil)
-   (position :accessor position-of :initarg :position :initform nil)
+   (position :accessor position-of :initarg :position :initform +pos-standing+)
    (carry-items :accessor carry-items-of :initarg :carry-items :initform nil)
    (weapon-proficiency :accessor weapon-proficiency-of :initarg :weapon-proficiency :initform nil)
    (mood :accessor mood-of :initarg :mood :initform nil)
