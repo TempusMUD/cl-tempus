@@ -297,7 +297,7 @@
    (creation-time :accessor creation-time-of :initarg :creation-time)
    (creation-method :accessor creation-method-of :initarg :creation-method)
    (creator :accessor creator-of :initarg :creator)
-   (tmp-affects :accessor tmp-affects-of :initarg :tmp-affects)
+   (tmp-affects :accessor tmp-affects-of :initarg :tmp-affects :initform nil)
    (in-obj :accessor in-obj-of :initarg :in-obj :initform nil)
    (contains :accessor contains-of :initarg :contains :initform nil)
    (aux-obj :accessor aux-obj-of :initarg :aux-obj :initform nil)
@@ -372,12 +372,18 @@
 
   (setf (weight-of obj) (+ (get-weight obj) mod-weight)))
 
+(defun is-obj-kind (obj type)
+  (= (kind-of obj) type))
+
 (defun is-obj-stat (obj flag)
   (logtest (extra-flags-of obj) flag))
 (defun is-obj-stat2 (obj flag)
   (logtest (extra2-flags-of obj) flag))
 (defun is-obj-stat3 (obj flag)
   (logtest (extra3-flags-of obj) flag))
+
+(defun obj-soiled (obj soil)
+  (logtest (soilage-of obj) soil))
 
 (defun is-corpse (obj)
   (and (= (kind-of obj) +item-container+)
