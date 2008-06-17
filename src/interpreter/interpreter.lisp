@@ -6,80 +6,103 @@
 (defun expand-aliases (ch arg)
   arg)
 
-#|
-(defcommand ("look")
-  (describe-contents ch (room-of ch)))
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (defstruct command-info
+    arity
+    pattern
+    flags
+    function)
 
-(defcommand ("look" "at")
-  (send-to-char ch "What do you want to look at?"))
+  (defvar *commands* nil)
 
-(defcommand ("examine" dirobj)
-  (let ((obj (resolve-alias dirobj
-                            '(:creature :object)
-                            '(:equipped :inventory :room))))
-    (send-to-char ch (description-of obj))))
-
-(defalias ("look" "at" dirobj) "examine" dirobj)
-
-(defcommand ("look" "in")
-  (send-to-char ch "What do you want to look in?"))
-
-(defcommand ("look" "in" dirobj)
-  (let ((obj (resolve-alias dirobj
-                            '(:creature :object)
-                            '(:equipped :inventory :room))))
-    (describe-contents ch obj)))
-
-(defun interpret-command (ch line)
-  (let ((line (string-left-trim '(#\space #\\) line)))
-    (unless (string= line "")
-      (let* ((args (cl-ppcre:split #/\s+/ line))
-             (command (match-command args)))
-|#
-        
-(defun interpret-command (ch arg)
-  (let* ((space-pos (position #\space arg))
-         (command-str (if space-pos (subseq arg 0 space-pos) arg))
-         (args (if space-pos
-                   (subseq arg (position #\space arg :test-not #'eql :start space-pos))
-                   "")))
-    (string-abbrev-case command-str
-      ("north"
-       (perform-move ch 0 nil t))
-      ("east"
-       (perform-move ch 1 nil t))
-      ("south"
-       (perform-move ch 2 nil t))
-      ("west"
-       (perform-move ch 3 nil t))
-      ("up"
-       (perform-move ch 4 nil t))
-      ("down"
-       (perform-move ch 5 nil t))
-      ("future"
-       (perform-move ch 6 nil t))
-      ("past"
-       (perform-move ch 7 nil t))
-      ("goto"
-       (perform-goto ch (parse-integer args)))
-      ("quit"
-       (char-from-room ch)
-       (setf *characters* (delete ch *characters*))
-       (setf (state-of (link-of ch)) 'main-menu))
-      ("look"
-       (look-at-room ch (in-room-of ch) t))
-      ("'"
-       (perform-say ch "say" args))
-      ("say"
-       (perform-say ch command-str args))
-      (":"
-       (perform-emote ch args))
-      ("emote"
-       (perform-emote ch args))
-      ("roomflags"
-       (setf (bit (prefs-of ch) +pref-roomflags+)
-             (if (zerop (bit (prefs-of ch) +pref-roomflags+)) 1 0)))
-      ("shutdown"
-       (setf *shutdown* t))
+  (defun command-sort-compare (a b)
+    (cond
+      ((not (and (member :direction (command-info-flags a))
+                 (member :direction (command-info-flags b))))
+       (member :direction (command-info-flags a)))
+      ((/= (command-info-arity a) (command-info-arity b))
+       (> (command-info-arity a) (command-info-arity b)))
       (t
-       (send-to-char ch "You typed: '~a'~%" arg)))))
+       (string< (first (command-info-pattern a))
+                (first (command-info-pattern b)))))))
+
+(defmacro defcommand ((actor &rest pattern) flags &body body)
+  (let ((cmd (gensym "CMD")))
+    `(let ((,cmd (find ',pattern *commands* :test 'equal :key 'command-info-pattern)))
+         (cond
+           (,cmd
+            (setf (command-info-pattern ,cmd) ',pattern)
+            (setf (command-info-arity ,cmd) ,(length pattern))
+            (setf (command-info-flags ,cmd) ',flags)
+            (setf (command-info-function ,cmd)
+                  (lambda (,actor ,@(remove-if 'stringp pattern)) ,@body)))
+           (t
+            (push
+             (make-command-info :arity ,(length pattern)
+                                :pattern ',pattern
+                                :flags ',flags
+                                :function
+                                (lambda (,actor ,@(remove-if 'stringp pattern)) ,@body))
+              *commands*)
+            (setf *commands* (sort *commands* 'command-sort-compare)))))))
+
+(defun command-matches (cmd string)
+  (loop
+     with vars = nil
+     with tokens = (command-info-pattern cmd)
+     while tokens
+     for token = (car tokens)
+     do (cond
+          ((symbolp token)
+           ;; wildcard matching
+           (setf tokens (rest tokens))
+           (cond
+             ((null tokens)
+              (push (string-trim '(#\space) string) vars))
+             ((symbolp (first tokens))
+              (let ((space-pos (position #\space string)))
+                (unless space-pos
+                  (return-from command-matches nil))
+                (push (subseq string 0 space-pos) vars)
+                (setf string (subseq string (1+ space-pos)))))
+             ((stringp (first tokens))
+              (let ((match-pos (search (first tokens) string)))
+                (unless match-pos
+                  (return-from command-matches nil))
+                (push (string-trim '(#\space)
+                                   (subseq string 0 match-pos)) vars)
+                (setf string (subseq string (+ match-pos (length (first tokens)))))))))
+          ((rest tokens)
+           ;; string matching
+           (let* ((space-pos (position #\space string))
+                  (word (if space-pos (subseq string 0 space-pos) string)))
+             (unless (string-abbrev word token)
+               (return-from command-matches nil))
+             (if space-pos
+                 (setf string (string-left-trim '(#\space)
+                                                (subseq string (1+ space-pos))))
+                 (setf string ""))
+             (setf tokens (rest tokens))))
+          (t
+           ;; end of string
+           (unless (string-abbrev string token)
+             (return-from command-matches nil))
+           (setf tokens nil)))
+     finally (return (list t (nreverse vars)))))
+
+(defun find-command (arg)
+  (loop for command in *commands*
+       as (match vars) = (command-matches command arg)
+       until match
+       finally (return (when match (values command vars)))))
+
+(defun interpret-command (ch arg)
+  (multiple-value-bind (command vars)
+      (find-command arg)
+    (cond
+      ((null command)
+        (send-to-char ch "I didn't get that.~%"))
+      ((and (is-npc ch) (member :player (command-info-flags command)))
+       (send-to-char ch "Sorry, players ONLY!~%"))
+      (t
+       (apply (command-info-function command) ch vars)))))

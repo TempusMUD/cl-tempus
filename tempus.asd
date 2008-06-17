@@ -30,17 +30,17 @@
              (:file "accstr" :pathname "util/accstr"
                              :depends-on ("defs"))
              (:file "act-comm" :pathname "misc/act-comm"
-                                 :depends-on ("defs" "utils"))
+                                 :depends-on ("defs" "utils" "interpreter"))
              (:file "act-informative" :pathname "misc/act-informative"
-                                 :depends-on ("defs" "utils"))
+                                 :depends-on ("defs" "utils" "interpreter"))
              (:file "act-movement" :pathname "misc/act-movement"
-                                 :depends-on ("defs" "utils"))
+                                 :depends-on ("defs" "utils" "interpreter"))
              (:file "act-physic" :pathname "classes/act-physic"
-                                 :depends-on ("defs" "utils"))
+                                 :depends-on ("defs" "utils" "interpreter"))
              (:file "act-social" :pathname "social/act-social"
-                                 :depends-on ("defs" "utils"))
+                                 :depends-on ("defs" "utils" "interpreter"))
              (:file "act-wizard" :pathname "misc/act-wizard"
-                                 :depends-on ("defs" "utils"))
+                                 :depends-on ("defs" "utils" "interpreter"))
              (:file "artisan" :pathname "mobiles/artisan"
                               :depends-on ("creature"))
              (:file "ban" :pathname "net/ban"

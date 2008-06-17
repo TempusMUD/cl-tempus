@@ -491,3 +491,11 @@
                 (with-output-to-string (s)
                   (list-char-to-char s (people-of room) ch))))
     
+(defcommand (ch "commands") ()
+  (send-to-char ch "Commands:~%~{~10a~}~%"
+                (sort 
+                 (mapcar #'first (mapcar #'command-info-pattern *commands*))
+                 #'string<)))
+
+(defcommand (ch "look") (:resting)
+  (look-at-room ch (in-room-of ch) t))

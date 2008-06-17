@@ -10,3 +10,9 @@
          (char-from-room ch))
        (char-to-room ch destination)
        (look-at-room ch destination nil)))))
+
+(defcommand (ch "goto" room-num) (:immortal)
+  (perform-goto ch (parse-integer room-num)))
+(defcommand (ch "shutdown") (:immortal)
+  (send-to-char ch "Shutting down...~%")
+  (setf *shutdown* t))
