@@ -57,6 +57,9 @@
            ;; wildcard matching
            (setf tokens (rest tokens))
            (cond
+             ((string= string "")
+              ;; wildcards don't match the empty string
+              (return-from command-matches nil))
              ((null tokens)
               (push (string-trim '(#\space) string) vars))
              ((symbolp (first tokens))
