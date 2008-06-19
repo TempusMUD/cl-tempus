@@ -1175,12 +1175,12 @@
 
 (defun fread-string (inf)
   (with-output-to-string (s)
-    (loop for line = (read-line inf)
-         as tilde-pos = (position #\~ line)
-         until tilde-pos do
-         (if tilde-pos
-              (write-line line s)
-              (write-line line s :end tilde-pos)))))
+    (loop
+       for line = (read-line inf)
+       as tilde-pos = (position #\~ line)
+       until tilde-pos
+       do (write-line line s)
+       finally (write-string line s :end tilde-pos))))
 
 (defun real-room (vnum)
   (when (plusp (hash-table-count *rooms*))
