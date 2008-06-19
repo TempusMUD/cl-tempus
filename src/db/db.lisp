@@ -303,7 +303,11 @@
          (rec-count 0))
 
     ;;; First, count the records in the file so we can cons
-    (with-open-file (index path :direction :input :if-does-not-exist nil)
+    (with-open-file (index path
+                           :direction :input
+                           :if-does-not-exist nil
+                           
+)
       (unless index
         (error "Error opening index file '~a'~%" path))
 
@@ -407,13 +411,19 @@
         (error "Format error in ~a file near ~a #~d~%Offending line: '~a'~%"
                mode mode nr line))))))
 
-(defun asciiflag-conv (flag)
-  (apply #'logior
-         (loop for c across flag
-               collect (if (alpha-char-p c)
-                           (ash 1 (- (char-code (char-downcase c))
-                                     (char-code #\a)))
-                           0))))
+(defun asciiflag-conv (flag &key (start 0) end)
+  (let ((result 0))
+    (loop
+       for idx from start upto (or end (1- (length flag)))
+       as char = (char flag idx)
+       as code = (char-code char)
+       when (alpha-char-p char)
+       do (setf (ldb (byte 1 (if (lower-case-p char)
+                                 (- (char-code #\a) code)
+                                 (+ 26 (- (char-code #\A) code))))
+                     result)
+                1))
+    result))
 
 (defun parse-room (inf vnum-nr)
   (let ((zone (find-if (lambda (zone)
@@ -533,10 +543,18 @@
       (unless line
         (error "Format error room #~d, direction D~d." (number-of room) dir))
 
-      (let ((result (scan #/^(\S+)\s+([0-9-]+)\s+([-0-9]+)/ line)))
-        (setf (exit-info-of room-dir) (asciiflag-conv (regref result 1)))
-        (setf (key-of room-dir) (parse-integer (regref result 2)))
-        (setf (to-room-of room-dir) (parse-integer (regref result 3)))))))
+      (multiple-value-bind (start end reg-starts reg-ends)
+          (cl-ppcre:scan #/^(\S+)\s+([0-9-]+)\s+([-0-9]+)/ line)
+        (declare (ignore start end))
+        (setf (exit-info-of room-dir) (asciiflag-conv line
+                                                      :start (aref reg-starts 0)
+                                                      :end (aref reg-ends 0)))
+        (setf (key-of room-dir) (parse-integer line
+                                               :start (aref reg-starts 1)
+                                               :end (aref reg-ends 1)))
+        (setf (to-room-of room-dir) (parse-integer line
+                                                   :start (aref reg-starts 2)
+                                                   :end (aref reg-ends 2)))))))
 
 (defun pin (val min max)
   (min (max val max) min))
@@ -1152,10 +1170,13 @@
       (setf (flags-of search) (logand (flags-of search) (lognot +search-tripped+))))))
 
 (defun fread-string (inf)
-  (format nil "~{~a~^~%~}"
-          (loop for line = (read-line inf nil nil)
-                collect (remove #\~ line)
-                until (or (null line) (find #\~ line)))))
+  (with-output-to-string (s)
+    (loop for line = (read-line inf)
+         as tilde-pos = (position #\~ line)
+         until tilde-pos do
+         (if tilde-pos
+              (write-line line s)
+              (write-line line s :end tilde-pos)))))
 
 (defun real-room (vnum)
   (when (plusp (hash-table-count *rooms*))
