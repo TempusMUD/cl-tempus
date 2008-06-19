@@ -108,8 +108,8 @@
 (defun xml-boot ()
   nil)
 
-(defun boot-world ()
-  (slog "Initializing world")
+(defun clear-world ()
+  (close-all-cxns)
   (setf *zone-table* nil
         *top-of-world* 0
         +mob-index+ nil
@@ -119,7 +119,11 @@
   (clrhash *mobile-prototypes*)
   (clrhash *object-prototypes*)
   (setf *characters* nil)
-  (sb-ext:gc)
+  (sb-ext:gc :full t))
+
+(defun boot-world ()
+  (slog "Initializing world")
+  (clear-world)
 
   (slog "Loading zone table.")
   (index-boot :zon)
