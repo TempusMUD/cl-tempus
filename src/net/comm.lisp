@@ -13,7 +13,6 @@
 (defparameter *no-specials* nil)          ; Suppress ass. of special routines
 (defparameter *avail-descs* 0)            ; max descriptors available
 (defparameter *tics* 0)                   ; for extern checkpointing
-(defparameter *scheck* nil)                 ; for syntax checking mode
 (defparameter *log-cmds* nil)             ; log cmds
 (defparameter *shutdown-count* -1)        ; shutdown countdown
 (defparameter *shutdown-idnum* -1)        ; idnum of person calling shutdown
@@ -47,7 +46,6 @@
     (setf *no-rent-check* t)
     (slog "Running in minimized mode & with no rent check and olc lock."))
   (when check-only
-    (setf *scheck* t)
     (slog "Syntax check mode enabled."))
   (when no-rent
     (setf *no-rent-check* t)
@@ -81,7 +79,7 @@
     (verify-environment)
 
     (cond
-      (*scheck*
+      (check-only
        (boot-world)
        (slog "Done.")
        (return-from main 0))
