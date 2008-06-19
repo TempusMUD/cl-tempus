@@ -3,31 +3,6 @@
 (defparameter +dirs+ #("n" "e" "s" "w" "u" "d" "f" "p"))
 (defparameter +num-of-dirs+ (length +dirs+))
 
-(defun do-auto-exits (ch room)
-  (send-to-char ch "&c[ Exits: ~:[None obvious~;~:*~{~a~^ ~}~] ]"
-                (loop for door across (dir-option-of room)
-                     for dir across +dirs+
-                   unless (or (null door)
-                              (zerop (to-room-of door))
-                              (logtest (exit-info-of door)
-                                       (logior +ex-hidden+ +ex-secret+))) 
-                   collect (if (logtest (exit-info-of door)
-                                        (logior +ex-closed+))
-                               (format nil "|~a|" dir)
-                               (format nil "~a" dir))))
-  (when (immortalp ch)
-    (send-to-char ch " [ Hidden doors: ~:[None~;~:*~{~a~^ ~}~] ]"
-                  (loop for door across (dir-option-of room)
-                     for dir across +dirs+
-                     unless (or (null door)
-                                (zerop (to-room-of door))
-                                (not (logtest (exit-info-of door)
-                                              (logior +ex-hidden+ +ex-secret+))))
-                     collect (if (logtest (exit-info-of door)
-                                          (logior +ex-closed+))
-                                 (format nil "|~a|" dir)
-                                 (format nil "~a" dir))))))
-
 (defun show-room-obj (object ch stream)
   (let ((non-blank-ldesc (string/= (line-desc-of object) "")))
     (when (or non-blank-ldesc (immortalp ch))
@@ -206,10 +181,10 @@
                 (and (not (is-npc ch))
                      (mob2-flagged i +mob2-unapproved+)
                      (not (pref-flagged ch +pref-holylight+))
-                     (not (tester-p ch))))
+                     (not (testerp ch))))
       (let ((name (cond
                     ((is-npc i)
-                     (short-descr-of i))
+                     (name-of i))
                     ((affected-by-spell i +skill-disguise+)
                      (string-upcase (get-disguised-name ch i) :end 1))
                     (t
@@ -220,9 +195,9 @@
         (cond
           ((and (is-npc i)
                 (= (position-of i) (default-pos-of (shared-of i))))
-           (if (string= (long-descr-of i) "")
+           (if (string= (ldesc-of i) "")
                (format stream "~a exists here." name)
-               (format stream "~a" (long-descr-of i))))
+               (format stream "~a" (ldesc-of i))))
           ((= (position-of i) +pos-fighting+)
            (cond
              ((null (fighting-of i))
@@ -346,7 +321,7 @@
                (incf unseen))))
          ((and (not (immortalp ch))
                (is-npc i)
-               (null (long-descr-of i)))
+               (null (ldesc-of i)))
           ;; You don't see mobs with no ldesc
           nil)
          ((not (can-see-creature ch i))
@@ -396,6 +371,64 @@
          (format stream "&mYou sense a crowd of unseen presences.&n~%"))))
     (format stream "~a" str)))
 
+(defun do-auto-exits (ch room)
+  (send-to-char ch "&c[ Exits: ~:[None obvious~;~:*~{~a~^ ~}~] ]"
+                (loop for door across (dir-option-of room)
+                     for dir across +dirs+
+                   unless (or (null door)
+                              (zerop (to-room-of door))
+                              (logtest (exit-info-of door)
+                                       (logior +ex-hidden+ +ex-secret+))) 
+                   collect (if (logtest (exit-info-of door)
+                                        (logior +ex-closed+))
+                               (format nil "|~a|" dir)
+                               (format nil "~a" dir))))
+  (when (immortalp ch)
+    (send-to-char ch " [ Hidden doors: ~:[None~;~:*~{~a~^ ~}~] ]"
+                  (loop for door across (dir-option-of room)
+                     for dir across +dirs+
+                     unless (or (null door)
+                                (zerop (to-room-of door))
+                                (not (logtest (exit-info-of door)
+                                              (logior +ex-hidden+ +ex-secret+))))
+                     collect (if (logtest (exit-info-of door)
+                                          (logior +ex-closed+))
+                                 (format nil "|~a|" dir)
+                                 (format nil "~a" dir))))))
+
+(defun show-blood-and-ice (ch room)
+  (let ((blood-shown nil)
+        (ice-shown nil))
+    (dolist (o (contents-of room))
+      (when (and (= (vnum-of (shared-of o)) +blood-vnum+)
+                 (not blood-shown)
+                 (send-to-char ch "&r~a.&n~%"
+                               (cond
+                                 ((< (timer-of o) 10)
+                                  "Some spots of blood have been splattered around")
+                                 ((< (timer-of o) 20)
+                                  "Small pools of blood are here")
+                                 ((< (timer-of o) 30)
+                                  "Large pools of blood are here")
+                                 ((< (timer-of o) 40)
+                                  "Blood is pooled and splattered over everything")
+                                 (t
+                                  "Dark red blood covers everything in sight.")))
+                 (setf blood-shown t)))
+      (when (and (= (vnum-of (shared-of o)) +ice-vnum+)
+                 (not ice-shown))
+        (send-to-char ch "&r~a.&n~%"
+                      (cond
+                        ((< (timer-of o) 10)
+                         "A few patches of ice are scattered around")
+                        ((< (timer-of o) 20)
+                         "A thin coating of ice covers everything")
+                        ((< (timer-of o) 30)
+                         "A thick coating of ice covers everything")
+                        (t
+                         "Everything is covered with a thick coating of ice")))
+        (setf ice-shown t)))))
+
 (defun look-at-room (ch room ignore-brief)
   (unless (link-of ch)
     (return-from look-at-room))
@@ -428,22 +461,20 @@
             (room-flagged room +room-death+))
     (if (and (room-flagged room +room-smoke-filled+)
              (not (pref-flagged ch +pref-holylight+))
-             #+nil (not (aff3-flagged ch +aff3-sonic-imagery+)))
+             (not (aff3-flagged ch +aff3-sonic-imagery+)))
         (send-to-char ch "The smoke swirls around you...~%")
         (when (description-of room)
           (send-to-char ch "~a" (description-of room)))))
 
-  (case (pk-style-of (zone-of room))
-    (0
-     (send-to-char ch "&c[ &g!PK&c ] "))
-    (1
-     (send-to-char ch "&c[ &YNPK&c ] "))
-    (2
-     (send-to-char ch "&c[ &RCPK&c ] ")))
+  (send-to-char ch 
+                (case (pk-style-of (zone-of room))
+                  (0 "&c[ &g!PK&c ] ")
+                  (1 "&c[ &YNPK&c ] ")
+                  (2 "&c[ &RCPK&c ] ")))
 
   (unless (or (immortalp ch)
               (not (room-flagged room +room-smoke-filled+))
-              #+nil (aff3-flagged ch +aff3-sonic-imagery+))
+              (aff3-flagged ch +aff3-sonic-imagery+))
     (send-to-char ch "~%")
     (return-from look-at-room))
 
@@ -453,37 +484,7 @@
   (send-to-char ch "~%")
 
   ;; now list characters & objects
-  (let ((blood-shown nil)
-        (ice-shown nil))
-    (dolist (o (contents-of room))
-      (when (and (= (vnum-of (shared-of o)) +blood-vnum+)
-                 (not blood-shown)
-                 (send-to-char ch "&r~a.&n~%"
-                               (cond
-                                 ((< (timer-of o) 10)
-                                  "Some spots of blood have been splattered around")
-                                 ((< (timer-of o) 20)
-                                  "Small pools of blood are here")
-                                 ((< (timer-of o) 30)
-                                  "Large pools of blood are here")
-                                 ((< (timer-of o) 40)
-                                  "Blood is pooled and splattered over everything")
-                                 (t
-                                  "Dark red blood covers everything in sight.")))
-                 (setf blood-shown t)))
-      (when (and (= (vnum-of (shared-of o)) +ice-vnum+)
-                 (not ice-shown))
-        (send-to-char ch "&r~a.&n~%"
-                      (cond
-                        ((< (timer-of o) 10)
-                         "A few patches of ice are scattered around")
-                        ((< (timer-of o) 20)
-                         "A thin coating of ice covers everything")
-                        ((< (timer-of o) 30)
-                         "A thick coating of ice covers everything")
-                        (t
-                         "Everything is covered with a thick coating of ice")))
-        (setf ice-shown t))))
+  (show-blood-and-ice ch room)
   (send-to-char ch "&g~a&n"
                 (with-output-to-string (s)
                   (list-obj-to-char s (contents-of room) ch :room nil)))

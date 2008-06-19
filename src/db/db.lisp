@@ -716,11 +716,11 @@
     (setf (vnum-of (shared-of mobile)) nr
           (number-of (shared-of mobile)) 0
           (proto-of (shared-of mobile)) mobile
+          (aliases-of mobile) (fread-string inf)
           (name-of mobile) (fread-string inf)
-          (short-descr-of mobile) (fread-string inf)
-          (long-descr-of mobile) (string-right-trim '(#\return #\newline)
-                                                    (fread-string inf))
-          (description-of mobile) (fread-string inf)
+          (ldesc-of mobile) (string-right-trim '(#\return #\newline)
+                                               (fread-string inf))
+          (fdesc-of mobile) (fread-string inf)
           (str-of (real-abils-of mobile)) 11
           (str-add-of (real-abils-of mobile)) 0
           (int-of (real-abils-of mobile)) 11
