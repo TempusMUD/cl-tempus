@@ -951,3 +951,20 @@
 
 (defun affected-by-spell (ch spell)
   nil)
+
+(defun illegal-soilpos (pos)
+  (member pos (list +wear-light+
+                    +wear-shield+
+                    +wear-about+
+                    +wear-wield+
+                    +wear-hold+
+                    +wear-belt+
+                    +wear-wield-2+
+                    +wear-ass+
+                    +wear-neck-2+
+                    +wear-random+)))
+
+(defun char-soilage (ch pos)
+  (aref (soilage-of ch) pos))
+(defun char-soiled (ch pos soil)
+  (logtest (char-soilage ch pos) (ash 1 soil)))

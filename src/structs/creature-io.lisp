@@ -27,8 +27,11 @@
     (assert (string= (first xml) "creature") nil 'invalid-creature-file)
     (setf (idnum-of ch) (xml-attr xml "idnum" :numeric t))
     (setf (name-of ch) (xml-attr xml "name"))
+    (setf (aliases-of ch) (format nil "~(~a .~:*~a~)" (name-of ch)))
     (dolist (node (cddr xml))
       (string-case (first node)
+        ("description"
+         (setf (fdesc-of ch) (format nil "~a~%" (third node))))
         ("points"
          (setf (hitp-of ch) (xml-attr node "hit" :numeric t))
          (setf (mana-of ch) (xml-attr node "mana" :numeric t))
@@ -44,7 +47,7 @@
          (setf (alignment-of ch) (xml-attr node "align" :numeric t))
          (setf (weight-of ch) (xml-attr node "weight" :numeric t))
          (setf (height-of ch) (xml-attr node "height" :numeric t))
-         (setf (race-of ch) (xml-attr node "race"))
+         (setf (race-of ch) (parse-pc-race (xml-attr node "race")))
          (setf (sex-of ch) (string-case (xml-attr node "sex")
                              ("Male" 'male)
                              ("Female" 'female)

@@ -47,3 +47,14 @@
              for descrip across descriptions
              when (logtest bits (ash 1 idx))
              collect descrip)))
+
+(defun is-alias-of (str alias)
+  (let ((aliases (cl-ppcre:split #/\s+/ alias)))
+    (member str aliases :test #'string-abbrev)))
+
+(defun resolve-alias (ch str)
+  (find str (remove-if-not (lambda (i)
+                             (can-see-creature ch i))
+                           (people-of (in-room-of ch)))
+        :key 'aliases-of
+        :test 'is-alias-of)))

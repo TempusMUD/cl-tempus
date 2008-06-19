@@ -164,6 +164,54 @@
     (when (and (not found) show)
       (format stream " Nothing.~%"))))
 
+(defun desc-char-trailers (ch i)
+  nil)
+
+(defun diag-char-to-char (ch i)
+  nil)
+
+(defun look-at-char (ch i mode)
+  (let* ((af (affected-by-spell i +skill-disguise+))
+         (mob (when af (real-mobile-proto (modifier-of af))))
+         (desc (if mob (fdesc-of mob) (fdesc-of i))))
+    (unless (eql mode :glance)
+      (if desc
+         (send-to-char ch "~a" desc)
+         (send-to-char ch "You see nothing special about ~a.~%" (him-or-her i)))
+      (when (and (null mob) (typep i 'player))
+          (send-to-char ch "~a appears to be a ~d cm tall, ~d pound ~(~a ~a~).~%"
+                        (name-of i)
+                        (height-of i)
+                        (weight-of i)
+                        (sex-of i)
+                        (aref +player-races+ (race-of i))))))
+
+  (diag-char-to-char ch i)
+
+  (when (eql mode :look)
+    (desc-char-trailers ch i))
+
+  ;; Describe soilage
+  (when (and (not (eql mode :glance)) (typep i 'player))
+    (loop
+       for idx upto +num-wears+
+       as pos = (aref +eq-pos-order+ idx)
+       when (and (null (aref (equipment-of i) pos))
+                 (not (illegal-soilpos pos))
+                 (not (zerop (char-soilage i pos))))
+       do (let ((soilage-descs 
+                        (loop for bit upto +top-soil+
+                             when (char-soiled i pos bit)
+                             collect (aref +soilage-bits+ bit))))
+            (send-to-char ch "~a ~a ~a~v[~;~{~a~}~;~{~a and ~a~}~:;~{~#[~; and~] ~a~^,~}~].~%"
+                          (his-or-her i)
+                          (aref +wear-descriptions+ pos)
+                          (if (= pos +wear-feet+)
+                              "are"
+                              (is-are (aref +wear-descriptions+ pos)))
+                          (length soilage-descs)
+                          soilage-descs)))))
+
 (defun desc-one-char (stream ch i is-group)
   (let ((positions #(" is lying here, dead."
                      " is lying here, badly wounded."
@@ -500,3 +548,15 @@
 
 (defcommand (ch "look") (:resting)
   (look-at-room ch (in-room-of ch) t))
+
+(defcommand (ch "look" thing) (:resting)
+  (let ((vict (resolve-alias ch thing)))
+    (if vict
+        (look-at-char ch vict :look)
+        (send-to-char ch "There's no '~a' here.~%" thing))))
+
+(defcommand (ch "examine" thing) (:resting)
+  (look-at-char ch thing :examine))
+
+(defcommand (ch "glance" vict) (:resting)
+  (look-at-char ch vict :glance))

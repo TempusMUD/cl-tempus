@@ -786,3 +786,92 @@
 (defparameter +soil-rust+ (ash 1 15))
 (defparameter +soil-char+ (ash 1 16))
 (defparameter +top-soil+ 17)
+
+(defparameter +eq-pos-order+
+  (coerce (list +wear-head+ +wear-face+ +wear-eyes+ +wear-ear-l+
+                +wear-ear-r+ +wear-neck-1+ +wear-neck-2+ +wear-about+
+                +wear-body+ +wear-back+ +wear-arms+ +wear-shield+
+                +wear-wrist-r+ +wear-wrist-l+ +wear-light+ +wear-hold+
+                +wear-wield+ +wear-wield-2+ +wear-waist+ +wear-belt+
+                +wear-crotch+ +wear-legs+ +wear-feet+ +wear-ass+
+                0 0 0 0 0 0)
+          'vector))
+
+(defparameter +soilage-bits+
+  #("wet" "bloody" "muddy" "covered with feces"
+    "dripping with urine" "smeared with mucus"
+    "spattered with saliva" "covered with acid"
+    "oily" "sweaty" "greasy" "sooty" "slimy" "sticky" 
+    "covered with vomit" "rusty" "charred"))
+
+(defparameter +wear-descriptions+
+  #("!light!" "right finger" "left finger" "neck" "!neck!" "body"
+    "head" "legs" "feet" "hands" "arms" "!shield" "!about!" "waist"
+    "right wrist" "left wrist" "!wield!" "!hold!" "crotch" "eyes"
+    "back" "!belt!" "face" "left ear" "right ear" "!wield2!" "!ass!"
+    "\n"))
+
+(defparameter +player-races+
+  #("Human"
+	"Elf"
+	"Dwarf"
+	"Half Orc"
+	"Klingon"
+	"Halfling"					; 5
+	"Tabaxi"
+	"Drow"
+	"ILL" "ILL"
+	"Mobile"					; 10
+	"Undead"
+	"Humanoid"
+	"Animal"
+	"Dragon"
+	"Giant"					; 15
+	"Orc"
+	"Goblin"
+	"Hafling"
+	"Minotaur"
+	"Troll"					; 20
+	"Golem"
+	"Elemental"
+	"Ogre"
+	"Devil"
+	"Trog"
+	"Manticore"
+	"Bugbear"
+	"Draconian"
+	"Duergar"
+	"Slaad"
+	"Robot"
+	"Demon"
+	"Deva"
+	"Plant"
+	"Archon"
+	"Pudding"
+	"Alien 1"
+	"Predator Alien"
+	"Slime"
+	"Illithid"					; 40
+	"Fish"
+	"Beholder"
+	"Gaseous"
+	"Githyanki"
+	"Insect"
+	"Daemon"
+	"Mephit"
+	"Kobold"
+	"Umber Hulk"
+	"Wemic"
+	"Rakshasa"
+	"Spider"                  ; 52
+    "Griffin"
+    "Rotarian"
+    "Half Elf"
+    "Celestial"
+    "Guardinal"
+    "Olympian"
+    "Yugoloth"
+    "Rowlahr"
+	"Githzerai"
+    "Faerie"
+	"\n"))

@@ -547,3 +547,18 @@ of immediately."
      "a divine presence")
     (t
      "someone")))
+
+(defun him-or-her (ch)
+  (case (sex-of ch)
+    (male "him")
+    (female "her")
+    (t "it")))
+
+(defun his-or-her (ch)
+  (case (sex-of ch)
+    (male "his")
+    (female "her")
+    (t "its")))
+
+(defun is-are (str)
+  (if (eql (char str (1- (length str))) #\s) "are" "is"))
