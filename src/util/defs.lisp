@@ -76,7 +76,7 @@
     (declare (ignore char arg))
     (let ((pattern (read-regex-string stream))
           (options (read-regex-options stream)))
-      `(eval-when (:compile-toplevel :load-toplevel :execute)
+      `(load-time-value
          (cl-ppcre:create-scanner ,pattern
                                   :case-insensitive-mode ,(member #\i options)
                                   :multi-line-mode ,(member #\m options)
