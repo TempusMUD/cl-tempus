@@ -212,10 +212,12 @@
   (mudlog 'notice t "~a entering game as ~a"
 		  (name-of (account-of (link-of player)))
 		  (name-of player))
+
   (char-to-room player
-                (real-room (or (load-room-of player)
-                               (home-room-of player)
-                               3001)))
+                (or (real-room (or (load-room-of player)
+                                   (home-room-of player)
+                                   3001))
+                    (real-room 3001)))
   (setf (load-room-of player) nil)
 #+nil  (dolist (equip (load-equipment (idnum-of player)))
 	(item-to-actor equip player))
