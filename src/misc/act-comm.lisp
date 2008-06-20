@@ -18,13 +18,24 @@
 
 (defcommand (ch "say" message) (:resting)
   (perform-say ch "say" message))
-(defcommand (ch "'" message) (:resting)
+
+(defcommand (ch #\' message) (:resting)
   (perform-say ch "say" message))
+
 (defcommand (ch "say" "to" target message) (:resting)
-  (perform-say-to ch target message))
-(defcommand (ch ">" target message) (:resting)
-  (perform-say-to ch target message))
+  (let ((vict (resolve-alias ch target)))
+    (if vict
+        (perform-say-to ch vict message)
+        (send-to-char ch "There's no '~a' here.~%" target))))
+
+(defcommand (ch #\> target message) (:resting)
+  (let ((vict (resolve-alias ch target)))
+    (if vict
+        (perform-say-to ch vict message)
+        (send-to-char ch "There's no '~a' here.~%" target))))
+
 (defcommand (ch "emote" message) (:resting)
   (perform-emote ch message))
-(defcommand (ch ":" message) (:resting)
+
+(defcommand (ch #\: message) (:resting)
   (perform-emote ch message))
