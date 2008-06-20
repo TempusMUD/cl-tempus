@@ -57,4 +57,4 @@
                              (can-see-creature ch i))
                            (people-of (in-room-of ch)))
         :key 'aliases-of
-        :test 'is-alias-of)))
+        :test 'is-alias-of))
