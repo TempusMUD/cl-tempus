@@ -27,22 +27,21 @@
                 (first (command-info-pattern b)))))))
 
 (defmacro defcommand ((actor &rest pattern) flags &body body)
-  (let ((cmd (gensym "CMD")))
+  (let ((cmd (gensym "CMD"))
+        (func `(lambda (,actor ,@(remove-if-not 'symbolp pattern)) ,@body)))
     `(let ((,cmd (find ',pattern *commands* :test 'equal :key 'command-info-pattern)))
          (cond
            (,cmd
             (setf (command-info-pattern ,cmd) ',pattern)
             (setf (command-info-arity ,cmd) ,(length pattern))
             (setf (command-info-flags ,cmd) ',flags)
-            (setf (command-info-function ,cmd)
-                  (lambda (,actor ,@(remove-if 'stringp pattern)) ,@body)))
+            (setf (command-info-function ,cmd) ,func))
            (t
             (push
              (make-command-info :arity ,(length pattern)
                                 :pattern ',pattern
                                 :flags ',flags
-                                :function
-                                (lambda (,actor ,@(remove-if 'stringp pattern)) ,@body))
+                                :function ,func)
               *commands*)
             (setf *commands* (sort *commands* 'command-sort-compare)))))))
 
@@ -75,6 +74,11 @@
                 (push (string-trim '(#\space)
                                    (subseq string 0 match-pos)) vars)
                 (setf string (subseq string (+ match-pos (length (first tokens)))))))))
+          ((characterp token)
+           (unless (eql token (char string 0))
+             (return-from command-matches nil))
+           (setf string (string-left-trim '(#\space) (subseq string 1)))
+           (setf tokens (rest tokens)))
           ((rest tokens)
            ;; string matching
            (let* ((space-pos (position #\space string))
