@@ -825,13 +825,15 @@
     (when (> (length (line-desc-of obj)) 1)
       (setf (line-desc-of obj) (string-upcase (line-desc-of obj) :end 1)))
 
-    (let ((result (scan #/(\d+) (\S+) (\S+) (\S+) (\S+)/ (get-line inf))))
-      (assert result nil "Expected 5 args in first numeric line, object ~d" nr)
+    (let ((result (scan #/(\d+) (\S+) (\S+) (\S+)(?: (\S+))?/ (get-line inf))))
+      (assert result nil "Expected 4 or 5 args in first numeric line, object ~d" nr)
       (setf (kind-of obj) (parse-integer (regref result 1))
             (extra-flags-of obj) (asciiflag-conv (regref result 2))
             (extra2-flags-of obj) (asciiflag-conv (regref result 3))
             (wear-flags-of obj) (asciiflag-conv (regref result 4))
-            (extra3-flags-of obj) (asciiflag-conv (regref result 5))))
+            (extra3-flags-of obj) (if (regref result 5)
+                                      (asciiflag-conv (regref result 5))
+                                      0)))
     
     (let ((result (scan #/(\d+) ([\d-]+) ([\d-]+)(?: (\d+))?/ (get-line inf))))
       (assert result nil "Expected 3 or 4 args in second numeric line, object ~d" nr)
