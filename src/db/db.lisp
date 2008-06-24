@@ -51,9 +51,6 @@
 
 (defparameter +index-file+ "index")
 (defparameter +mindex-file+ "index.mini")
-(defparameter +mob-index+ nil)
-(defparameter +obj-index+ nil)
-(defparameter +wld-index+ nil)
 (defparameter +null-mob-shared+ nil)
 (defparameter +null-obj-shared+ nil)
 (defparameter +dummy-mob+ nil)
@@ -342,36 +339,6 @@
          (setf (house-count-of +null-obj-shared+) 0)
          (setf (func-of +null-obj-shared+) nil)
          (setf (proto-of +null-obj-shared+) nil)))
-
-      (unless (eql mode :zon)
-        (file-position index 0)
-        (case mode
-          (:obj
-           (setf +obj-index+ (make-array (1+ index-count))))
-          (:mob
-           (setf +mob-index+ (make-array (1+ index-count))))
-          (:wld
-           (setf +wld-index+ (make-array (1+ index-count)))))
-
-        (dotimes (i index-count)
-          (case mode
-            (:obj
-             (setf (aref +obj-index+ i)
-                   (parse-integer (read-line index nil :eof) :junk-allowed t)))
-            (:mob
-             (setf (aref +mob-index+ i)
-                   (parse-integer (read-line index nil :eof) :junk-allowed t)))
-            (:wld
-             (setf (aref +wld-index+ i)
-                   (parse-integer (read-line index nil :eof) :junk-allowed t)))))
-
-        (case mode
-          (:obj
-           (setf (aref +obj-index+ index-count) -1))
-          (:mob
-           (setf (aref +mob-index+ index-count) -1))
-          (:wld
-           (setf (aref +wld-index+ index-count) -1))))
       
       (file-position index 0)
 
