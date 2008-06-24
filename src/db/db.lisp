@@ -1140,8 +1140,38 @@
             nil)
            (#\R
             nil)
-           (#\D
-            nil)
+           (#\D                         ; set state of door
+            (let ((room (real-room (arg1-of zone-cmd))))
+              (cond
+                ((or (null room)
+                     (not (< 0 (arg2-of zone-cmd) +num-of-dirs+))
+                     (null (aref (dir-option-of room) (arg2-of zone-cmd))))
+                 (slog "door does not exist in room ~a" (arg1-of zone-cmd)))
+                (t
+                 (let* ((cmd-flags (arg3-of zone-cmd))
+                        (dir-option (aref (dir-option-of room) (arg2-of zone-cmd)))
+                        (exit-info (exit-info-of dir-option)))
+                   (when (logtest cmd-flags +door-open+)
+                     (setf (exit-info-of dir-option)
+                           (logandc2 exit-info +ex-locked+))
+                     (setf (exit-info-of dir-option)
+                           (logandc2 exit-info +ex-closed+)))
+
+                   (when (logtest cmd-flags +door-closed+)
+                     (setf (exit-info-of dir-option)
+                           (logandc2 exit-info +ex-locked+))
+                     (setf (exit-info-of dir-option)
+                           (logior exit-info +ex-closed+)))
+
+                   (when (logtest cmd-flags +door-locked+)
+                     (setf (exit-info-of dir-option)
+                           (logior exit-info +ex-locked+))
+                     (setf (exit-info-of dir-option)
+                           (logior exit-info +ex-closed+)))
+
+                   (when (logtest cmd-flags +door-hidden+)
+                     (setf (exit-info-of dir-option)
+                           (logior exit-info +ex-hidden+))))))))
            (t
             (slog "Unknown cmd in reset table! cmd disabled")
             (setf (command-of zone-cmd) #\*)))))))
