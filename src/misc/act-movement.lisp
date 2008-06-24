@@ -24,7 +24,8 @@
   (let ((exit (exit ch dir)))
     (cond
       ((or (null exit)
-           (null (to-room-of exit))
+           (zerop (to-room-of exit))
+           (null (real-room (to-room-of exit)))
            (logtest (exit-info-of exit) +ex-nopass+)
            (and (logtest (exit-info-of exit) (logior +ex-secret+ +ex-hidden+))
                 (logtest (exit-info-of exit) +ex-closed+)
