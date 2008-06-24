@@ -107,15 +107,21 @@
 
 (defun clear-world ()
   (close-all-cxns)
-  (setf *zone-table* nil
-        *top-of-world* 0
-        +mob-index+ nil
-        +obj-index+ nil
-        +wld-index+ nil)
-  (clrhash *rooms*)
-  (clrhash *mobile-prototypes*)
-  (clrhash *object-prototypes*)
+
+  ;; Clear hashes
+  (dolist (hash (list *rooms*
+                      *mobile-prototypes*
+                      *object-prototypes*
+                      *character-map*
+                      *account-idnum-cache*
+                      *account-name-cache*))
+    (clrhash hash))
+
+  (setf *default-quad-zone* nil)
+  (setf *zone-table* nil)
+  (setf *object-list* nil)
   (setf *characters* nil)
+  (setf *top-of-world* 0)
   (sb-ext:gc :full t))
 
 (defun boot-world ()
