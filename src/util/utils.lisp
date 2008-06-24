@@ -548,6 +548,12 @@ of immediately."
     (t
      "someone")))
 
+(defun he-or-she (ch)
+  (case (sex-of ch)
+    (male "he")
+    (female "she")
+    (t "it")))
+
 (defun him-or-her (ch)
   (case (sex-of ch)
     (male "him")
