@@ -389,18 +389,18 @@
                mode mode nr line))))))
 
 (defun asciiflag-conv (flag &key (start 0) end)
-  (let ((result 0))
-    (loop
-       for idx from start upto (or end (1- (length flag)))
-       as char = (char flag idx)
-       as code = (char-code char)
-       when (alpha-char-p char)
-       do (setf (ldb (byte 1 (if (lower-case-p char)
-                                 (- (char-code #\a) code)
-                                 (+ 26 (- (char-code #\A) code))))
-                     result)
-                1))
-    result))
+  (loop
+     with result = 0
+     for idx from start upto (or end (1- (length flag)))
+     as char = (char flag idx)
+     as code = (char-code char)
+     when (alpha-char-p char)
+     do (setf (ldb (byte 1 (if (lower-case-p char)
+                               (- code (char-code #\a))
+                               (+ 26 (- code (char-code #\A)))))
+                   result)
+              1)
+     finally (return result)))
 
 (defun parse-room (inf vnum-nr)
   (let ((zone (find-if (lambda (zone)
