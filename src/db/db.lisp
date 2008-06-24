@@ -753,7 +753,10 @@
       (assert result nil "Illegal numbers-3 line of mobile ~d: ~s~%" nr line)
       (setf (position-of mobile) (parse-integer (regref result 1))
             (default-pos-of (shared-of mobile)) (parse-integer (regref result 2))
-            (sex-of mobile) (parse-integer (regref result 3)))
+            (sex-of mobile) (case (parse-integer (regref result 3))
+                              (0 'neuter)
+                              (1 'male)
+                              (2 'female)))
       (when (regref result 4)
         (attack-type-of (shared-of mobile)) (parse-integer (regref result 4))))
 
