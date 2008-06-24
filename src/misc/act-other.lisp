@@ -72,7 +72,10 @@
                          "You will now hear the dreams of other players while you sleep.")
   (define-toggle-command "noproject" () +pref-noproject+
                          "You will now ignore the projections of other remorts."
-                         "You will now be aware of the projections of other remorts."))
+                         "You will now be aware of the projections of other remorts.")
+  (define-toggle-command "notrailers" () +pref-notrailers+
+                         "You will now ignore affect trailers on characters."
+                         "You will now see affect trailers on characters."))
 
 
 (defcommand (ch "quit") ()
