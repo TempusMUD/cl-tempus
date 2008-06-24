@@ -892,6 +892,10 @@
 (defun check-skill (ch skill)
   (aref (skills-of ch) skill))
 
+(defun is-soulless (ch)
+  (or (mob-flagged ch +mob-soulless+)
+      (plr2-flagged ch +plr2-soulless+)))
+
 (defun aff-flagged (ch flag)
   (logtest (aff-flags-of ch) flag))
 (defun aff2-flagged (ch flag)
