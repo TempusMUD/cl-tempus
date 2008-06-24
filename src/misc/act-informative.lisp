@@ -164,11 +164,113 @@
     (when (and (not found) show)
       (format stream " Nothing.~%"))))
 
-(defun desc-char-trailers (ch i)
-  nil)
+(defun desc-char-trailers (stream ch i)
+  (format stream "&n")
+  (when (affected-by-spell i +spell-quad-damage+)
+    (format stream "...~a is glowing with a bright blue light!~%"
+                  (he-or-she i)))
+  (when (aff2-flagged i +aff2-ablaze+)
+    (format stream "...~a body is blazing like a bonfire!~%"
+                  (his-or-her i)))
+  (when (aff-flagged i +aff-blind+)
+    (format stream "...~a is groping around blindly!~%"
+                  (he-or-she i)))
+  (when (aff-flagged i +aff-sanctuary+)
+    (format stream
+                  (if (is-evil i)
+                      "...~a is surrounded by darkness!~%"
+                      "...~a glows with a bright light!~%")
+                  (he-or-she i)))
+  (when (aff-flagged i +aff-confusion+)
+    (format stream "...~a is looking around in confusion!~%"
+                  (he-or-she i)))
+  (when (aff3-flagged i +aff3-symbol-of-pain+)
+    (format stream "...a symbol of pain burns bright on ~a forehead!~%"
+                  (his-or-her i)))
+  (when (aff-flagged i +aff-blur+)
+    (format stream "...~a form appears to be blurry and shifting.~%"
+                  (his-or-her i)))
+  (when (aff2-flagged i +aff2-fire-shield+)
+    (format stream "...a blazing sheet of fire floats before ~a body!~%"
+                  (his-or-her i)))
+  (when (aff2-flagged i +aff2-blade-barrier+)
+    (format stream "...~a is surrounded by whirling blades!~%"
+                  (he-or-she i)))
+  (when (aff2-flagged i +aff2-energy-field+)
+    (format stream "...~a is covered by a crackling field of energy!~%"
+                  (he-or-she i)))
+  (cond
+    ((is-soulless i)
+     (format stream "...a deep red pentagram has been burned into ~a forehead!~%"
+             (his-or-her i)))
+    ((aff3-flagged i +aff3-tainted+)
+     (format stream "...the mark of the tainted has been burned into ~a forehead!~%"
+             (his-or-her i))))
 
-(defun diag-char-to-char (ch i)
-  nil)
+  (when (aff3-flagged i +aff3-prismatic-sphere+)
+    (format stream "...~a is surrounded by a prismatic sphere of light!~%"
+                  (he-or-she i)))
+  (when (or (affected-by-spell i +spell-skunk-stench+)
+            (affected-by-spell i +spell-trog-stench+))
+    (format stream "...~a is followed by a malodorous stench...~%"
+                  (he-or-she i)))
+  (when (aff2-flagged i +aff2-petrified+)
+    (format stream "...~a is petrified into solid stone.~%"
+                  (he-or-she i)))
+  (when (affected-by-spell i +spell-entangle+)
+    (if (or (= (terrain-of (in-room-of i)) +sect-city+)
+            (= (terrain-of (in-room-of i)) +sect-cracked-road+))
+        (format stream "...~a is hopelessly tangled in the weeds and sparse vegetation.~%"
+                (he-or-she i))
+        (format stream "...~a is hopelessly tangled in the undergrowth.~%"
+                (he-or-she i))))
+  (when (and (aff2-flagged i +aff2-displacement+)
+             (aff2-flagged ch +aff2-true-seeing+))
+    (format stream "...the image of ~a body is strangely displaced.~%"
+            (his-or-her i)))
+  (when (aff-flagged i +aff-invisible+)
+        (format stream "...~a is invisible to the unaided eye.~%"
+                (he-or-she i)))
+  (when (aff2-flagged i +aff2-transparent+)
+        (format stream "...~a is completely transparent.~%"
+                (he-or-she i)))
+  (when (and (affected-by-spell i +skill-kata+)
+             (>= (get-level-bonus i +skill-kata+) 50))
+        (format stream "...~a hands are glowing eerily.~%"
+                (his-or-her i)))
+  (when (affected-by-spell i +spell-gauss-shield+)
+    (format stream "...~a is protected by a swirling shield of energy.~%"
+            (he-or-she i)))
+  (when (affected-by-spell i +spell-thorn-skin+)
+    (format stream "...thorns protrude painfully from ~a skin.~%"
+            (his-or-her i)))
+  (when (affected-by-spell i +song-wounding-whispers+)
+    (format stream "...~a is surrounded by whirling slivers of sound.~%"
+            (he-or-she i)))
+  (when (affected-by-spell i +song-mirror-image-melody+)
+    (format stream "...~a is surrounded by mirror images.~%"
+            (he-or-she i)))
+  (when (affected-by-spell i +spell-dimensional-shift+)
+    (format stream "...~a is shifted into a parallel dimension.~%"
+            (he-or-she i))))
+
+
+(defun diag-char-to-char (stream ch i)
+  (let ((percent (if (plusp (max-hitp-of i))
+                     (floor (* 100 (hitp-of i)) (max-hitp-of i))
+                     -1)))
+    (format stream "&y~a ~a.&n~%"
+                  (desc ch i)
+                  (cond
+                    ((>= percent 100) "is in excellent condition")
+                    ((>= percent 90) "has a few scratches")
+                    ((>= percent 75) "has some small wounds and bruises")
+                    ((>= percent 50) "has quite a few wounds")
+                    ((>= percent 30) "has some big nasty wounds and scratches")
+                    ((>= percent 15) "looks pretty hurt")
+                    ((>= percent 5) "is in awful condition")
+                    ((>= percent 0) "is on the brink of death")
+                    (t "is bleeding awfully from big wounds")))))
 
 (defun look-at-char (ch i mode)
   (let* ((af (affected-by-spell i +skill-disguise+))
@@ -186,10 +288,12 @@
                         (sex-of i)
                         (aref +player-races+ (race-of i))))))
 
-  (diag-char-to-char ch i)
+  (send-to-char ch "~a"
+                (with-output-to-string (s) (diag-char-to-char s ch i)))
 
   (when (eql mode :look)
-    (desc-char-trailers ch i))
+    (send-to-char ch "~a"
+                  (with-output-to-string (s) (desc-char-trailers s ch i))))
 
   ;; Describe soilage
   (when (and (not (eql mode :glance)) (typep i 'player))
@@ -199,7 +303,7 @@
        when (and (null (aref (equipment-of i) pos))
                  (not (illegal-soilpos pos))
                  (not (zerop (char-soilage i pos))))
-       do (let ((soilage-descs 
+       do (let ((soilage-descs
                         (loop for bit upto +top-soil+
                              when (char-soiled i pos bit)
                              collect (aref +soilage-bits+ bit))))
@@ -292,7 +396,7 @@
            (format stream "~a struggles blindly in the pitch." name))
           (t
            (format stream "~a~a" name (aref positions (position-of i)))))
-        
+
         ;; Show alignment flags
         (cond
           ((pref-flagged ch +pref-holylight+)
@@ -308,7 +412,7 @@
               (format stream "&R(Red Aura)"))
              ((is-good i)
               (format stream "&B(Blue Aura)")))))
-        
+
         (when (and (aff3-flagged ch +aff3-detect-poison+)
                    (or (has-poison-1 i)
                        (has-poison-2 i)
@@ -336,8 +440,11 @@
                 (format stream " &g(afk: ~a)&y" (afk-reason-of i))
                 (format stream " &g(afk)&y"))))
 
-        (format stream "~%")))))
-      
+        (format stream "~%")
+
+        (unless (pref-flagged ch +pref-notrailers+)
+          (desc-char-trailers stream ch i))))))
+
 
 (defun char-list-desc (people ch)
   "Returns two values, a string containing the description of all the seen creatures in PEOPLE, and the number of unseen creatures.  This function may send another creature notification that they've been seen."
@@ -360,10 +467,10 @@
             ;; You might see creatures with infravision
             (case (random-range 0 2)
               (0
-               (format stream 
+               (format stream
                        "You see a pair of glowing red eyes looking your way.~%"))
               (1
-               (format stream 
+               (format stream
                        "A pair of eyes glow red in the darkness~%"))
               (2
                (incf unseen))))
@@ -425,10 +532,10 @@
                      for dir across +dirs+
                    unless (or (null door)
                               (zerop (to-room-of door))
+                              (null (real-room (to-room-of door)))
                               (logtest (exit-info-of door)
-                                       (logior +ex-hidden+ +ex-secret+))) 
-                   collect (if (logtest (exit-info-of door)
-                                        (logior +ex-closed+))
+                                       (logior +ex-hidden+ +ex-secret+)))
+                   collect (if (logtest (exit-info-of door) +ex-closed+)
                                (format nil "|~a|" dir)
                                (format nil "~a" dir))))
   (when (immortalp ch)
@@ -514,7 +621,7 @@
         (when (description-of room)
           (send-to-char ch "~a" (description-of room)))))
 
-  (send-to-char ch 
+  (send-to-char ch
                 (case (pk-style-of (zone-of room))
                   (0 "&c[ &g!PK&c ] ")
                   (1 "&c[ &YNPK&c ] ")
@@ -539,10 +646,10 @@
   (send-to-char ch "&y~a&n"
                 (with-output-to-string (s)
                   (list-char-to-char s (people-of room) ch))))
-    
+
 (defcommand (ch "commands") ()
   (send-to-char ch "Commands:~%~{~10a~}~%"
-                (sort 
+                (sort
                  (mapcar #'first (mapcar #'command-info-pattern *commands*))
                  #'string<)))
 
@@ -555,8 +662,20 @@
         (look-at-char ch vict :look)
         (send-to-char ch "There's no '~a' here.~%" thing))))
 
-(defcommand (ch "examine" thing) (:resting)
-  (look-at-char ch thing :examine))
+(defcommand (ch "look" "at" thing) (:resting)
+  (let ((vict (resolve-alias ch thing)))
+    (if vict
+        (look-at-char ch vict :look)
+        (send-to-char ch "There's no '~a' here.~%" thing))))
 
-(defcommand (ch "glance" vict) (:resting)
-  (look-at-char ch vict :glance))
+(defcommand (ch "examine" thing) (:resting)
+  (let ((vict (resolve-alias ch thing)))
+    (if vict
+        (look-at-char ch vict :examine)
+        (send-to-char ch "There's no '~a' here.~%" thing))))
+
+(defcommand (ch "glance" thing) (:resting)
+  (let ((vict (resolve-alias ch thing)))
+    (if vict
+        (look-at-char ch vict :glance)
+        (send-to-char ch "There's no '~a' here.~%" thing))))
