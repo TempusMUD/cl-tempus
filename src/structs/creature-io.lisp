@@ -32,6 +32,10 @@
       (string-case (first node)
         ("description"
          (setf (fdesc-of ch) (format nil "~a~%" (third node))))
+        ("title"
+         (if (third node)
+             (setf (title-of ch) (format nil " ~a" (third node)))
+             ""))
         ("points"
          (setf (hitp-of ch) (xml-attr node "hit" :numeric t))
          (setf (mana-of ch) (xml-attr node "mana" :numeric t))
@@ -54,9 +58,9 @@
                              ("Neuter" 'neuter)))
          (setf (level-of ch) (xml-attr node "level" :numeric t)))
         ("class"
-         (setf (remort-gen-of ch) (xml-attr node "gen" :numeric t))
-         (setf (char-class-of ch) (xml-attr node "name"))
-         (setf (remort-char-class-of ch) (xml-attr node "remort")))
+         (setf (remort-gen-of ch) (xml-attr node "gen" :numeric t :default 0))
+         (setf (char-class-of ch) (parse-pc-char-class (xml-attr node "name")))
+         (setf (remort-char-class-of ch) (parse-pc-char-class (xml-attr node "remort"))))
         ("time"
          (setf (login-time-of ch) (unix-to-timestamp
                                    (xml-attr node "last" :numeric t)))
@@ -64,7 +68,12 @@
                                    (xml-attr node "birth" :numeric t)))
          (setf (death-time-of ch) (xml-attr node "death" :numeric-with-nil t))
          (setf (played-time-of ch) (xml-attr node "played" :numeric t)))
-        ("carnage" nil)
+        ("carnage"
+         (setf (pkills-of ch) (xml-attr node "pkills" :numeric t :default 0))
+         (setf (akills-of ch) (xml-attr node "akills" :numeric t :default 0))
+         (setf (mobkills-of ch) (xml-attr node "mkills" :numeric t :default 0))
+         (setf (deaths-of ch) (xml-attr node "deaths" :numeric t :default 0))
+         (setf (reputation-of ch) (xml-attr node "reputation" :numeric t :default 0)))
         ("attr" nil)
         ("condition" nil)
         ("player" nil)
@@ -92,7 +101,10 @@
          (setf (aff-flags-of ch) (xml-attr node "flag1" :hex t))
          (setf (aff2-flags-of ch) (xml-attr node "flag2" :hex t))
          (setf (aff3-flags-of ch) (xml-attr node "flag2" :hex t)))
-        ("immort" nil)
+        ("immort"
+         (setf (badge-of ch) (xml-attr node "badge"))
+         (setf (qlog-level-of ch) (xml-attr node "qlog" :numeric t))
+         (setf (invis-level-of ch) (xml-attr node "invis" :numeric t)))
         ("poofin" nil)
         ("poofout" nil)
         ("alias" nil)))

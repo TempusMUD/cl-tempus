@@ -755,7 +755,7 @@
    (weap-spec :accessor weap-spec-of :initarg :weap-spec :initform nil)
    (wimp-level :accessor wimp-level-of :initarg :wimp-level :initform nil)
    (freeze-level :accessor freeze-level-of :initarg :freeze-level :initform nil)
-   (invis-level :accessor invis-level-of :initarg :invis-level :initform nil)
+   (invis-level :accessor invis-level-of :initarg :invis-level :initform 0)
    (load-room :accessor load-room-of :initarg :load-room :initform nil)
    (home-room :accessor home-room-of :initarg :home-room :initform nil)
    (prefs :accessor prefs-of :initarg :pref :initform nil)
@@ -769,10 +769,10 @@
    (badge :accessor badge-of :initarg :badge :initform nil)
    (deity :accessor deity-of :initarg :deity :initform nil)
    (life-points :accessor life-points-of :initarg :life-points :initform nil)
-   (pkills :accessor pkills-of :initarg :pkills :initform nil)
-   (akills :accessor akills-of :initarg :akills :initform nil)
-   (mobkills :accessor mobkills-of :initarg :mobkills :initform nil)
-   (deaths :accessor deaths-of :initarg :deaths :initform nil)
+   (pkills :accessor pkills-of :initarg :pkills :initform 0)
+   (akills :accessor akills-of :initarg :akills :initform 0)
+   (mobkills :accessor mobkills-of :initarg :mobkills :initform 0)
+   (deaths :accessor deaths-of :initarg :deaths :initform 0)
    (old-char-class :accessor old-char-class-of :initarg :old-char-class :initform nil)
    (total-dam :accessor total-dam-of :initarg :total-dam :initform nil)
    (hold-load-room :accessor hold-load-room-of :initarg :hold-load-room :initform nil)
@@ -884,6 +884,9 @@
        (logtest flag (mob2-flags-of ch))))
 
 (defun immortalp (ch)
+  (>= (level-of ch) 50))
+
+(defun immortal-level-p (ch)
   (>= (level-of ch) 50))
 
 (defun noncorporealp (ch)
