@@ -647,11 +647,167 @@
                 (with-output-to-string (s)
                   (list-char-to-char s (people-of room) ch))))
 
+(defun parse-who-args (args)
+  (let ((options nil))
+    (dolist (term (cl-ppcre:split #/\s+/ args))
+      (string-case term
+        ("zone"
+         (push :zone options))
+        ("plane"
+         (push :plane options))
+        ("time"
+         (push :time options))
+        ("kills"
+         (push :kills options))
+        ("noflags"
+         (push :noflags options))))
+    options))
+
+(defun who-arg-matches (ch player options)
+  (and
+   (or (immortalp ch) (not (pref-flagged player +pref-nowho+)))
+   (<= (invis-level-of player) (level-of ch))
+   (or (not (member :zone options)) (eql (zone-of (in-room-of ch))
+                                         (zone-of (in-room-of player))))
+   (or (not (member :plane options)) (eql (plane-of (zone-of (in-room-of ch)))
+                                          (plane-of (zone-of (in-room-of player)))))
+   (or (not (member :time options)) (eql (time-frame-of (zone-of (in-room-of ch)))
+                                         (time-frame-of (zone-of (in-room-of player)))))
+   (or (not (member :kills options)) (plusp (pkills-of player)))))
+
+(defun char-class-color (ch class)
+  (case class
+    (#.+class-mage+
+     "&m")
+    (#.+class-cleric+
+     (cond
+       ((is-good ch) "&B")
+       ((is-evil ch) "&R")
+       (t            "&y")))
+    (#.+class-knight+
+     (cond
+       ((is-good ch) "&B")
+       ((is-evil ch) "&r")
+       (t            "&y")))
+    (#.+class-ranger+  "&g")
+    (#.+class-barb+  "&c")
+    (#.+class-thief+  "&N")
+    (#.+class-cyborg+  "&c")
+    (#.+class-psionic+  "&m")
+    (#.+class-physic+  "&n")
+    (#.+class-bard+  "&Y")
+    (#.+class-monk+  "&g")
+    (#.+class-mercenary+  "&y")
+    (t              "&n")))
+
+(defun char-class-name (class)
+  (aref +char-class-abbrevs+ class))
+
+(defun parse-pc-char-class (class-name)
+  (position class-name +class-names+ :test #'string-equal))
+
+(defun get-reputation-rank (ch)
+  (cond
+    ((zerop (reputation-of ch))
+     0)
+    ((>= (reputation-of ch) 1000)
+     11)
+    (t
+     (1+ (floor (reputation-of ch) 100)))))
+
+(defun reputation-desc (ch)
+  (aref +reputation-msg+ (get-reputation-rank ch)))
+
+(defun send-who-line (ch player options)
+  (cond
+    ((immortal-level-p player)
+     (send-to-char ch "&Y[&G~7<~;~:@(~a~)~;~>&Y]&g " (badge-of player)))
+    ((testerp player)
+     (send-to-char ch "&Y[&GTESTING&Y]&g "))
+    ((immortalp ch)
+     (send-to-char ch "&g[~:[&r~;&n~]~2d&c(&n~2d&c) ~a~a&g] &n"
+                   (pref-flagged player +pref-anonymous+)
+                   (level-of player)
+                   (remort-gen-of player)
+                   (char-class-color player (char-class-of player))
+                   (char-class-name (char-class-of player))))
+    (t
+     (send-to-char ch "&g[~:[&c--~*~;&n~2d~] ~a~a&g] &n"
+                   (pref-flagged player +pref-anonymous+)
+                   (level-of player)
+                   (char-class-color player (char-class-of player))
+                   (char-class-name (char-class-of player)))))
+  
+  (send-to-char ch "~a~@[~a~]&n"
+                (if (can-see-creature ch player)
+                    (name-of player)
+                    "Someone")
+                (title-of player))
+
+  (unless (member :noflags options)
+    (send-who-flags ch player))
+  (when (member :kills options)
+    (send-to-char ch " &R*~d KILLS* -~a-"
+                  (pkills-of player)
+                  (reputation-desc player)))
+  (send-to-char ch "~%"))
+
+(defun perform-who (ch options)
+  ;; Print header
+  (send-to-char ch "&W**************      &GVisible Players of TEMPUS      &W**************&n~%")
+
+  ;; Filter out the players to be displayed
+  (let* ((players (remove-if-not (lambda (actor)
+                                   (and actor (in-room-of actor)))
+                                 (mapcar #'actor-of 
+                                         (remove-if-not (lambda (cxn)
+                                                          (typep cxn 'tempus-cxn))
+                                                        *cxns*))))
+         (displayed (sort (remove-if-not (lambda (player)
+                                           (who-arg-matches ch player options))
+                                         players)
+                          #'> :key 'level-of)))
+
+    ;; Display the proper players
+    (dolist (player displayed)
+      (send-who-line ch player options))
+
+    ;; Send counts of the various kinds of players
+    (let* ((immortals-displayed (length (remove-if-not #'immortal-level-p displayed)))
+           (immortals-playing (length (remove-if-not #'immortal-level-p players)))
+           (testers-displayed (length (remove-if-not #'testerp displayed)))
+           (testers-playing (length (remove-if-not #'testerp players)))
+           (players-displayed (- (length displayed) immortals-displayed testers-displayed))
+           (players-playing (- (length players) immortals-playing testers-playing)))
+      (if (immortalp ch)
+          (send-to-char ch "&n~d of ~d immortal~:p, ~d tester~:p, and ~d player~:p displayed.~%"
+                        immortals-displayed
+                        immortals-playing
+                        testers-displayed
+                        players-displayed)
+          (send-to-char ch "&n~d of ~d immortal~:p and ~d of ~d player~:p displayed.~%"
+                          
+                        immortals-displayed
+                        immortals-playing
+                        players-displayed
+                        players-playing)))))
+
 (defcommand (ch "commands") ()
   (send-to-char ch "Commands:~%~{~10a~}~%"
-                (sort
-                 (mapcar #'first (mapcar #'command-info-pattern *commands*))
-                 #'string<)))
+                (mapcar (lambda (str)
+                          (cond
+                            ((not (stringp str))
+                             str)
+                            ((< (length str) 10)
+                             str)
+                            (t
+                             (subseq str 0 8))))
+                        (sort
+                         (remove-duplicates
+                          (mapcar #'first
+                                  (mapcar #'command-info-pattern *commands*))
+                          :test #'string=)
+                         #'string<))))
 
 (defcommand (ch "look") (:resting)
   (look-at-room ch (in-room-of ch) t))
@@ -679,3 +835,9 @@
     (if vict
         (look-at-char ch vict :glance)
         (send-to-char ch "There's no '~a' here.~%" thing))))
+
+(defcommand (ch "who") ()
+  (perform-who ch nil))
+
+(defcommand (ch "who" flags) ()
+  (perform-who ch (parse-who-args flags)))
