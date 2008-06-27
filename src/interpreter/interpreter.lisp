@@ -24,11 +24,21 @@
        (> (command-info-arity a) (command-info-arity b)))
       (t
        (string< (first (command-info-pattern a))
-                (first (command-info-pattern b)))))))
+                (first (command-info-pattern b))))))
+
+  (define-condition parser-error ()
+    ((message :reader message-of :initarg :message)))
+  (defmethod print-object ((err parser-error) stream)
+    (princ (message-of err) stream)))
 
 (defmacro defcommand ((actor &rest pattern) flags &body body)
-  (let ((cmd (gensym "CMD"))
-        (func `(lambda (,actor ,@(remove-if-not 'symbolp pattern)) ,@body)))
+  (let* ((cmd (gensym "CMD"))
+         (err (gensym "ERR"))
+         (func `(lambda (,actor ,@(remove-if-not 'symbolp pattern))
+                  (handler-case
+                      (progn ,@body)
+                    (parser-error (,err)
+                      (send-to-char ,actor "~a~%" ,err))))))
     `(let ((,cmd (find ',pattern *commands* :test 'equal :key 'command-info-pattern)))
          (cond
            (,cmd
