@@ -75,10 +75,27 @@
                          "You will now be aware of the projections of other remorts.")
   (define-toggle-command "notrailers" () +pref-notrailers+
                          "You will now ignore affect trailers on characters."
-                         "You will now see affect trailers on characters."))
+                         "You will now see affect trailers on characters.")
+  (define-toggle-command "nowho" () +pref-nowho+
+                         "You will no longer be shown on the who list."
+                         "You will now be shown on the who list."))
 
 
 (defcommand (ch "quit") ()
   (char-from-room ch)
   (setf *characters* (delete ch *characters*))
   (setf (state-of (link-of ch)) 'main-menu))
+
+(defcommand (ch "title") ()
+  (setf (title-of ch) nil)
+  (send-to-char ch "Okay, you're now ~a.~%" (name-of ch)))
+
+(defcommand (ch "title" title) ()
+  (cond
+    ((not (typep ch 'player))
+     (send-to-char ch "Mobs don't have titles.~%"))
+    ((scan #/[()]/ title)
+     (send-to-char ch "Titles can't contain the ( or ) characters.~%"))
+    (t
+     (setf (title-of ch) (concatenate 'string " " title))
+     (send-to-char ch "Okay, you're now ~a~a.~%" (name-of ch) (title-of ch)))))
