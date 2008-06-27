@@ -4,3 +4,6 @@
   (slog "Reading clans")
   ;; FIXME: actually fill this in
   (slog "Clan boot successful"))
+
+(defun real-clan (clan-id)
+  nil)
