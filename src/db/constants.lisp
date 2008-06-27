@@ -801,7 +801,7 @@
   #("wet" "bloody" "muddy" "covered with feces"
     "dripping with urine" "smeared with mucus"
     "spattered with saliva" "covered with acid"
-    "oily" "sweaty" "greasy" "sooty" "slimy" "sticky" 
+    "oily" "sweaty" "greasy" "sooty" "slimy" "sticky"
     "covered with vomit" "rusty" "charred"))
 
 (defparameter +wear-descriptions+
@@ -810,6 +810,31 @@
     "right wrist" "left wrist" "!wield!" "!hold!" "crotch" "eyes"
     "back" "!belt!" "face" "left ear" "right ear" "!wield2!" "!ass!"
     "\n"))
+
+(defparameter +char-class-abbrevs+
+  #("Mage" "Cler" "Thie" "Warr" "Barb" "Psio" "Phyz" "Borg" "Knig"
+    "Rang" "Bard" "Monk" "Vamp" "Merc" "Spa1" "Spa2" "Spa3" "ERR" "ERR"
+    "ERR" "ERR" "ERR" "ERR" "ERR" "ERR" "ERR" "ERR" "ERR" "ERR" "ERR"
+    "ERR" "ERR" "ERR" "ERR" "ERR" "ERR" "ERR" "ERR" "ERR" "ERR" "ERR"
+    "ERR" "ERR" "ERR" "ERR" "ERR" "ERR" "ERR" "ERR" "ERR" "Norm" "Bird"
+    "Pred" "Snak" "Hrse" "Smll" "Medm" "Lrge" "Scin" "ERR" "Skel" "Ghou"
+    "Shad" "Wigt" "Wrth" "Mumy" "Spct" "Vamp" "Ghst" "Lich" "Zomb" "ERR"
+    "ERR" "ERR" "ERR" "ERR" "ERR" "ERR" "ERR" "ERR" "ERR" "Eart" "Fire"
+    "Watr" "Air " "Lgtn" "ERR" "ERR" "ERR" "ERR" "ERR" "Gren" "Whte"
+    "Blck" "Blue" "Red" "Slvr" "Shad" "Deep" "Turt" "ILL" "Lest" "Lssr"
+    "Grtr" "Duke" "Arch" "ILL" "ILL" "ILL" "ILL" "ILL" "Hill" "Ston"
+    "Frst" "Fire" "Clod" "Strm" "ILL" "ILL" "ILL" "Red" "Blue" "Gren"
+    "Grey" "Deth" "Lord" "ILL" "ILL" "ILL" "ILL" "Tp I" "T II" "TIII"
+    "TIV" "Tp V" "T VI" "Semi" "Minr" "Majr" "Lord" "Prnc" "ILL" "ILL" "ILL"
+    "ILL" "ILL" "ILL" "ILL" "ILL" "ILL" "ILL" "Astl" "Mond" "Movn" "ILL"
+    "ILL" "ILL" "ILL" "ILL" "ILL" "ILL" "ILL" "ILL" "ILL" "ILL" "ILL"
+    "ILL" "ILL" "ILL" "ILL" "ILL" "ILL" "ILL" "ILL" "ILL" "ILL" "ILL"
+    "ILL" "ILL" "Gdlg" "Diet" "ILL" "ILL" "ILL"))
+
+(defparameter +class-names+
+  #("Mage" "Cleric" "Thief" "Warrior" "Barbarian" "Psionic" "Physic" "Cyborg" "Knight" "Ranger" "Bard" "Monk" "Vampire" "Mercenary" "Spare1" "Spare2" "Spare3" "ILL" "ILL" "ILL" "ILL" "ILL" "ILL" "ILL" "ILL" "ILL" "ILL" "ILL" "ILL" "ILL" "ILL" "ILL" "ILL" "ILL" "ILL" "ILL" "ILL" "ILL" "ILL" "ILL" "ILL" "ILL" "ILL" "ILL" "ILL" "ILL" "ILL" "ILL" "ILL" "ILL" "Mobile" "Bird" "Predator" "Snake" "Horse" "Small" "Medium" "Large" "Scientist" "ILL" "Skeleton" "Ghoul" "Shadow" "Wight" "Wraith" "Mummy" "Spectre" "Vampire" "Ghost" "Lich" "Zombie" "ILL" "ILL" "ILL" "ILL" "ILL" "ILL" "ILL" "ILL" "ILL" "ILL" "Earth" "Fire" "Water" "Air" "Lighting" "ILL" "ILL" "ILL" "ILL" "ILL" "Green" "White" "Black" "Blue" "Red" "Silver" "Shadow_D" "Deep" "Turtle" "ILL" "Least" "Lesser" "Greater" "Duke" "Arch" "ILL" "ILL" "ILL" "ILL" "ILL" "Hill" "Stone" "Frost" "Fire" "Cloud" "Storm" "ILL" "ILL" "ILL" "Red" "Blue" "Green" "Grey" "Death" "Lord" "ILL" "ILL" "ILL" "ILL" "Type I" "Type II" "Type III" "Type IV" "Type V" "Type VI" "Semi" "Minor" "Major" "Lord" "Prince" "ILL" "ILL" "ILL" "ILL" "ILL" "ILL" "ILL" "ILL" "ILL" "Astral" "Monadic" "Movanic" "ILL" "ILL" "ILL" "ILL" "ILL" "ILL" "ILL" "Fire" "Lava" "Smoke" "Steam" "ILL" "ILL" "ILL" "ILL" "ILL" "ILL" "Arcana" "Charona" "Dergho" "Hydro" "Pisco" "Ultro" "Yagno" "Pyro" "Godling" "Deity"))
+
+
 
 (defparameter +player-races+
   #("Human"
@@ -875,3 +900,17 @@
 	"Githzerai"
     "Faerie"
 	"\n"))
+
+(defparameter +reputation-msg+
+  #("Innocent"                          ; 0 reputation
+	"Mostly Harmless"                   ; 1-99
+	"Unfriendly"                        ; 100-199
+	"Unkind"                            ; 200-299
+	"Cold"                              ; 300-399
+	"Daunting"                          ; 400-499
+	"Feared"                            ; 500-599
+	"Frightening"                       ; 600-699
+	"Dreaded"                           ; 700-799
+	"Terrifying"                        ; 800-899
+	"Monstrous"                         ; 900-999
+	"True Killer"))                     ; 1000 reputation
