@@ -3,12 +3,12 @@
 (defun perform-say (ch say-cmd message)
   (let ((message (act-escape message)))
     (act ch
-         :all-emit (format nil "&B$n ~a$%$a, &c'$[~a]'" say-cmd message))))
+         :all-emit (format nil "&B$n ~a$%$a, &c'$[~a]'&n" say-cmd message))))
 
 (defun perform-say-to (ch target message)
   (let ((message (act-escape message)))
     (act ch :target target
-         :all-emit (format nil "&B$n$a say$% to $N, &c'$[~a]'" message))))
+         :all-emit (format nil "&B$n$a say$% to $N, &c'$[~a]'&n" message))))
 
 (defun perform-emote (ch message)
   (let ((message (act-escape message)))
