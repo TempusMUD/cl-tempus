@@ -296,7 +296,8 @@ sequences in seq-list with the delimiter between each element"
 		 ""
 		 "es"))
 	(#\a
-	 (or (mood-of subject)
+     (if (mood-of subject)
+         (concatenate 'string " " (mood-of subject))
 	 	 ""))
 	(#\$
 	 "$")))
