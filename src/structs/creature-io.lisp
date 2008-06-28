@@ -75,7 +75,10 @@
          (setf (deaths-of ch) (xml-attr node "deaths" :numeric t :default 0))
          (setf (reputation-of ch) (xml-attr node "reputation" :numeric t :default 0)))
         ("attr" nil)
-        ("condition" nil)
+        ("condition"
+         (setf (aref (conditions-of ch) +full+) (xml-attr node "hunger" :numeric t :default 0))
+         (setf (aref (conditions-of ch) +thirst+) (xml-attr node "thirst" :numeric t :default 0))
+         (setf (aref (conditions-of ch) +drunk+) (xml-attr node "drunk" :numeric t :default 0)))
         ("player" nil)
         ("rent" nil)
         ("home"

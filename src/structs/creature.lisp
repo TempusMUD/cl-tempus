@@ -759,7 +759,7 @@
    (load-room :accessor load-room-of :initarg :load-room :initform nil)
    (home-room :accessor home-room-of :initarg :home-room :initform nil)
    (prefs :accessor prefs-of :initarg :pref :initform nil)
-   (conditions :accessor conditions-of :initarg :conditions :initform nil)
+   (conditions :accessor conditions-of :initarg :conditions :initform (make-array 3 :element-type '(integer -1 24)))
    (clan :accessor clan-of :initarg :clan :initform nil)
    (broken-component :accessor broken-component-of :initarg :broken-component :initform nil)
    (imm-qp :accessor imm-qp-of :initarg :imm-qp :initform nil)
@@ -918,11 +918,30 @@
 (defun is-hamstrung (ch) (aff3-flagged ch +aff3-hamstrung+))
 (defun has-poison-1 (ch) (aff-flagged ch +aff-poison+))
 (defun has-poison-2 (ch) (aff3-flagged ch +aff3-poison-2+))
+
 (defun has-poison-3 (ch) (aff3-flagged ch +aff3-poison-2+))
+(defun is-poisoned (ch) (or (has-poison-1 ch)
+                            (has-poison-2 ch)
+                            (has-poison-3 ch)))
+
+(defun get-condition (ch cond) (aref (conditions-of ch) cond))
+
+(defun char-withstands-fire (ch)
+  (or (immortalp ch)
+      (aff2-flagged ch +aff2-prot-fire+)
+      (= (char-class-of ch) +class-fire+)
+      (and (is-dragon ch) (= (char-class-of ch) +class-red+))
+      (and (is-devil ch) (or
+                          (= (plane-of (zone-of (in-room-of ch)))
+                             +plane-hell-4+)
+                          (= (plane-of (zone-of (in-room-of ch)))
+                             +plane-hell-6+)))))
 
 (defun is-npc (ch) (typep ch 'mobile))
 (defun is-cleric (ch) (or (eql (char-class-of ch) +class-cleric+)
                           (eql (remort-char-class-of ch) +class-cleric+)))
+(defun is-devil (ch) (= (race-of ch) +race-devil+))
+(defun is-dragon (ch) (= (race-of ch) +race-dragon+))
 
 (defun can-detect-disguise (ch vict level)
   (or (pref-flagged ch +pref-holylight+)
