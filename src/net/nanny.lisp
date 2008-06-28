@@ -225,7 +225,7 @@
 	(setf (hitp-of player) 1))
   (act player :all-emit "$n enter$% the game.")
   (push player *characters*)
-#+nil  (display-contents (place player) player (brief-p (prefs-of player)))
+  (look-at-room player (in-room-of player) nil)
   (when (probe-file (mail-pathname (idnum-of player)))
 	(send-to-char player "You have new mail.~%"))
   (save-player-to-xml player)
