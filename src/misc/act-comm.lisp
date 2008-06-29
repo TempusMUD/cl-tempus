@@ -66,8 +66,14 @@
     (t
      "say"))))
 
+(defcommand (ch "say") (:resting)
+  (send-to-char ch "Yes, but WHAT do you want to say?~%"))
+
 (defcommand (ch "say" message) (:resting)
   (perform-say ch (select-say-cmd ch message) message))
+
+(defcommand (ch #\') (:resting)
+  (send-to-char ch "Yes, but WHAT do you want to say?~%"))
 
 (defcommand (ch #\' message) (:resting)
   (perform-say ch (select-say-cmd ch message) message))
@@ -137,20 +143,32 @@
                 "wishfully" "wistfully" "wryly" "valiantly"
                 "vehemently"))
 
+(defcommand (ch #\> target-str) (:resting)
+  (send-to-char ch "Yes, but WHAT do you want to say?~%"))
+
+(defcommand (ch #\>) (:resting)
+  (send-to-char ch "Say what to who?~%"))
+
 (defcommand (ch #\> target-str message) (:resting)
   (let ((target (resolve-alias ch target-str)))
     (cond
       ((null target)
        (send-to-char ch "There's no '~a' here.~%" target))
       ((typep target 'creature)
-       (perform-say-to ch vict message))
+       (perform-say-to ch target message))
       ((typep target 'obj-data)
-       (perform-say-to-obj ch vict message))
+       (perform-say-to-obj ch target message))
       (t
        (error "Shouldn't happen")))))
 
+(defcommand (ch "emote") (:resting)
+  (send-to-char ch "Yes... but what?~%"))
+
 (defcommand (ch "emote" message) (:resting)
   (perform-emote ch message))
+
+(defcommand (ch #\:) (:resting)
+  (send-to-char ch "Yes... but what?~%"))
 
 (defcommand (ch #\: message) (:resting)
   (perform-emote ch message))
