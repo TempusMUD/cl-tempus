@@ -94,18 +94,17 @@
 (macrolet ((define-moods (&rest moods)
              `(progn
                 ,@(mapcar (lambda (mood)
-                            `(defcommand (ch ,mood) ()
+                            `(defcommand (ch ,mood) (:mood)
                                  (send-to-char ch "What do you want to ~a do?~%"
                                                ,mood)))
                           moods)
                 ,@(mapcar (lambda (mood)
-                            (let ((cmd (gensym "CMD")))
-                              `(defcommand (ch ,mood ,cmd) (:resting)
-                                 (unwind-protect
-                                      (progn
-                                        (setf (mood-of ch) ,mood)
-                                        (interpret-command ch ,cmd))
-                                   (setf (mood-of ch) nil)))))
+                            `(defcommand (ch ,mood command) (:resting :mood)
+                               (unwind-protect
+                                    (progn
+                                      (setf (mood-of ch) ,mood)
+                                      (interpret-command ch command))
+                                 (setf (mood-of ch) nil))))
                           moods))))
   (define-moods "accusingly" "angelically" "angrily" "apologetically"
                 "arrogantly" "bitterly" "boldly" "brutally" "callously"
@@ -118,7 +117,7 @@
                 "gallantly" "gently" "graciously" "gravely" "grumpily"
                 "happily" "harshly" "hatefully" "hungrily" "icily"
                 "impatiently" "indignantly" "innocently" "inquisitively"
-                "jealously" "jokingly" "kindly" "knowingly" "languages"
+                "jealously" "jokingly" "kindly" "knowingly"
                 "lazily" "longingly" "loudly" "lovingly" "lustily"
                 "maliciously" "meekly" "merrily" "mischeviously"
                 "mockingly" "modestly" "moodily" "morbidly"
