@@ -17,19 +17,29 @@
 
   (defun command-sort-compare (a b)
     (cond
-      ((not (and (member :direction (command-info-flags a))
-                 (member :direction (command-info-flags b))))
+      ((not (eql (first (member :direction (command-info-flags a)))
+                 (first (member :direction (command-info-flags b)))))
        (member :direction (command-info-flags a)))
+      ((not (eql (first (member :mood (command-info-flags a)))
+                 (first (member :mood (command-info-flags b)))))
+       (member :mood (command-info-flags b)))
       ((/= (command-info-arity a) (command-info-arity b))
        (> (command-info-arity a) (command-info-arity b)))
       (t
        (string< (first (command-info-pattern a))
                 (first (command-info-pattern b))))))
 
+  (defmethod print-object ((cmd command-info) stream)
+    (format stream "#<CMD-INFO ~s~{ ~a~}>"
+            (command-info-pattern cmd)
+            (command-info-flags cmd)))
   (define-condition parser-error ()
     ((message :reader message-of :initarg :message)))
   (defmethod print-object ((err parser-error) stream)
     (princ (message-of err) stream)))
+
+(defun get-command (&rest pattern)
+  (find pattern *commands* :test #'equal :key #'command-info-pattern))
 
 (defmacro defcommand ((actor &rest pattern) flags &body body)
   (let* ((cmd (gensym "CMD"))
