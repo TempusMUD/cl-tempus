@@ -937,6 +937,7 @@
                           (= (plane-of (zone-of (in-room-of ch)))
                              +plane-hell-6+)))))
 
+(defun is-remort (ch) (plusp (remort-gen-of ch)))
 (defun is-npc (ch) (typep ch 'mobile))
 (defun is-cleric (ch) (or (eql (char-class-of ch) +class-cleric+)
                           (eql (remort-char-class-of ch) +class-cleric+)))
