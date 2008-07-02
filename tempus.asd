@@ -23,6 +23,8 @@
             ((:file "defpackage" :pathname "util/defpackage")
              (:file "defs" :pathname "util/defs"
                            :depends-on ("defpackage"))
+             (:file "config" :pathname "misc/config"
+                    :depends-on ("defpackage"))
              (:file "db" :pathname "db/db"
                          :depends-on ("defs" "creature" "obj-data" "zone-data" "room-data" "search" "artisan" "account" "spec-assign" "clan" "help" "act-social" "tongues" "act-physic" "dyntext" "spell-parser" "combat-messages" "quest" "artisan" "utils"))
              (:file "account" :pathname "db/account"
@@ -74,8 +76,11 @@
                               :depends-on ("defs" "utils"))
              (:file "login" :pathname "misc/login"
                             :depends-on ("defs"))
+             (:file "mail" :pathname "mobiles/mail"
+                            :depends-on ("defs" "creature"))
              (:file "nanny" :pathname "net/nanny"
-                            :depends-on ("defs" "utils" "network" "login"))
+                            :depends-on ("defs" "utils" "config" "network"
+                                                "login" "mail"))
              (:file "network" :pathname "net/network"
                               :depends-on ("defs"))
              (:file "obj-data" :pathname "structs/obj-data"
