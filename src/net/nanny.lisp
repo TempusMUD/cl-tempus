@@ -125,6 +125,7 @@
 
 (defmethod handle-accept ((cxn tempus-cxn))
   (mudlog 'info t "New connection received from ~a" (peer-addr cxn))
+  (cxn-write cxn "~a" +greetings+)
   (setf (state-of cxn) 'login))
 
 (defmethod handle-flush :before ((cxn tempus-cxn))
@@ -200,27 +201,36 @@
 								   (asdf:find-system "tempus")))))
 
 (defun player-to-game (player)
-  (mudlog 'notice t "~a entering game as ~a"
-		  (name-of (account-of (link-of player)))
-		  (name-of player))
-
+  (setf (login-time-of player) (now))
+  (send-to-char player "&R~a&n" +welcome-message+)
   (char-to-room player
                 (or (real-room (or (load-room-of player)
                                    (home-room-of player)
                                    3001))
                     (real-room 3001)))
+
+  (show-mud-date-to-char player)
+  (send-to-char player "~%")
+
+  (setf (state-of (link-of player)) 'playing)
+
+  (mudlog 'notice t "~a has entered the game in room #~d~@[~a~]"
+		  (name-of player)
+          (number-of (in-room-of player))
+          (when (banned-of (account-of (link-of player))) " [BANNED]"))
+
+  (act player :place-emit "$n enter$% the game.")
+
   (setf (load-room-of player) nil)
 #+nil  (dolist (equip (load-equipment (idnum-of player)))
 	(item-to-actor equip player))
   (unless (plusp (hitp-of player))
 	(setf (hitp-of player) 1))
-  (act player :all-emit "$n enter$% the game.")
   (push player *characters*)
   (look-at-room player (in-room-of player) nil)
-  (when (probe-file (mail-pathname (idnum-of player)))
+  (when (has-mail (idnum-of player))
 	(send-to-char player "You have new mail.~%"))
-  (save-player-to-xml player)
-  (setf (state-of (link-of player)) 'playing))
+  (save-player-to-xml player))
 
 (defun send-section-header (cxn str)
   (if (string= str "")
@@ -522,27 +532,131 @@ choose a password to use on this system.
   (input (cxn line)
    (setf (state-of cxn) 'main-menu)))
 
+(defun show-account-chars (cxn acct immort brief)
+  (unless immort
+    (if brief
+        (cxn-write cxn "  # Name         Last on   Status  Mail   # Name         Last on   Status  Mail~% -- --------- ---------- --------- ----  -- --------- ---------- --------- ----~%")
+        (cxn-write cxn 	"&y  # Name           Lvl Gen Sex     Race     Class      Last on    Status  Mail~%&b -- -------------- --- --- --- -------- --------- ------------- --------- ----~%")))
+  (loop
+     for player in (players-of acct)
+     for idx from 1
+     do (let ((tmp-ch (load-player-from-xml (idnum-of player)))
+              (real-ch (player-in-world (idnum-of player))))
+          (cond
+            ((null tmp-ch)
+             (cxn-write cxn "&R------ BAD PROBLEMS ------  PLEASE REPORT ------[%ld]&n~%"))
+            ((and (not immort)
+                  (or (plr-flagged tmp-ch +plr-deleted+)
+                      (plr2-flagged tmp-ch +plr2-buried+)))
+             nil)
+            (t
+             (let* ((+immort-time-format+ '(:short-weekday #\, #\space
+                                            (:day 2 #\0) #\space
+                                            :short-month #\space
+                                            :year #\space
+                                            :hour #\: :min #\: :sec))
+                    (+brief-time-format+ '(:year #\/ (:month 2) #\/ (:day 2)))
+                    (+long-time-format+ '(:long-month #\space :day #\,
+                                          #\space :year))
+                    (max-name-length (if brief 8 13))
+                    (truncated-name (if (> (length (name-of tmp-ch))
+                                           max-name-length)
+                                        (subseq (name-of tmp-ch) 0 max-name-length)
+                                        (name-of tmp-ch)))
+                    (name-str (if (immortal-level-p tmp-ch)
+                                  (format nil "&g~:[~13a~;~8a~]&n" brief truncated-name)
+                                  truncated-name))
+                    (class-str (if (is-remort tmp-ch)
+                                   (format nil "~a~a&n/~a~a&n"
+                                           (char-class-color tmp-ch (char-class-of tmp-ch))
+                                           (char-class-name (char-class-of tmp-ch))
+                                           (char-class-color tmp-ch (remort-char-class-of tmp-ch))
+                                           (char-class-name (remort-char-class-of tmp-ch)))
+                                   (format nil "~a~9a&n"
+                                           (char-class-color tmp-ch (char-class-of tmp-ch))
+                                           (char-class-name (char-class-of tmp-ch)))))
+                    (sex-str (case (sex-of tmp-ch)
+                               (male "&bmale")
+                               (female "&mfemale")
+                               (t "neuter")))
+                    (laston-str (format-timestring nil (login-time-of tmp-ch)
+                                                   :format (cond
+                                                             (immort +immort-time-format+)
+                                                             (brief  +brief-time-format+)
+                                                             (t      +long-time-format+))))
+                    (status-str (cond
+                                  ((plr-flagged tmp-ch +plr-frozen+)
+                                   "&C  FROZEN!")
+                                  ((and real-ch (link-of real-ch))
+                                   "&g  Playing")
+                                  (real-ch
+                                   "&c Linkless")
+                                  ((eql (desc-mode-of tmp-ch) 'afterlife)
+                                   "&R     Died")
+                                  (t
+                                   (case (rentcode-of tmp-ch)
+                                     (creating "&Y Creating")
+                                     (new-char "&Y      New")
+                                     (undef    "&r    UNDEF")
+                                     (cryo     "&c   Cryoed")
+                                     (crash    "&yCrashsave")
+                                     (rented   "&m   Rented")
+                                     (forced   "&yForcerent")
+                                     (quit     "&m     Quit")
+                                     (remorting "&YRemorting")
+                                     (t        "&R REPORTME")))))
+                    (mail-str (if (has-mail (idnum-of player)) "&Y Yes" "&n No ")))
+               (cond
+                 (immort
+                  (cxn-write cxn "&y~5d &n~13a ~a&n ~a  ~2d&c(&n~2d&c)&n ~a~%"
+                             player
+                             name-str
+                             status-str
+                             laston-str
+                             (level-of tmp-ch)
+                             (remort-gen-of tmp-ch)
+                             class-str))
+                 ((and brief (eql (rentcode-of tmp-ch) 'creating))
+                  (cxn-write cxn "&b[&y~2d&b] &n%~8a     &yNever  Creating&n  -- "
+                             idx name-str))
+                 ((eql (rentcode-of tmp-ch) 'creating)
+                  (cxn-write cxn "&b[&y~2d&b] &n%~13a   &y-   -  -         -         -         Never  Creating&n  --\r\n"
+                             idx name-str))
+                 (brief
+                  (cxn-write cxn "&b[&y~2d&b] &n~8a ~10a ~a ~a&n "
+                             idx name-str laston-str status-str mail-str))
+                 (t
+                  (cxn-write cxn "&b[&y~2d&b] &n~13a ~3d ~3d  ~a  ~8a ~a ~13a ~a ~a&n\r\n"
+                             idx name-str
+                             (level-of tmp-ch) (remort-gen-of tmp-ch)
+                             sex-str
+                             (aref +player-races+ (race-of tmp-ch))
+                             class-str laston-str status-str mail-str))))
+             (when (and brief (not (logtest idx 1)))
+               (cxn-write cxn "~%")))))
+     finally (when (and brief (not (logtest idx 1)))
+               (cxn-write cxn "~%"))))
+                  
 (define-connection-state main-menu
   (menu (cxn)
-   (cxn-write cxn "&@")
-   (send-section-header cxn "")
-   (send-section-header cxn "main menu")
-   (send-section-header cxn "")
-   (loop for player in (players-of (account-of cxn))
-      for idx from 1 do
-      (cxn-write cxn " &b[&y~2,' d&b]&n  ~10a ~a~%"
-                 idx
-                 (name-of player)
-                 (multiple-value-bind (ms second minute hour day month year dow)
-                     (decode-timestamp (login-time-of player))
-                   (declare (ignorable ms second minute hour dow))
-                   (format nil "~d/~2,'0d/~2,'0d" year month day))))
-   (cxn-write cxn "~%~5tPast bank: ~d~50tFuture bank: ~d~%"
+   (cxn-write cxn "&@&c*&n&b-----------------------------------------------------------------------------&c*
+&n&b|                                 &YT E M P U S&n                                 &b|
+&c*&b-----------------------------------------------------------------------------&c*&n
+
+")
+   (show-account-chars cxn
+                       (account-of cxn)
+                       nil
+                       (> (length (players-of (account-of cxn))) 5))
+   (cxn-write cxn "~%~%~5tPast bank: ~d~50tFuture bank: ~d~%~%"
               (past-bank-of (account-of cxn))
               (future-bank-of (account-of cxn)))
-   (cxn-write cxn "~%~23t&b[&yC&b]&n &cCreate a new character")
-   (cxn-write cxn "~%~23t&b[&yP&b]&n &cChange your password")
-   (cxn-write cxn "~%~23t&b[&yL&b]&n &cLog out of the game&n~%~%"))
+   (cxn-write cxn "    &b[&yP&b] &cChange your account password     &b[&yV&b] &cView the background story~%")
+   (cxn-write cxn "    &b[&yC&b]&n &cCreate a new character")
+   (when (players-of (account-of cxn))
+      (cxn-write cxn "           &b[&yS&b] &cShow character details~%")
+      (cxn-write cxn "    &b[&yE&b] &cEdit a character's description   &b[&yD&b] &cDelete an existing character~%"))
+   (cxn-write cxn "~%~%                            &b[&yL&b] &cLog out of the game&n~%"))
   (prompt (cxn)
     (cxn-write cxn "Enter your selection: "))
   (input (cxn line)
@@ -629,7 +743,6 @@ choose a password to use on this system.
          (interpret-command (actor-of cxn)
                             (expand-aliases (actor-of cxn)
                                             trimmed-line))))))
-;;)
 
 (defun send-menu (cxn state)
   (send-state-menu cxn state))

@@ -914,3 +914,21 @@
 	"Terrifying"                        ; 800-899
 	"Monstrous"                         ; 900-999
 	"True Killer"))                     ; 1000 reputation
+
+(defparameter +month-name+
+  #("Month of Winter"
+    "Month of the Dire Wolf"
+    "Month of the Frost Giant"
+    "Month of the Old Forces"
+    "Month of the Grand Struggle"
+    "Month of Conception"
+    "Month of Nature"
+    "Month of Futility"
+    "Month of the Dragon"
+    "Month of the Sun"
+    "Month of Madness"
+    "Month of the Battle"
+    "Month of the Dark Shades"
+    "Month of Long Shadows"
+	"Month of the Ancient Darkness"
+	"Month of the Great Evil"))

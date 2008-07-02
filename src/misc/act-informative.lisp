@@ -825,6 +825,26 @@
                         players-displayed
                         players-playing)))))
 
+(defun show-mud-date-to-char (ch)
+  (unless (in-room-of ch)
+    (error "No room of ch in show-mud-date-to-char"))
+
+  (multiple-value-bind (hour day month year)
+      (local-time-of (zone-of (in-room-of ch)))
+    (declare (ignore hour))
+    (incf day)
+    (let ((suf (cond
+                 ((= day 1) "st")
+                 ((= day 2) "nd")
+                 ((= day 3) "rd")
+                 ((< day 20) "th")
+                 ((= (mod day 10) 1) "st")
+                 ((= (mod day 10) 2) "nd")
+                 ((= (mod day 10) 3) "rd")
+                 (t "th"))))
+      (send-to-char ch "It is the ~d~a Day of the ~a, Year ~d~%"
+                    day suf (aref +month-name+ month) year))))
+
 (defcommand (ch "commands") ()
   (send-to-char ch "Commands:~%~{~10a~}~%"
                 (mapcar (lambda (str)
