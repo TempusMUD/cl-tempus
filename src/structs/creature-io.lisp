@@ -80,7 +80,13 @@
          (setf (aref (conditions-of ch) +thirst+) (xml-attr node "thirst" :numeric t :default 0))
          (setf (aref (conditions-of ch) +drunk+) (xml-attr node "drunk" :numeric t :default 0)))
         ("player" nil)
-        ("rent" nil)
+        ("rent"
+         (setf (rentcode-of ch) (aref #(undef crash rented cryo forced quit new-char creating remorting)
+                                      (xml-attr node "code" :numeric t)))
+         (setf (rent-per-day-of ch) (xml-attr node "perdiem" :numeric t))
+         (setf (rent-currency-of ch) (if (zerop (xml-attr node "currency" :numeric t))
+                                         'gold
+                                         'credits)))
         ("home"
          (setf (home-room-of ch) (xml-attr node "homeroom" :numeric-with-nil t))
          (setf (load-room-of ch) (xml-attr node "loadroom" :numeric-with-nil t))
