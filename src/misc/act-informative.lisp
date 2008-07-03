@@ -858,7 +858,52 @@
                         (sort
                          (remove-duplicates
                           (mapcar #'first
-                                  (mapcar #'command-info-pattern *commands*))
+                                  (mapcar #'command-info-pattern
+                                          (delete-if (lambda (cmd)
+                                                       (or (member :mood (command-info-flags cmd))
+                                                           (member :social (command-info-flags cmd))))
+                                                     *commands*)))
+                          :test #'string=)
+                         #'string<))))
+(defcommand (ch "commands") ()
+  (send-to-char ch "Commands:~%~{~10a~}~%"
+                (mapcar (lambda (str)
+                          (cond
+                            ((not (stringp str))
+                             str)
+                            ((< (length str) 10)
+                             str)
+                            (t
+                             (subseq str 0 8))))
+                        (sort
+                         (remove-duplicates
+                          (mapcar #'first
+                                  (mapcar #'command-info-pattern
+                                          (delete-if (lambda (cmd)
+                                                       (or (member :mood (command-info-flags cmd))
+                                                           (member :social (command-info-flags cmd))))
+                                                     *commands*)))
+                          :test #'string=)
+                         #'string<))))
+
+(defcommand (ch "socials") ()
+  (send-to-char ch "Socials:~%~{~10a~}~%"
+                (mapcar (lambda (str)
+                          (cond
+                            ((not (stringp str))
+                             str)
+                            ((< (length str) 10)
+                             str)
+                            (t
+                             (subseq str 0 8))))
+                        (sort
+                         (remove-duplicates
+                          (mapcar #'first
+                                  (mapcar #'command-info-pattern
+                                          (delete-if-not
+                                           (lambda (cmd)
+                                             (member :social (command-info-flags cmd)))
+                                           *commands*)))
                           :test #'string=)
                          #'string<))))
 
