@@ -32,7 +32,7 @@
              (:file "accstr" :pathname "util/accstr"
                              :depends-on ("defs"))
              (:file "act-comm" :pathname "misc/act-comm"
-                                 :depends-on ("defs" "utils" "interpreter"))
+                                 :depends-on ("defs" "utils" "interpreter" "act-social"))
              (:file "act-informative" :pathname "misc/act-informative"
                                  :depends-on ("defs" "utils" "interpreter"))
              (:file "act-movement" :pathname "misc/act-movement"

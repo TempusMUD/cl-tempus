@@ -82,20 +82,28 @@
              `(progn
                 ,@(mapcar (lambda (command)
                             (let ((msg (gensym "MSG")))
-                              `(defcommand (ch ,command ,msg) (:resting)
-                                 (perform-say ch ,command ,msg))))
-                          commands))))
-  (define-say-commands "add" "admit" "apologize" "assert" "ask"
-                       "babble" "bellow" "chant" "complain" "coo"
-                       "declare" "demand" "describe" "drawl"
-                       "enthuse" "exclaim" "expostulate" "grunt"
-                       "groan" "growl" "grumble" "howl" "indicate"
-                       "intone" "mourn" "moan" "mumble" "murmur"
-                       "mutter" "note" "plead" "prattle" "pronounce"
-                       "quote" "ramble" "rant" "rave" "respond"
-                       "request" "retort" "smirk" "snarl" "sneer"
-                       "state" "stutter" "suggest" "threaten" "utter"
-                       "wail" "whimper" "whine" "yell"))
+                              `(progn
+                                 (defcommand (ch ,command ,msg) (:resting)
+                                   (perform-say ch ,command ,msg))
+                                 (defcommand (ch ,command) (:resting)
+                                   (let ((social (gethash ,command *socials*)))
+                                     (if social
+                                         (act ch
+                                              :subject-emit (social-message-char-no-arg social)
+                                              :place-emit (social-message-others-no-arg social))
+                                         (send-to-char ch "Yes, but WHAT do you want to say?~%")))))))
+                            commands))))
+           (define-say-commands "add" "admit" "apologize" "assert" "ask"
+                                "babble" "bellow" "chant" "complain" "coo"
+                                "declare" "demand" "describe" "drawl"
+                                "enthuse" "exclaim" "expostulate" "grunt"
+                                "groan" "growl" "grumble" "howl" "indicate"
+                                "intone" "mourn" "moan" "mumble" "murmur"
+                                "mutter" "note" "plead" "prattle" "pronounce"
+                                "quote" "ramble" "rant" "rave" "respond"
+                                "request" "retort" "smirk" "snarl" "sneer"
+                                "state" "stutter" "suggest" "threaten" "utter"
+                                "wail" "whimper" "whine" "yell")))
 
 (macrolet ((define-moods (&rest moods)
              `(progn
@@ -151,15 +159,9 @@
 
 (defcommand (ch #\> target-str message) (:resting)
   (let ((target (resolve-alias ch target-str)))
-    (cond
-      ((null target)
-       (send-to-char ch "There's no '~a' here.~%" target))
-      ((typep target 'creature)
-       (perform-say-to ch target message))
-      ((typep target 'obj-data)
-       (perform-say-to-obj ch target message))
-      (t
-       (error "Shouldn't happen")))))
+    (if target
+       (perform-say-to ch target message)
+       (send-to-char ch "There's no '~a' here.~%" target))))
 
 (defcommand (ch "emote") (:resting)
   (send-to-char ch "Yes... but what?~%"))
