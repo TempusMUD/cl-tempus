@@ -214,7 +214,7 @@
   (load-messages)
 
   (slog "Loading social messages.")
-  (boot-social-messages)
+  (boot-social-messages +socmess-file+)
 
   (slog "Assigning function pointers:")
   
