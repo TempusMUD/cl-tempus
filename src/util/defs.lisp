@@ -27,8 +27,6 @@
 
 (defvar *help* nil)
 (defvar *restrict* nil)
-(defvar *mini-mud* nil)
-(defvar *mud-moved* nil)
 (defvar *olc-lock* nil)
 (defvar *no-rent-check* nil)
 (defvar *no-initial-zreset* nil)
@@ -48,11 +46,7 @@
 (eval-when (:load-toplevel :compile-toplevel)
   (defparameter *regex-macro-character* #\/)
 
-  (defmacro enable-regex-reader-syntax ()
-    `(eval-when (:compile-toplevel :load-toplevel :execute)
-       (%enable-regex-reader-syntax)))
-
-  (defun read-regex-string (stream)
+  (defun %read-regex-string (stream)
     (let ((eof (gensym "EOF")))
       (with-output-to-string (str)
         (loop for prev-char = nil then cur-char
@@ -65,17 +59,17 @@
            finally (when (eql cur-char eof)
                      (error "Unexpected end-of-file while reading regex"))))))
 
-  (defun read-regex-options (stream)
+  (defun %read-regex-options (stream)
     (let ((eof (gensym "EOF")))
       (loop for char = (read-char stream nil eof)
          until (or (eql char eof)
                    (not (alphanumericp char)))
          collect char)))
 
-  (defun read-regex (stream char arg)
+  (defun %read-regex (stream char arg)
     (declare (ignore char arg))
-    (let ((pattern (read-regex-string stream))
-          (options (read-regex-options stream)))
+    (let ((pattern (%read-regex-string stream))
+          (options (%read-regex-options stream)))
       `(load-time-value
          (cl-ppcre:create-scanner ,pattern
                                   :case-insensitive-mode ,(member #\i options)
@@ -84,8 +78,12 @@
                                   :extended-mode ,(member #\x options)))))
 
   (defun %enable-regex-reader-syntax ()
-    (set-dispatch-macro-character #\# *regex-macro-character* #'read-regex)
+    (set-dispatch-macro-character #\# *regex-macro-character* #'%read-regex)
     (values))
+
+  (defmacro enable-regex-reader-syntax ()
+    `(eval-when (:compile-toplevel :load-toplevel :execute)
+       (%enable-regex-reader-syntax)))
 
   (enable-regex-reader-syntax))
 
