@@ -1,8 +1,5 @@
 (in-package :tempus)
 
-(defun sort-commands ()
-  nil)
-
 (defun expand-aliases (ch arg)
   arg)
 
@@ -15,20 +12,6 @@
 
   (defvar *commands* nil)
 
-  (defun command-sort-compare (a b)
-    (cond
-      ((not (eql (first (member :direction (command-info-flags a)))
-                 (first (member :direction (command-info-flags b)))))
-       (member :direction (command-info-flags a)))
-      ((not (eql (first (member :mood (command-info-flags a)))
-                 (first (member :mood (command-info-flags b)))))
-       (member :mood (command-info-flags b)))
-      ((/= (command-info-arity a) (command-info-arity b))
-       (> (command-info-arity a) (command-info-arity b)))
-      (t
-       (string< (first (command-info-pattern a))
-                (first (command-info-pattern b))))))
-
   (defmethod print-object ((cmd command-info) stream)
     (format stream "#<CMD-INFO ~s~{ ~a~}>"
             (command-info-pattern cmd)
@@ -38,32 +21,55 @@
   (defmethod print-object ((err parser-error) stream)
     (princ (message-of err) stream)))
 
+(defun command-sort-compare (a b)
+  (cond
+    ((not (eql (first (member :direction (command-info-flags a)))
+               (first (member :direction (command-info-flags b)))))
+     (member :direction (command-info-flags a)))
+    ((not (eql (first (member :mood (command-info-flags a)))
+               (first (member :mood (command-info-flags b)))))
+     (member :mood (command-info-flags b)))
+    ((not (eql (first (member :social (command-info-flags a)))
+               (first (member :social (command-info-flags b)))))
+     (member :social (command-info-flags b)))
+    ((/= (command-info-arity a) (command-info-arity b))
+     (> (command-info-arity a) (command-info-arity b)))
+    (t
+     (string< (first (command-info-pattern a))
+              (first (command-info-pattern b))))))
+
+(defun sort-commands ()
+  (setf *commands* (sort *commands* 'command-sort-compare)))
+
 (defun get-command (&rest pattern)
   (find pattern *commands* :test #'equal :key #'command-info-pattern))
 
+(defun add-command (pattern flags func)
+  "Adds a command to the parser.  PATTERN is the pattern for matching user input, FLAGS involves the restrictions on the command.  FUNC is the function to execute when the user input matches."
+  (let ((cmd (find pattern *commands* :test #'equal :key 'command-info-pattern)))
+    (cond
+      (cmd
+       (setf (command-info-pattern cmd) pattern)
+       (setf (command-info-arity cmd) (length pattern))
+       (setf (command-info-flags cmd) flags)
+       (setf (command-info-function cmd) func))
+      (t
+       (push
+        (make-command-info :pattern pattern
+                           :arity (length pattern)
+                           :flags flags
+                           :function func)
+        *commands*)))))
+
 (defmacro defcommand ((actor &rest pattern) flags &body body)
-  (let* ((cmd (gensym "CMD"))
-         (err (gensym "ERR"))
+  (let* ((err (gensym "ERR"))
          (func `(lambda (,actor ,@(remove-if-not 'symbolp pattern))
                   (handler-case
                       (progn ,@body)
                     (parser-error (,err)
                       (send-to-char ,actor "~a~%" ,err))))))
-    `(let ((,cmd (find ',pattern *commands* :test 'equal :key 'command-info-pattern)))
-         (cond
-           (,cmd
-            (setf (command-info-pattern ,cmd) ',pattern)
-            (setf (command-info-arity ,cmd) ,(length pattern))
-            (setf (command-info-flags ,cmd) ',flags)
-            (setf (command-info-function ,cmd) ,func))
-           (t
-            (push
-             (make-command-info :arity ,(length pattern)
-                                :pattern ',pattern
-                                :flags ',flags
-                                :function ,func)
-              *commands*)
-            (setf *commands* (sort *commands* 'command-sort-compare)))))))
+    `(progn
+       (add-command (quote ,pattern) (quote ,flags) ,func))))
 
 (defun command-matches (cmd string)
   (loop
