@@ -103,7 +103,7 @@
                                 "quote" "ramble" "rant" "rave" "respond"
                                 "request" "retort" "smirk" "snarl" "sneer"
                                 "state" "stutter" "suggest" "threaten" "utter"
-                                "wail" "whimper" "whine" "yell")))
+                                "wail" "whimper" "whine" "yell"))
 
 (macrolet ((define-moods (&rest moods)
              `(progn
@@ -152,6 +152,7 @@
                 "vehemently"))
 
 (defcommand (ch #\> target-str) (:resting)
+  (declare (ignore target-str))
   (send-to-char ch "Yes, but WHAT do you want to say?~%"))
 
 (defcommand (ch #\>) (:resting)
@@ -174,3 +175,329 @@
 
 (defcommand (ch #\: message) (:resting)
   (perform-emote ch message))
+
+(defparameter +channels+
+  '((:name "holler"
+     :deaf-flag #.+pref-noholler+
+     :scope universe
+     :desc-color #\Y
+     :text-color #\r
+     :minimum-level 6
+     :move-cost 10
+     :not-on-message "Ha!  You are noholler buddy."
+     :muted-message "You find yourself unable to holler.")
+    (:name "shout"
+     :scope zone
+     :desc-color #\y
+     :text-color #\c
+     :not-on-message "Turn off your noshout flag first!"
+     :muted-message "You cannot shout!!")
+    (:name "gossip"
+     :scope plane
+     :deaf-flag #.+pref-nogoss+
+     :desc-color #\g
+     :text-color #\n
+     :minimum-level 6
+     :not-on-message "You aren't even on the channel!"
+     :muted-message "You cannot gossip!!")
+    (:name "auction"
+     :scope plane
+     :deaf-flag #.+pref-noauct+
+     :desc-color #\m
+     :text-color #\n
+     :npc-only-message "Only licensed auctioneers can use that channel!"
+     :not-on-message "You aren't even on the channel!"
+     :muted-message "You cannot auction!!")
+    (:name "congrat"
+     :scope plane
+     :deaf-flag #.+pref-nogratz+
+     :desc-color #\g
+     :text-color #\m
+     :minimum-level 6
+     :not-on-message "You aren't even on the channel!"
+     :muted-message "You cannot congratulate!!")
+    (:name "sing"
+     :scope plane
+     :deaf-flag #.+pref-nomusic+
+     :desc-color #\c
+     :text-color #\y
+     :minimum-level 6
+     :not-on-message "You aren't even on the channel!"
+     :muted-message "You cannot sing!!")
+    (:name "spew"
+     :scope plane
+     :deaf-flag #.+pref-nospew+
+     :desc-color #\r
+     :text-color #\y
+     :minimum-level 6
+     :not-on-message "You aren't even on the channel!"
+     :muted-message "You cannot spew!!")
+    (:name "dream"
+     :scope plane
+     :deaf-flag #.+pref-nodream+
+     :desc-color #\c
+     :text-color #\W
+     :minimum-level 6
+     :maximum-position +pos-sleeping+
+     :not-on-message "You aren't even on the channel!"
+     :muted-message "You cannot dream!!")
+    (:name "project"
+     :scope universe
+     :deaf-flag #.+pref-noproject+
+     :desc-color #\W
+     :text-color #\c
+     :minimum-gen 6
+     :not-on-message "You are not open to projections yourself..."
+     :muted-message "You cannot project.  The immortals have muted you.")
+    (:name "newbie"
+     :scope plane
+     :deaf-flag #.+pref-newbie-helper+
+     :desc-color #\y
+     :text-color #\w
+     :not-on-message "You aren't on the illustrious newbie channel."
+     :muted-message "The immortals have muted you for bad behavior!")
+    (:name "petition"
+     :scope universe
+     :deaf-flag #.+pref-nopetition+
+     :desc-color #\m
+     :text-color #\c
+     :minimum-level-heard 50
+     :not-on-message "You aren't listening to petitions at this time."
+     :muted-message "The immortals have turned a deaf ear to your petitions.")
+    (:name "guildsay"
+     :scope plane
+     :guild-channel t
+     :deaf-flag #.+pref-noguildsay+
+     :desc-color #\m
+     :text-color #\y
+     :not-on-message "You aren't listening to the rumors of your guild."
+     :muted-message "You may not guild-say, for the immortals have muted you.")
+    (:name "clansay"
+     :scope plane
+     :clan-channel t
+     :deaf-flag #.+pref-noclansay+
+     :desc-color #\c
+     :text-color #\n
+     :not-on-message "You aren't listening to the words of your clan."
+     :muted-message "The immortals have muted you.  You may not clansay.")
+    (:name "clansay"
+     :scope plane
+     :clan-channel t
+     :emote t
+     :deaf-flag #.+pref-noclansay+
+     :desc-color #\c
+     :text-color #\c
+     :not-on-message "You aren't listening to the words of your clan."
+     :muted-message "The immortals have muted you.  You may not clan emote.")
+    (:name "immchat"
+     :scope universe
+     :deaf-flag #.+pref-noimmchat+
+     :desc-color #\y
+     :text-color #\y
+     :not-on-message "You aren't on the immchat channel."
+     :group "immortal")
+    (:name "wizchat"
+     :scope universe
+     :deaf-flag #.+pref-nowiz+
+     :desc-color #\c
+     :text-color #\c
+     :minimum-level 60
+     :not-on-message "You aren't on the wizchat channel."
+     :group "immortal")))
+
+(defun can-use-channel (ch chan)
+  (cond
+    ;; Pets can't shout on interplanar channels
+    ((and (null (link-of ch))
+          (master-of ch)
+          (eql (getf chan :scope) 'universe))
+     nil)
+    ;; Drunk people not allowed
+    ((and (> (get-condition ch +drunk+) 5)
+          (>= (random-range 0 3) 2))
+     (send-to-char ch "You try to ~a, but somehow it doesn't come out right.~%"
+                   (name-of chan))
+     nil)
+    ;; Player is muted
+    ((plr-flagged ch +plr-noshout+)
+     (send-to-char ch "~a" (getf chan :muted-message))
+     nil)
+    ;; Make sure the char is on the channel
+    ((pref-flagged ch (getf chan :deaf-flag))
+     (send-to-char ch "~a~%" (getf chan :not-on-message))
+     nil)
+    ;; Afterwards are all restrictions to which immortals and npcs are uncaring
+    ((or (is-npc ch) (immortalp ch))
+     t)
+    ;; Channel is NPC only
+    ((getf chan :npc-only-message)
+        (send-to-char ch "~a~%" (getf chan :npc-only-message))
+     nil)
+    ;; High enough level to shout
+    ((let ((min-level (getf chan :minimum-level)))
+       (and min-level
+            (< (level-of ch) min-level)
+            (<= (remort-gen-of ch) 0)))
+     (send-to-char ch "You must be at least level ~d before you can ~a.~%"
+                   (getf chan :minimum-level)
+                   (first chan))
+     (send-to-char ch "Try using the newbie channel instead.~%")
+     nil)
+    ;; Only remort players can project
+    ((and (getf chan :minimum-gen)
+          (not (is-remort ch))
+          (not (immortal-level-p ch)))
+     (send-to-char ch "You do not know how to project yourself that way.~%")
+     nil)
+    ;; Maximum position of channel
+    ((and (getf chan :maximum-position)
+          (> (position-of ch) (getf chan :maximum-position)))
+     (send-to-char ch "You attempt to dream, but realize you need to sleep first.~%")
+     nil)
+    ;; Guild channel checks
+    ((and (getf chan :guild-channel)
+          (or (and (= (char-class-of ch) +class-monk+)
+                   (not (is-neutral ch)))
+              (and (= (char-class-of ch) +class-cleric+)
+                   (is-neutral ch))
+              (and (= (char-class-of ch) +class-knight+)
+                   (is-neutral ch))))
+              
+     (case (char-class-of ch)
+       (#.+class-monk+
+        (send-to-char ch "You have been cast out of the monks until your neutrality is regained.~%"))
+       (#.+class-cleric+
+        (send-to-char ch "You have been cast out of the ranks of the blessed.~%"))
+       (#.+class-knight+
+        (send-to-char ch "You have been cast out of the ranks of the honored.~%")))
+     nil)
+    ;; Ensure they are in a clan for clan channels
+    ((and (getf chan :clan-channel)
+               (zerop (clan-of ch)))
+     (send-to-char ch "You aren't even in a clan!~%")
+     nil)
+    ;; Ensure they have enough movement for the movement cost
+    ((let ((move-cost (getf chan :move-cost)))
+       (and move-cost
+            (not (immortalp ch))
+            (< (move-of ch) move-cost)))
+     (send-to-char ch "You're too exhausted to holler.~%")
+     nil)
+    ;; All checks pass
+    (t
+     t)))
+
+(defun can-receive-channel (ch cxn chan evilp goodp char-class clan-id)
+  (let ((target (actor-of cxn)))
+    (and
+         (eql (state-of cxn) 'playing)
+         target
+         (not (or (plr-flagged target +plr-writing+)
+                  (plr-flagged target +plr-olc+)))
+         (not (pref-flagged target (getf chan :deaf-flag)))
+         (or (not (getf chan :clan-channel))
+             (= (clan-of target) clan-id))
+         (or (not (getf chan :guild-channel))
+             (and (= (char-class-of target) char-class)
+                  (or (not (= (char-class-of target) +class-monk+))
+                      (is-neutral target))
+                  (or (and (not (= (char-class-of target) +class-cleric+))
+                           (not (= (char-class-of target) +class-knight+)))
+                      (and goodp (is-good target))
+                      (and evilp (is-evil target)))))
+         (or (is-npc ch)
+             (immortalp target)
+             (and (or (getf chan :min-gen)
+                      (is-remort target))
+                  (or (getf chan :minimum-pos)
+                      (/= (position-of target) +pos-sleeping+))
+                  (or (eql (getf chan :scope) 'zone)
+                      (eql (zone-of (in-room-of ch))
+                           (zone-of (in-room-of target))))
+                  (or (getf chan :minimum-level-heard)
+                      (not (eql ch target)))
+                  (or (eql (in-room-of ch) (in-room-of target))
+                      (and (not (room-flagged (in-room-of ch) +room-soundproof+))
+                           (not (room-flagged (in-room-of target) +room-soundproof+))))
+                  (or (not (eql (getf chan :scope) 'plane))
+                      (eql (plane-of (zone-of (in-room-of ch)))
+                           (plane-of (zone-of (in-room-of target))))))))))
+
+
+(defun perform-channel-emits (ch chan evilp goodp char-class clan-id message)
+  (let* ((subchannel-desc (cond
+                            ((getf chan :guild-channel)
+                             (format nil "[~:[~c-~a~;~*~a~]] "
+                                     (or (= char-class +class-cleric+)
+                                         (= char-class +class-knight+))
+                                     (if goodp #\g #\e)
+                                     (if (< 0 char-class +top-class+)
+                                         (aref +class-names+ char-class)
+                                         (format nil "#~d" char-class))))
+                            ((getf chan :clan-channel)
+                             (let ((clan (real-clan clan-id)))
+                               (format nil "[~:[#~d~;~(~a~)~]]"
+                                       clan
+                                       (if clan
+                                           (name-of clan)
+                                           clan-id))))
+                            (t "")))
+         (imm-actstr (if (getf chan :emote)
+                         (format nil "&~c~a$n &~c~a"
+                                 (getf chan :desc-color)
+                                 subchannel-desc
+                                 (getf chan :text-color)
+                                 (act-escape message))
+                         (format nil "&~c~a$n$a ~a$%$l, &~c'$[~a]'"
+                                 (getf chan :desc-color)
+                                 subchannel-desc
+                                 (getf chan :name)
+                                 (getf chan :text-color)
+                                 (act-escape message))))
+         (mort-actstr (if (getf chan :emote)
+                          (format nil "&~c$n$a &~c~a"
+                                  (getf chan :desc-color)
+                                  (getf chan :text-color)
+                                  (act-escape message))
+                          (format nil "&~c$n$a ~a$%$l, &~c'$[~a]'"
+                                  (getf chan :desc-color)
+                                  (getf chan :name)
+                                  (getf chan :text-color)
+                                  (act-escape message)))))
+    (dolist (cxn *cxns*)
+      (when (and (typep cxn 'tempus-cxn)
+                 (can-receive-channel ch cxn chan evilp goodp char-class clan-id))
+        (act ch :target (actor-of cxn)
+             :target-emit (if (immortalp (actor-of cxn))
+                              imm-actstr
+                              mort-actstr))))
+
+    (when (and (room-flagged (in-room-of ch) +room-soundproof+)
+               (not (immortalp ch))
+               (string/= (name-of chan) "petition"))
+      (send-to-char ch "The walls seem to absorb your words...~%"))))
+    
+(defun do-gen-comm (ch chan-name message)
+  (let ((chan (find chan-name +channels+ :test (lambda (x y)
+                                                 (string= x (getf y :name))))))
+    (when (can-use-channel ch chan)
+      (perform-channel-emits ch chan
+                             (is-evil ch)
+                             (is-good ch)
+                             (char-class-of ch)
+                             (clan-of ch)
+                             message))))
+
+(macrolet ((define-channels ()
+             `(progn
+                ,@(mapcar (lambda (command)
+                            (let ((msg (gensym "MSG")))
+                              `(progn
+                                 (defcommand (ch ,command ,msg) (:resting)
+                                   (do-gen-comm ch ,command ,msg))
+                                 (defcommand (ch ,command) (:resting)
+                                   (send-to-char ch "Yes, ~a, fine, ~a we must, but WHAT???~%"
+                                                 ,command
+                                                 ,command)))))
+                           (mapcar #'second +channels+)))))
+           (define-channels))
