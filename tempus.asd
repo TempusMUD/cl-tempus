@@ -129,7 +129,9 @@
   :author "Daniel Lowe <dlowe@bitmuse.com>"
   :description "Testing code for the TempusMUD"
   :depends-on (:tempus :fiveam)
-  :components ((:file "tests" :pathname "tests/test-random")))
+  :components ((:file "defpackage" :pathname "tests/test-defpackage")
+               (:file "test-random" :pathname "tests/test-random"
+                      :depends-on ("defpackage"))))
 
 (defmethod perform ((op test-op) (system (eql (find-system :tempus))))
   (operate 'load-op '#:tempus.test)

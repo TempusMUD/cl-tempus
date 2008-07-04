@@ -1,6 +1,3 @@
-(defpackage #:tempus.tests
-  (:use :cl :tempus :5am))
-
 (in-package #:tempus.tests)
 
 (def-suite :tempus)
