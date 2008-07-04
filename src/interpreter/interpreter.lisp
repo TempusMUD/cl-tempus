@@ -63,7 +63,18 @@
 
 (defmacro defcommand ((actor &rest pattern) flags &body body)
   (let* ((err (gensym "ERR"))
+         (body-docstr (when (stringp (first body))
+                        (prog1
+                            (list (first body))
+                          (setf body (rest body)))))
+         (body-declare (when (and (consp (first body))
+                                  (eql (first (first body)) 'declare))
+                         (prog1
+                             (list (first body))
+                           (setf body (rest body)))))
          (func `(lambda (,actor ,@(remove-if-not 'symbolp pattern))
+                  ,@body-docstr
+                  ,@body-declare
                   (handler-case
                       (progn ,@body)
                     (parser-error (,err)
