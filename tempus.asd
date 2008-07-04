@@ -3,9 +3,9 @@
 
 #.(declaim (optimize (debug 3) (speed 0) (safety 3) (space 2)))
 
-(defsystem tempus
+(defsystem :tempus
   :name "Tempus"
-  :version "1.0.d"
+  :version "1.0.0d"
   :author "Daniel Lowe <dlowe@bitmuse.com>"
   :description "Tempus MUD Codebase"
   :depends-on (postmodern
@@ -24,7 +24,7 @@
              (:file "defs" :pathname "util/defs"
                            :depends-on ("defpackage"))
              (:file "config" :pathname "misc/config"
-                    :depends-on ("defpackage"))
+                             :depends-on ("defpackage"))
              (:file "db" :pathname "db/db"
                          :depends-on ("defs" "creature" "obj-data" "zone-data" "room-data" "search" "artisan" "account" "spec-assign" "clan" "help" "act-social" "tongues" "act-physic" "dyntext" "spell-parser" "combat-messages" "quest" "artisan" "utils"))
              (:file "account" :pathname "db/account"
@@ -32,11 +32,11 @@
              (:file "accstr" :pathname "util/accstr"
                              :depends-on ("defs"))
              (:file "act-comm" :pathname "misc/act-comm"
-                                 :depends-on ("defs" "utils" "interpreter" "act-social"))
+                               :depends-on ("defs" "utils" "interpreter" "act-social"))
              (:file "act-informative" :pathname "misc/act-informative"
-                                 :depends-on ("defs" "utils" "interpreter"))
+                                      :depends-on ("defs" "utils" "interpreter"))
              (:file "act-movement" :pathname "misc/act-movement"
-                                 :depends-on ("defs" "utils" "interpreter"))
+                                   :depends-on ("defs" "utils" "interpreter"))
              (:file "act-other" :pathname "misc/act-other"
                                 :depends-on ("defs" "utils" "interpreter"))
              (:file "act-physic" :pathname "classes/act-physic"
@@ -50,7 +50,7 @@
              (:file "ban" :pathname "net/ban"
                           :depends-on ("defs" "utils"))
              (:file "bomb" :pathname "objects/bomb"
-                          :depends-on ("defs" "utils"))
+                           :depends-on ("defs" "utils"))
              (:file "constants" :pathname "db/constants")
              (:file "clan" :pathname "clan/clan"
                            :depends-on ("defs" "utils"))
@@ -61,23 +61,23 @@
              (:file "creature" :pathname "structs/creature"
                                :depends-on ("defs"))
              (:file "creature-io" :pathname "structs/creature-io"
-                               :depends-on ("creature"))
+                                  :depends-on ("creature"))
              (:file "dyntext" :pathname "dyntext/dyntext"
                               :depends-on ("defs" "utils"))
              (:file "groups" :pathname "interpreter/groups"
-                              :depends-on ("defs" "utils"))
+                             :depends-on ("defs" "utils"))
              (:file "handler" :pathname "util/handler"
-                            :depends-on ("defs"))
+                              :depends-on ("defs"))
              (:file "help" :pathname "help/help"
                            :depends-on ("defs" "utils"))
              (:file "house" :pathname "house/house"
                             :depends-on ("defs" "utils"))
              (:file "interpreter" :pathname "interpreter/interpreter"
-                              :depends-on ("defs" "utils"))
+                                  :depends-on ("defs" "utils"))
              (:file "login" :pathname "misc/login"
                             :depends-on ("defs"))
              (:file "mail" :pathname "mobiles/mail"
-                            :depends-on ("defs" "creature"))
+                           :depends-on ("defs" "creature"))
              (:file "nanny" :pathname "net/nanny"
                             :depends-on ("defs" "utils" "config" "network"
                                                 "login" "mail"))
@@ -92,7 +92,7 @@
              (:file "quest" :pathname "quest/quest"
                             :depends-on ("defs" "utils"))
              (:file "random" :pathname "util/random"
-                                :depends-on ("defs"))
+                             :depends-on ("defs"))
              (:file "room-data" :pathname "structs/room-data"
                                 :depends-on ("defs"))
              (:file "search" :pathname "structs/search"
@@ -100,7 +100,7 @@
              (:file "sight" :pathname "util/sight"
                             :depends-on ("defs"))
              (:file "smokes" :pathname "objects/smokes"
-                            :depends-on ("defs"))
+                             :depends-on ("defs"))
              (:file "spec-assign" :pathname "specials/spec-assign"
                                   :depends-on ("defs" "utils"))
              (:file "spec-procs" :pathname "specials/spec-procs"
@@ -121,3 +121,20 @@
                               :depends-on ("zone-data"))
              (:file "zone-data" :pathname "structs/zone-data"
                                 :depends-on ("defs"))))))
+
+
+(defsystem #:tempus.test
+  :name "tempus.test"
+  :version "1.0.0d"
+  :author "Daniel Lowe <dlowe@bitmuse.com>"
+  :description "Testing code for the TempusMUD"
+  :depends-on (:tempus :fiveam)
+  :components ((:file "tests" :pathname "tests/test-random")))
+
+(defmethod perform ((op test-op) (system (eql (find-system :tempus))))
+  (operate 'load-op '#:tempus.test)
+  (funcall (read-from-string "5am:run!")))
+
+
+(defmethod operation-done-p ((op test-op) (system (eql (find-system :tempus))))
+  nil)
