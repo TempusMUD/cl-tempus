@@ -78,7 +78,10 @@
                          "You will now see affect trailers on characters.")
   (define-toggle-command "nowho" () +pref-nowho+
                          "You will no longer be shown on the who list."
-                         "You will now be shown on the who list."))
+                         "You will now be shown on the who list.")
+  (define-toggle-command "noholler" () +pref-noholler+
+                         "You now ignore the hollering."
+                         "You now hear the hollering."))
 
 
 (defcommand (ch "quit") ()
