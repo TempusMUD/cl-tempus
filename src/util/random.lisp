@@ -8,10 +8,11 @@
 
 (defun dice (num size)
   "Simulates dice roll"
-  (if (or (minusp num) (minusp size))
-      0
-      (loop for idx from 1 upto num
-           sum (random-range 1 size))))
+  (if (and (plusp num) (plusp size))
+      (loop
+         for idx from 1 upto num
+         sum (random-range 1 size))
+      0))
 
 (defun rand-value (val variance min max)
   (if (zerop variance)
