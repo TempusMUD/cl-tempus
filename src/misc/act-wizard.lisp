@@ -16,3 +16,17 @@
 (defcommand (ch "shutdown") (:immortal)
   (send-to-char ch "Shutting down...~%")
   (setf *shutdown* t))
+
+(defcommand (ch "eval" expr) (:wizard)
+  "Command function to evaluate an arbitrary lisp expression."
+  (handler-case
+      (let* ((*standard-output* (make-string-output-stream))
+             (*package* (find-package "TEMPUS"))
+             (results (multiple-value-list (eval `(let ((self ,ch))
+                                                    (declare (ignorable self))
+                                                    ,(read-from-string expr))))))
+        (cxn-write (link-of ch) "~a~{~s~%~}"
+                   (get-output-stream-string *standard-output*)
+                   results))
+    (error (err)
+        (cxn-write (link-of ch) "ERROR: ~a~%" err))))
