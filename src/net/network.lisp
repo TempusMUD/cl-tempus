@@ -66,19 +66,19 @@
 (defclass data-cxn (cxn)
   ((input-buf :accessor cxn-input-buf :type (or null simple-string) :initform nil)
    (input-len :accessor cxn-input-len :type fixnum :initform 0)
-   (output-buf :accessor cxn-output-buf :type (or null simple-string) :initform nil)
-   (output-len :accessor cxn-output-len :type fixnum :initform 0)
-
+   (output-buf :accessor cxn-output-buf :initform nil)
+   (output-tail :accessor cxn-output-tail :initform nil)
    (commands :accessor cxn-commands :type list :initform '())))
 
 (defmethod cxn-write ((cxn data-cxn) fmt &rest args)
-  (let ((str (format nil "~?" fmt args)))
-	(setf (cxn-output-buf cxn)
-		  (concatenate '(vector (unsigned-byte 8))
-					   (cxn-output-buf cxn)
-					   (map '(vector (unsigned-byte 8))
-                            #'char-code
-                            (prepare-output str))))))
+  (let ((str (prepare-output (format nil "~?" fmt args))))
+    (cond
+      ((cxn-output-buf cxn)
+       (setf (cdr (cxn-output-tail cxn)) (cons str nil))
+       (setf (cxn-output-tail cxn) (cdr (cxn-output-tail cxn))))
+      (t
+        (setf (cxn-output-buf cxn) (list str))
+        (setf (cxn-output-tail cxn) (cxn-output-buf cxn))))))
 
 (defmethod handle-input ((cxn data-cxn))
   (cxn-read cxn)
@@ -86,20 +86,27 @@
 	(queue-commands cxn)))
 
 (defmethod handle-flush ((cxn data-cxn))
-  (let* ((buf-len (length (cxn-output-buf cxn))))
-    (when (> buf-len 0)
-      (multiple-value-bind (count err)
-          (sb-unix:unix-write (cxn-fd cxn) (cxn-output-buf cxn) 0 buf-len)
+  (loop
+     for str = (pop (cxn-output-buf cxn))
+     while str 
+     when (plusp (length str))
+     do (let ((buf (map '(vector (unsigned-byte 8)) #'char-code str)))
+          (multiple-value-bind (count err)
+              (sb-unix:unix-write (cxn-fd cxn) buf 0 (length str))
 
-        (unless (zerop err)
-          (error "write() returned error ~a!" err))
+            (unless (zerop err)
+              (error "write() returned error ~a!" err))
 
-	  (cond
-		((null count)
-		 (setf (cxn-connected cxn) nil))
-		(t
-		 (setf (cxn-output-buf cxn)
-			   (subseq (cxn-output-buf cxn) count))))))))
+            (cond
+              ((zerop count)
+               (setf (cxn-connected cxn) nil)
+               (return-from handle-flush))
+              ((= count (length str))
+               nil)
+              (t
+               (push (subseq str count) (cxn-output-buf cxn))
+               (return-from handle-flush))))))
+  (setf (cxn-output-tail cxn) nil))
 	
 (defun cxn-listen (port accept-type)
   "Sets up a listener socket on port with the accept-handler accept."
