@@ -469,10 +469,14 @@
     (dolist (cxn *cxns*)
       (when (and (typep cxn 'tempus-cxn)
                  (can-receive-channel ch cxn chan evilp goodp char-class clan-id))
-        (act ch :target (actor-of cxn)
-             :target-emit (if (immortalp (actor-of cxn))
-                              imm-actstr
-                              mort-actstr))))
+        (send-act-str (actor-of cxn)
+                      (if (immortalp (actor-of cxn))
+                          imm-actstr
+                          mort-actstr)
+                      ch (actor-of cxn) nil
+                      (if (eql ch (actor-of cxn))
+                          :self
+                          :target))))
 
     (when (and (room-flagged (in-room-of ch) +room-soundproof+)
                (not (immortalp ch))
