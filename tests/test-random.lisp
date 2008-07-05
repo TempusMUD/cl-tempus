@@ -1,8 +1,6 @@
 (in-package #:tempus.tests)
 
-(def-suite :tempus)
-
-(in-suite* #:tempus.make :in :tempus)
+(in-suite* #:tempus.random :in :tempus)
 
 (test random-range
   (for-all ((a (gen-integer :min 0 :max 100))

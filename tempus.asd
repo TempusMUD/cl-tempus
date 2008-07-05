@@ -130,12 +130,16 @@
   :description "Testing code for the TempusMUD"
   :depends-on (:tempus :fiveam)
   :components ((:file "defpackage" :pathname "tests/test-defpackage")
+               (:file "helpers" :pathname "tests/helpers"
+                      :depends-on ("defpackage"))
                (:file "test-random" :pathname "tests/test-random"
-                      :depends-on ("defpackage"))))
+                      :depends-on ("defpackage"))
+               (:file "test-comm" :pathname "tests/test-comm"
+                      :depends-on ("helpers"))))
 
 (defmethod perform ((op test-op) (system (eql (find-system :tempus))))
   (operate 'load-op '#:tempus.test)
-  (funcall (read-from-string "5am:run!")))
+  (funcall (read-from-string "5am:run!") :tempus))
 
 
 (defmethod operation-done-p ((op test-op) (system (eql (find-system :tempus))))
