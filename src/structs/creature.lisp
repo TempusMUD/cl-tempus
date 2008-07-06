@@ -943,6 +943,8 @@
                           (eql (remort-char-class-of ch) +class-cleric+)))
 (defun is-devil (ch) (= (race-of ch) +race-devil+))
 (defun is-dragon (ch) (= (race-of ch) +race-dragon+))
+(defun is-undead (ch) (= (race-of ch) +race-undead+))
+(defun is-fish (ch) (= (race-of ch) +race-fish+))
 
 (defun can-detect-disguise (ch vict level)
   (or (pref-flagged ch +pref-holylight+)
@@ -995,3 +997,10 @@
   (aref (soilage-of ch) pos))
 (defun char-soiled (ch pos soil)
   (logtest (char-soilage ch pos) (ash 1 soil)))
+
+(defun wait-state (ch pulses)
+  (when (link-of ch)
+    (incf (wait-of (link-of ch)) pulses)))
+
+(defun affect-remove (ch af)
+  (setf (affects-of ch) (delete af (affects-of ch))))

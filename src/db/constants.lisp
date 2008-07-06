@@ -1,5 +1,9 @@
 (in-package #:tempus)
 
+(defparameter +dirs+ #("north" "east" "south" "west" "up" "down" "future" "past"))
+(defparameter +to-dirs+ #("north" "east" "south" "west" "up" "down" "into the future" "into the past"))
+(defparameter +from-dirs+ #("the south" "the west" "the north" "the east" "below" "above" "the past" "the future"))
+
 (defparameter +room-bits+
   #("DRK" "DTH" "!MOB" "IND" "NV" "SDPF" "!TRK" "!MAG" "TNL" "!TEL"
     "GDR" "HAS" "HCR" "COMFORT" "SMOKE" "!FLEE" "!PSI" "!SCI" "!RCL"
@@ -932,3 +936,45 @@
     "Month of Long Shadows"
 	"Month of the Ancient Darkness"
 	"Month of the Great Evil"))
+
+(defparameter +str-app+
+  #((:to-hit -5 :to-dam -4 :carry-w 0 :wield-w 0)
+	(:to-hit -5 :to-dam -4 :carry-w 3 :wield-w 1)
+	(:to-hit -3 :to-dam -2 :carry-w 3 :wield-w 2)
+	(:to-hit -3 :to-dam -1 :carry-w 10 :wield-w 3)
+	(:to-hit -2 :to-dam -1 :carry-w 25 :wield-w 4)
+	(:to-hit -2 :to-dam -1 :carry-w 55 :wield-w 5) ; 5
+	(:to-hit -1 :to-dam 0 :carry-w 80 :wield-w 6)
+	(:to-hit -1 :to-dam 0 :carry-w 90 :wield-w 7)
+	(:to-hit 0 :to-dam 0 :carry-w 100 :wield-w 8)
+	(:to-hit 0 :to-dam 0 :carry-w 110 :wield-w 9)
+	(:to-hit 0 :to-dam 0 :carry-w 120 :wield-w 10) ; 10
+	(:to-hit 0 :to-dam 0 :carry-w 130 :wield-w 11)
+	(:to-hit 0 :to-dam 0 :carry-w 140 :wield-w 12)
+	(:to-hit 1 :to-dam 0 :carry-w 150 :wield-w 13)
+	(:to-hit 1 :to-dam 1 :carry-w 160 :wield-w 14)
+	(:to-hit 1 :to-dam 1 :carry-w 180 :wield-w 15) ; 15
+	(:to-hit 1 :to-dam 2 :carry-w 200 :wield-w 16)
+	(:to-hit 1 :to-dam 2 :carry-w 220 :wield-w 18)
+	(:to-hit 1 :to-dam 3 :carry-w 245 :wield-w 20) ; 18
+	(:to-hit 3 :to-dam 13 :carry-w 650 :wield-w 33)
+	(:to-hit 3 :to-dam 14 :carry-w 700 :wield-w 35) ; 20
+	(:to-hit 4 :to-dam 15 :carry-w 750 :wield-w 36)
+	(:to-hit 4 :to-dam 16 :carry-w 800 :wield-w 37)
+	(:to-hit 5 :to-dam 17 :carry-w 850 :wield-w 38)
+	(:to-hit 6 :to-dam 18 :carry-w 955 :wield-w 39)
+	(:to-hit 7 :to-dam 20 :carry-w 1000 :wield-w 40) ; 25
+	(:to-hit 1 :to-dam 4 :carry-w 270 :wield-w 21)   ; 18/10
+	(:to-hit 1 :to-dam 4 :carry-w 295 :wield-w 22)   ; 18/20
+	(:to-hit 1 :to-dam 5 :carry-w 320 :wield-w 23)   ; 18/30
+	(:to-hit 1 :to-dam 5 :carry-w 350 :wield-w 24)   ; 18/40
+	(:to-hit 2 :to-dam 6 :carry-w 380 :wield-w 25)   ; 18/50
+	(:to-hit 2 :to-dam 7 :carry-w 410 :wield-w 26)   ; 18/60
+	(:to-hit 2 :to-dam 8 :carry-w 440 :wield-w 27)   ; 18/70
+	(:to-hit 2 :to-dam 9 :carry-w 480 :wield-w 28)   ; 18/80
+	(:to-hit 2 :to-dam 10 :carry-w 520 :wield-w 29)  ; 18/90
+	(:to-hit 3 :to-dam 11 :carry-w 560 :wield-w 30)  ; 18/99
+	(:to-hit 3 :to-dam 12 :carry-w 600 :wield-w 31))) ; 18/00
+
+(defun str-app-type-to-hit (plist)
+  (getf plist :to-hit))

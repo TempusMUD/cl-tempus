@@ -132,9 +132,11 @@
   :components ((:file "defpackage" :pathname "tests/test-defpackage")
                (:file "helpers" :pathname "tests/helpers"
                       :depends-on ("defpackage"))
-               (:file "test-random" :pathname "tests/test-random"
-                      :depends-on ("defpackage"))
                (:file "test-comm" :pathname "tests/test-comm"
+                      :depends-on ("helpers"))
+               (:file "test-move" :pathname "tests/test-move"
+                      :depends-on ("helpers"))
+               (:file "test-random" :pathname "tests/test-random"
                       :depends-on ("helpers"))))
 
 (defmethod perform ((op test-op) (system (eql (find-system :tempus))))
