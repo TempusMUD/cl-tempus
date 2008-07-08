@@ -50,6 +50,7 @@
                                  :name (format nil "test-~(~a~)" name))))
     (setf (tempus::actor-of link) player)
     (setf (tempus::account-of link) account)
+    (setf (tempus::account-of player) account)
     (setf (tempus::state-of link) 'tempus::playing)
     (push link tempus::*cxns*)
     (tempus::char-to-room player (tempus::real-room room-num))

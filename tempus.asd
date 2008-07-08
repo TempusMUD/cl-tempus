@@ -136,6 +136,8 @@
                       :depends-on ("helpers"))
                (:file "test-move" :pathname "tests/test-move"
                       :depends-on ("helpers"))
+               (:file "test-network" :pathname "tests/test-network"
+                      :depends-on ("helpers"))
                (:file "test-random" :pathname "tests/test-random"
                       :depends-on ("helpers"))))
 
