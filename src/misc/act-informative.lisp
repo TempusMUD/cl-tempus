@@ -1,6 +1,5 @@
 (in-package #:tempus)
 
-(defparameter +dirs+ #("n" "e" "s" "w" "u" "d" "f" "p"))
 (defparameter +num-of-dirs+ (length +dirs+))
 
 (defun show-room-obj (object ch stream)
@@ -527,29 +526,30 @@
     (format stream "~a" str)))
 
 (defun do-auto-exits (ch room)
-  (send-to-char ch "&c[ Exits: ~:[None obvious~;~:*~{~a~^ ~}~] ]"
-                (loop for door across (dir-option-of room)
-                     for dir across +dirs+
-                   unless (or (null door)
-                              (zerop (to-room-of door))
-                              (null (real-room (to-room-of door)))
-                              (logtest (exit-info-of door)
-                                       (logior +ex-hidden+ +ex-secret+)))
-                   collect (if (logtest (exit-info-of door) +ex-closed+)
-                               (format nil "|~a|" dir)
-                               (format nil "~a" dir))))
-  (when (immortalp ch)
-    (send-to-char ch " [ Hidden doors: ~:[None~;~:*~{~a~^ ~}~] ]"
+  (let ((+dir-letters+ #("n" "e" "s" "w" "u" "d" "f" "p")))
+    (send-to-char ch "&c[ Exits: ~:[None obvious~;~:*~{~a~^ ~}~] ]"
                   (loop for door across (dir-option-of room)
-                     for dir across +dirs+
+                     for dir across +dir-letters+
                      unless (or (null door)
                                 (zerop (to-room-of door))
-                                (not (logtest (exit-info-of door)
-                                              (logior +ex-hidden+ +ex-secret+))))
-                     collect (if (logtest (exit-info-of door)
-                                          (logior +ex-closed+))
+                                (null (real-room (to-room-of door)))
+                                (logtest (exit-info-of door)
+                                         (logior +ex-hidden+ +ex-secret+)))
+                     collect (if (logtest (exit-info-of door) +ex-closed+)
                                  (format nil "|~a|" dir)
-                                 (format nil "~a" dir))))))
+                                 (format nil "~a" dir))))
+    (when (immortalp ch)
+      (send-to-char ch " [ Hidden doors: ~:[None~;~:*~{~a~^ ~}~] ]"
+                    (loop for door across (dir-option-of room)
+                       for dir across +dir-letters+
+                       unless (or (null door)
+                                  (zerop (to-room-of door))
+                                  (not (logtest (exit-info-of door)
+                                                (logior +ex-hidden+ +ex-secret+))))
+                       collect (if (logtest (exit-info-of door)
+                                            (logior +ex-closed+))
+                                   (format nil "|~a|" dir)
+                                   (format nil "~a" dir)))))))
 
 (defun show-blood-and-ice (ch room)
   (let ((blood-shown nil)

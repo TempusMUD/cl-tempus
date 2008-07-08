@@ -5,11 +5,13 @@
 (test basic-movement
   (with-mock-players (alice bob)
     (let ((orig-room (tempus::in-room-of alice)))
+      (setf (tempus::bitp (tempus::prefs-of alice) tempus::+pref-autoexit+) t)
       (tempus::interpret-command alice "e")
       (is (eql (tempus::to-room-of
                 (aref (tempus::dir-option-of orig-room) tempus::+east+))
                (tempus::number-of (tempus::in-room-of alice))))
       (is-true (search "East Goddess Street" (char-output alice)))
+      (is-true (search "[ Exits: n e s w u ]" (char-output alice)))
       (is-true (search "The broad tree-lined avenue leads east"
                        (char-output alice)))
       (is (or (string= (char-output bob) "Alice walks east.~%")
