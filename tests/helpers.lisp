@@ -20,6 +20,11 @@
              (char str idx)))
           result))))
 
+(defmethod tempus::cxn-queue-output ((cxn mock-cxn) str)
+  "Escapes the color codes before sending them to the tempus-cxn writing routines"
+  (call-next-method cxn
+                    (cl-ppcre:regex-replace-all #/\r\n/ str "~%")))
+
 (defmethod tempus::cxn-write ((cxn mock-cxn) fmt &rest args)
   "Escapes the color codes before sending them to the tempus-cxn writing routines"
   (let ((str (format nil "~?" fmt args)))

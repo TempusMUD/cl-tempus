@@ -70,15 +70,18 @@
    (output-tail :accessor cxn-output-tail :initform nil)
    (commands :accessor cxn-commands :type list :initform '())))
 
+(defmethod cxn-queue-output ((cxn data-cxn) str)
+  (cond
+    ((cxn-output-buf cxn)
+     (setf (cdr (cxn-output-tail cxn)) (cons str nil))
+     (setf (cxn-output-tail cxn) (cdr (cxn-output-tail cxn))))
+    (t
+     (setf (cxn-output-buf cxn) (list str))
+     (setf (cxn-output-tail cxn) (cxn-output-buf cxn)))))
+
 (defmethod cxn-write ((cxn data-cxn) fmt &rest args)
   (let ((str (prepare-output (format nil "~?" fmt args))))
-    (cond
-      ((cxn-output-buf cxn)
-       (setf (cdr (cxn-output-tail cxn)) (cons str nil))
-       (setf (cxn-output-tail cxn) (cdr (cxn-output-tail cxn))))
-      (t
-        (setf (cxn-output-buf cxn) (list str))
-        (setf (cxn-output-tail cxn) (cxn-output-buf cxn))))))
+    (cxn-queue-output cxn str)))
 
 (defmethod handle-input ((cxn data-cxn))
   (cxn-read cxn)
