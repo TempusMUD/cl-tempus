@@ -105,7 +105,7 @@ be loaded from the database or it may be retrieved from a cache."
                                            :name (cdr (assoc :name info))
                                            :birth-time (if (eql (cdr (assoc :birth-time info)) :null) (now) (cdr (assoc :birth-time info)))
                                            :login-time (if (eql (cdr (assoc :login-time info)) :null) (now) (cdr (assoc :login-time info)))))
-                           (query (:order-by (:select 'idnum 'name 'birth-time 'login-time :from 'players :where (:= 'account 2)) 'idnum) :alists)))
+                           (query (:order-by (:select 'idnum 'name 'birth-time 'login-time :from 'players :where (:= 'account (idnum-of account))) 'idnum) :alists)))
             account)))))
 
 (defun save-account (account)
