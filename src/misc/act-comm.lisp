@@ -176,134 +176,135 @@
 (defcommand (ch #\: message) (:resting)
   (perform-emote ch message))
 
-(defparameter +channels+
-  '((:name "holler"
-     :deaf-flag #.+pref-noholler+
-     :scope universe
-     :desc-color #\Y
-     :text-color #\r
-     :minimum-level 6
-     :move-cost 10
-     :not-on-message "Ha!  You are noholler buddy."
-     :muted-message "You find yourself unable to holler.")
-    (:name "shout"
-     :scope zone
-     :desc-color #\y
-     :text-color #\c
-     :not-on-message "Turn off your noshout flag first!"
-     :muted-message "You cannot shout!!")
-    (:name "gossip"
-     :scope plane
-     :deaf-flag #.+pref-nogoss+
-     :desc-color #\g
-     :text-color #\n
-     :minimum-level 6
-     :not-on-message "You aren't even on the channel!"
-     :muted-message "You cannot gossip!!")
-    (:name "auction"
-     :scope plane
-     :deaf-flag #.+pref-noauct+
-     :desc-color #\m
-     :text-color #\n
-     :npc-only-message "Only licensed auctioneers can use that channel!"
-     :not-on-message "You aren't even on the channel!"
-     :muted-message "You cannot auction!!")
-    (:name "congrat"
-     :scope plane
-     :deaf-flag #.+pref-nogratz+
-     :desc-color #\g
-     :text-color #\m
-     :minimum-level 6
-     :not-on-message "You aren't even on the channel!"
-     :muted-message "You cannot congratulate!!")
-    (:name "sing"
-     :scope plane
-     :deaf-flag #.+pref-nomusic+
-     :desc-color #\c
-     :text-color #\y
-     :minimum-level 6
-     :not-on-message "You aren't even on the channel!"
-     :muted-message "You cannot sing!!")
-    (:name "spew"
-     :scope plane
-     :deaf-flag #.+pref-nospew+
-     :desc-color #\r
-     :text-color #\y
-     :minimum-level 6
-     :not-on-message "You aren't even on the channel!"
-     :muted-message "You cannot spew!!")
-    (:name "dream"
-     :scope plane
-     :deaf-flag #.+pref-nodream+
-     :desc-color #\c
-     :text-color #\W
-     :minimum-level 6
-     :maximum-position +pos-sleeping+
-     :not-on-message "You aren't even on the channel!"
-     :muted-message "You cannot dream!!")
-    (:name "project"
-     :scope universe
-     :deaf-flag #.+pref-noproject+
-     :desc-color #\W
-     :text-color #\c
-     :minimum-gen 6
-     :not-on-message "You are not open to projections yourself..."
-     :muted-message "You cannot project.  The immortals have muted you.")
-    (:name "newbie"
-     :scope plane
-     :deaf-flag #.+pref-newbie-helper+
-     :desc-color #\y
-     :text-color #\w
-     :not-on-message "You aren't on the illustrious newbie channel."
-     :muted-message "The immortals have muted you for bad behavior!")
-    (:name "petition"
-     :scope universe
-     :deaf-flag #.+pref-nopetition+
-     :desc-color #\m
-     :text-color #\c
-     :minimum-level-heard 50
-     :not-on-message "You aren't listening to petitions at this time."
-     :muted-message "The immortals have turned a deaf ear to your petitions.")
-    (:name "guildsay"
-     :scope plane
-     :guild-channel t
-     :deaf-flag #.+pref-noguildsay+
-     :desc-color #\m
-     :text-color #\y
-     :not-on-message "You aren't listening to the rumors of your guild."
-     :muted-message "You may not guild-say, for the immortals have muted you.")
-    (:name "clansay"
-     :scope plane
-     :clan-channel t
-     :deaf-flag #.+pref-noclansay+
-     :desc-color #\c
-     :text-color #\n
-     :not-on-message "You aren't listening to the words of your clan."
-     :muted-message "The immortals have muted you.  You may not clansay.")
-    (:name "clansay"
-     :scope plane
-     :clan-channel t
-     :emote t
-     :deaf-flag #.+pref-noclansay+
-     :desc-color #\c
-     :text-color #\c
-     :not-on-message "You aren't listening to the words of your clan."
-     :muted-message "The immortals have muted you.  You may not clan emote.")
-    (:name "immchat"
-     :scope universe
-     :deaf-flag #.+pref-noimmchat+
-     :desc-color #\y
-     :text-color #\y
-     :not-on-message "You aren't on the immchat channel."
-     :group "immortal")
-    (:name "wizchat"
-     :scope universe
-     :deaf-flag #.+pref-nowiz+
-     :desc-color #\c
-     :text-color #\c
-     :minimum-level 60
-     :not-on-message "You aren't on the wizchat channel."
-     :group "immortal")))
+(eval-when (:compile-toplevel :load-toplevel)
+  (defparameter +channels+
+    '((:name "holler"
+       :deaf-flag #.+pref-noholler+
+       :scope universe
+       :desc-color #\Y
+       :text-color #\r
+       :minimum-level 6
+       :move-cost 10
+       :not-on-message "Ha!  You are noholler buddy."
+       :muted-message "You find yourself unable to holler.")
+      (:name "shout"
+       :scope zone
+       :desc-color #\y
+       :text-color #\c
+       :not-on-message "Turn off your noshout flag first!"
+       :muted-message "You cannot shout!!")
+      (:name "gossip"
+       :scope plane
+       :deaf-flag #.+pref-nogoss+
+       :desc-color #\g
+       :text-color #\n
+       :minimum-level 6
+       :not-on-message "You aren't even on the channel!"
+       :muted-message "You cannot gossip!!")
+      (:name "auction"
+       :scope plane
+       :deaf-flag #.+pref-noauct+
+       :desc-color #\m
+       :text-color #\n
+       :npc-only-message "Only licensed auctioneers can use that channel!"
+       :not-on-message "You aren't even on the channel!"
+       :muted-message "You cannot auction!!")
+      (:name "congrat"
+       :scope plane
+       :deaf-flag #.+pref-nogratz+
+       :desc-color #\g
+       :text-color #\m
+       :minimum-level 6
+       :not-on-message "You aren't even on the channel!"
+       :muted-message "You cannot congratulate!!")
+      (:name "sing"
+       :scope plane
+       :deaf-flag #.+pref-nomusic+
+       :desc-color #\c
+       :text-color #\y
+       :minimum-level 6
+       :not-on-message "You aren't even on the channel!"
+       :muted-message "You cannot sing!!")
+      (:name "spew"
+       :scope plane
+       :deaf-flag #.+pref-nospew+
+       :desc-color #\r
+       :text-color #\y
+       :minimum-level 6
+       :not-on-message "You aren't even on the channel!"
+       :muted-message "You cannot spew!!")
+      (:name "dream"
+       :scope plane
+       :deaf-flag #.+pref-nodream+
+       :desc-color #\c
+       :text-color #\W
+       :minimum-level 6
+       :maximum-position +pos-sleeping+
+       :not-on-message "You aren't even on the channel!"
+       :muted-message "You cannot dream!!")
+      (:name "project"
+       :scope universe
+       :deaf-flag #.+pref-noproject+
+       :desc-color #\W
+       :text-color #\c
+       :minimum-gen 6
+       :not-on-message "You are not open to projections yourself..."
+       :muted-message "You cannot project.  The immortals have muted you.")
+      (:name "newbie"
+       :scope plane
+       :deaf-flag #.+pref-newbie-helper+
+       :desc-color #\y
+       :text-color #\w
+       :not-on-message "You aren't on the illustrious newbie channel."
+       :muted-message "The immortals have muted you for bad behavior!")
+      (:name "petition"
+       :scope universe
+       :deaf-flag #.+pref-nopetition+
+       :desc-color #\m
+       :text-color #\c
+       :minimum-level-heard 50
+       :not-on-message "You aren't listening to petitions at this time."
+       :muted-message "The immortals have turned a deaf ear to your petitions.")
+      (:name "guildsay"
+       :scope plane
+       :guild-channel t
+       :deaf-flag #.+pref-noguildsay+
+       :desc-color #\m
+       :text-color #\y
+       :not-on-message "You aren't listening to the rumors of your guild."
+       :muted-message "You may not guild-say, for the immortals have muted you.")
+      (:name "clansay"
+       :scope plane
+       :clan-channel t
+       :deaf-flag #.+pref-noclansay+
+       :desc-color #\c
+       :text-color #\n
+       :not-on-message "You aren't listening to the words of your clan."
+       :muted-message "The immortals have muted you.  You may not clansay.")
+      (:name "clansay"
+       :scope plane
+       :clan-channel t
+       :emote t
+       :deaf-flag #.+pref-noclansay+
+       :desc-color #\c
+       :text-color #\c
+       :not-on-message "You aren't listening to the words of your clan."
+       :muted-message "The immortals have muted you.  You may not clan emote.")
+      (:name "immchat"
+       :scope universe
+       :deaf-flag #.+pref-noimmchat+
+       :desc-color #\y
+       :text-color #\y
+       :not-on-message "You aren't on the immchat channel."
+       :group "immortal")
+      (:name "wizchat"
+       :scope universe
+       :deaf-flag #.+pref-nowiz+
+       :desc-color #\c
+       :text-color #\c
+       :minimum-level 60
+       :not-on-message "You aren't on the wizchat channel."
+       :group "immortal"))))
 
 (defun can-use-channel (ch chan)
   (cond
