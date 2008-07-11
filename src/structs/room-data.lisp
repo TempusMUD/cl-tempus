@@ -201,3 +201,11 @@
     (or (= terrain +sect-underwater+)
         (= terrain +sect-elemental-water+)
         (= terrain +sect-deep-ocean+))))
+
+(defun room-is-open-air (room)
+  (let ((terrain (terrain-of room)))
+    (or (= terrain +sect-flying+)
+        (= terrain +sect-elemental-air+)
+        (= terrain +sect-elemental-radiance+)
+        (= terrain +sect-elemental-lightning+)
+        (= terrain +sect-elemental-vacuum+))))

@@ -145,6 +145,107 @@
       (t
        (do-simple-move ch dir mode need-specials-check)))))
 
+(defcommand (ch "stand") (:sleeping)
+  (cond
+    ((or (= (position-of ch) +pos-standing+)
+         (= (position-of ch) +pos-fighting+))
+     (send-to-char ch "You are already standing.~%"))
+    ((= (position-of ch) +pos-mounted+)
+     (send-to-char ch "You should dismount first.~%"))
+    ((and (aff3-flagged ch +aff3-gravity-well+)
+          (/= (position-of ch) +pos-flying+)
+          (>= (random-range 1 20) (str-of ch)))
+     (act ch :all-emit "The gravity well drive$% $n into the ground as $e attempt$% to stand.")
+     (setf (position-of ch) +pos-resting+))
+    ((and (aff3-flagged ch +aff3-gravity-well+)
+          (/= (position-of ch) +pos-flying+))
+     (act ch
+          :subject-emit "You defy the probability waves of the gravity well and struggle to your feet."
+          :place-emit "$n defies the gravity well and struggles to $s feet.")
+     (setf (position-of ch) +pos-standing+))
+    ((= (position-of ch) +pos-sleeping+)
+     (act ch :all-emit "$n wake$% up, and stagger$% to $s feet.")
+     (setf (position-of ch) +pos-standing+))
+    ((= (position-of ch) +pos-resting+)
+     (act ch :all-emit "$n stop$% resting, and clamber$% onto $s feet.")
+     (setf (position-of ch) +pos-standing+))
+    ((= (position-of ch) +pos-sitting+)
+     (act ch :all-emit "$n clamber$% to $s feet.")
+     (setf (position-of ch) +pos-standing+))
+    ((/= (position-of ch) +pos-flying+)
+     (act ch :all-emit "$n stop$% floating around, and put$% $s feet on the ground.")
+     (setf (position-of ch) +pos-standing+))
+    ;; creature must be flying at this point
+    ((is-race ch +race-gaseous+)
+     (send-to-char ch "You don't have legs.~%"))
+    ((room-is-open-air (in-room-of ch))
+     (send-to-char ch "You can't stand on air, silly!~%"))
+    ((and (= (terrain-of (in-room-of ch)) +sect-water-noswim+)
+          (or (aff-flagged ch +aff-waterwalk+)
+              (is-carrying-boat ch)))
+     (send-to-char ch "You can't land here, on the water!~%"))
+    (t
+     (cond
+       ((or (= (terrain-of (in-room-of ch)) +sect-water-swim+)
+            (= (terrain-of (in-room-of ch)) +sect-water-noswim+))
+        (act ch
+             :subject-emit "You settle lightly to the surface."
+             :place-emit "$n drifts downward and stands upon the waters."))
+       ((= (terrain-of (in-room-of ch)) +sect-swamp+)
+        (act ch
+             :subject-emit "You settle lightly onto the swampy ground."
+             :place-emit "$n drifts downward and stands upon the swampy ground."))
+       ((= (terrain-of (in-room-of ch)) +sect-blood+)
+        (act ch
+             :subject-emit "You settle lightly onto the blood soaked ground."
+             :place-emit "$n drifts downward and stands on the blood soaked ground."))
+       ((= (terrain-of (in-room-of ch)) +sect-muddy+)
+        (act ch
+             :subject-emit "You settle lightly into the mud."
+             :place-emit "$n drifts downward and stands on the mud."))
+       ((= (terrain-of (in-room-of ch)) +sect-desert+)
+        (act ch
+             :subject-emit "You settle lightly to the sands."
+             :place-emit "$n drifts downward and stands upon the sand."))
+       ((= (terrain-of (in-room-of ch)) +sect-fire-river+)
+        (act ch
+             :subject-emit "You settle lightly into the fires."
+             :place-emit "$n drifts downward and stands within the fire."))
+       (t
+        (act ch
+             :subject-emit "You settle lightly to the ground."
+             :place-emit "$n drifts downward and stands on the ground.")))
+     (setf (position-of ch) +pos-standing+))))
+
+(defcommand (ch "rest") (:sleeping)
+  (cond
+    ((= (position-of ch) +pos-standing+)
+     (act ch
+          :subject-emit "You sit down and lay back into a relaxed position."
+          :place-emit "$n sits down and rests.")
+     (setf (position-of ch) +pos-resting+))
+    ((= (position-of ch) +pos-sitting+)
+     (act ch
+          :subject-emit "You lay back and rest your tired bones."
+          :place-emit "$n rests.")
+     (setf (position-of ch) +pos-resting+))
+    ((= (position-of ch) +pos-resting+)
+     (send-to-char ch "You are already resting.~%"))
+    ((= (position-of ch) +pos-sleeping+)
+     (send-to-char ch "You have to wake up first.~%"))
+    ((= (position-of ch) +pos-fighting+)
+     (send-to-char ch "Rest while fighting?  Are you MAD?~%"))
+    ((= (position-of ch) +pos-flying+)
+     (send-to-char ch "You better not try that while flying.~%"))
+    ((= (position-of ch) +pos-mounted+)
+     (act ch :target (mounted-of ch)
+          :subject-emit "You had better get off $N first."))
+    (t
+     (act ch
+          :subject-emit "You stop floating around, and stop to rest your tired bones."
+          :place-emit "$n stops floating around and rests.")
+     (setf (position-of ch) +pos-resting+))))
+
 (defcommand (ch "north") (:direction :standing)
   (perform-move ch 0 nil t))
 (defcommand (ch "east") (:direction :standing)
