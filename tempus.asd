@@ -36,7 +36,10 @@
              (:file "act-informative" :pathname "misc/act-informative"
                                       :depends-on ("defs" "utils" "interpreter"))
              (:file "act-movement" :pathname "misc/act-movement"
-                                   :depends-on ("defs" "utils" "interpreter"))
+                                   :depends-on ("defs"
+                                                "utils"
+                                                "interpreter"
+                                                "constants"))
              (:file "act-other" :pathname "misc/act-other"
                                 :depends-on ("defs" "utils" "interpreter"))
              (:file "act-physic" :pathname "classes/act-physic"
