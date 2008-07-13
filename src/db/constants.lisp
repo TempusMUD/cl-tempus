@@ -1,5 +1,19 @@
 (in-package #:tempus)
 
+(defparameter +opt-usec+ 100000)        ; 10 passes per second
+(defparameter +passes-per-sec+ (floor 1000000 +opt-usec+))
+(defun rl-sec (pulses)
+  (* pulses +passes-per-sec+))
+
+
+(defparameter +pulse-zone+ (rl-sec 10))
+(defparameter +pulse-mobile+ (rl-sec 4))
+(defparameter +pulse-mobile-spec+ (rl-sec 2))
+(defparameter +pulse-violence+ (rl-sec 2))
+(defparameter +seg-violence+ 7)
+(defparameter +fire-tick+ (rl-sec 3))
+(defparameter +pulse-flows+ (rl-sec 1))
+
 (defparameter +dirs+ #("north" "east" "south" "west" "up" "down" "future" "past"))
 (defparameter +to-dirs+ #("north" "east" "south" "west" "up" "down" "into the future" "into the past"))
 (defparameter +from-dirs+ #("the south" "the west" "the north" "the east" "below" "above" "the past" "the future"))

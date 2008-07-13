@@ -271,6 +271,22 @@
      (send-to-char ch "You stop floating around, and lie down to sleep.~%")
      (setf (position-of ch) +pos-sleeping+))))
 	
+(defcommand (ch "wake") ()
+  (cond
+    ((aff-flagged ch +aff-sleep+)
+     (send-to-char ch "You can't wake up!~%"))
+    ((> (position-of ch) +pos-sleeping+)
+     (send-to-char ch "You are already awake...~%"))
+    ((aff3-flagged ch +aff3-stasis+)
+     (act ch :subject-emit "Reactivating processes..."
+          :place-emit "$n awakens.")
+     (setf (aff3-flags-of ch) (logandc2 (aff3-flags-of ch) +aff3-stasis+))
+     (wait-state ch (* +pulse-violence+ 3))
+     (setf (position-of ch) +pos-sitting+))
+    (t
+     (act ch :subject-emit "You awaken, and sit up."
+          :place-emit "$n awakens.")
+     (setf (position-of ch) +pos-sitting+))))
 
 (defcommand (ch "north") (:direction :standing)
   (perform-move ch 0 nil t))

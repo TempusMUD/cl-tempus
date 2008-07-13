@@ -157,4 +157,25 @@
     (tempus::interpret-command alice "sleep")
     (is (= (tempus::position-of alice) tempus::+pos-flying+))
     (is (string= (char-output alice) "That's a really bad idea while flying!~%"))))
+
+(test waking
+  (with-mock-players (alice)
+    (setf (tempus::position-of alice) tempus::+pos-sleeping+)
+    (tempus::interpret-command alice "wake")
+    (is (= (tempus::position-of alice) tempus::+pos-sitting+))
+    (is (string= (char-output alice) "You awaken, and sit up.~%"))
+
+    (clear-mock-buffers alice)
+    (setf (tempus::position-of alice) tempus::+pos-sitting+)
+    (tempus::interpret-command alice "wake")
+    (is (= (tempus::position-of alice) tempus::+pos-sitting+))
+    (is (string= (char-output alice) "You are already awake...~%"))
+
+    (clear-mock-buffers alice)
+    (setf (tempus::position-of alice) tempus::+pos-sleeping+)
+    (setf (tempus::aff3-flags-of alice) (logior (tempus::aff3-flags-of alice)
+                                                tempus::+aff3-stasis+))
+    (tempus::interpret-command alice "wake")
+    (is (= (tempus::position-of alice) tempus::+pos-sitting+))
+    (is (string= (char-output alice) "Reactivating processes...~%"))))
   
