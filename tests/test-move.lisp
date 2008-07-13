@@ -108,4 +108,53 @@
     (tempus::interpret-command alice "rest")
     (is (= (tempus::position-of alice) tempus::+pos-flying+))
     (is (string= (char-output alice) "You better not try that while flying.~%"))))
+
+(test sleeping
+  (with-mock-players (alice)
+    (setf (tempus::position-of alice) tempus::+pos-sitting+)
+    (tempus::interpret-command alice "sleep")
+    (is (= (tempus::position-of alice) tempus::+pos-sleeping+))
+    (is (string= (char-output alice) "You go to sleep.~%"))
+
+    (clear-mock-buffers alice)
+    (setf (tempus::position-of alice) tempus::+pos-sleeping+)
+    (tempus::interpret-command alice "sleep")
+    (is (= (tempus::position-of alice) tempus::+pos-sleeping+))
+    (is (string= (char-output alice) "You are already sound asleep.~%"))
+
+    (clear-mock-buffers alice)
+    (setf (tempus::position-of alice) tempus::+pos-standing+)
+    (setf (tempus::aff-flags-of alice) (logior (tempus::aff-flags-of alice)
+                                               tempus::+aff-adrenaline+))
+    (tempus::interpret-command alice "sleep")
+    (is (= (tempus::position-of alice) tempus::+pos-standing+))
+    (is (string= (char-output alice) "You can't seem to relax.~%"))
+    (setf (tempus::aff-flags-of alice) 0)
+    
+    (clear-mock-buffers alice)
+    (setf (tempus::position-of alice) tempus::+pos-standing+)
+    (setf (tempus::aff2-flags-of alice) (logior (tempus::aff2-flags-of alice)
+                                                tempus::+aff2-berserk+))
+    (tempus::interpret-command alice "sleep")
+    (is (= (tempus::position-of alice) tempus::+pos-standing+))
+    (is (string= (char-output alice) "What, sleep while in a berserk rage??~%"))
+    (setf (tempus::aff2-flags-of alice) 0)
+    
+    (clear-mock-buffers alice)
+    (setf (tempus::position-of alice) tempus::+pos-standing+)
+    (tempus::interpret-command alice "sleep")
+    (is (= (tempus::position-of alice) tempus::+pos-sleeping+))
+    (is (string= (char-output alice) "You go to sleep.~%"))
+
+    (clear-mock-buffers alice)
+    (setf (tempus::position-of alice) tempus::+pos-fighting+)
+    (tempus::interpret-command alice "sleep")
+    (is (= (tempus::position-of alice) tempus::+pos-fighting+))
+    (is (string= (char-output alice) "Sleep while fighting?  Are you MAD?~%"))
+
+    (clear-mock-buffers alice)
+    (setf (tempus::position-of alice) tempus::+pos-flying+)
+    (tempus::interpret-command alice "sleep")
+    (is (= (tempus::position-of alice) tempus::+pos-flying+))
+    (is (string= (char-output alice) "That's a really bad idea while flying!~%"))))
   
