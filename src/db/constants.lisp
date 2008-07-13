@@ -3,6 +3,7 @@
 (defparameter +dirs+ #("north" "east" "south" "west" "up" "down" "future" "past"))
 (defparameter +to-dirs+ #("north" "east" "south" "west" "up" "down" "into the future" "into the past"))
 (defparameter +from-dirs+ #("the south" "the west" "the north" "the east" "below" "above" "the past" "the future"))
+(defparameter +num-of-dirs+ (length +dirs+))
 
 (defparameter +room-bits+
   #("DRK" "DTH" "!MOB" "IND" "NV" "SDPF" "!TRK" "!MAG" "TNL" "!TEL"

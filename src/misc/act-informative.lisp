@@ -1,7 +1,5 @@
 (in-package #:tempus)
 
-(defparameter +num-of-dirs+ (length +dirs+))
-
 (defun show-room-obj (object ch stream)
   (let ((non-blank-ldesc (string/= (line-desc-of object) "")))
     (when (or non-blank-ldesc (immortalp ch))
