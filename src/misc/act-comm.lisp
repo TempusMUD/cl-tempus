@@ -281,7 +281,7 @@
        :text-color #\n
        :not-on-message "You aren't listening to the words of your clan."
        :muted-message "The immortals have muted you.  You may not clansay.")
-      (:name "clansay"
+      (:name "clanemote"
        :scope plane
        :clan-channel t
        :emote t
