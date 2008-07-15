@@ -69,18 +69,24 @@
                           (setf body (rest body)))))
          (body-declare (when (and (consp (first body))
                                   (eql (first (first body)) 'declare))
-                         (prog1
-                             (list (first body))
-                           (setf body (rest body)))))
-         (func `(lambda (,actor ,@(remove-if-not 'symbolp pattern))
+                         (let ((non-declare-pos (position-if-not (lambda (x)
+                                                           (eql (first x) 'declare))
+                                                         body)))
+                           (prog1
+                               (subseq body 0 non-declare-pos)
+                             (setf body (nthcdr non-declare-pos body))))))
+         (func-name (intern (format nil "DO-~@:(~{~a~^-~}~)" pattern)))
+         (func `(defun ,func-name (,actor ,@(remove-if-not 'symbolp pattern))
                   ,@body-docstr
                   ,@body-declare
+                  (check-type ,actor creature)
                   (handler-case
                       (progn ,@body)
                     (parser-error (,err)
                       (send-to-char ,actor "~a~%" ,err))))))
     `(progn
-       (add-command (quote ,pattern) (quote ,flags) ,func))))
+       ,func
+       (add-command (quote ,pattern) (quote ,flags) ',func-name))))
 
 (defun command-matches (cmd string)
   (loop
