@@ -413,3 +413,9 @@
 
 (defun is-cigarette (obj)
   (= (kind-of obj) +item-cigarette+))
+(defun is-interface (obj)
+  (= (kind-of obj) +item-interface+))
+
+(defmethod approvedp ((obj obj-data))
+  "Returns T if the object has been approved."
+  (not (is-obj-stat2 obj +item2-unapproved+)))

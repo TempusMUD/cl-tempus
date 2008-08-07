@@ -1063,6 +1063,15 @@
         (setf (timer-of obj) 60))
       obj)))
 
+(defun find-mob-leader (mob)
+  (when (plusp (leader-of (shared-of mob)))
+    (find-if (lambda (potential)
+               (and (not (eql mob potential))
+                    (is-npc potential)
+                    (= (vnum-of potential) (leader-of (shared-of mob)))
+                    (not (circle-follow mob potential))))
+               (people-of (in-room-of mob)))))
+
 (defun reset-zone (zone)
   ;; Send +special-reset+ notification to all mobiles with specials
   (dolist (ch *characters*)
@@ -1093,6 +1102,8 @@
         ((and (not prob-override) (> (random-range 1 100) (prob-of zone-cmd)))
          (setf prob-override nil))
         (t
+         (setf last-cmd 1
+               prob-override nil)
          (case (command-of zone-cmd)
            (#\*                         ; Ignore command
             (setf last-cmd -1))
@@ -1108,9 +1119,15 @@
                  (setf last-cmd 0))
                 (t
                  (let ((mob (read-mobile (arg1-of zone-cmd))))
-                   (if mob
-                       (char-to-room mob room)
-                       (setf last-cmd 0)))))))
+                   (cond
+                     (mob
+                      (char-to-room mob room)
+                      (let ((leader (find-mob-leader mob)))
+                        (when leader
+                          (add-follower mob leader)))
+                      (setf last-cmd 1))
+                     (t
+                      (setf last-cmd 0))))))))
            (#\O                         ; Read an object
             (let ((tobj (real-object-proto (arg1-of zone-cmd)))
                   (room (real-room (arg3-of zone-cmd))))
@@ -1123,9 +1140,12 @@
                  (setf last-cmd 0))
                 (t
                  (let ((obj (read-object (arg1-of zone-cmd))))
-                   (if obj
-                       (obj-to-room obj room)
-                       (setf last-cmd 0)))))))
+                   (cond
+                     (obj
+                      (obj-to-room obj room)
+                      (setf last-cmd 1))
+                     (t
+                      (setf last-cmd 0))))))))
            (#\P
             nil)
            (#\V
@@ -1138,8 +1158,18 @@
             nil)
            (#\W
             nil)
-           (#\R
-            nil)
+           (#\R                         ; rem obj from room
+            (let* ((room (real-room (arg1-of zone-cmd)))
+                   (obj (when room (get-obj-in-list-num (arg1-of zone-cmd)
+                                                        (contents-of room)))))
+              (cond
+                ((and room obj (not (room-flagged room +room-house+)))
+                 (obj-from-room obj)
+                 (extract-obj obj)
+                 (setf last-cmd 1
+                       prob-override 1))
+                (t
+                 (setf last-cmd 0)))))
            (#\D                         ; set state of door
             (let ((room (real-room (arg1-of zone-cmd))))
               (cond

@@ -25,3 +25,6 @@
   
 (defun car-closed (car)
   (logtest (door-state car) +cont-closed+))
+
+(defun is-device (obj)
+  (= (kind-of obj) +item-device+))

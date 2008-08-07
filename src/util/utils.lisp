@@ -542,6 +542,24 @@ of immediately."
 (defun player-in-world (idnum)
   (find idnum *characters* :key #'idnum-of))
 
+(defun circle-follow (ch victim)
+  "Returns T if CH following VICTIM would make a follow loop."
+  (loop
+     for k = victim then (master-of k)
+     until (or (null k)
+               (eql k ch))
+     finally (return (eql k ch))))
+
+(defun add-follower (ch leader)
+  (assert (null (master-of ch)) nil "Master of creature is non-NULL in add-follower")
+  (setf (master-of ch) leader)
+  (push (followers-of leader) ch)
+
+  (act ch :target leader
+       :subject-emit "You now follow $N."
+       :target-emit "$n starts following you."
+       :nottarget-emit "$n starts to follow $N."))
+
 (defun describe-char (viewer subject)
   (cond
     ((can-see-creature viewer subject)
