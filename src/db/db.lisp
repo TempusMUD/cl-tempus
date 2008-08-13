@@ -534,7 +534,7 @@
                                                    :end (aref reg-ends 2)))))))
 
 (defun pin (val min max)
-  (min (max val max) min))
+  (min (max val min) max))
 
 (defun compile-all-progs ()
   "Compiles all the progs on the mud."
