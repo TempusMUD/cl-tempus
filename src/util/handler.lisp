@@ -357,6 +357,29 @@
   (find num list :key (lambda (obj)
                         (vnum-of (shared-of obj)))))
 
+(defun obj-from-char (obj)
+  (assert obj nil "NIL object passed to obj-from-char")
+  (assert (null (carried-by-of obj)) nil "NIL carried by")
+
+  (let ((ch (carried-by-of obj)))
+  (setf (carrying-of ch) (delete obj (carrying-of ch)))
+
+  ;; set flag for crash-save system
+  (unless (is-npc ch)
+    (setf (plr-bits-of ch) (logior (plr-bits-of ch) +plr-crash+)))
+
+  (decf (carry-weight-of ch) (weight-of obj))
+  (decf (carry-items-of ch))
+  (when (and (aux-obj-of obj)
+             (or (eql (kind-of obj) +item-scuba-mask+)
+                 (eql (kind-of obj) +item-scuba-tank+)))
+    (setf (aux-obj-of (aux-obj-of obj)) nil)
+    (setf (aux-obj-of obj) nil))
+
+  (setf (carried-by-of obj) nil)
+  obj))
+
+
 (defun apply-ac (ch eq-pos)
   (let ((obj (aref (equipment-of ch) eq-pos)))
     (assert obj nil "NIL eq at eq_pos")
@@ -466,12 +489,47 @@
 
     obj))
 
+(defun obj-from-obj (obj)
+  "Remove an object from an object"
+  (assert (null (in-obj-of obj)) nil "Trying to extract object from object")
+  (let ((obj-from (in-obj-of obj)))
+    (decf (weight-of obj-from) (weight-of obj))
+    (setf (contains-of obj-from) (delete obj (contains-of obj-from)))
+
+    (when (is-interface obj-from)
+      (let ((vict (worn-by-of obj-from)))
+        (when (and vict
+                   (or (not (eql obj-from (aref (equipment-of vict) (worn-on-of obj-from))))
+                       (/= (worn-on-of obj-from) +wear-belt+)
+                       (and (not (eql (kind-of obj) +item-weapon+))
+                            (not (eql (kind-of obj) +item-pipe+))))
+                   (not (invalid-char-class vict obj))
+                   (or (not (eql obj-from (aref (equipment-of vict) (worn-on-of obj-from))))
+                       (not (is-implant obj))))
+          
+      (when (and (skillchip obj)
+                 (plusp (chip-data obj))
+                 (< (chip-data obj) +max-skills+))
+        (affect-modify vict (- (chip-data obj)) (chip-max obj) 0 0 nil))
+      (apply-object-affects vict obj nil))))
+    
+    (when (and (in-room-of obj-from)
+               (room-flagged (in-room-of obj-from) +room-house+))
+      (setf (flags-of (in-room-of obj-from))
+            (logior (in-room-of obj-from) +room-house-crash+)))
+
+    (setf (in-obj-of obj) nil)
+
+    (setf (extra2-flags-of obj) (logandc2 (extra2-flags-of obj) +item2-hidden+))
+    obj))
+
 (defun extract-obj (obj)
   "Extract an object from the world"
   (cond
     ((worn-by-of obj)
      (when (unequip-char (worn-by-of obj) (worn-on-of obj)
-                         (if (eql obj (get-eq (worn-by-of obj) (worn-on-of obj)))
+                         (if (eql obj (aref (equipment-of (worn-by-of obj))
+                                            (worn-on-of obj)))
                              :worn
                              :implant)
                          nil)
@@ -499,9 +557,6 @@
 
   (setf *object-list* (delete obj *object-list*))
 
-  (when (is-vehicle obj)
-    (path-remove-object obj))
-
   (when (and (is-corpse obj)
              (plusp (corpse-idnum obj)))
-    (delete-file (corpse-file-path (corpse-idnum obj)))))
+    (delete-file (corpse-pathname (corpse-idnum obj)))))
