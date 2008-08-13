@@ -470,10 +470,10 @@ choose a password to use on this system.
   (input (cxn line)
     (cond
       ((or (string= line "")
-           (null (race-by-name line)))
+           (null (parse-pc-race line)))
        (cxn-write cxn "~%You need to enter one of the listed races.~%~%"))
       (t
-       (setf (race-of (actor-of cxn)) (idnum-of (race-by-name line)))
+       (setf (race-of (actor-of cxn)) (idnum-of (parse-pc-race line)))
        (setf (state-of cxn) 'new-player-sex)))))
 
 (define-connection-state new-player-sex

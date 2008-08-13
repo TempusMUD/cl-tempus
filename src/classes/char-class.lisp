@@ -1,5 +1,20 @@
 (in-package #:tempus)
 
+;; 0 - class/race combination not allowed
+;; 1 - class/race combination allowed only for secondary class
+;; 2 - class/race combination allowed for primary class
+(defparameter +race-restrictions+
+;;                      MG CL TH WR BR PS PH CY KN RN BD MN VP MR S1 S2 S3
+  #2A((#.+race-human+    2  2  2  0  2  2  2  2  2  2  2  2  0  2  0  0  0 )
+      (#.+race-elf+      2  2  2  0  0  2  2  2  2  2  2  2  0  2  0  0  0 )
+      (#.+race-dwarf+    0  2  2  0  2  1  1  1  2  0  0  0  0  1  0  0  0 )
+      (#.+race-half-orc+ 0  0  2  0  2  0  2  2  0  0  0  0  0  2  0  0  0 )
+      (#.+race-halfling+ 2  2  2  0  2  1  1  1  2  2  2  2  0  1  0  0  0 )
+      (#.+race-tabaxi+   2  2  2  0  2  2  2  2  0  2  0  2  0  2  0  0  0 )
+      (#.+race-drow+     2  2  2  0  0  1  1  1  2  2  2  0  0  1  0  0  0 )
+      (#.+race-minotaur+ 2  2  0  0  2  0  1  1  0  2  0  0  0  1  0  0  0 )
+      (#.+race-orc+      0  0  1  0  2  0  1  2  0  0  0  2  0  2  0  0  0 )))
+
 (defun invalid-char-class (ch obj)
   "Used to determine if a piece of equipment is usable by a particular character class, based on the +ITEM-ANTI-<class>+ bitvectors"
   (cond

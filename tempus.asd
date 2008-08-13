@@ -58,6 +58,7 @@
                           :depends-on ("defs" "utils"))
              (:file "bomb" :pathname "objects/bomb"
                            :depends-on ("defs" "utils"))
+             (:file "char-class" :pathname "classes/char-class")
              (:file "constants" :pathname "db/constants")
              (:file "clan" :pathname "clan/clan"
                            :depends-on ("defs" "utils"))
@@ -82,7 +83,7 @@
              (:file "interpreter" :pathname "interpreter/interpreter"
                                   :depends-on ("defs" "utils"))
              (:file "login" :pathname "misc/login"
-                            :depends-on ("defs"))
+                            :depends-on ("defs" "char-class"))
              (:file "mail" :pathname "mobiles/mail"
                            :depends-on ("defs" "creature"))
              (:file "nanny" :pathname "net/nanny"
