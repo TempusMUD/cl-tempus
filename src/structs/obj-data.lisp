@@ -245,9 +245,19 @@
 (defparameter +cont-closed+ (ash 1 2))
 (defparameter +cont-locked+ (ash 1 3))
 
+(defparameter +interface-none+ 0)
+(defparameter +interface-power+ 1)
+(defparameter +interface-chips+ 2)
+(defparameter +num-interfaces+ 3)
+
+(defparameter +chip-none+ 0)
+(defparameter +chip-skill+ 1)
+(defparameter +chip-affects+ 2)
+(defparameter +num-chips+ 3)
+
 (defclass obj-affected-type ()
-  ((location :accessor location-of :initarg :location :initform nil)
-   (modifier :accessor modifier-of :initarg :modifier :initform nil)))
+  ((location :accessor location-of :initarg :location :initform 0)
+   (modifier :accessor modifier-of :initarg :modifier :initform 0)))
 
 (defclass tmp-obj-affect ()
   ((level :accessor level-of :initarg :level)
@@ -266,12 +276,12 @@
    (affect-mod :accessor affect-mod-of :initarg :affect-mod)))
 
 (defclass obj-shared-data ()
-  ((vnum :accessor vnum-of :initarg :vnum :initform nil)
-   (number :accessor number-of :initarg :number :initform nil)
-   (cost :accessor cost-of :initarg :cost :initform nil)
-   (cost-per-day :accessor cost-per-day-of :initarg :cost-per-day :initform nil)
-   (house-count :accessor house-count-of :initarg :house-count :initform nil)
-   (owner-id :accessor owner-id-of :initarg :owner-id :initform nil)
+  ((vnum :accessor vnum-of :initarg :vnum :initform -1)
+   (number :accessor number-of :initarg :number :initform 0)
+   (cost :accessor cost-of :initarg :cost :initform 0)
+   (cost-per-day :accessor cost-per-day-of :initarg :cost-per-day :initform 0)
+   (house-count :accessor house-count-of :initarg :house-count :initform 0)
+   (owner-id :accessor owner-id-of :initarg :owner-id :initform 0)
    (proto :accessor proto-of :initarg :proto :initform nil)
    (func :accessor func-of :initarg :func :initform nil)
    (func-param :accessor func-param-of :initarg :func-param :initform nil)))
@@ -281,7 +291,7 @@
    (in-room :accessor in-room-of :initarg :in-room :initform nil)
    (cur-flow-pulse :accessor cur-flow-pulse-of :initform 0)
    (affected :accessor affected-of :initarg :affected
-             :initform (make-array +max-obj-affect+ :initial-element nil))
+             :initform (make-array +max-obj-affect+))
    (name :accessor name-of :initarg :name)
    (aliases :accessor aliases-of :initarg :aliases)
    (line-desc :accessor line-desc-of :initarg :line-desc)
@@ -304,12 +314,12 @@
 
    ;; Originally from obj_flag_data
    (value :accessor value-of :initarg :value
-          :initform (make-array 4 :initial-element nil))
-   (kind :accessor kind-of :initarg :kind)
+          :initform (make-array 4 :initial-element 0))
+   (kind :accessor kind-of :initarg :kind :initform 0)
    (wear-flags :accessor wear-flags-of :initarg :wear-flags)
-   (extra-flags :accessor extra-flags-of :initarg :extra-flags)
-   (extra2-flags :accessor extra2-flags-of :initarg :extra2-flags)
-   (extra3-flags :accessor extra3-flags-of :initarg :extra3-flags)
+   (extra-flags :accessor extra-flags-of :initarg :extra-flags :initform 0)
+   (extra2-flags :accessor extra2-flags-of :initarg :extra2-flags :initform 0)
+   (extra3-flags :accessor extra3-flags-of :initarg :extra3-flags :initform 0)
    (weight :accessor weight-of :initarg :weight :initform 0)
    (timer :accessor timer-of :initarg :timer)
    (bitvector :accessor bitvector-of :initarg :bitvector
@@ -419,3 +429,48 @@
 (defmethod approvedp ((obj obj-data))
   "Returns T if the object has been approved."
   (not (is-obj-stat2 obj +item2-unapproved+)))
+
+;;; Vehicles
+(defun key-number (car)
+  (aref (value-of car) 0))
+(defun door-state (car)
+  (aref (value-of car) 1))
+(defun room-number (car)
+  (aref (value-of car) 0))
+(defun car-flags (car)
+  (aref (value-of car) 2))
+(defun car-special (car)
+  (aref (value-of car) 3))
+(defun max-energy (engine)
+  (aref (value-of engine) 0))
+(defun cur-energy (engine)
+  (aref (value-of engine) 1))
+(defun engine-state (engine)
+  (aref (value-of engine) 2))
+(defun use-rate (engine)
+  (aref (value-of engine) 3))
+(defun car-openable (car)
+  (logtest (door-state car) +cont-closeable+))
+(defun car-closed (car)
+  (logtest (door-state car) +cont-closed+))
+(defun is-vehicle (obj)
+  (= (kind-of obj) +item-vehicle+))
+
+;;; Devices
+(defun is-device (obj)
+  (= (kind-of obj) +item-device+))
+
+;;; Chip interfaces
+(defun interface-type (obj)
+  (aref (value-of obj) 0))
+(defun interface-max (obj)
+  (aref (value-of obj) 2))
+(defun chip-type (obj)
+  (aref (value-of obj) 0))
+(defun chip-data (obj)
+  (aref (value-of obj) 1))
+(defun chip-max (obj)
+  (aref (value-of obj) 2))
+(defun skillchip (obj)
+  (= (chip-type obj) +chip-skill+))
+      

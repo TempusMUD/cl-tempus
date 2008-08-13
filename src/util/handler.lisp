@@ -1,43 +1,11 @@
 (in-package #:tempus)
 
-(defparameter +interface-none+ 0)
-(defparameter +interface-power+ 1)
-(defparameter +interface-chips+ 2)
-(defparameter +num-interfaces+ 3)
-
-(defparameter +chip-none+ 0)
-(defparameter +chip-skill+ 1)
-(defparameter +chip-affects+ 2)
-(defparameter +num-chips+ 3)
-
-(defun interface-type (obj)
-  (aref (value-of obj) 0))
-(defun interface-max (obj)
-  (aref (value-of obj) 2))
-(defun chip-type (obj)
-  (aref (value-of obj) 0))
-(defun chip-data (obj)
-  (aref (value-of obj) 1))
-(defun chip-max (obj)
-  (aref (value-of obj) 2))
-(defun skillchip (obj)
-  (= (chip-type obj) +chip-skill+))
-
-(defun check-interface (ch obj mode)
-  (dolist (chip (contains-of obj))
-    (when (and (skillchip chip)
-               (plusp (chip-data chip))
-               (< (chip-data chip) +max-skills+))
-      (affect-modify ch (- (chip-data chip)) (chip-max chip) 0 0 mode))
-    (dotimes (j +max-obj-affect+)
-      (let ((af (aref (affected-of obj) j)))
-        (affect-modify ch (location-of af) (modifier-of af) 0 0 mode)))
-    (dotimes (j 3)
-      (affect-modify ch 0 0 (aref (bitvector-of obj) j) (1+ j) nil))))
-      
 (defun obj-gives-affects (obj ch mode)
   (and (eql (worn-by-of obj) ch)
        (not (invalid-char-class ch obj))
+       (not (or (and (is-obj-stat obj +item-anti-good+) (is-good ch))
+                (and (is-obj-stat obj +item-anti-evil+) (is-evil ch))
+                (and (is-obj-stat obj +item-anti-neutral+) (is-neutral ch))))
        (or (not (eql mode :worn))
            (and (not (is-implant obj))
                 (not (and (= (worn-on-of obj) +wear-belt+)
@@ -46,12 +14,29 @@
        (not (and (is-device obj)
                  (zerop (engine-state obj))))))
 
+(defun apply-object-affects (ch obj mode)
+  (when (obj-gives-affects obj ch mode)
+    (dotimes (j +max-obj-affect+)
+      (let ((af (aref (affected-of obj) j)))
+        (affect-modify ch (location-of af) (modifier-of af) 0 0 mode)))
+    (dotimes (j 3)
+      (affect-modify ch 0 0 (aref (bitvector-of obj) j) (1+ j) mode))))
+
+(defun check-interface (ch obj mode)
+  (when (eql (interface-type obj) +interface-chips+)
+    (dolist (chip (contains-of obj))
+      (when (and (skillchip chip)
+                 (plusp (chip-data chip))
+                 (< (chip-data chip) +max-skills+))
+        (affect-modify ch (- (chip-data chip)) (chip-max chip) 0 0 mode))
+      (apply-object-affects ch obj mode))))
+
 (defun apply-skill (ch skill mod)
   (setf (aref (skills-of ch) skill)
         (min (+ (aref (skills-of ch) skill) mod) 125)))
 
 (defun affect-modify (ch loc mod bitv index add)
-  (when bitv
+  (unless (zerop bitv)
     ;; Handle bitvectors
     (if add
         ;; Set bitvectors on character
@@ -99,32 +84,33 @@
                       (not (affected-by-spell ch +spell-quad-damage+)))
              (decf (light-of (in-room-of ch)))))
           (3
-           (setf (aff3-flags-of ch) (logandc2 (aff3-flags-of ch) bitv)))))
+           (setf (aff3-flags-of ch) (logandc2 (aff3-flags-of ch) bitv))))))
 
   (when (not add)
     (setf mod (- mod)))
 
-  (when (minusp loc)
-    (setf loc (- loc))
-    (when (and (< loc +max-skills+) (not (is-npc ch)))
-      (apply-skill ch loc mod))
-    (return-from affect-modify))
-
   (cond
+    ((zerop loc)
+     ;; do nothing
+     nil)
+    ((minusp loc)
+     (setf loc (- loc))
+     (when (and (< loc +max-skills+) (not (is-npc ch)))
+       (apply-skill ch loc mod)))
     ((= loc +apply-str+)
-     (incf (str-of ch) mod)
-     (incf (str-of ch) (floor (str-add-of ch) 10))
+     (incf (str-of (aff-abils-of ch)) mod)
+     (incf (str-of (aff-abils-of ch)) (floor (str-add-of ch) 10))
      (setf (str-add-of ch) 0))
     ((= loc +apply-dex+)
-     (incf (dex-of ch) mod))
+     (incf (dex-of (aff-abils-of ch)) mod))
     ((= loc +apply-int+)
-     (incf (int-of ch) mod))
+     (incf (int-of (aff-abils-of ch)) mod))
     ((= loc +apply-wis+)
-     (incf (wis-of ch) mod))
+     (incf (wis-of (aff-abils-of ch)) mod))
     ((= loc +apply-con+)
-     (incf (con-of ch) mod))
+     (incf (con-of (aff-abils-of ch)) mod))
     ((= loc +apply-cha+)
-     (incf (cha-of ch) mod))
+     (incf (cha-of (aff-abils-of ch)) mod))
     ((= loc +apply-age+)
      (incf (age-adjust-of ch) mod))
     ((= loc +apply-char-weight+)
@@ -145,12 +131,12 @@
      (setf (damroll-of ch) (pin (+ (damroll-of ch) mod) -125 125)))
     (t
      (error "Unknown apply adjust attempt on ~a ~d + ~d in affect_modify add=~a"
-            (name-of ch) loc mod add)))))
+            (name-of ch) loc mod add))))
 
 (defun affect-total (ch)
   "Updates a character by subtracting everything it is affected by, restoring original abilities, and then affecting it all again."
-  (when (> (str-of ch) 18)
-    (incf (str-of ch) 10))
+  (when (> (str-of (aff-abils-of ch)) 18)
+    (incf (str-of (aff-abils-of ch)) 10))
 
   ;; Remove all item-based affects
   (dotimes (i +num-wears+)
@@ -159,8 +145,8 @@
       (apply-object-affects ch (aref (equipment-of ch) i) nil))
     (when (aref (implants-of ch) i)
       (apply-object-affects ch (aref (implants-of ch) i) nil)
-      (when (= (kind-of obj) +item-interface+)
-        (check-interface obj ch nil)))
+      (when (= (kind-of (aref (implants-of ch) i)) +item-interface+)
+        (check-interface (aref (implants-of ch) i) ch nil)))
     (when (aref (tattoos-of ch) i)
       (apply-object-affects ch (aref (tattoos-of ch) i) nil)))
 
@@ -169,7 +155,117 @@
     (affect-modify ch (location-of af) (modifier-of af) (bitvector-of af)
                    (aff-index-of af) nil))
 
+  ;; Set stats to real stats
+  (setf (aff-abils-of ch) (copy-abilities (real-abils-of ch)))
 
+  (when (> (str-of (aff-abils-of ch)) 18)
+    (incf (str-of (aff-abils-of ch)) 10))
+
+  (dotimes (i 10)
+    (setf (aref (saves-of ch) i) 0))
+
+  (cond
+    ((and (typep ch 'mobile) (proto-of (shared-of ch)))
+     (setf (hitroll-of ch) (hitroll-of (proto-of (shared-of ch))))
+     (setf (damroll-of ch) (damroll-of (proto-of (shared-of ch)))))
+    (t
+     (setf (hitroll-of ch) 0)
+     (setf (damroll-of ch) 0)))
+
+  (setf (speed-of ch) 0)
+
+  ;; Reset affected stats
+
+  ;; Re-apply all item-based affects
+  (dotimes (i +num-wears+)
+    (when (aref (equipment-of ch) i)
+      (apply-object-affects ch (aref (equipment-of ch) i) t))
+    (when (aref (implants-of ch) i)
+      (apply-object-affects ch (aref (implants-of ch) i) t)
+      (when (= (kind-of (aref (implants-of ch) i)) +item-interface+)
+        (check-interface (aref (implants-of ch) i) ch t)))
+    (when (aref (tattoos-of ch) i)
+      (apply-object-affects ch (aref (tattoos-of ch) i) t)))
+
+  (dolist (af (affected-of ch))
+    (affect-modify ch (location-of af) (modifier-of af) (bitvector-of af)
+                   (aff-index-of af) t))
+
+  ;; Make certain values are between 0..25, not < 0 and not > 25!
+  (let ((max-dex (if (is-npc ch) 25
+                     (min 25 (+ 18
+                                (if (is-remort ch) (remort-gen-of ch) 0)
+                                (if (is-tabaxi ch) 2 0)
+                                (if (or (is-elf ch) (is-drow ch)) 1 0)))))
+        (max-int (if (is-npc ch) 25
+                     (min 25 (+ 18
+                                (if (is-remort ch) (remort-gen-of ch) 0)
+                                (if (or (is-elf ch) (is-drow ch)) 1 0)
+                                (if (is-minotaur ch) -2 0)
+                                (if (is-tabaxi ch) -1 0)
+                                (if (is-orc ch) -1 0)
+                                (if (is-half-orc ch) -1 0)))))
+        (max-wis (if (is-npc ch) 25
+                     (min 25 (+ 18
+                                (if (is-remort ch) (remort-gen-of ch) 0)
+                                (if (is-minotaur ch) -2 0)
+                                (if (is-tabaxi ch) -1 0)
+                                (if (is-orc ch) -1 0)
+                                (if (is-half-orc ch) -1 0)))))
+        (max-con (if (is-npc ch) 25
+                     (min 25 (+ 18
+                                (if (is-remort ch) (remort-gen-of ch) 0)
+                                (if (or (is-minotaur ch) (is-dwarf ch)) 1 0)
+                                (if (is-tabaxi ch) 1 0)
+                                (if (is-half-orc ch) 1 0)
+                                (if (is-orc ch) 2 0)
+                                (if (or (is-elf ch) (is-drow ch)) -1 0)))))
+        (max-cha (if (is-npc ch) 25
+                     (min 25 (+ 18
+                                (if (is-remort ch) (remort-gen-of ch) 0)
+                                (if (is-half-orc ch) -3 0)
+                                (if (is-orc ch) -3 0)
+                                (if (is-dwarf ch) -1 0)
+                                (if (is-tabaxi ch) -2 0))))))
+    (setf (dex-of (aff-abils-of ch)) (pin (dex-of (aff-abils-of ch)) 1 max-dex))
+    (setf (int-of (aff-abils-of ch)) (pin (int-of (aff-abils-of ch)) 1 max-int))
+    (setf (wis-of (aff-abils-of ch)) (pin (wis-of (aff-abils-of ch)) 1 max-wis))
+    (setf (con-of (aff-abils-of ch)) (pin (con-of (aff-abils-of ch)) 1 max-con))
+    (setf (cha-of (aff-abils-of ch)) (pin (cha-of (aff-abils-of ch)) 1 max-cha))
+    (setf (str-of (aff-abils-of ch)) (max (str-of (aff-abils-of ch)) 1)))
+
+  ;; Make sure that hit !> max-hit, etc
+  (setf (hitp-of ch) (min (max-hitp-of ch) (hitp-of ch)))
+  (setf (mana-of ch) (min (max-mana-of ch) (mana-of ch)))
+  (setf (move-of ch) (min (max-move-of ch) (move-of ch)))
+
+  (let ((i (+ (str-of (aff-abils-of ch)) (floor (str-add-of (aff-abils-of ch)) 10))))
+    (cond
+      ((<= i 18)
+       (setf (str-add-of (aff-abils-of ch)) 0))
+      ((<= i 28)
+       (setf (str-of (aff-abils-of ch)) 18)
+       (setf (str-add-of (aff-abils-of ch)) (* (- i 18) 10)))
+      ((or (is-remort ch)
+           (is-minotaur ch)
+           (is-npc ch)
+           (is-half-orc ch)
+           (is-dwarf ch)
+           (is-orc ch)
+           (immortal-level-p ch))
+       (setf (str-of (aff-abils-of ch)) (min 25
+                              (- (+ (str-of (aff-abils-of ch)) (floor (str-add-of (aff-abils-of ch)) 10)) 10)
+                              (+ 18
+                                 (remort-gen-of ch)
+                                 (if (or (is-npc ch) (immortal-level-p ch)) 8 0)
+                                 (if (is-minotaur ch) 2 0)
+                                 (if (is-dwarf ch) 1 0)
+                                 (if (is-half-orc ch) 2 0)
+                                 (if (is-orc ch) 1 0))))
+       (setf (str-add-of (aff-abils-of ch)) 0))
+      (t
+       (setf (str-of (aff-abils-of ch)) 18)
+       (setf (str-add-of (aff-abils-of ch)) 100)))))
 
 (defun char-to-room (ch room &optional check-specials)
   (assert (null(in-room-of ch)) nil "creature already in a room in char-to-room!")
@@ -177,25 +273,25 @@
 
   (push ch (people-of room))
   (setf (in-room-of ch) room)
-  #+nil  (when (and (eql (race-of ch) +race-elemental+)
+  (when (and (eql (race-of ch) +race-elemental+)
                     (eql (class-of ch) +class-fire+))
-           (incf (light-of room)))
+    (incf (light-of room)))
 
-  #+nil  (let ((light-eq (get-eq ch +wear-light+)))
-           (when (and light-eq
-                      (eql (kind-of light-eq) +item-light+)
-                      (plusp (aref (val-of light-eq) 2)))
-             (incf (light-of room))))
+  (let ((light-eq (aref (equipment-of ch) +wear-light+)))
+    (when (and light-eq
+               (eql (kind-of light-eq) +item-light+)
+               (plusp (aref (val-of light-eq) 2)))
+      (incf (light-of room))))
 
-  #+nil  (when (or (is-affected ch +aff-glowlight+)
-                   (is-affected-2 ch +aff2-fluorescent+)
-                   (is-affected-2 ch +aff2-divine-illumination+)
-                   (affected-by-spell ch +spell-quad-damage+))
-           (incf (light-of room)))
+  (when (or (aff-flagged ch +aff-glowlight+)
+            (aff2-flagged ch +aff2-fluorescent+)
+            (aff2-flagged ch +aff2-divine-illumination+)
+            (affected-by-spell ch +spell-quad-damage+))
+    (incf (light-of room)))
 
-  #+nil  (when (is-pc ch)
-           (incf (num-players-of (zone-of room)))
-           (setf (idle-time-of (zone-of room)) 0)))
+  (unless (is-npc ch)
+    (incf (num-players-of (zone-of room)))
+    (setf (idle-time-of (zone-of room)) 0)))
 
 (defun zone-number (vnum)
   (floor vnum 100))
@@ -221,8 +317,8 @@
     (let ((zone (real-zone (zone-number (vnum-of obj)))))
       (setf (timer-of obj)
             (if zone (max 2 (floor (lifespan-of zone) 2)) 15)))))
-                
-          
+
+
 (defun char-from-room (ch)
   (setf (people-of (in-room-of ch)) (delete ch (people-of (in-room-of ch))))
   (setf (in-room-of ch) nil))
@@ -264,7 +360,7 @@
 (defun apply-ac (ch eq-pos)
   (let ((obj (aref (equipment-of ch) eq-pos)))
     (assert obj nil "NIL eq at eq_pos")
-    (if (= (kind-of obj) +item-armor+)
+    (if (eql (kind-of obj) +item-armor+)
         (cond
           ((= eq-pos +wear-body+)
            (* 3 (aref (value-of obj) 0)))
@@ -275,6 +371,43 @@
            (aref (value-of obj) 0)))
         0)))
 
+
+(defun equip-char (ch obj pos mode)
+  (assert (< 0 pos +num-wears+) nil "Illegal pos in unequip-char")
+  (assert (not (carried-by-of obj)) nil "Object is carried-by when equipped")
+  (assert (not (in-room-of obj)) nil "Object is in-room when equipped")
+  (case mode
+    (:worn
+     (assert (not (aref (equipment-of ch) pos)) nil "~a is already equipped: ~a"
+             (name-of ch)
+             (name-of obj))
+     (setf (aref (equipment-of ch) pos) obj)
+     (when (eql (kind-of obj) +item-armor+)
+       (decf (armor-of ch) (apply-ac ch pos)))
+     (incf (worn-weight-of ch) (weight-of obj))
+     (when (and (in-room-of ch)
+                (= pos +wear-light+)
+                (eql (kind-of obj) +item-light+)
+                (plusp (aref (value-of obj) 2))) ; if light is ON
+       (incf (light-of (in-room-of ch)))))
+    (:implant
+     (assert (not (aref (implants-of ch) pos)) nil "~a is already implanted: ~a"
+             (name-of ch)
+             (name-of obj))
+     (setf (aref (implants-of ch) pos) obj)
+     (incf (weight-of ch) (weight-of obj)))
+    (:tattoo
+     (assert (not (aref (tattoos-of ch) pos)) nil "~a is already tattooed: ~a"
+             (name-of ch)
+             (name-of obj))
+     (setf (aref (tattoos-of ch) pos) obj)))
+
+  (setf (worn-by-of obj) ch)
+  (setf (worn-on-of obj) pos)
+
+  (apply-object-affects ch obj t)
+
+  (affect-total ch))
 
 (defun unequip-char (ch pos mode disable-checks)
   (assert (< 0 pos +num-wears+) nil "Illegal pos in unequip-char")
@@ -332,15 +465,15 @@
                     +wear-wield+ :worn)))
 
     obj))
-      
+
 (defun extract-obj (obj)
   "Extract an object from the world"
   (cond
     ((worn-by-of obj)
      (when (unequip-char (worn-by-of obj) (worn-on-of obj)
                          (if (eql obj (get-eq (worn-by-of obj) (worn-on-of obj)))
-                             +equip-worn+
-                             +equip-implant+)
+                             :worn
+                             :implant)
                          nil)
        (error "Inconsistent worn-by and worn-on references!")))
     ((in-room-of obj)

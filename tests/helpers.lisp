@@ -69,6 +69,15 @@
       (tempus::char-from-room ch))
     (setf tempus::*cxns* (delete (tempus::link-of ch) tempus::*cxns*))))
 
+(defun make-mock-object ()
+  (let* ((shared (make-instance 'tempus::obj-shared-data))
+         (obj (make-instance 'tempus::obj-data
+                             :shared shared)))
+    (dotimes (i tempus::+max-obj-affect+)
+      (setf (aref (tempus::affected-of obj) i)
+            (make-instance 'tempus::obj-affected-type)))
+    obj))
+
 (defmacro with-mock-players (vars &body body)
   `(let ,vars
      (unwind-protect

@@ -66,7 +66,7 @@
              (:file "comm" :pathname "net/comm"
                            :depends-on ("defs" "utils" "network" "nanny"))
              (:file "creature" :pathname "structs/creature"
-                               :depends-on ("defs"))
+                               :depends-on ("defs" "random"))
              (:file "creature-io" :pathname "structs/creature-io"
                                   :depends-on ("creature"))
              (:file "dyntext" :pathname "dyntext/dyntext"
@@ -96,6 +96,8 @@
                             :depends-on ("defs" "utils"))
              (:file "prog-compile" :pathname "search/prog-compile"
                                    :depends-on ("defs" "utils"))
+             (:file "prog" :pathname "search/prog"
+                           :depends-on ("defs" "utils"))
              (:file "quest" :pathname "quest/quest"
                             :depends-on ("defs" "utils"))
              (:file "random" :pathname "util/random"
@@ -122,8 +124,6 @@
                               :depends-on ("defs" "utils"))
              (:file "utils" :pathname "util/utils"
                             :depends-on ("defs" "network"))
-             (:file "vehicle" :pathname "objects/vehicle"
-                              :depends-on ("zone-data"))
              (:file "weather" :pathname "util/weather"
                               :depends-on ("zone-data"))
              (:file "zone-data" :pathname "structs/zone-data"
@@ -142,6 +142,8 @@
                (:file "test-comm" :pathname "tests/test-comm"
                       :depends-on ("helpers"))
                (:file "test-move" :pathname "tests/test-move"
+                      :depends-on ("helpers"))
+               (:file "test-obj" :pathname "tests/test-obj"
                       :depends-on ("helpers"))
                (:file "test-network" :pathname "tests/test-network"
                       :depends-on ("helpers"))

@@ -183,7 +183,7 @@
    (trail :accessor trail-of :initarg :trail :initform nil)
    (flags :accessor flags-of :initarg :room-flags :initform nil)
    (max-occupancy :accessor max-occupancy-of :initarg :max-occupancy :initform nil)
-   (light :accessor light-of :initarg :light :initform nil)
+   (light :accessor light-of :initarg :light :initform 0)
    (flow-dir :accessor flow-dir-of :initarg :flow-dir :initform nil)
    (flow-speed :accessor flow-speed-of :initarg :flow-speed :initform nil)
    (flow-kind :accessor flow-kind-of :initarg :flow-kind :initform nil)
