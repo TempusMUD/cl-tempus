@@ -474,3 +474,8 @@
 (defun skillchip (obj)
   (= (chip-type obj) +chip-skill+))
       
+;;; Corpses/containers
+(defun corpse-killer (obj)
+  (aref (value-of obj) 1))
+(defun corpse-idnum (obj)
+  (aref (value-of obj) 2))

@@ -806,7 +806,10 @@
   (con-of (aff-abils-of ch)))
 (defmethod cha-of ((ch creature))
   (cha-of (aff-abils-of ch)))
-
+(defmethod vnum-of ((ch mobile))
+  (if (shared-of ch)
+      (vnum-of (shared-of ch))
+      -1))
 (defun clone-mobile-proto (proto)
   (let ((maxhitp (if (zerop (max-hitp-of proto))
                      (+ (dice (hitp-of proto) (mana-of proto)) (move-of proto))

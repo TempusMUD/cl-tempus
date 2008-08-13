@@ -192,7 +192,16 @@
   (make-pathname :name (princ-to-string idnum)
 				 :type "equip"
 				 :defaults
-				 (merge-pathnames (format nil "data/equipment/~d/"
+				 (merge-pathnames (format nil "lib/players/equipment/~d/"
+										  (mod idnum 10))
+								  (asdf:component-pathname
+								   (asdf:find-system "tempus")))))
+
+(defun corpse-pathname (idnum)
+  (make-pathname :name (princ-to-string idnum)
+				 :type "dat"
+				 :defaults
+				 (merge-pathnames (format nil "lib/players/corpses/~d/"
 										  (mod idnum 10))
 								  (asdf:component-pathname
 								   (asdf:find-system "tempus")))))
