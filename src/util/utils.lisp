@@ -553,12 +553,12 @@ of immediately."
 (defun add-follower (ch leader)
   (assert (null (master-of ch)) nil "Master of creature is non-NULL in add-follower")
   (setf (master-of ch) leader)
-  (push (followers-of leader) ch)
+  (push ch (followers-of leader))
 
   (act ch :target leader
        :subject-emit "You now follow $N."
        :target-emit "$n starts following you."
-       :nottarget-emit "$n starts to follow $N."))
+       :not-target-emit "$n starts to follow $N."))
 
 (defun describe-char (viewer subject)
   (cond
