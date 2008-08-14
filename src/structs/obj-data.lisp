@@ -382,6 +382,9 @@
 
   (setf (weight-of obj) (+ (get-weight obj) mod-weight)))
 
+(defmethod vnum-of ((obj obj-data))
+  (vnum-of (shared-of obj)))
+
 (defun is-obj-kind (obj type)
   (= (kind-of obj) type))
 
