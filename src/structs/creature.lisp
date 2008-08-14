@@ -702,7 +702,7 @@
    (breath-count :accessor breath-count-of :initarg :breath-count :initform nil)
    (fall-count :accessor fall-count-of :initarg :fall-count :initform nil)
    (position :accessor position-of :initarg :position :initform +pos-standing+)
-   (carry-items :accessor carry-items-of :initarg :carry-items :initform nil)
+   (carry-items :accessor carry-items-of :initarg :carry-items :initform 0)
    (weapon-proficiency :accessor weapon-proficiency-of :initarg :weapon-proficiency :initform nil)
    (mood :accessor mood-of :initarg :mood :initform nil)
    (saved :accessor saved-of :initarg :saved :initform nil)
