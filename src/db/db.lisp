@@ -1078,6 +1078,7 @@
       (funcall (func-of (shared-of ch)) ch ch 0 "" +special-reset+)))
 
   (let ((last-cmd 0)
+        (last-mob nil)
         (prob-override nil))
     (dolist (zone-cmd (cmds-of zone))
       ;; if-flag
@@ -1116,6 +1117,7 @@
                  (setf last-cmd 0))
                 (t
                  (let ((mob (read-mobile (arg1-of zone-cmd))))
+                   (setf last-mob mob)
                    (cond
                      (mob
                       (char-to-room mob room)
@@ -1143,12 +1145,59 @@
                       (setf last-cmd 1))
                      (t
                       (setf last-cmd 0))))))))
-           (#\P
+           (#\P                         ; object to object
+            (let ((tobj (real-object-proto (arg1-of zone-cmd)))
+                  (obj-to (find (arg3-of zone-cmd) *object-list* :key 'vnum-of)))
+              (cond
+                ((null obj-to)
+                 (slog "Error: attempt to put obj ~a into nonexistent obj ~a"
+                       (arg1-of zone-cmd)
+                       (arg3-of zone-cmd))
+                 (setf last-cmd 0))
+                ((null tobj)
+                 (setf last-cmd 0))
+                ((> (number-of (shared-of tobj)) (arg2-of zone-cmd))
+                 (setf last-cmd 0))
+                (t
+                 (let ((obj (read-object (arg1-of zone-cmd))))
+                   (cond
+                     (obj
+                      (setf (creation-method-of obj) :zone)
+                      (setf (creator-of obj) (number-of zone))
+                      (when (zone-flagged zone +zone-zcmds-approved+)
+                        (setf (extra2-flags-of obj)
+                              (logior (extra2-flags-of obj) +item2-unapproved+))
+                        (setf (timer-of obj) 60))
+                      (obj-to-obj obj obj-to)
+                      (setf last-cmd 1))
+                     (t
+                      (setf last-cmd 0))))))))
+           (#\V                         ; add path to vehicle
             nil)
-           (#\V
-            nil)
-           (#\G
-            nil)
+           (#\G                         ; obj_to_char
+            (let ((tobj (real-object-proto (arg1-of zone-cmd))))
+              (cond
+                ((null last-mob)
+                 (slog "Error: attempt to give obj to nonexistent mob")
+                 (setf last-cmd 0))
+                ((null tobj)
+                 (setf last-cmd 0))
+                ((> (number-of (shared-of tobj)) (arg2-of zone-cmd))
+                 (setf last-cmd 0))
+                (t
+                 (let ((obj (read-object (arg1-of zone-cmd))))
+                   (cond
+                     (obj
+                      (setf (creation-method-of obj) :zone)
+                      (setf (creator-of obj) (number-of zone))
+                      (when (zone-flagged zone +zone-zcmds-approved+)
+                        (setf (extra2-flags-of obj)
+                              (logior (extra2-flags-of obj) +item2-unapproved+))
+                        (setf (timer-of obj) 60))
+                      (obj-to-char obj last-mob)
+                      (setf last-cmd 1))
+                     (t
+                      (setf last-cmd 0))))))))
            (#\E
             nil)
            (#\I
