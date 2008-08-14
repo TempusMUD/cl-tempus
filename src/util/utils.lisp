@@ -310,9 +310,7 @@ sequences in seq-list with the delimiter between each element"
 (defun act-str (viewer fmt subject target item pov)
   (with-output-to-string (result)
 	(loop 
-       with initial-printable = t
-       for idx from 0 to (1- (length fmt))
-       do
+       for idx from 0 to (1- (length fmt)) do
        (princ
         (case (char fmt idx)
           (#\$
