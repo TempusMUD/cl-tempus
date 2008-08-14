@@ -1171,9 +1171,11 @@
             (let ((room (real-room (arg1-of zone-cmd))))
               (cond
                 ((or (null room)
-                     (not (< 0 (arg2-of zone-cmd) +num-of-dirs+))
+                     (not (<= 0 (arg2-of zone-cmd) (1- +num-of-dirs+)))
                      (null (aref (dir-option-of room) (arg2-of zone-cmd))))
-                 (slog "door does not exist in room ~a" (arg1-of zone-cmd)))
+                 (slog "~a door does not exist in room ~a"
+                       (aref +dirs+ (arg2-of zone-cmd))
+                       (arg1-of zone-cmd)))
                 (t
                  (let* ((cmd-flags (arg3-of zone-cmd))
                         (dir-option (aref (dir-option-of room) (arg2-of zone-cmd)))
