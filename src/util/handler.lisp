@@ -318,7 +318,6 @@
       (setf (timer-of obj)
             (if zone (max 2 (floor (lifespan-of zone) 2)) 15)))))
 
-
 (defun char-from-room (ch)
   (setf (people-of (in-room-of ch)) (delete ch (people-of (in-room-of ch))))
   (setf (in-room-of ch) nil))
@@ -333,6 +332,77 @@
   (setf (contents-of (in-room-of obj))
         (delete obj (contents-of (in-room-of obj))))
   (setf (in-room-of obj) nil))
+
+(defun obj-to-obj (obj obj-to &optional sorted)
+  "put an object in an object (quaint)"
+
+  (assert obj nil "Illegal NIL object")
+  (assert obj-to nil "Illegal NIL target object")
+  (assert (not (eql obj obj-to)) nil "object is eql to target object")
+
+  (push obj (contains-of obj-to))
+  (setf (in-obj-of obj) obj-to)
+
+  (when sorted
+    (setf (contains-of obj-to) (sort (contains-of obj-to) 'vnum-of)))
+
+  ;; top level object. Subtract weight from inventory if necessary.
+  (incf (weight-of obj-to) (weight-of obj))
+
+  (when (and (in-room-of obj-to)
+             (room-flagged (in-room-of obj-to) +room-house-crash+))
+    (setf (flags-of (in-room-of obj-to)) (logior (flags-of (in-room-of obj-to)) +room-house-crash+)))
+
+  (when (is-interface obj-to)
+    (let ((vict (worn-by-of obj-to)))
+      (when (and vict
+                 (or (not (eql obj-to (aref (equipment-of vict) (worn-on-of obj-to))))
+                     (/= (worn-on-of obj-to) +wear-belt+)
+                     (and (not (eql (kind-of obj) +item-weapon+))
+                          (not (eql (kind-of obj) +item-pipe+))))
+                 (not (invalid-char-class vict obj))
+                 (or (not (eql obj-to (aref (equipment-of vict) (worn-on-of obj-to))))
+                     (not (is-implant obj))))
+
+        (when (and (skillchip obj)
+                   (plusp (chip-data obj))
+                   (< (chip-data obj) +max-skills+))
+          (affect-modify vict (- (chip-data obj)) (chip-max obj) 0 0 t))
+        (apply-object-affects vict obj t)))))
+
+(defun obj-from-obj (obj)
+  "Remove an object from an object"
+  (assert (null (in-obj-of obj)) nil "Trying to extract object from object")
+  (let ((obj-from (in-obj-of obj)))
+    (decf (weight-of obj-from) (weight-of obj))
+    (setf (contains-of obj-from) (delete obj (contains-of obj-from)))
+
+    (when (is-interface obj-from)
+      (let ((vict (worn-by-of obj-from)))
+        (when (and vict
+                   (or (not (eql obj-from (aref (equipment-of vict) (worn-on-of obj-from))))
+                       (/= (worn-on-of obj-from) +wear-belt+)
+                       (and (not (eql (kind-of obj) +item-weapon+))
+                            (not (eql (kind-of obj) +item-pipe+))))
+                   (not (invalid-char-class vict obj))
+                   (or (not (eql obj-from (aref (equipment-of vict) (worn-on-of obj-from))))
+                       (not (is-implant obj))))
+
+      (when (and (skillchip obj)
+                 (plusp (chip-data obj))
+                 (< (chip-data obj) +max-skills+))
+        (affect-modify vict (- (chip-data obj)) (chip-max obj) 0 0 nil))
+      (apply-object-affects vict obj nil))))
+
+    (when (and (in-room-of obj-from)
+               (room-flagged (in-room-of obj-from) +room-house+))
+      (setf (flags-of (in-room-of obj-from))
+            (logior (in-room-of obj-from) +room-house-crash+)))
+
+    (setf (in-obj-of obj) nil)
+
+    (setf (extra2-flags-of obj) (logandc2 (extra2-flags-of obj) +item2-hidden+))
+    obj))
 
 (defun printbits (bits descriptions)
   (format nil "~{~a~^ ~}"
@@ -487,40 +557,6 @@
         (equip-char ch (unequip-char ch +wear-wield-2+ :worn nil)
                     +wear-wield+ :worn)))
 
-    obj))
-
-(defun obj-from-obj (obj)
-  "Remove an object from an object"
-  (assert (null (in-obj-of obj)) nil "Trying to extract object from object")
-  (let ((obj-from (in-obj-of obj)))
-    (decf (weight-of obj-from) (weight-of obj))
-    (setf (contains-of obj-from) (delete obj (contains-of obj-from)))
-
-    (when (is-interface obj-from)
-      (let ((vict (worn-by-of obj-from)))
-        (when (and vict
-                   (or (not (eql obj-from (aref (equipment-of vict) (worn-on-of obj-from))))
-                       (/= (worn-on-of obj-from) +wear-belt+)
-                       (and (not (eql (kind-of obj) +item-weapon+))
-                            (not (eql (kind-of obj) +item-pipe+))))
-                   (not (invalid-char-class vict obj))
-                   (or (not (eql obj-from (aref (equipment-of vict) (worn-on-of obj-from))))
-                       (not (is-implant obj))))
-          
-      (when (and (skillchip obj)
-                 (plusp (chip-data obj))
-                 (< (chip-data obj) +max-skills+))
-        (affect-modify vict (- (chip-data obj)) (chip-max obj) 0 0 nil))
-      (apply-object-affects vict obj nil))))
-    
-    (when (and (in-room-of obj-from)
-               (room-flagged (in-room-of obj-from) +room-house+))
-      (setf (flags-of (in-room-of obj-from))
-            (logior (in-room-of obj-from) +room-house-crash+)))
-
-    (setf (in-obj-of obj) nil)
-
-    (setf (extra2-flags-of obj) (logandc2 (extra2-flags-of obj) +item2-hidden+))
     obj))
 
 (defun extract-obj (obj)
