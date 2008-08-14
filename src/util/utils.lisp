@@ -34,6 +34,9 @@
              (incf format-idx)))
     (values-list values))))
            
+(defun pin (val min max)
+  (min (max val min) max))
+
 (defun get-line (inf)
   (loop for line = (read-line inf nil nil)
         for count from 0

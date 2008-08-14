@@ -533,9 +533,6 @@
                                                    :start (aref reg-starts 2)
                                                    :end (aref reg-ends 2)))))))
 
-(defun pin (val min max)
-  (min (max val min) max))
-
 (defun compile-all-progs ()
   "Compiles all the progs on the mud."
   ;; Compile all room progs
