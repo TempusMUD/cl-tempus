@@ -683,7 +683,7 @@
    (sex :accessor sex-of :initarg :sex :initform 'male)
    (race :accessor race-of :initarg :race :initform 0)
    (level :accessor level-of :initarg :level :initform 0)
-   (age-adjust :accessor age-adjust-of :initarg :age-adjust :initform nil)
+   (age-adjust :accessor age-adjust-of :initarg :age-adjust :initform 0)
    (age :accessor age-of :initarg :age :initform nil)
    (birth-time :accessor birth-time-of :initarg :birth-time :initform nil)
    (login-time :accessor login-time-of :initarg :birth-time :initform nil)
@@ -810,6 +810,13 @@
   (if (shared-of ch)
       (vnum-of (shared-of ch))
       -1))
+(defmethod speed-of ((ch mobile))
+  0)
+(defmethod (setf speed-of) (val (ch mobile))
+  (declare (ignore val))
+  ;; Does nothing
+  nil)
+
 (defun clone-mobile-proto (proto)
   (let ((maxhitp (if (zerop (max-hitp-of proto))
                      (+ (dice (hitp-of proto) (mana-of proto)) (move-of proto))
@@ -999,6 +1006,9 @@
 (defun is-rakshasa (ch) (= (race-of ch) +race-rakshasa+))
 (defun is-rowlahr (ch) (= (race-of ch) +race-rowlahr+))
 
+(defun get-eq (ch pos) (aref (equipment-of ch) pos))
+(defun get-implant (ch pos) (aref (implants-of ch) pos))
+(defun get-tattoo (ch pos) (aref (tattoos-of ch) pos))
 (defun get-condition (ch cond) (aref (conditions-of ch) cond))
 
 (defun char-withstands-fire (ch)
