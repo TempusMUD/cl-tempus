@@ -27,7 +27,7 @@
          (and (is-obj-stat obj +item-anti-warrior+) (is-warrior ch))
          (and (is-obj-stat obj +item-anti-thief+) (is-thief ch))
          (and (is-obj-stat obj +item-anti-barb+) (is-barb ch))
-         (and (is-obj-stat obj +item-anti-psychic+) (is-psychic ch))
+         (and (is-obj-stat obj +item-anti-psychic+) (is-psionic ch))
          (and (is-obj-stat obj +item-anti-physic+) (is-physic ch))
          (and (is-obj-stat obj +item-anti-cyborg+) (is-cyborg ch))
          (and (is-obj-stat obj +item-anti-knight+) (is-knight ch))
@@ -59,5 +59,5 @@
      nil)
     (t
      t)))
-     
+
 
