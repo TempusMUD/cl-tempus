@@ -32,8 +32,9 @@
       (apply-object-affects ch obj mode))))
 
 (defun apply-skill (ch skill mod)
-  (setf (aref (skills-of ch) skill)
-        (min (+ (aref (skills-of ch) skill) mod) 125)))
+  (when (not (is-npc ch))
+    (setf (aref (skills-of ch) skill)
+          (min (+ (aref (skills-of ch) skill) mod) 125))))
 
 (defun affect-modify (ch loc mod bitv index add)
   (unless (zerop bitv)
@@ -99,8 +100,8 @@
        (apply-skill ch loc mod)))
     ((= loc +apply-str+)
      (incf (str-of (aff-abils-of ch)) mod)
-     (incf (str-of (aff-abils-of ch)) (floor (str-add-of ch) 10))
-     (setf (str-add-of ch) 0))
+     (incf (str-of (aff-abils-of ch)) (floor (str-add-of (aff-abils-of ch)) 10))
+     (setf (str-add-of (aff-abils-of ch)) 0))
     ((= loc +apply-dex+)
      (incf (dex-of (aff-abils-of ch)) mod))
     ((= loc +apply-int+)
@@ -129,6 +130,78 @@
      (setf (hitroll-of ch) (pin (+ (hitroll-of ch) mod) -125 125)))
     ((= loc +apply-damroll+)
      (setf (damroll-of ch) (pin (+ (damroll-of ch) mod) -125 125)))
+    ((= loc +apply-saving-para+)
+     (incf (aref (saves-of ch) +saving-para+) mod))
+    ((= loc +apply-saving-rod+)
+     (incf (aref (saves-of ch) +saving-rod+) mod))
+    ((= loc +apply-saving-petri+)
+     (incf (aref (saves-of ch) +saving-petri+) mod))
+    ((= loc +apply-saving-breath+)
+     (incf (aref (saves-of ch) +saving-breath+) mod))
+    ((= loc +apply-saving-spell+)
+     (incf (aref (saves-of ch) +saving-spell+) mod))
+    ((= loc +apply-saving-chem+)
+     (incf (aref (saves-of ch) +saving-chem+) mod))
+    ((= loc +apply-saving-psi+)
+     (incf (aref (saves-of ch) +saving-psi+) mod))
+    ((= loc +apply-saving-phy+)
+     (incf (aref (saves-of ch) +saving-phy+) mod))
+    ((= loc +apply-sneak+)
+     (apply-skill ch +skill-sneak+ mod))
+    ((= loc +apply-hide+)
+     (apply-skill ch +skill-hide+ mod))
+    ((= loc +apply-race+)
+     (when (<= 0 mod (1- +num-races+))
+       (setf (race-of ch) mod)))
+    ((= loc +apply-sex+)
+     (when (<= 0 mod 2)
+       (setf (sex-of ch) mod)))
+    ((= loc +apply-backstab+)
+     (apply-skill ch +skill-backstab+ mod))
+    ((= loc +apply-pick-lock+)
+     (apply-skill ch +skill-pick-lock+ mod))
+    ((= loc +apply-punch+)
+     (apply-skill ch +skill-punch+ mod))
+    ((= loc +apply-shoot+)
+     (apply-skill ch +skill-shoot+ mod))
+    ((= loc +apply-kick+)
+     (apply-skill ch +skill-kick+ mod))
+    ((= loc +apply-track+)
+     (apply-skill ch +skill-track+ mod))
+    ((= loc +apply-impale+)
+     (apply-skill ch +skill-impale+ mod))
+    ((= loc +apply-behead+)
+     (apply-skill ch +skill-behead+ mod))
+    ((= loc +apply-throwing+)
+     (apply-skill ch +skill-throwing+ mod))
+    ((= loc +apply-riding+)
+     (apply-skill ch +skill-riding+ mod))
+    ((= loc +apply-turn+)
+     (apply-skill ch +skill-turn+ mod))
+    ((= loc +apply-align+)
+     (setf (alignment-of ch) (pin (+ (alignment-of ch) mod) -1000 1000)))
+    ((= loc +apply-nothirst+)
+     (when (and (not (is-npc ch))
+                (/= (aref (condition-of ch) +thirst+) -1))
+       (setf (aref (condition-of ch) +thirst+)
+             (if (plusp mod) -2 0))))
+    ((= loc +apply-nohunger+)
+     (when (and (not (is-npc ch))
+                (/= (aref (condition-of ch) +full+) -1))
+       (setf (aref (condition-of ch) +full+)
+             (if (plusp mod) -2 0))))
+    ((= loc +apply-nodrunk+)
+     (when (and (not (is-npc ch))
+                (/= (aref (condition-of ch) +drunk+) -1))
+       (setf (aref (condition-of ch) +drunk+)
+             (if (plusp mod) -1 0))))
+    ((= loc +apply-speed+)
+     (incf (speed-of ch) mod))
+    ((member loc (list +apply-caster+
+                       +apply-weaponspeed+
+                       +apply-disguise+))
+     ;; These do nothing
+     nil)
     (t
      (error "Unknown apply adjust attempt on ~a ~d + ~d in affect_modify add=~a"
             (name-of ch) loc mod add))))
@@ -141,12 +214,12 @@
   ;; Remove all item-based affects
   (dotimes (i +num-wears+)
     ;; Remove equipment affects
-    (when (aref (equipment-of ch) i)
-      (apply-object-affects ch (aref (equipment-of ch) i) nil))
+    (when (get-eq ch i)
+      (apply-object-affects ch (get-eq ch i) nil))
     (when (aref (implants-of ch) i)
       (apply-object-affects ch (aref (implants-of ch) i) nil)
       (when (= (kind-of (aref (implants-of ch) i)) +item-interface+)
-        (check-interface (aref (implants-of ch) i) ch nil)))
+        (check-interface ch (aref (implants-of ch) i) nil)))
     (when (aref (tattoos-of ch) i)
       (apply-object-affects ch (aref (tattoos-of ch) i) nil)))
 
@@ -178,12 +251,12 @@
 
   ;; Re-apply all item-based affects
   (dotimes (i +num-wears+)
-    (when (aref (equipment-of ch) i)
-      (apply-object-affects ch (aref (equipment-of ch) i) t))
+    (when (get-eq ch i)
+      (apply-object-affects ch (get-eq ch i) t))
     (when (aref (implants-of ch) i)
       (apply-object-affects ch (aref (implants-of ch) i) t)
       (when (= (kind-of (aref (implants-of ch) i)) +item-interface+)
-        (check-interface (aref (implants-of ch) i) ch t)))
+        (check-interface ch (aref (implants-of ch) i) t)))
     (when (aref (tattoos-of ch) i)
       (apply-object-affects ch (aref (tattoos-of ch) i) t)))
 
@@ -277,7 +350,7 @@
                     (eql (class-of ch) +class-fire+))
     (incf (light-of room)))
 
-  (let ((light-eq (aref (equipment-of ch) +wear-light+)))
+  (let ((light-eq (get-eq ch +wear-light+)))
     (when (and light-eq
                (eql (kind-of light-eq) +item-light+)
                (plusp (aref (val-of light-eq) 2)))
@@ -356,12 +429,12 @@
   (when (is-interface obj-to)
     (let ((vict (worn-by-of obj-to)))
       (when (and vict
-                 (or (not (eql obj-to (aref (equipment-of vict) (worn-on-of obj-to))))
+                 (or (not (eql obj-to (get-eq vict (worn-on-of obj-to))))
                      (/= (worn-on-of obj-to) +wear-belt+)
                      (and (not (eql (kind-of obj) +item-weapon+))
                           (not (eql (kind-of obj) +item-pipe+))))
                  (not (invalid-char-class vict obj))
-                 (or (not (eql obj-to (aref (equipment-of vict) (worn-on-of obj-to))))
+                 (or (not (eql obj-to (get-eq vict (worn-on-of obj-to))))
                      (not (is-implant obj))))
 
         (when (and (skillchip obj)
@@ -380,12 +453,12 @@
     (when (is-interface obj-from)
       (let ((vict (worn-by-of obj-from)))
         (when (and vict
-                   (or (not (eql obj-from (aref (equipment-of vict) (worn-on-of obj-from))))
+                   (or (not (eql obj-from (get-eq vict (worn-on-of obj-from))))
                        (/= (worn-on-of obj-from) +wear-belt+)
                        (and (not (eql (kind-of obj) +item-weapon+))
                             (not (eql (kind-of obj) +item-pipe+))))
                    (not (invalid-char-class vict obj))
-                   (or (not (eql obj-from (aref (equipment-of vict) (worn-on-of obj-from))))
+                   (or (not (eql obj-from (get-eq vict (worn-on-of obj-from))))
                        (not (is-implant obj))))
 
       (when (and (skillchip obj)
@@ -451,7 +524,7 @@
 
 
 (defun apply-ac (ch eq-pos)
-  (let ((obj (aref (equipment-of ch) eq-pos)))
+  (let ((obj (get-eq ch eq-pos)))
     (assert obj nil "NIL eq at eq_pos")
     (if (eql (kind-of obj) +item-armor+)
         (cond
@@ -466,12 +539,12 @@
 
 
 (defun equip-char (ch obj pos mode)
-  (assert (< 0 pos +num-wears+) nil "Illegal pos in unequip-char")
+  (assert (<= 0 pos +num-wears+) nil "Illegal pos in equip-char")
   (assert (not (carried-by-of obj)) nil "Object is carried-by when equipped")
   (assert (not (in-room-of obj)) nil "Object is in-room when equipped")
   (case mode
     (:worn
-     (assert (not (aref (equipment-of ch) pos)) nil "~a is already equipped: ~a"
+     (assert (not (get-eq ch pos)) nil "~a is already equipped: ~a"
              (name-of ch)
              (name-of obj))
      (setf (aref (equipment-of ch) pos) obj)
@@ -507,9 +580,9 @@
   (let ((obj nil))
     (case mode
       (:worn
-       (assert (aref (equipment-of ch) pos) nil
+       (assert (get-eq ch pos) nil
                "eq NIL at pos ~d" pos)
-       (setf obj (aref (equipment-of ch) pos))
+       (setf obj (get-eq ch pos))
        (when (= (kind-of obj) +item-armor+)
          (incf (armor-of ch) (apply-ac ch pos)))
 
@@ -550,10 +623,10 @@
     (when (and (not disable-checks)
                (eql mode :worn))
       (when (and (= pos +wear-waist+)
-                 (aref (equipment-of ch) +wear-belt+))
+                 (get-eq ch +wear-belt+))
         (obj-to-char (unequip-char ch +wear-belt+ :worn nil) ch))
       (when (and (= pos +wear-wield+)
-                 (aref (equipment-of ch) +wear-wield-2+))
+                 (get-eq ch +wear-wield-2+))
         (equip-char ch (unequip-char ch +wear-wield-2+ :worn nil)
                     +wear-wield+ :worn)))
 
