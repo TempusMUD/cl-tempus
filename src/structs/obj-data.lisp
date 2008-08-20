@@ -409,7 +409,7 @@
 (defun same-obj (obj-a obj-b)
   (= (vnum-of (shared-of obj-a)) (vnum-of (shared-of obj-b))))
 (defun can-wear (obj pos)
-  (logtest (worn-on-of obj) pos))
+  (logtest (wear-flags-of obj) pos))
 
 (defun hidden-obj-prob (ch obj)
   (+ (level-of ch)
@@ -476,7 +476,7 @@
   (aref (value-of obj) 2))
 (defun skillchip (obj)
   (= (chip-type obj) +chip-skill+))
-      
+
 ;;; Corpses/containers
 (defun corpse-killer (obj)
   (aref (value-of obj) 1))
