@@ -993,3 +993,17 @@
 
 (defun str-app-type-to-hit (plist)
   (getf plist :to-hit))
+
+
+
+(defparameter +wear-bitvectors+
+  (coerce (list +item-wear-take+ +item-wear-finger+ +item-wear-finger+
+                +item-wear-neck+ +item-wear-neck+ +item-wear-body+
+                +item-wear-head+ +item-wear-legs+ +item-wear-feet+
+                +item-wear-hands+ +item-wear-arms+ +item-wear-shield+
+                +item-wear-about+ +item-wear-waist+ +item-wear-wrist+
+                +item-wear-wrist+ +item-wear-wield+ +item-wear-hold+
+                +item-wear-crotch+ +item-wear-eyes+ +item-wear-back+
+                +item-wear-belt+ +item-wear-face+ +item-wear-ear+
+                +item-wear-ear+ +item-wear-wield+ +item-wear-ass+)
+          'vector))
