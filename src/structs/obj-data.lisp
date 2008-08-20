@@ -331,7 +331,7 @@
    (sigil-level :accessor sigil-level-of :initarg :sigil-level :initform 0)))
 
 (defun clone-object-proto (proto)
-  (make-instance 'obj-data
+  (let ((obj (make-instance 'obj-data
                  :shared (shared-of proto)
                  :name (name-of proto)
                  :aliases (aliases-of proto)
@@ -345,6 +345,7 @@
                  :creation-method 'unknown
                  :creator 0
                  :value (make-array 4 :initial-contents (value-of proto))
+                 :affected (make-array +max-obj-affect+)
                  :kind (kind-of proto)
                  :wear-flags (wear-flags-of proto)
                  :extra-flags (extra-flags-of proto)
@@ -357,7 +358,14 @@
                  :max-dam (max-dam-of proto)
                  :damage (damage-of proto)
                  :sigil-idnum (sigil-idnum-of proto)
-                 :sigil-level (sigil-level-of proto)))
+                 :sigil-level (sigil-level-of proto))))
+    (dotimes (j +max-obj-affect+)
+      (let ((proto-af (aref (affected-of proto) j)))
+        (setf (aref (affected-of obj) j)
+              (make-instance 'affected-type
+                             :location (location-of proto-af)
+                             :modifier (modifier-of proto-af)))))
+    obj))
 
 (defmethod get-weight ((obj obj-data))
   (weight-of obj))
