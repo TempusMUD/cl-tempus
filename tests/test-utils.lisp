@@ -18,3 +18,7 @@
                    (= result middle))))))
 
       
+(test first-word
+      (is (equal "first" (tempus::first-word "first second third fourth")))
+      (is (equal "first" (tempus::first-word "first")))
+      (is (equal "" (tempus::first-word ""))))
