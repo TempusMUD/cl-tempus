@@ -74,7 +74,6 @@
 (defvar *zone-table* nil)
 (defvar *default-quad-zone*)
 (defvar *top-of-world* 0)
-(defvar *mini-mud* nil)
 (defvar *boot-time* nil)
 (defvar *reset-q* nil)
 (defvar *top-unique-id* 0)
@@ -1353,3 +1352,6 @@
   (gethash vnum *mobile-prototypes*))
 (defun real-object-proto (vnum)
   (gethash vnum *object-prototypes*))
+
+(defun player-in-world (idnum)
+  (find idnum *characters* :key #'idnum-of))

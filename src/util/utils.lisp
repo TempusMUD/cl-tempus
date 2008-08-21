@@ -540,9 +540,6 @@ of immediately."
 			 maximum
 			 (min maximum (safe-parse-integer max-str))))))))
 
-(defun player-in-world (idnum)
-  (find idnum *characters* :key #'idnum-of))
-
 (defun circle-follow (ch victim)
   "Returns T if CH following VICTIM would make a follow loop."
   (loop
