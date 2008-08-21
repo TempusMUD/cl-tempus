@@ -4,7 +4,10 @@
   (aref (dir-option-of (in-room-of ch)) dir))
 
 (defun first-word (str)
-  (subseq str 0 (min (length str) (position #\space str))))
+  (let ((space-pos (position #\space str)))
+    (if space-pos
+        (subseq str 0 space-pos)
+        str)))
 
 (defun is-carrying-boat (ch)
   (find +item-boat+ (carrying-of ch) :key #'kind-of))
