@@ -104,7 +104,8 @@
                                      (act ch
                                           :subject-emit (social-message-not-found social)))
                                     ((eql target ch)
-                                     (act ch target
+                                     (act ch
+                                          :target target
                                           :subject-emit (social-message-char-auto social)
                                           :place-emit (social-message-others-auto social)))
                                     ((null (social-message-char-found social))
