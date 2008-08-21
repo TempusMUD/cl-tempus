@@ -113,7 +113,7 @@
   (with-mock-players (alice)
     (setf (tempus::position-of alice) tempus::+pos-sitting+)
     (tempus::interpret-command alice "sleep")
-    (is (= (tempus::position-of alice) tempus::+pos-sleeping+))
+    (is (= tempus::+pos-sleeping+ (tempus::position-of alice)))
     (is (string= (char-output alice) "You go to sleep.~%"))
 
     (clear-mock-buffers alice)

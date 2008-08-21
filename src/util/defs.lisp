@@ -25,6 +25,8 @@
 (defparameter +secs-per-mud-month+ (* 35 +secs-per-mud-day+))
 (defparameter +secs-per-mud-year+ (* 16 +secs-per-mud-month+))
 
+(defvar *mini-mud* nil)
+
 (defvar *help* nil)
 (defvar *restrict* nil)
 (defvar *olc-lock* nil)
