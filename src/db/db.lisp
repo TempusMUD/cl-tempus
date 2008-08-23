@@ -1068,272 +1068,292 @@
                     (not (circle-follow mob potential))))
                (people-of (in-room-of mob)))))
 
-(defun reset-zone (zone)
+(defun process-zone-command (zone-cmd zone command-num last-cmd last-mob prob-override)
+  ;; if-flag
+  ;; 0 - "Do regardless of previous"
+  ;; 1 - "Do if previous succeeded"
+  ;; -1 - "Do if previous failed"
+  ;; last-cmd
+  ;; 1 - "Last command succeeded"
+  ;; 2 - "Last command had an error"
+  ;; -1 - "Last command's percentage failed"
   (flet ((zone-error (fmt &rest args)
-           (slog "ZONEERR: Zone #~d: ~?" (number-of zone) fmt args)))
+           (slog "ZONEERR: Zone #~d, Cmd ~d: ~?"
+                 (number-of zone)
+                 command-num
+                 fmt args)))
+    (cond
+      ((and (= (if-flag-of zone-cmd) 1) (/= last-cmd 1))
+       ;; skip
+       (values last-cmd last-mob prob-override))
+      ((and (= (if-flag-of zone-cmd) -1) (/= last-cmd -1))
+       ;; skip
+       (values last-cmd last-mob prob-override))
+      ((and (not prob-override) (> (random-range 1 100) (prob-of zone-cmd)))
+       (values -1 last-mob nil))
+      (t
+       (case (command-of zone-cmd)
+         (#\*                           ; Ignore command
+          (values -1 last-mob nil))
+         (#\M                           ; Read a mobile
+          (let ((tmob (real-mobile-proto (arg1-of zone-cmd)))
+                (room (real-room (arg3-of zone-cmd))))
+            (cond
+              ((null tmob)
+               (values 0 last-mob nil))
+              ((> (number-of (shared-of tmob)) (arg2-of zone-cmd))
+               (values 0 last-mob nil))
+              ((null room)
+               (values 0 last-mob nil))
+              (t
+               (let ((mob (read-mobile (arg1-of zone-cmd))))
+                 (cond
+                   (mob
+                    (char-to-room mob room)
+                    (let ((leader (find-mob-leader mob)))
+                      (when leader
+                        (add-follower mob leader)))
+                    (values 1 mob nil))
+                   (t
+                    (values 0 mob nil))))))))
+         (#\O                           ; Read an object
+          (let ((tobj (real-object-proto (arg1-of zone-cmd)))
+                (room (real-room (arg3-of zone-cmd))))
+            (cond
+              ((null tobj)
+               (values 0 last-mob nil))
+              ((>= (number-of (shared-of tobj)) (arg2-of zone-cmd))
+               (values 0 last-mob nil))
+              ((null room)
+               (values 0 last-mob nil))
+              (t
+               (let ((obj (read-object (arg1-of zone-cmd))))
+                 (cond
+                   (obj
+                    (obj-to-room obj room)
+                    (values 1 last-mob nil))
+                   (t
+                    (values 0 last-mob nil))))))))
+         (#\P                           ; object to object
+          (let ((tobj (real-object-proto (arg1-of zone-cmd)))
+                (obj-to (find (arg3-of zone-cmd) *object-list* :key 'vnum-of)))
+            (cond
+              ((null obj-to)
+               (zone-error "attempt to put obj ~a into nonexistent obj ~a"
+                           (arg1-of zone-cmd)
+                           (arg3-of zone-cmd))
+               (values 0 last-mob nil))
+              ((null tobj)
+               (values 0 last-mob nil))
+              ((>= (number-of (shared-of tobj)) (arg2-of zone-cmd))
+               (values 0 last-mob nil))
+              (t
+               (let ((obj (read-object (arg1-of zone-cmd))))
+                 (cond
+                   (obj
+                    (setf (creation-method-of obj) :zone)
+                    (setf (creator-of obj) (number-of zone))
+                    (when (zone-flagged zone +zone-zcmds-approved+)
+                      (setf (extra2-flags-of obj)
+                            (logior (extra2-flags-of obj) +item2-unapproved+))
+                      (setf (timer-of obj) 60))
+                    (obj-to-obj obj obj-to)
+                    (values 1 last-mob nil))
+                   (t
+                    (values 0 last-mob nil))))))))
+         (#\V                           ; add path to vehicle
+          (values 0 last-mob nil))
+         (#\W                           ; add path to mobile
+          (values 0 last-mob nil))
+         (#\G                           ; obj-to-char
+          (let ((tobj (real-object-proto (arg1-of zone-cmd))))
+            (cond
+              ((null last-mob)
+               (zone-error "attempt to give obj ~d to nonexistent mob"
+                           (arg1-of zone-cmd))
+               (values 0 last-mob nil))
+              ((null tobj)
+               (values 0 last-mob nil))
+              ((>= (number-of (shared-of tobj)) (arg2-of zone-cmd))
+               (values 0 last-mob nil))
+              (t
+               (let ((obj (read-object (arg1-of zone-cmd))))
+                 (cond
+                   (obj
+                    (setf (creation-method-of obj) :zone)
+                    (setf (creator-of obj) (number-of zone))
+                    (when (zone-flagged zone +zone-zcmds-approved+)
+                      (setf (extra2-flags-of obj)
+                            (logior (extra2-flags-of obj) +item2-unapproved+))
+                      (setf (timer-of obj) 60))
+                    (obj-to-char obj last-mob)
+                    (values 1 last-mob nil))
+                   (t
+                    (values 0 last-mob nil))))))))
+         (#\E                           ; equipping object
+          (let ((tobj (real-object-proto (arg1-of zone-cmd))))
+            (cond
+              ((null last-mob)
+               (zone-error "attempt to equip obj ~d on nonexistent mob"
+                           (arg1-of zone-cmd))
+               (values 0 last-mob nil))
+              ((null tobj)
+               (values 0 last-mob nil))
+              ((>= (number-of (shared-of tobj)) (arg2-of zone-cmd))
+               (values 0 last-mob nil))
+              ((not (<= 0 (arg3-of zone-cmd) +num-wears+))
+               (zone-error "invalid equipment pos number ~d on obj ~d"
+                           (arg3-of zone-cmd)
+                           (arg1-of zone-cmd))
+               (values 0 last-mob nil))
+              ((not (can-wear tobj (aref +wear-bitvectors+ (arg3-of zone-cmd))))
+               (zone-error "invalid eq pos ~d for object ~a"
+                           (arg3-of zone-cmd)
+                           (arg1-of zone-cmd))
+               (values 0 last-mob nil))
+              ((get-eq last-mob (arg3-of zone-cmd))
+               (zone-error "char ~d already equipped in pos ~d while equipping ~d"
+                           (vnum-of last-mob)
+                           (arg3-of zone-cmd)
+                           (arg1-of zone-cmd))
+               (values 0 last-mob nil))
+              (t
+               (let ((obj (read-object (arg1-of zone-cmd))))
+                 (cond
+                   (obj
+                    (setf (creation-method-of obj) :zone)
+                    (setf (creator-of obj) (number-of zone))
+                    (when (zone-flagged zone +zone-zcmds-approved+)
+                      (setf (extra2-flags-of obj)
+                            (logior (extra2-flags-of obj) +item2-unapproved+))
+                      (setf (timer-of obj) 60))
+                    (if (equip-char last-mob obj (arg3-of zone-cmd) :worn)
+                        (values 1 last-mob nil)
+                        (values 0 last-mob nil)))
+                   (t
+                    (values 0 last-mob nil))))))))
+         (#\I                           ; implanting object
+          (let ((tobj (real-object-proto (arg1-of zone-cmd))))
+            (cond
+              ((null last-mob)
+               (zone-error "attempt to implant nonexistent mob")
+               (values 0 last-mob nil))
+              ((null tobj)
+               (values 0 last-mob nil))
+              ((>= (number-of (shared-of tobj)) (arg2-of zone-cmd))
+               (values 0 last-mob nil))
+              ((not (<= 0 (arg3-of zone-cmd) +num-wears+))
+               (zone-error "invalid implant pos number ~d on obj ~d"
+                           (arg3-of zone-cmd)
+                           (arg1-of zone-cmd))
+               (values 0 last-mob nil))
+              ((not (can-wear tobj (aref +wear-bitvectors+ (arg3-of zone-cmd))))
+               (zone-error "invalid implant pos ~d for object ~a"
+                           (arg3-of zone-cmd)
+                           (arg1-of zone-cmd))
+               (values 0 last-mob nil))
+              ((get-implant last-mob (arg3-of zone-cmd))
+               (zone-error "char ~d already implanted in pos ~d while equipping ~d"
+                           (vnum-of last-mob)
+                           (arg3-of zone-cmd)
+                           (arg1-of zone-cmd))
+               (values 0 last-mob nil))
+              (t
+               (let ((obj (read-object (arg1-of zone-cmd))))
+                 (cond
+                   (obj
+                    (setf (creation-method-of obj) :zone)
+                    (setf (creator-of obj) (number-of zone))
+                    (when (zone-flagged zone +zone-zcmds-approved+)
+                      (setf (extra2-flags-of obj)
+                            (logior (extra2-flags-of obj) +item2-unapproved+))
+                      (setf (timer-of obj) 60))
+                  
+                    (if (equip-char last-mob obj (arg3-of zone-cmd) :implant)
+                        (values 1 last-mob nil)
+                        (values 0 last-mob nil)))
+                   (t
+                    (values 0 last-mob nil))))))))
+         (#\R                           ; rem obj from room
+          (let* ((room (real-room (arg1-of zone-cmd)))
+                 (obj (when room (get-obj-in-list-num (arg1-of zone-cmd)
+                                                      (contents-of room)))))
+            (cond
+              ((and room obj (not (room-flagged room +room-house+)))
+               (obj-from-room obj)
+               (extract-obj obj)
+               (values 1 last-mob t))
+              (t
+               (values 0 last-mob nil)))))
+         (#\D                           ; set state of door
+          (let ((room (real-room (arg1-of zone-cmd))))
+            (cond
+              ((or (null room)
+                   (not (<= 0 (arg2-of zone-cmd) (1- +num-of-dirs+)))
+                   (null (aref (dir-option-of room) (arg2-of zone-cmd))))
+               (zone-error "~a door does not exist in room ~a"
+                           (aref +dirs+ (arg2-of zone-cmd))
+                           (arg1-of zone-cmd))
+               (values 0 last-mob nil))
+              (t
+               (let* ((cmd-flags (arg3-of zone-cmd))
+                      (dir-option (aref (dir-option-of room) (arg2-of zone-cmd)))
+                      (exit-info (exit-info-of dir-option)))
+                 (when (logtest cmd-flags +door-open+)
+                   (setf (exit-info-of dir-option)
+                         (logandc2 exit-info +ex-locked+))
+                   (setf (exit-info-of dir-option)
+                         (logandc2 exit-info +ex-closed+)))
 
-    ;; Send +special-reset+ notification to all mobiles with specials
-    (dolist (ch *characters*)
-      (when (and (eql (zone-of (in-room-of ch)) zone)
-                 (mob-flagged ch +mob-spec+)
-                 (func-of (shared-of ch)))
-        (funcall (func-of (shared-of ch)) ch ch 0 "" +special-reset+)))
+                 (when (logtest cmd-flags +door-closed+)
+                   (setf (exit-info-of dir-option)
+                         (logandc2 exit-info +ex-locked+))
+                   (setf (exit-info-of dir-option)
+                         (logior exit-info +ex-closed+)))
 
-    (let ((last-cmd 0)
-          (last-mob nil)
-          (prob-override nil))
-      (dolist (zone-cmd (cmds-of zone))
-        ;; if-flag
-        ;; 0 - "Do regardless of previous"
-        ;; 1 - "Do if previous succeeded"
-        ;; 2 - "Do if previous failed"
-        ;; last-cmd
-        ;; 1 - "Last command succeeded"
-        ;; 2 - "Last command had an error"
-        ;; -1 - "Last command's percentage failed"
+                 (when (logtest cmd-flags +door-locked+)
+                   (setf (exit-info-of dir-option)
+                         (logior exit-info +ex-locked+))
+                   (setf (exit-info-of dir-option)
+                         (logior exit-info +ex-closed+)))
 
-        (cond
-          ((and (= (if-flag-of zone-cmd) 1) (/= last-cmd 1))
-           ;; skip
-           nil)
-          ((and (= (if-flag-of zone-cmd) -1) (/= last-cmd -1))
-           ;; skip
-           nil)
-          ((and (not prob-override) (> (random-range 1 100) (prob-of zone-cmd)))
-           (setf prob-override nil))
-          (t
-           (setf last-cmd 1
-                 prob-override nil)
-           (case (command-of zone-cmd)
-             (#\*                       ; Ignore command
-              (setf last-cmd -1))
-             (#\M                       ; Read a mobile
-              (let ((tmob (real-mobile-proto (arg1-of zone-cmd)))
-                    (room (real-room (arg3-of zone-cmd))))
-                (cond
-                  ((null tmob)
-                   (setf last-cmd 0))
-                  ((> (number-of (shared-of tmob)) (arg2-of zone-cmd))
-                   (setf last-cmd 0))
-                  ((null room)
-                   (setf last-cmd 0))
-                  (t
-                   (let ((mob (read-mobile (arg1-of zone-cmd))))
-                     (setf last-mob mob)
-                     (cond
-                       (mob
-                        (char-to-room mob room)
-                        (let ((leader (find-mob-leader mob)))
-                          (when leader
-                            (add-follower mob leader)))
-                        (setf last-cmd 1))
-                       (t
-                        (setf last-cmd 0))))))))
-             (#\O                       ; Read an object
-              (let ((tobj (real-object-proto (arg1-of zone-cmd)))
-                    (room (real-room (arg3-of zone-cmd))))
-                (cond
-                  ((null tobj)
-                   (setf last-cmd 0))
-                  ((>= (number-of (shared-of tobj)) (arg2-of zone-cmd))
-                   (setf last-cmd 0))
-                  ((null room)
-                   (setf last-cmd 0))
-                  (t
-                   (let ((obj (read-object (arg1-of zone-cmd))))
-                     (cond
-                       (obj
-                        (obj-to-room obj room)
-                        (setf last-cmd 1))
-                       (t
-                        (setf last-cmd 0))))))))
-             (#\P                       ; object to object
-              (let ((tobj (real-object-proto (arg1-of zone-cmd)))
-                    (obj-to (find (arg3-of zone-cmd) *object-list* :key 'vnum-of)))
-                (cond
-                  ((null obj-to)
-                   (zone-error "attempt to put obj ~a into nonexistent obj ~a"
-                         (arg1-of zone-cmd)
-                         (arg3-of zone-cmd))
-                   (setf last-cmd 0))
-                  ((null tobj)
-                   (setf last-cmd 0))
-                  ((>= (number-of (shared-of tobj)) (arg2-of zone-cmd))
-                   (setf last-cmd 0))
-                  (t
-                   (let ((obj (read-object (arg1-of zone-cmd))))
-                     (cond
-                       (obj
-                        (setf (creation-method-of obj) :zone)
-                        (setf (creator-of obj) (number-of zone))
-                        (when (zone-flagged zone +zone-zcmds-approved+)
-                          (setf (extra2-flags-of obj)
-                                (logior (extra2-flags-of obj) +item2-unapproved+))
-                          (setf (timer-of obj) 60))
-                        (obj-to-obj obj obj-to)
-                        (setf last-cmd 1))
-                       (t
-                        (setf last-cmd 0))))))))
-             (#\V                       ; add path to vehicle
-              nil)
-             (#\W                       ; add path to mobile
-              nil)
-             (#\G                       ; obj-to-char
-              (let ((tobj (real-object-proto (arg1-of zone-cmd))))
-                (cond
-                  ((null last-mob)
-                   (zone-error "attempt to give obj ~d to nonexistent mob"
-                               (arg1-of zone-cmd))
-                   (setf last-cmd 0))
-                  ((null tobj)
-                   (setf last-cmd 0))
-                  ((>= (number-of (shared-of tobj)) (arg2-of zone-cmd))
-                   (setf last-cmd 0))
-                  (t
-                   (let ((obj (read-object (arg1-of zone-cmd))))
-                     (cond
-                       (obj
-                        (setf (creation-method-of obj) :zone)
-                        (setf (creator-of obj) (number-of zone))
-                        (when (zone-flagged zone +zone-zcmds-approved+)
-                          (setf (extra2-flags-of obj)
-                                (logior (extra2-flags-of obj) +item2-unapproved+))
-                          (setf (timer-of obj) 60))
-                        (obj-to-char obj last-mob)
-                        (setf last-cmd 1))
-                       (t
-                        (setf last-cmd 0))))))))
-             (#\E                       ; equipping object
-              (let ((tobj (real-object-proto (arg1-of zone-cmd))))
-                (cond
-                  ((null last-mob)
-                   (zone-error "attempt to equip obj ~d on nonexistent mob"
-                               (arg1-of zone-cmd))
-                   (setf last-cmd 0))
-                  ((null tobj)
-                   (setf last-cmd 0))
-                  ((>= (number-of (shared-of tobj)) (arg2-of zone-cmd))
-                   (setf last-cmd 0))
-                  ((not (<= 0 (arg3-of zone-cmd) +num-wears+))
-                   (zone-error "invalid equipment pos number ~d on obj ~d"
-                               (arg3-of zone-cmd)
-                               (arg1-of zone-cmd)))
-                  ((not (can-wear tobj (aref +wear-bitvectors+ (arg3-of zone-cmd))))
-                   (zone-error "invalid eq pos ~d for object ~a"
-                         (arg3-of zone-cmd)
-                         (arg1-of zone-cmd)))
-                  ((get-eq last-mob (arg3-of zone-cmd))
-                   (zone-error "char ~d already equipped in pos ~d while equipping ~d"
-                               (vnum-of last-mob)
-                               (arg3-of zone-cmd)
-                               (arg1-of zone-cmd)))
-                  (t
-                   (let ((obj (read-object (arg1-of zone-cmd))))
-                     (cond
-                       (obj
-                        (setf (creation-method-of obj) :zone)
-                        (setf (creator-of obj) (number-of zone))
-                        (when (zone-flagged zone +zone-zcmds-approved+)
-                          (setf (extra2-flags-of obj)
-                                (logior (extra2-flags-of obj) +item2-unapproved+))
-                          (setf (timer-of obj) 60))
-                        (setf last-cmd
-                              (if (equip-char last-mob obj (arg3-of zone-cmd) :worn)
-                                  1 0)))
-                       (t
-                        (setf last-cmd 0))))))))
-             (#\I                       ; implanting object
-              (let ((tobj (real-object-proto (arg1-of zone-cmd))))
-                (cond
-                  ((null last-mob)
-                   (zone-error "attempt to implant nonexistent mob")
-                   (setf last-cmd 0))
-                  ((null tobj)
-                   (setf last-cmd 0))
-                  ((>= (number-of (shared-of tobj)) (arg2-of zone-cmd))
-                   (setf last-cmd 0))
-                  ((not (<= 0 (arg3-of zone-cmd) +num-wears+))
-                   (zone-error "invalid implant pos number ~d on obj ~d"
-                               (arg3-of zone-cmd)
-                               (arg1-of zone-cmd)))
-                  ((not (can-wear tobj (aref +wear-bitvectors+ (arg3-of zone-cmd))))
-                   (zone-error "invalid implant pos ~d for object ~a"
-                         (arg3-of zone-cmd)
-                         (arg1-of zone-cmd)))
-                  ((get-implant last-mob (arg3-of zone-cmd))
-                   (zone-error "char ~d already implanted in pos ~d while equipping ~d"
-                               (vnum-of last-mob)
-                               (arg3-of zone-cmd)
-                               (arg1-of zone-cmd)))
-                  (t
-                   (let ((obj (read-object (arg1-of zone-cmd))))
-                     (cond
-                       (obj
-                        (setf (creation-method-of obj) :zone)
-                        (setf (creator-of obj) (number-of zone))
-                        (when (zone-flagged zone +zone-zcmds-approved+)
-                          (setf (extra2-flags-of obj)
-                                (logior (extra2-flags-of obj) +item2-unapproved+))
-                          (setf (timer-of obj) 60))
-                        (setf last-cmd
-                              (if (equip-char last-mob obj (arg3-of zone-cmd) :implant)
-                                  1 0)))
-                       (t
-                        (setf last-cmd 0))))))))
-             (#\R                       ; rem obj from room
-              (let* ((room (real-room (arg1-of zone-cmd)))
-                     (obj (when room (get-obj-in-list-num (arg1-of zone-cmd)
-                                                          (contents-of room)))))
-                (cond
-                  ((and room obj (not (room-flagged room +room-house+)))
-                   (obj-from-room obj)
-                   (extract-obj obj)
-                   (setf last-cmd 1
-                         prob-override 1))
-                  (t
-                   (setf last-cmd 0)))))
-             (#\D                       ; set state of door
-              (let ((room (real-room (arg1-of zone-cmd))))
-                (cond
-                  ((or (null room)
-                       (not (<= 0 (arg2-of zone-cmd) (1- +num-of-dirs+)))
-                       (null (aref (dir-option-of room) (arg2-of zone-cmd))))
-                   (zone-error "~a door does not exist in room ~a"
-                         (aref +dirs+ (arg2-of zone-cmd))
-                         (arg1-of zone-cmd)))
-                  (t
-                   (let* ((cmd-flags (arg3-of zone-cmd))
-                          (dir-option (aref (dir-option-of room) (arg2-of zone-cmd)))
-                          (exit-info (exit-info-of dir-option)))
-                     (when (logtest cmd-flags +door-open+)
-                       (setf (exit-info-of dir-option)
-                             (logandc2 exit-info +ex-locked+))
-                       (setf (exit-info-of dir-option)
-                             (logandc2 exit-info +ex-closed+)))
+                 (when (logtest cmd-flags +door-hidden+)
+                   (setf (exit-info-of dir-option)
+                         (logior exit-info +ex-hidden+)))
+                 (values 1 last-mob nil))))))
+         (t
+          (zone-error "Unknown cmd in reset table! cmd disabled")
+          (setf (command-of zone-cmd) #\*)
+          (values 0 last-mob nil)))))))
 
-                     (when (logtest cmd-flags +door-closed+)
-                       (setf (exit-info-of dir-option)
-                             (logandc2 exit-info +ex-locked+))
-                       (setf (exit-info-of dir-option)
-                             (logior exit-info +ex-closed+)))
+(defun reset-zone (zone)
+  ;; Send +special-reset+ notification to all mobiles with specials
+  (dolist (ch *characters*)
+    (when (and (eql (zone-of (in-room-of ch)) zone)
+               (mob-flagged ch +mob-spec+)
+               (func-of (shared-of ch)))
+      (funcall (func-of (shared-of ch)) ch ch 0 "" +special-reset+)))
 
-                     (when (logtest cmd-flags +door-locked+)
-                       (setf (exit-info-of dir-option)
-                             (logior exit-info +ex-locked+))
-                       (setf (exit-info-of dir-option)
-                             (logior exit-info +ex-closed+)))
+  (let ((last-cmd 0)
+        (last-mob nil)
+        (command-num 0)
+        (prob-override nil))
+    (dolist (zone-cmd (cmds-of zone))
+      (multiple-value-setq (last-cmd last-mob prob-override)
+        (process-zone-command zone-cmd
+                              zone
+                              command-num 
+                              last-cmd
+                              last-mob
+                              prob-override))
+      (incf command-num)))
 
-                     (when (logtest cmd-flags +door-hidden+)
-                       (setf (exit-info-of dir-option)
-                             (logior exit-info +ex-hidden+))))))))
-             (t
-              (zone-error "Unknown cmd in reset table! cmd disabled")
-              (setf (command-of zone-cmd) #\*)))))))
-    (setf (age-of zone) 0)
+  (setf (age-of zone) 0)
 
-    (dolist (room (world-of zone))
-      (dolist (search (searches-of room))
-        (setf (flags-of search) (logand (flags-of search) (lognot +search-tripped+)))))))
+  (dolist (room (world-of zone))
+    (dolist (search (searches-of room))
+      (setf (flags-of search)
+            (logand (flags-of search) (lognot +search-tripped+))))))
 
 (defun fread-string (inf)
   (with-output-to-string (s)
