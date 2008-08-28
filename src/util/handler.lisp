@@ -1,45 +1,52 @@
 (in-package #:tempus)
 
-(defun obj-gives-affects (obj ch mode)
-  (and (eql (worn-by-of obj) ch)
-       (not (invalid-char-class ch obj))
-       (not (or (and (is-obj-stat obj +item-anti-good+) (is-good ch))
-                (and (is-obj-stat obj +item-anti-evil+) (is-evil ch))
-                (and (is-obj-stat obj +item-anti-neutral+) (is-neutral ch))))
-       (or (not (eql mode :worn))
-           (and (not (is-implant obj))
-                (not (and (= (worn-on-of obj) +wear-belt+)
-                          (or (= (kind-of obj) +item-weapon+)
-                              (= (kind-of obj) +item-pipe+))))))
-       (not (and (is-device obj)
-                 (zerop (engine-state obj))))))
+(defun apply-object-affects (ch obj addp)
+  (when (and obj
+             (or (eql (worn-by-of obj) ch)
+                 (and (in-obj-of obj)
+                      (is-interface (in-obj-of obj))
+                      (= (interface-type (in-obj-of obj)) +interface-chips+)
+                      (is-chip obj)))
+             (not (invalid-char-class ch obj))
+             (not (or (and (is-obj-stat obj +item-anti-good+) (is-good ch))
+                      (and (is-obj-stat obj +item-anti-evil+) (is-evil ch))
+                      (and (is-obj-stat obj +item-anti-neutral+) (is-neutral ch))))
+             (or (not (eql obj (aref (equipment-of ch) (worn-on-of obj)))))
+                 (and (not (is-implant obj))
+                      (not (and (= (worn-on-of obj) +wear-belt+)
+                                (or (= (kind-of obj) +item-weapon+)
+                                    (= (kind-of obj) +item-pipe+))))))
+             (not (and (is-device obj)
+                       (zerop (engine-state obj)))))
 
-(defun apply-object-affects (ch obj mode)
-  (when (obj-gives-affects obj ch mode)
+    ;; Apply object affects
     (dotimes (j +max-obj-affect+)
       (let ((af (aref (affected-of obj) j)))
-        (affect-modify ch (location-of af) (modifier-of af) 0 0 mode)))
+        (affect-modify ch (location-of af) (modifier-of af) 0 0 addp)))
     (dotimes (j 3)
-      (affect-modify ch 0 0 (aref (bitvector-of obj) j) (1+ j) mode))))
+      (affect-modify ch 0 0 (aref (bitvector-of obj) j) (1+ j) addp))
 
-(defun check-interface (ch obj mode)
-  (when (eql (interface-type obj) +interface-chips+)
-    (dolist (chip (contains-of obj))
-      (when (and (skillchip chip)
-                 (plusp (chip-data chip))
-                 (< (chip-data chip) +max-skills+))
-        (affect-modify ch (- (chip-data chip)) (chip-max chip) 0 0 mode))
-      (apply-object-affects ch obj mode))))
+    ;; Special skill chip affects
+    (when (and (is-chip obj)
+               (skillchip obj)
+               (< 0 (chip-data obj) +max-skills+))
+        (affect-modify ch (- (chip-data obj)) (chip-max obj) 0 0 addp))
+
+    ;; Apply affects of contained chips, if this is a chip interface
+    (when (and (is-interface obj)
+               (eql (interface-type obj) +interface-chips+))
+      (dolist (chip (contains-of obj))
+        (apply-object-affects ch chip addp)))))
 
 (defun apply-skill (ch skill mod)
   (when (not (is-npc ch))
     (setf (aref (skills-of ch) skill)
           (min (+ (aref (skills-of ch) skill) mod) 125))))
 
-(defun affect-modify (ch loc mod bitv index add)
+(defun affect-modify (ch loc mod bitv index addp)
   (unless (zerop bitv)
     ;; Handle bitvectors
-    (if add
+    (if addp
         ;; Set bitvectors on character
         (case index
           (1
@@ -87,7 +94,7 @@
           (3
            (setf (aff3-flags-of ch) (logandc2 (aff3-flags-of ch) bitv))))))
 
-  (when (not add)
+  (when (not addp)
     (setf mod (- mod)))
 
   (cond
@@ -204,7 +211,7 @@
      nil)
     (t
      (error "Unknown apply adjust attempt on ~a ~d + ~d in affect_modify add=~a"
-            (name-of ch) loc mod add))))
+            (name-of ch) loc mod addp))))
 
 (defun affect-total (ch)
   "Updates a character by subtracting everything it is affected by, restoring original abilities, and then affecting it all again."
@@ -217,9 +224,7 @@
     (when (get-eq ch i)
       (apply-object-affects ch (get-eq ch i) nil))
     (when (aref (implants-of ch) i)
-      (apply-object-affects ch (aref (implants-of ch) i) nil)
-      (when (= (kind-of (aref (implants-of ch) i)) +item-interface+)
-        (check-interface ch (aref (implants-of ch) i) nil)))
+      (apply-object-affects ch (aref (implants-of ch) i) nil))
     (when (aref (tattoos-of ch) i)
       (apply-object-affects ch (aref (tattoos-of ch) i) nil)))
 
@@ -254,9 +259,7 @@
     (when (get-eq ch i)
       (apply-object-affects ch (get-eq ch i) t))
     (when (aref (implants-of ch) i)
-      (apply-object-affects ch (aref (implants-of ch) i) t)
-      (when (= (kind-of (aref (implants-of ch) i)) +item-interface+)
-        (check-interface ch (aref (implants-of ch) i) t)))
+      (apply-object-affects ch (aref (implants-of ch) i) t))
     (when (aref (tattoos-of ch) i)
       (apply-object-affects ch (aref (tattoos-of ch) i) t)))
 
@@ -604,16 +607,11 @@
        (setf obj (aref (tattoos-of ch) pos))
        (setf (aref (tattoos-of ch) pos) nil)))
 
-    (when (obj-gives-affects obj ch mode)
-      (dotimes (j +max-obj-affect+)
-        (let ((af (aref (affected-of obj) j)))
-          (affect-modify ch (location-of af) (modifier-of af) 0 0 nil)))
-      (dotimes (j 3)
-        (affect-modify ch 0 0 (aref (bitvector-of obj) j) (1+ j) nil))
-      (when (and (is-interface obj)
-                 (= (interface-type obj) +interface-chips+)
-                 (contains-of obj))
-        (check-interface ch obj nil)))
+    (dotimes (j +max-obj-affect+)
+      (let ((af (aref (affected-of obj) j)))
+        (affect-modify ch (location-of af) (modifier-of af) 0 0 nil)))
+    (dotimes (j 3)
+      (affect-modify ch 0 0 (aref (bitvector-of obj) j) (1+ j) nil))
 
     (setf (worn-by-of obj) nil)
     (setf (worn-on-of obj) -1)
