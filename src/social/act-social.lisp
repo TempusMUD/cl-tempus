@@ -74,7 +74,34 @@
               :min-pos min-pos
               :char-no-arg char-no-arg
               :others-no-arg others-no-arg)))))))
-                   
+
+(defun perform-social (ch social-str target-str)
+  (let ((target (resolve-alias ch target-str))
+        (social (gethash social-str *socials*)))
+    (cond
+      ((null target-str)
+       (act ch
+            :subject-emit (social-message-char-no-arg social)
+            :place-emit (social-message-others-no-arg social)))
+      ((null target)
+       (act ch
+            :subject-emit (social-message-not-found social)))
+      ((eql target ch)
+       (act ch
+            :target target
+            :subject-emit (social-message-char-auto social)
+            :place-emit (social-message-others-auto social)))
+      ((null (social-message-char-found social))
+       (act ch
+            :subject-emit (social-message-char-no-arg social)
+            :place-emit (social-message-others-no-arg social)))
+      (t
+       (act ch
+            :target target
+            :subject-emit (social-message-char-found social)
+            :target-emit (social-message-vict-found social)
+            :not-target-emit (social-message-others-found social))))))
+
 (defun boot-social-messages (path)
   (with-open-file (fl path)
     (loop
@@ -87,35 +114,16 @@
                     '(:resting :social)
                     (compile nil
                              `(lambda (ch)
-                                (let ((social (gethash ,(social-message-cmd new-social) *socials*)))
-                                  (act ch
-                                       :subject-emit (social-message-char-no-arg social)
-                                       :place-emit (social-message-others-no-arg social))))))
+                                (perform-social ch
+                                                ,(social-message-cmd new-social)
+                                                nil))))
 
        ;; Add command for argument
        (add-command (list (social-message-cmd new-social) 'target)
                     '(:resting :social)
                     (compile nil
                              `(lambda (ch target-str)
-                                (let ((target (resolve-alias ch target-str))
-                                      (social (gethash ,(social-message-cmd new-social) *socials*)))
-                                  (cond
-                                    ((null target)
-                                     (act ch
-                                          :subject-emit (social-message-not-found social)))
-                                    ((eql target ch)
-                                     (act ch
-                                          :target target
-                                          :subject-emit (social-message-char-auto social)
-                                          :place-emit (social-message-others-auto social)))
-                                    ((null (social-message-char-found social))
-                                     (act ch
-                                          :subject-emit (social-message-char-no-arg social)
-                                          :place-emit (social-message-others-no-arg social)))
-                                    (t
-                                     (act ch
-                                          :target target
-                                          :subject-emit (social-message-char-found social)
-                                          :target-emit (social-message-vict-found social)
-                                          :not-target-emit (social-message-others-found social))))))))))
+                                (perform-social ch
+                                                ,(social-message-cmd new-social)
+                                                target-str))))))
   (sort-commands))
