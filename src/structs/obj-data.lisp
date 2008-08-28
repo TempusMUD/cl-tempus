@@ -436,6 +436,8 @@
   (= (kind-of obj) +item-cigarette+))
 (defun is-interface (obj)
   (= (kind-of obj) +item-interface+))
+(defun is-chip (obj)
+  (= (kind-of obj) +item-microchip+))
 
 (defmethod approvedp ((obj obj-data))
   "Returns T if the object has been approved."
