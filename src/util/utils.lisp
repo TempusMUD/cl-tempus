@@ -33,7 +33,7 @@
              ;; literal match
              (incf format-idx)))
     (values-list values))))
-           
+
 (defun pin (val min max)
   (min (max val min) max))
 
@@ -51,7 +51,7 @@
 
   (unless (and group level)
     (return-from mlog))
-  
+
   ;; Write to the people online
   nil)
 
@@ -309,7 +309,7 @@ sequences in seq-list with the delimiter between each element"
 
 (defun act-str (viewer fmt subject target item pov)
   (with-output-to-string (result)
-	(loop 
+	(loop
        for idx from 0 to (1- (length fmt)) do
        (princ
         (case (char fmt idx)
@@ -442,7 +442,7 @@ of immediately."
              (t
               (char str idx)))
            result))))
-						 
+
 (defun string-abbrev (abbrev str)
   "Returns T if ABBREV is at least one character, and is an abbreviation of STR."
   (unless (or (zerop (length abbrev))
@@ -450,28 +450,30 @@ of immediately."
     (string-equal abbrev str :end2 (min (length abbrev) (length str)))))
 
 (defun string-replace (needle haystack replacement)
-  "Returns a copy of HAYSTACK with all instances of NEEDLE replaced by REPLACMENT."
-  (format nil "~{~a~}"
-		  (loop with needle-length = (length needle)
-			 for left = 0 then (+ right needle-length)
-			 as right = (search needle haystack :start2 left)
-			 while right
-			 collect (subseq haystack left right) into result
-			 nconc (list replacement) into result
-			 finally (return (nconc result
-									(list (subseq haystack left)))))))
+  "Returns a copy of HAYSTACK with all instances of NEEDLE replaced by REPLACMENT.  NEEDLE must be a string of at least one character."
+  (assert (plusp (length needle)) nil "string-replace called with zero-length search pattern!")
+  (with-output-to-string (result)
+    (loop
+       with needle-length = (length needle)
+       for left = 0 then (+ right needle-length)
+       as right = (search needle haystack :start2 left)
+       while right
+       do (write-string haystack result :start left :end right)
+       (write-string replacement result)
+       finally (write-string haystack result :start left))))
 
 (defun string-replace-func (needle haystack func)
-  "Returns a copy of HAYSTACK with all instances of NEEDLE replaced by the return value of FUNC"
-  (format nil "~{~a~}"
-		  (loop with needle-length = (length needle)
-			 for left = 0 then (+ right needle-length)
-			 as right = (search needle haystack :start2 left)
-			 while right
-			 collect (subseq haystack left right) into result
-			 nconc (list (funcall func needle)) into result
-			 finally (return (nconc result
-									(list (subseq haystack left)))))))
+  "Returns a copy of HAYSTACK with all instances of NEEDLE replaced by the return value of FUNC.  NEEDLE must be a string of at least one character."
+  (assert (plusp (length needle)) nil "string-replace-func called with zero-length search pattern!")
+  (with-output-to-string (result)
+    (loop
+       with needle-length = (length needle)
+       for left = 0 then (+ right needle-length)
+       as right = (search needle haystack :start2 left)
+       while right
+       do (write-string haystack result :start left :end right)
+       (write-string (funcall func needle) result)
+       finally (write-string haystack result :start left))))
 
 (defun hash-table-keys (hash)
   "Returns all the keys of the hash table HASH"
