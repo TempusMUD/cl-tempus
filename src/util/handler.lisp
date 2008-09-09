@@ -36,7 +36,7 @@
     (when (and (is-interface obj)
                (eql (interface-type obj) +interface-chips+))
       (dolist (chip (contains-of obj))
-        (apply-object-affects ch chip addp)))))
+        (apply-object-affects ch chip addp))))
 
 (defun apply-skill (ch skill mod)
   (when (not (is-npc ch))
