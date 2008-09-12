@@ -93,7 +93,9 @@ be loaded from the database or it may be retrieved from a cache."
                              :alist))
               (account (make-instance 'account)))
 		  (when result
-            (loop for tuple in result
+            (loop
+               for tuple in result
+               unless (eql (car tuple) :null)
                do (setf (slot-value account (intern (symbol-name (car tuple)))) (cdr tuple)))
             (setf (gethash canonical-name *account-name-cache*) account)
             (setf (gethash (idnum-of account) *account-idnum-cache*) account)
@@ -135,7 +137,7 @@ be loaded from the database or it may be retrieved from a cache."
   (defvar *crypt-library-loaded* nil)
 
   (unless *crypt-library-loaded*
-    (uffi:load-foreign-library 
+    (uffi:load-foreign-library
      (uffi:find-foreign-library "libcrypt"
 			   '(#+64bit "/usr/lib64/"
 			     "/usr/lib/" "/usr/local/lib/" "/lib/"))
@@ -151,7 +153,7 @@ be loaded from the database or it may be retrieved from a cache."
   "Encrypt a password with a hash"
   (uffi:with-cstring (password-cstring (coerce password 'simple-string))
     (uffi:with-cstring (salt-cstring (coerce salt 'simple-string))
-      (uffi:convert-from-cstring 
+      (uffi:convert-from-cstring
        (crypt password-cstring salt-cstring)))))
 
 (defun check-password (account password)
