@@ -28,5 +28,6 @@
       (is (equal "cccc" (tempus::string-replace "ba" "cba" "ccc")))
       (is (equal "" (tempus::string-replace "foo" "" "bar")))
       (is (equal "foo" (tempus::string-replace "bar" "foobar" "")))
-      (is (equal "foo" (tempus::string-replace "bar" "foobar" "")))
-      (is (equal "bar" (tempus::string-replace "foobar" "bar" ""))))
+      (is (equal "barbar" (tempus::string-replace "foo" "foobar" "bar")))
+      (is (equal "bar" (tempus::string-replace "foo" "foobar" "")))
+      (is (equal "foo" (tempus::string-replace "foobar" "foo" "foo"))))
