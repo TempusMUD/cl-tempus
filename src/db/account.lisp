@@ -95,7 +95,7 @@ be loaded from the database or it may be retrieved from a cache."
 		  (when result
             (loop
                for tuple in result
-               unless (eql (car tuple) :null)
+               unless (eql (cdr tuple) :null)
                do (setf (slot-value account (intern (symbol-name (car tuple)))) (cdr tuple)))
             (setf (gethash canonical-name *account-name-cache*) account)
             (setf (gethash (idnum-of account) *account-idnum-cache*) account)
