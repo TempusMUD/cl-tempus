@@ -316,17 +316,17 @@
    (value :accessor value-of :initarg :value
           :initform (make-array 4 :initial-element 0))
    (kind :accessor kind-of :initarg :kind :initform 0)
-   (wear-flags :accessor wear-flags-of :initarg :wear-flags)
+   (wear-flags :accessor wear-flags-of :initarg :wear-flags :initform 0)
    (extra-flags :accessor extra-flags-of :initarg :extra-flags :initform 0)
    (extra2-flags :accessor extra2-flags-of :initarg :extra2-flags :initform 0)
    (extra3-flags :accessor extra3-flags-of :initarg :extra3-flags :initform 0)
    (weight :accessor weight-of :initarg :weight :initform 0)
-   (timer :accessor timer-of :initarg :timer)
+   (timer :accessor timer-of :initarg :timer :initform 0)
    (bitvector :accessor bitvector-of :initarg :bitvector
               :initform (make-array 3 :initial-element 0))
-   (material :accessor material-of :initarg :material)
-   (max-dam :accessor max-dam-of :initarg :max-dam)
-   (damage :accessor damage-of :initarg :damage)
+   (material :accessor material-of :initarg :material :initform 0)
+   (max-dam :accessor max-dam-of :initarg :max-dam :initform 0)
+   (damage :accessor damage-of :initarg :damage :initform 0)
    (sigil-idnum :accessor sigil-idnum-of :initarg :sigil-idnum :initform 0)
    (sigil-level :accessor sigil-level-of :initarg :sigil-level :initform 0)))
 

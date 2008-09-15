@@ -17,7 +17,7 @@
                xmls
                #+sbcl sb-bsd-sockets
                #+sbcl sb-posix)
-	
+
   :components
   ((:module :src :components
             ((:file "defpackage" :pathname "util/defpackage")
@@ -44,6 +44,13 @@
                                                 "utils"
                                                 "interpreter"
                                                 "constants"))
+             (:file "act-obj" :pathname "misc/act-obj"
+                                :depends-on ("defs"
+                                             "utils"
+                                             "interpreter"
+                                             "constants"
+                                             "obj-data"
+                                             "creature"))
              (:file "act-other" :pathname "misc/act-other"
                                 :depends-on ("defs" "utils" "interpreter"))
              (:file "act-physic" :pathname "classes/act-physic"

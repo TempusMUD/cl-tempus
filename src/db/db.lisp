@@ -288,7 +288,7 @@
           lunar-day (lunar-phase lunar-day))))
 
 (defun count-hash-records (prefix fname)
-  (with-open-file (inf (format nil "~a/~a" prefix fname)
+  (with-open-file (inf (tempus-path (format nil "lib/~a/~a" prefix fname))
                        :direction :input)
     (loop for line = (get-line inf)
           while line
@@ -304,7 +304,7 @@
                   (t
                    (error "Unknown subcommand ~a to index-boot!" mode))))
          (index-filename (if *mini-mud* +mindex-file+ +index-file+))
-         (path (format nil "~a/~a" prefix index-filename))
+         (path (tempus-path (format nil "lib/~a/~a" prefix index-filename)))
          (index-count 0)
          (rec-count 0))
 
@@ -349,7 +349,7 @@
 
       (loop for buf1 = (read-line index nil :eof)
             until (or (eql buf1 :eof) (char= (char buf1 0) #\$)) do
-            (with-open-file (inf (format nil "~a/~a" prefix buf1)
+            (with-open-file (inf (tempus-path (format nil "lib/~a/~a" prefix buf1))
                                  :direction :input)
               (if (eql mode :zon)
                   (load-zones inf buf1)
@@ -1268,7 +1268,7 @@
                       (setf (extra2-flags-of obj)
                             (logior (extra2-flags-of obj) +item2-unapproved+))
                       (setf (timer-of obj) 60))
-                  
+
                     (if (equip-char last-mob obj (arg3-of zone-cmd) :implant)
                         (values 1 last-mob nil)
                         (values 0 last-mob nil)))
@@ -1342,7 +1342,7 @@
       (multiple-value-setq (last-cmd last-mob prob-override)
         (process-zone-command zone-cmd
                               zone
-                              command-num 
+                              command-num
                               last-cmd
                               last-mob
                               prob-override))

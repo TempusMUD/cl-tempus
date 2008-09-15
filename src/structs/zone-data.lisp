@@ -83,6 +83,10 @@
 (defparameter +time-past+ +time-modrian+)
 (defparameter +time-future+ +time-electro+)
 
+(defparameter +zone-no-pk+ 0)
+(defparameter +zone-neutral-pk+ 1)
+(defparameter +zone-chaotic-pk+ 2)
+
 (defclass reset-com ()
   ((command :accessor command-of :initarg :command :initform nil)
    (if-flag :accessor if-flag-of :initarg :if-flag :initform nil)
@@ -132,4 +136,3 @@
    (cmds :accessor cmds-of :initarg :cmd :initform nil)
    (weather :accessor weather-of :initarg :weather :initform nil)))
 
- 

@@ -91,8 +91,12 @@
 (defparameter +type-undefined+ -1)
 (defparameter +spell-reserved-dbc+ 0)	; SKILL NUMBER ZERO -- RESERVED
 
+;; Special mobile vnums
 (defparameter +unholy-stalker-vnum+ 1513)
 (defparameter +zombie-vnum+ 1512)
+
+;; Special object vnums
+(defparameter +quad-vnum+ 1578)
 
 ;;; PLAYER SPELLS -- Numbered from 1 to MAX_SPELLS
 

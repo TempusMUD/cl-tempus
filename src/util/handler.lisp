@@ -1,5 +1,10 @@
 (in-package #:tempus)
 
+(defun is-name (str namelist)
+  (find str
+        (split-sequence #\space namelist :remove-empty-subseqs t)
+        :test #'string-abbrev))
+
 (defun apply-object-affects (ch obj addp)
   (when (and obj
              (or (eql (worn-by-of obj) ch)
@@ -505,7 +510,7 @@
 
 (defun obj-from-char (obj)
   (assert obj nil "NIL object passed to obj-from-char")
-  (assert (null (carried-by-of obj)) nil "NIL carried by")
+  (assert (carried-by-of obj) nil "NIL carried by")
 
   (let ((ch (carried-by-of obj)))
   (setf (carrying-of ch) (delete obj (carrying-of ch)))
@@ -667,3 +672,33 @@
   (when (and (is-corpse obj)
              (plusp (corpse-idnum obj)))
     (delete-file (corpse-pathname (corpse-idnum obj)))))
+
+(defun get-number (name)
+  (cl-ppcre:register-groups-bind (number-str name-str)
+      (#/(?:([+-]?\d+)\.)?(.*)/ name :sharedp t)
+    (if number-str
+        (let ((num (parse-integer number-str)))
+          (if (plusp num)
+              (values num name-str)
+              nil))
+        (values 1 name-str))))
+
+(defun get-obj-in-list-vis (ch arg list)
+  (multiple-value-bind (number name)
+      (get-number arg)
+    (dolist (obj list)
+      (when (and (is-name name (aliases-of obj))
+                 (can-see-object ch obj)
+                 (zerop (decf number)))
+        (return-from get-obj-in-list-vis obj)))))
+
+(defun find-all-dots (arg)
+  (cond
+    ((string-equal arg "all")
+     :find-all)
+    ((< (length arg) 4)
+     :find-indiv)
+    ((string-equal arg "all." :end1 4)
+     :find-alldot)
+    (t
+     :find-indiv)))p

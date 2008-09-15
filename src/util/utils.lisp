@@ -569,6 +569,11 @@ of immediately."
     (t
      "someone")))
 
+(defun a-or-an (noun)
+  (if (find (char noun 0) "aeiou")
+      "an"
+      "a"))
+
 (defun he-or-she (ch)
   (case (sex-of ch)
     (male "he")
