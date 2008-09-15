@@ -182,29 +182,20 @@
 (defun player-pathname (idnum)
   (make-pathname :name (princ-to-string idnum)
 				 :type "dat"
-				 :defaults
-				 (merge-pathnames (format nil "lib/players/character/~d/"
-										  (mod idnum 10))
-								  (asdf:component-pathname
-								   (asdf:find-system "tempus")))))
+				 :defaults (tempus-path (format nil "lib/players/character/~d/"
+										  (mod idnum 10)))))
 
 (defun equipment-pathname (idnum)
   (make-pathname :name (princ-to-string idnum)
 				 :type "equip"
-				 :defaults
-				 (merge-pathnames (format nil "lib/players/equipment/~d/"
-										  (mod idnum 10))
-								  (asdf:component-pathname
-								   (asdf:find-system "tempus")))))
+				 :defaults (tempus-path (format nil "lib/players/equipment/~d/"
+										  (mod idnum 10)))))
 
 (defun corpse-pathname (idnum)
   (make-pathname :name (princ-to-string idnum)
 				 :type "dat"
-				 :defaults
-				 (merge-pathnames (format nil "lib/players/corpses/~d/"
-										  (mod idnum 10))
-								  (asdf:component-pathname
-								   (asdf:find-system "tempus")))))
+				 :defaults (tempus-path (format nil "lib/players/corpses/~d/"
+										  (mod idnum 10)))))
 
 (defun player-to-game (player)
   (setf (login-time-of player) (now))
@@ -642,7 +633,7 @@ choose a password to use on this system.
                (cxn-write cxn "~%")))))
      finally (when (and brief (not (logtest idx 1)))
                (cxn-write cxn "~%"))))
-                  
+
 (define-connection-state main-menu
   (menu (cxn)
    (cxn-write cxn "&@&c*&n&b-----------------------------------------------------------------------------&c*
@@ -666,7 +657,7 @@ choose a password to use on this system.
   (prompt (cxn)
     (cxn-write cxn "Enter your selection: "))
   (input (cxn line)
-   (cond 
+   (cond
      ((string= line "")
       (send-menu cxn 'main-menu))
      ((or (char-equal (char line 0) #\l) (eql (char line 0) #\0))
