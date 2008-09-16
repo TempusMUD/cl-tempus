@@ -58,9 +58,6 @@
   (define-toggle-command "debug" (:immortal) +pref-debug+
                          "You are now debugging fights."
                          "You stop debugging fights.")
-  (define-toggle-command "debug" () +pref-debug+
-                         "You are now debugging fights."
-                         "You stop debugging fights.")
   (define-toggle-command "nonewbie" () +pref-newbie-helper+
                          "You are now monitoring the newbies."
                          "You are now ignoring the newbies")
