@@ -912,7 +912,7 @@
         (look-at-char ch vict :glance)
         (send-to-char ch "There's no '~a' here.~%" thing))))
 
-(defcommand (ch "inventory") ()
+(defcommand (ch "inventory") (:important)
   (send-to-char ch "~a"
                 (with-output-to-string (str)
                   (format str "You are carrying:~%")

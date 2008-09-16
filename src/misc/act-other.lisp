@@ -1,7 +1,7 @@
 (in-package #:tempus)
 
 (macrolet ((define-toggle-command (command flags pref on-message off-message)
-             `(defcommand (ch ,command) ,(cons :player flags)
+             `(defcommand (ch ,command) ,(cons :player (cons :config flags))
                 (setf (bitp (prefs-of ch) ,pref)
                       (not (bitp (prefs-of ch) ,pref)))
                     (send-to-char ch "~a~%"
@@ -58,7 +58,7 @@
   (define-toggle-command "debug" (:immortal) +pref-debug+
                          "You are now debugging fights."
                          "You stop debugging fights.")
-  (define-toggle-command "" () +pref-debug+
+  (define-toggle-command "debug" () +pref-debug+
                          "You are now debugging fights."
                          "You stop debugging fights.")
   (define-toggle-command "nonewbie" () +pref-newbie-helper+
