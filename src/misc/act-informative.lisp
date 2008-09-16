@@ -768,7 +768,7 @@
                    (level-of player)
                    (char-class-color player (char-class-of player))
                    (char-class-name (char-class-of player)))))
-  
+
   (send-to-char ch "~a~@[~a~]&n"
                 (if (can-see-creature ch player)
                     (name-of player)
@@ -790,7 +790,7 @@
   ;; Filter out the players to be displayed
   (let* ((players (remove-if-not (lambda (actor)
                                    (and actor (in-room-of actor)))
-                                 (mapcar #'actor-of 
+                                 (mapcar #'actor-of
                                          (remove-if-not (lambda (cxn)
                                                           (typep cxn 'tempus-cxn))
                                                         *cxns*))))
@@ -817,7 +817,7 @@
                         testers-displayed
                         players-displayed)
           (send-to-char ch "&n~d of ~d immortal~:p and ~d of ~d player~:p displayed.~%"
-                          
+
                         immortals-displayed
                         immortals-playing
                         players-displayed
@@ -911,6 +911,12 @@
     (if vict
         (look-at-char ch vict :glance)
         (send-to-char ch "There's no '~a' here.~%" thing))))
+
+(defcommand (ch "inventory") ()
+  (send-to-char ch "~a"
+                (with-output-to-string (str)
+                  (format str "You are carrying:~%")
+                  (list-obj-to-char str (carrying-of ch) ch :inv t))))
 
 (defcommand (ch "who") ()
   (perform-who ch nil))

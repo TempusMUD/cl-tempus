@@ -145,3 +145,14 @@
              (is (null (tempus::in-room-of obj)))
              (is (equal "You get some plate armor.~%" (char-output alice))))
         (tempus::extract-obj obj)))))
+
+(test inventory-command
+  (with-mock-players (alice)
+    (let ((obj nil))
+      (unwind-protect
+           (progn
+             (setf obj (make-mock-object "some plate armor"))
+             (tempus::obj-to-char obj alice)
+             (tempus::interpret-command alice "i")
+             (is (equal "You are carrying:~%some plate armor~%" (char-output alice))))
+        (tempus::extract-obj obj)))))
