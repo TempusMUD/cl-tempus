@@ -21,6 +21,20 @@
     (is (equal "&BAlice says, &c'foo bar'&n~%" (char-output bob)))
     (is (equal "&BAlice says, &c'foo bar'&n~%" (char-output eva)))))
 
+(test say-with-escapes
+  (with-mock-players (alice)
+    (tempus::interpret-command alice "' $ is a dollar sign")
+    (is (equal "&BYou say, &c'$ is a dollar sign'&n~%" (char-output alice)))
+    (clear-mock-buffers alice)
+    (tempus::interpret-command alice "' & is an ampersand")
+    (is (equal "&BYou say, &c'& is an ampersand'&n~%" (char-output alice)))
+    (clear-mock-buffers alice)
+    (tempus::interpret-command alice "' \\ is a backslash")
+    (is (equal "&BYou say, &c'\\ is a backslash'&n~%" (char-output alice)))
+    (clear-mock-buffers alice)
+    (tempus::interpret-command alice "' ] is a right bracket")
+    (is (equal "&BYou say, &c'] is a right bracket'&n~%" (char-output alice)))))
+
 (test sayto
   (with-mock-players (alice bob eva)
     (clear-mock-buffers alice bob eva)

@@ -25,6 +25,20 @@
       (is-true (or (= max middle)
                    (= result middle))))))
 
+(test act-str
+  (with-mock-players (alice)
+    (is (equal "Alice says, 'checking $ in languages'"
+               (tempus::act-str alice
+                        (format nil "Alice says, '$[~a]'"
+                                (tempus::act-escape "checking $ in languages"))
+                        alice nil nil :self)))
+    (is (equal "Alice nods solemnly."
+               (tempus::act-str alice "Alice nods${ solemnly}."
+                                alice nil nil :self)))
+    (setf (tempus::mood-of alice) "sagely")
+    (is (equal "Alice nods sagely."
+               (tempus::act-str alice "Alice nods${ solemnly}."
+                                alice nil nil :self)))))
 
 (test first-word
       (is (equal "first" (tempus::first-word "first second third fourth")))
