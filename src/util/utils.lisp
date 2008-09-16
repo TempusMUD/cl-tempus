@@ -322,9 +322,9 @@ sequences in seq-list with the delimiter between each element"
                              (1+ idx)
                              (position #\} fmt :start idx))))
                 (incf idx (1+ (length default-mood)))
-                (or
-                 (mood-of subject)
-                 default-mood)))
+                (if (mood-of subject)
+                    (format nil " ~a" (mood-of subject))
+                    default-mood)))
              ((eql (char fmt idx) #\[)
               (let ((end-brace-pos (position #\] fmt :start idx)))
                 (prog1
