@@ -132,29 +132,17 @@ be loaded from the database or it may be retrieved from a cache."
   (syslog "~a logged in" (name-of account)))
 
 ;;; Support for encrypted password transmission
+(cffi:define-foreign-library libcrypt
+    (:unix (:default "libcrypt")))
 
-(eval-when (:compile-toplevel :load-toplevel :execute)
-  (defvar *crypt-library-loaded* nil)
-
-  (unless *crypt-library-loaded*
-    (uffi:load-foreign-library
-     (uffi:find-foreign-library "libcrypt"
-			   '(#+64bit "/usr/lib64/"
-			     "/usr/lib/" "/usr/local/lib/" "/lib/"))
-     :supporting-libraries '("c"))
-    (setq *crypt-library-loaded* t)))
-
-(uffi:def-function ("crypt" crypt)
-    ((key :cstring)
-     (salt :cstring))
-  :returning :cstring)
+(cffi:use-foreign-library libcrypt)
 
 (defun crypt-password (password salt)
   "Encrypt a password with a hash"
-  (uffi:with-cstring (password-cstring (coerce password 'simple-string))
-    (uffi:with-cstring (salt-cstring (coerce salt 'simple-string))
-      (uffi:convert-from-cstring
-       (crypt password-cstring salt-cstring)))))
+  (cffi:foreign-funcall "crypt"
+                        :string password
+                        :string salt
+                        :string))
 
 (defun check-password (account password)
   "Determines if the hash of the given password matches the stored hash."

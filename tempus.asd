@@ -13,7 +13,7 @@
                asdf-system-connections
                local-time
                cl-ppcre
-               uffi
+               cffi
                xmls
                #+sbcl sb-bsd-sockets
                #+sbcl sb-posix)
