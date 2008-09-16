@@ -114,6 +114,7 @@
              (tempus::interpret-command alice "get armor")
              (is (eql (tempus::carried-by-of obj) alice))
              (is (null (tempus::in-room-of obj)))
+             (is (equal (list obj) (tempus::carrying-of alice)))
              (is (equal "You get some plate armor.~%" (char-output alice)))
              (is (equal "Alice gets some plate armor.~%" (char-output bob))))
         (tempus::extract-obj obj)))))
