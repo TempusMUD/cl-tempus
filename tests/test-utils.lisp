@@ -45,6 +45,12 @@
       (is (equal "first" (tempus::first-word "first")))
       (is (equal "" (tempus::first-word ""))))
 
+(test string-abbrev
+  (is-true (tempus::string-abbrev "foo" "foobar"))
+  (is-true (tempus::string-abbrev "foobar" "foobar"))
+  (is-false (tempus::string-abbrev "" "foobar"))
+  (is-false (tempus::string-abbrev "bar" "foobar")))
+
 (test string-replace
       (is (equal "cccc" (tempus::string-replace "ab" "abc" "ccc")))
       (is (equal "cccc" (tempus::string-replace "ba" "cba" "ccc")))
