@@ -683,6 +683,27 @@
               nil))
         (values 1 name-str))))
 
+(defun get-matching-objects (ch arg list)
+  "Returns a list of all objects in LIST visible to CH that match ARG"
+  (case (find-all-dots arg)
+    (:find-all
+     (loop for obj in list when (can-see-object ch obj) collect obj))
+    (:find-alldot
+     (loop
+        with name = (subseq arg 4)
+        for obj in list
+        when (and (is-name name (aliases-of obj))
+                  (can-see-object ch obj))
+        collect obj))
+    (:find-indiv
+     (multiple-value-bind (number name)
+         (get-number arg)
+       (dolist (obj list)
+         (when (and (is-name name (aliases-of obj))
+                    (can-see-object ch obj)
+                    (zerop (decf number)))
+           (return-from get-matching-objects (list obj))))))))
+
 (defun get-obj-in-list-vis (ch arg list)
   (multiple-value-bind (number name)
       (get-number arg)
@@ -701,4 +722,4 @@
     ((string-equal arg "all." :end1 4)
      :find-alldot)
     (t
-     :find-indiv)))p
+     :find-indiv)))

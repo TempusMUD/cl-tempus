@@ -92,6 +92,41 @@
        nil))))
 
 
+(defun perform-drop (ch obj mode sname dest-room displayp)
+  (when (is-obj-stat obj +item-nodrop+)
+    (cond
+      ((immortalp ch)
+       (act ch :item obj
+            :subject-emit (format nil "You can't ~a $p, it must be CURSED!" sname)))
+      (t
+       (act ch :item obj
+             :subject-emit "You peel $p off your hand..."))))
+
+  (when displayp
+    (act ch :item obj :all-emit (format nil "$n ~a$% $p." sname)))
+
+  (obj-from-char obj)
+
+  (case mode
+    (:drop
+     (obj-to-room obj (in-room-of ch))
+     (when (and (room-is-open-air (in-room-of ch))
+                (exit ch +down+)
+                (to-room-of (exit ch +down+))
+                (not (logtest (exit-info-of (exit ch +down+)) +ex-closed+)))
+       (act ch :item obj
+            :all-emit "$p falls downward through the air, out of sight!")
+       (obj-from-room obj)
+       (obj-to-room obj (to-room-of (exit ch +down+)))
+       (act nil :item obj
+            :place-emit "$p falls from the sky and lands by your feet.")))
+    (:donate
+     (obj-to-room obj dest-room)
+     (act nil :item obj
+          :place-emit "$p suddenly appears in a puff of smoke!"))
+    (:junk
+     (extract-obj obj))))
+
 (defcommand (ch "get" thing) (:resting)
     (cond
       ((>= (carry-items-of ch) (can-carry-items ch))
@@ -100,3 +135,35 @@
        (send-to-char ch "Get what?~%"))
       (t
        (get-from-room ch thing))))
+
+(defcommand (ch "drop") (:resting)
+  (send-to-char ch "What do you want to drop?"))
+
+(defcommand (ch "drop" thing) (:resting)
+  "Drop one or more objects"
+  (let* ((dot-mode (find-all-dots thing))
+         (objs (if (eql dot-mode :find-all)
+                  (carrying-of ch)
+                  (get-matching-objects ch thing (carrying-of ch)))))
+    (cond
+      (objs
+       (loop
+          for obj-sublist on objs
+          as obj = (first obj-sublist)
+          as next-obj = (second obj-sublist)
+          as counter from 1
+          do
+            (perform-drop ch obj :drop "drop" (in-room-of ch) nil)
+            (when (or (null next-obj)
+                        (string/= (name-of next-obj) (name-of obj)))
+                (cond
+                  ((= counter 1)
+                   (act ch :item obj :all-emit "$n drop$% $p."))
+                  ((plusp counter)
+                   (act ch :item obj
+                        :all-emit (format nil "$n drop$% $p. (x~d)" counter))))
+                (setf counter 0))))
+      ((eql dot-mode :find-all)
+       (send-to-char ch "You don't seem to be carrying anything.~%"))
+      (t
+       (send-to-char ch "You don't seem to have any ~as.~%" thing)))))

@@ -67,6 +67,19 @@
   (is (equal '(nil) (multiple-value-list (tempus::get-number "0.foo"))))
   (is (equal '(nil) (multiple-value-list (tempus::get-number "-5.foo")))))
 
+(test get-matching-objects
+  (with-mock-players (alice)
+    (let ((objs (mapcar 'make-mock-object
+                        '("armor" "armor" "armor" "book" "book"
+                          "candle" "doublet"))))
+      (is (equal objs (tempus::get-matching-objects alice "all" objs)))
+      (is (equal (subseq objs 0 3) (tempus::get-matching-objects alice "all.armor" objs)))
+      (is (equal (subseq objs 3 5) (tempus::get-matching-objects alice "all.book" objs)))
+      (is (equal (subseq objs 6 7) (tempus::get-matching-objects alice "all.doublet" objs)))
+      (is (equal (subseq objs 0 1) (tempus::get-matching-objects alice "armor" objs)))
+      (is (equal (subseq objs 1 2) (tempus::get-matching-objects alice "2.armor" objs)))
+      (is (equal (subseq objs 2 3) (tempus::get-matching-objects alice "3.armor" objs))))))
+
 (test get-obj-in-list-vis
   (with-mock-players (alice)
     (let ((objs (loop

@@ -156,3 +156,29 @@
              (tempus::interpret-command alice "i")
              (is (equal "You are carrying:~%some plate armor~%" (char-output alice))))
         (tempus::extract-obj obj)))))
+
+(test drop-command
+  (with-mock-players (alice)
+    (let ((obj-a nil)
+          (obj-b nil)
+          (obj-c nil))
+      (unwind-protect
+           (progn
+             (setf obj-a (make-mock-object "some plate armor"))
+             (setf obj-b (make-mock-object "some plate armor"))
+             (setf obj-c (make-mock-object "some plate armor"))
+             (tempus::obj-to-char obj-a alice)
+             (tempus::interpret-command alice "drop armor")
+             (is (equal "You drop some plate armor.~%" (char-output alice)))
+             (is (eql (tempus::in-room-of alice) (tempus::in-room-of obj-a)))
+             (clear-mock-buffers alice)
+             (tempus::obj-from-room obj-a)
+             (tempus::obj-to-char obj-a alice)
+             (tempus::obj-to-char obj-b alice)
+             (tempus::obj-to-char obj-c alice)
+             (tempus::interpret-command alice "drop all")
+             (is (equal "You drop some plate armor. (x3)~%" (char-output alice))))
+        (progn
+          (tempus::extract-obj obj-a)
+          (tempus::extract-obj obj-b)
+          (tempus::extract-obj obj-c))))))
