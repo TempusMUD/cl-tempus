@@ -27,7 +27,7 @@
     (is (equal "&BYou say, &c'$ is a dollar sign'&n~%" (char-output alice)))
     (clear-mock-buffers alice)
     (tempus::interpret-command alice "' & is an ampersand")
-    (is (equal "&BYou say, &c'& is an ampersand'&n~%" (char-output alice)))
+    (is (equal "&BYou say, &c'&& is an ampersand'&n~%" (char-output alice)))
     (clear-mock-buffers alice)
     (tempus::interpret-command alice "' \\ is a backslash")
     (is (equal "&BYou say, &c'\\ is a backslash'&n~%" (char-output alice)))

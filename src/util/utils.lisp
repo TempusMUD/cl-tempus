@@ -307,12 +307,53 @@ sequences in seq-list with the delimiter between each element"
 	(#\$
 	 "$")))
 
+
+
+(defun act-escape (str)
+  "Given STR, returns a string, which has escaped the characters considered meaningful by the ACT and ACT-EVENT function"
+  (with-output-to-string (result)
+    (loop for idx from 0 to (1- (length str)) do
+          (princ
+           (case (char str idx)
+             (#\\
+              "\\\\")
+             (#\&
+              "&&")
+             (#\$
+              "\\$")
+             (#\]
+              "\\]")
+             (t
+              (char str idx)))
+           result))))
+
+(defun act-unescape (str)
+  (with-output-to-string (result)
+    (loop for idx from 0 to (1- (length str)) do
+          (princ
+           (case (char str idx)
+             (#\\
+              (incf idx)
+              (case (char str idx)
+                (#\\
+                 "\\")
+                (#\$
+                 "$")
+                (#\]
+                 "]")))
+             (t
+              (char str idx)))
+           result))))
+
 (defun act-str (viewer fmt subject target item pov)
   (with-output-to-string (result)
 	(loop
        for idx from 0 to (1- (length fmt)) do
        (princ
         (case (char fmt idx)
+          (#\\
+           (incf idx)
+           (char fmt idx))
           (#\$
            (incf idx)
            (cond
@@ -326,9 +367,10 @@ sequences in seq-list with the delimiter between each element"
                     (format nil " ~a" (mood-of subject))
                     default-mood)))
              ((eql (char fmt idx) #\[)
-              (let ((end-brace-pos (position #\] fmt :start idx)))
+              (let* ((match-pos (cl-ppcre:scan #/[^\\]\]/ fmt :start idx))
+                     (end-brace-pos (when match-pos (1+ match-pos))))
                 (prog1
-                    (subseq fmt (1+ idx) end-brace-pos)
+                    (act-unescape (subseq fmt (1+ idx) end-brace-pos))
                   (setf idx end-brace-pos))))
              (t
               (expand-dollar (char fmt idx) viewer subject target item pov))))
@@ -388,60 +430,48 @@ of immediately."
 	(with-output-to-string (result)
 	  (loop for idx from 0 to (1- (length str)) do
 		   (princ
-			(if (eql (char str idx) #\&)
-				(case ansi-level
-				  (0
-				   (case (char str (incf idx))
-					 (#\@ "[H[J")     (#\& "&")
-					 (t "")))
-				  (1
-				   (case (char str (incf idx))
-					 (#\n "[0m")    (#\r "[0;31m")
-					 (#\g "[0m") (#\y "[0m")
-					 (#\b "[0m") (#\m "[0m")
-					 (#\c "[0;36m") (#\w "[0m")
-					 (#\@ "[H[J")     (#\& "&")
-					 (t "")))
-				  (2
-				   (case (char str (incf idx))
-					 (#\n "[0m")    (#\r "[0;31m")
-					 (#\g "[0;32m") (#\y "[0;33m")
-					 (#\b "[0;34m") (#\m "[0;35m")
-					 (#\c "[0;36m") (#\w "[0;37m")
-					 (#\N "[0m")    (#\R "[0;31m")
-					 (#\G "[0;32m") (#\Y "[0;33m")
-					 (#\B "[0;34m") (#\M "[0;35m")
-					 (#\C "[0;36m") (#\W "[0;37m")
-					 (#\@ "[H[J")     (#\& "&")
-					 (t "<BUG PLEASE REPORT>")))
-				  (t
-				   (case (char str (incf idx))
-					 (#\n "[0m")    (#\r "[0;31m")
-					 (#\g "[0;32m") (#\y "[0;33m")
-					 (#\b "[0;34m") (#\m "[0;35m")
-					 (#\c "[0;36m") (#\w "[0;37m")
-					 (#\N "[1m")    (#\R "[1;31m")
-					 (#\G "[1;32m") (#\Y "[1;33m")
-					 (#\B "[1;34m") (#\M "[1;35m")
-					 (#\C "[1;36m") (#\W "[1;37m")
-					 (#\@ "[H[J")     (#\& "&")
-					 (t "<BUG PLEASE REPORT>"))))
-				(char str idx))
-			result)))))
-
-(defun act-escape (str)
-  "Given STR, returns a string, which has escaped the characters considered meaningful by the ACT and ACT-EVENT function"
-  (with-output-to-string (result)
-    (loop for idx from 0 to (1- (length str)) do
-          (princ
-           (case (char str idx)
-             (#\&
-              "&&")
-             (#\$
-              "$$")
-             (t
-              (char str idx)))
-           result))))
+            (cond
+              ((eql (char str idx) #\&)
+               (case ansi-level
+                 (0
+                  (case (char str (incf idx))
+                    (#\@ "[H[J")     (#\& "&")
+                    (t "")))
+                 (1
+                  (case (char str (incf idx))
+                    (#\n "[0m")    (#\r "[0;31m")
+                    (#\g "[0m") (#\y "[0m")
+                    (#\b "[0m") (#\m "[0m")
+                    (#\c "[0;36m") (#\w "[0m")
+                    (#\@ "[H[J")     (#\& "&")
+                    (t "")))
+                 (2
+                  (case (char str (incf idx))
+                    (#\n "[0m")    (#\r "[0;31m")
+                    (#\g "[0;32m") (#\y "[0;33m")
+                    (#\b "[0;34m") (#\m "[0;35m")
+                    (#\c "[0;36m") (#\w "[0;37m")
+                    (#\N "[0m")    (#\R "[0;31m")
+                    (#\G "[0;32m") (#\Y "[0;33m")
+                    (#\B "[0;34m") (#\M "[0;35m")
+                    (#\C "[0;36m") (#\W "[0;37m")
+                    (#\@ "[H[J")     (#\& "&")
+                    (t "<BUG PLEASE REPORT>")))
+                 (t
+                  (case (char str (incf idx))
+                    (#\n "[0m")    (#\r "[0;31m")
+                    (#\g "[0;32m") (#\y "[0;33m")
+                    (#\b "[0;34m") (#\m "[0;35m")
+                    (#\c "[0;36m") (#\w "[0;37m")
+                    (#\N "[1m")    (#\R "[1;31m")
+                    (#\G "[1;32m") (#\Y "[1;33m")
+                    (#\B "[1;34m") (#\M "[1;35m")
+                    (#\C "[1;36m") (#\W "[1;37m")
+                    (#\@ "[H[J")     (#\& "&")
+                    (t "<BUG PLEASE REPORT>")))))
+              (t
+               (char str idx)))
+              result)))))
 
 (defun string-abbrev (abbrev str)
   "Returns T if ABBREV is at least one character, and is an abbreviation of STR."
