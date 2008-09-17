@@ -152,12 +152,26 @@
        until match
        finally (return (when match (values command vars)))))
 
+(defun select-unknown-cmd-error ()
+  (case (random 12)
+    (1 "Beg pardon?")
+    (2 "Come again?")
+    (3 "Huh?!?")
+    (4 "What's that?")
+    (5 "Que?!?")
+    (6 "You must enter a proper command!")
+    (7 "I don't understand that.")
+    (8 "Wie bitte?")
+    (9 "You're talking nonsense to me.")
+    (10 "I didn't get that.")
+    (t "Hmm, I don't understand that command.")))
+
 (defun interpret-command (ch arg)
   (multiple-value-bind (command vars)
       (find-command arg)
     (cond
       ((null command)
-        (send-to-char ch "I didn't get that.~%"))
+        (send-to-char ch "~a~%" (select-unknown-cmd-error)))
       ((and (is-npc ch) (member :player (command-info-flags command)))
        (send-to-char ch "Sorry, players ONLY!~%"))
       (t
