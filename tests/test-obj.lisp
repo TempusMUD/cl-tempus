@@ -119,6 +119,58 @@
              (is (equal "Alice gets some plate armor.~%" (char-output bob))))
         (tempus::extract-obj obj)))))
 
+(test get-all-command
+  (with-mock-players (alice)
+    (let ((obj-a nil)
+          (obj-b nil)
+          (obj-c nil))
+      (unwind-protect
+           (progn
+             (setf obj-a (make-mock-object "some plate armor"))
+             (setf obj-b (make-mock-object "some plate armor"))
+             (setf obj-c (make-mock-object "some plate armor"))
+             (setf (tempus::wear-flags-of obj-a) tempus::+item-wear-take+)
+             (setf (tempus::wear-flags-of obj-b) tempus::+item-wear-take+)
+             (setf (tempus::wear-flags-of obj-c) tempus::+item-wear-take+)
+             (tempus::obj-to-room obj-a (tempus::in-room-of alice))
+             (tempus::obj-to-room obj-b (tempus::in-room-of alice))
+             (tempus::obj-to-room obj-c (tempus::in-room-of alice))
+             (tempus::interpret-command alice "get all")
+             (is (equal "You get some plate armor. (x3)~%" (char-output alice)))
+             (is (eql alice (tempus::carried-by-of obj-a)))
+             (is (eql alice (tempus::carried-by-of obj-b)))
+             (is (eql alice (tempus::carried-by-of obj-c))))
+        (progn
+          (tempus::extract-obj obj-a)
+          (tempus::extract-obj obj-b)
+          (tempus::extract-obj obj-c))))))
+
+(test get-all-dot-command
+  (with-mock-players (alice)
+    (let ((obj-a nil)
+          (obj-b nil)
+          (obj-c nil))
+      (unwind-protect
+           (progn
+             (setf obj-a (make-mock-object "some plate armor"))
+             (setf obj-b (make-mock-object "some plate armor"))
+             (setf obj-c (make-mock-object "some plate armor"))
+             (setf (tempus::wear-flags-of obj-a) tempus::+item-wear-take+)
+             (setf (tempus::wear-flags-of obj-b) tempus::+item-wear-take+)
+             (setf (tempus::wear-flags-of obj-c) tempus::+item-wear-take+)
+             (tempus::obj-to-room obj-a (tempus::in-room-of alice))
+             (tempus::obj-to-room obj-b (tempus::in-room-of alice))
+             (tempus::obj-to-room obj-c (tempus::in-room-of alice))
+             (tempus::interpret-command alice "get all.armor")
+             (is (equal "You get some plate armor. (x3)~%" (char-output alice)))
+             (is (eql alice (tempus::carried-by-of obj-a)))
+             (is (eql alice (tempus::carried-by-of obj-b)))
+             (is (eql alice (tempus::carried-by-of obj-c))))
+        (progn
+          (tempus::extract-obj obj-a)
+          (tempus::extract-obj obj-b)
+          (tempus::extract-obj obj-c))))))
+
 (test get-command-no-take
   (with-mock-players (alice)
     (let ((obj (make-mock-object "some plate armor")))
