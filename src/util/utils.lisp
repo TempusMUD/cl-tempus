@@ -512,9 +512,13 @@ of immediately."
 		 while more
 		 collect key)))
 
+(eval-when (:load-toplevel :execute)
+  (defparameter *tempus-root-pathname*
+    (asdf:component-pathname (asdf:find-system "tempus"))))
+
 (defun tempus-path (path)
   "Returns the local pathname merged with the root tempus path."
-  (merge-pathnames path (asdf:component-pathname (asdf:find-system "tempus"))))
+  (merge-pathnames path *tempus-root-pathname*))
 
 (defun send-page (cxn)
   "Sends a single buffered page to CXN.  If any of the page is left, displays the more prompt."
