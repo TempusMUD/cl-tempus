@@ -202,7 +202,7 @@ sequences in seq-list with the delimiter between each element"
   (declare (ignore viewer))
   (name-of subject))
 
-(defun expand-dollar (c viewer subject target item pov)
+(defun expand-dollar (c viewer subject target item target-item pov)
   (case c
 	(#\n
 	 (if (eql pov :self)
@@ -290,6 +290,8 @@ sequences in seq-list with the delimiter between each element"
 		"its")))
 	(#\p
 	 (name-of item))
+	(#\P
+	 (name-of target-item))
 	(#\%
 	 (if (eql pov :self)
 		 ""
@@ -345,7 +347,7 @@ sequences in seq-list with the delimiter between each element"
               (char str idx)))
            result))))
 
-(defun act-str (viewer fmt subject target item pov)
+(defun act-str (viewer fmt subject target item target-item pov)
   (with-output-to-string (result)
 	(loop
        for idx from 0 to (1- (length fmt)) do
@@ -373,7 +375,7 @@ sequences in seq-list with the delimiter between each element"
                     (act-unescape (subseq fmt (1+ idx) end-brace-pos))
                   (setf idx end-brace-pos))))
              (t
-              (expand-dollar (char fmt idx) viewer subject target item pov))))
+              (expand-dollar (char fmt idx) viewer subject target item target-item pov))))
           (#\&
            (incf idx)
            (concatenate 'string "&" (list (char fmt idx))))
@@ -381,32 +383,32 @@ sequences in seq-list with the delimiter between each element"
            (char fmt idx)))
         result))))
 
-(defun send-act-str (viewer emit subject target item pov)
+(defun send-act-str (viewer emit subject target item target-item pov)
   (when (or (can-see viewer subject)
             (and target (can-see viewer target)))
-    (send-to-char viewer "~a~%" (act-str viewer emit subject target item pov))))
+    (send-to-char viewer "~a~%" (act-str viewer emit subject target item target-item pov))))
 
-(defun act (subject &key (target nil) (item nil) (subject-emit nil) (target-emit nil) (not-target-emit nil) (place-emit nil) (all-emit nil))
+(defun act (subject &key (target nil) (item nil) (target-item nil) (subject-emit nil) (target-emit nil) (not-target-emit nil) (place-emit nil) (all-emit nil))
   ;; Handle "all" emit
   (when all-emit
-    (send-act-str subject all-emit subject target item :self)
+    (send-act-str subject all-emit subject target item target-item :self)
 	(when (and target (not (eql subject target)))
-	  (send-act-str target all-emit subject target item :target))
+	  (send-act-str target all-emit subject target item target-item :target))
 	   (dolist (other (people-of (in-room-of subject)))
 		 (unless (or (eql other subject) (eql other target))
-		   (send-act-str other all-emit subject target item :other))))
+		   (send-act-str other all-emit subject target item target-item :other))))
   (when subject-emit
-	(send-act-str subject subject-emit subject target item :self))
+	(send-act-str subject subject-emit subject target item target-item :self))
   (when (and target-emit target)
-	(send-act-str target target-emit subject target item :target))
+	(send-act-str target target-emit subject target item target-item :target))
   (when not-target-emit
     (dolist (other (people-of (in-room-of subject)))
       (unless (or (eql other subject) (eql other target))
-		(send-act-str other not-target-emit subject target item :other))))
+		(send-act-str other not-target-emit subject target item target-item :other))))
   (when place-emit
     (dolist (other (people-of (in-room-of subject)))
       (unless (eql other subject)
-		(send-act-str other place-emit subject target item
+		(send-act-str other place-emit subject target item target-item
 					  (if (eql other target) :target :other))))))
 
 (defun act-event (subject &key (target nil) (item nil) (subject-emit nil) (target-emit nil) (not-target-emit nil) (place-emit nil) (all-emit nil))

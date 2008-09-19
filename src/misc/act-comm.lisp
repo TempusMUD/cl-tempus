@@ -363,7 +363,7 @@
                    (is-neutral ch))
               (and (= (char-class-of ch) +class-knight+)
                    (is-neutral ch))))
-              
+
      (case (char-class-of ch)
        (#.+class-monk+
         (send-to-char ch "You have been cast out of the monks until your neutrality is regained.~%"))
@@ -474,7 +474,7 @@
                       (if (immortalp (actor-of cxn))
                           imm-actstr
                           mort-actstr)
-                      ch (actor-of cxn) nil
+                      ch (actor-of cxn) nil nil
                       (if (eql ch (actor-of cxn))
                           :self
                           :target))))
@@ -483,7 +483,7 @@
                (not (immortalp ch))
                (string/= (name-of chan) "petition"))
       (send-to-char ch "The walls seem to absorb your words...~%"))))
-    
+
 (defun do-gen-comm (ch chan-name message)
   (let ((chan (find chan-name +channels+ :test (lambda (x y)
                                                  (string= x (getf y :name))))))
