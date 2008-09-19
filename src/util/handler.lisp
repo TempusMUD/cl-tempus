@@ -453,7 +453,7 @@
 
 (defun obj-from-obj (obj)
   "Remove an object from an object"
-  (assert (null (in-obj-of obj)) nil "Trying to extract object from object")
+  (assert (in-obj-of obj) nil "Trying to extract object from object")
   (let ((obj-from (in-obj-of obj)))
     (decf (weight-of obj-from) (weight-of obj))
     (setf (contains-of obj-from) (delete obj (contains-of obj-from)))

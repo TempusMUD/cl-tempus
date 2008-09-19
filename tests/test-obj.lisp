@@ -2,6 +2,16 @@
 
 (in-suite* #:tempus.obj :in :tempus)
 
+(test objs-containing-objs
+  (let ((obj-a (make-mock-object))
+        (obj-b (make-mock-object)))
+    (tempus::obj-to-obj obj-a obj-b)
+    (is (equal (list obj-a) (tempus::contains-of obj-b)))
+    (is (equal (tempus::in-obj-of obj-a) obj-b))
+    (tempus::obj-from-obj obj-a)
+    (is-false (tempus::contains-of obj-b))
+    (is-false (tempus::in-obj-of obj-a))))
+
 (test can-carry-items
   (with-mock-players (alice)
     (setf (tempus::dex-of (tempus::aff-abils-of alice)) 11)
