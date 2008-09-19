@@ -50,6 +50,47 @@
 (defun activate-char-quad (ch)
   nil)
 
+(defun perform-put (ch obj container)
+  (cond
+    ((is-obj-kind container +item-pipe+)
+     (assert (is-obj-kind obj +item-tobacco+) nil "Invalid attempt to pack pipe with non-tobacco")
+     (cond
+       ((and (plusp (cur-drags container))
+             (/= (smoke-type container) (smoke-type obj)))
+        (act ch :item obj :target container
+             :subject-emit "You need to clear out $P before packing it with $p."))
+       ((not (plusp (- (max-drags obj) (cur-drags obj))))
+        (act ch :item container
+             :subject-emit "Sorry, $p is fully packed."))
+       (t
+        (setf (aref (value-of container) 0) (min (max-drags container)
+                                                  (+ (cur-drags container)
+                                                     (cur-drags obj))))
+        (setf (aref (value-of container) 2) (aref (value-of obj) 0)))))
+    ((is-obj-kind container +item-vehicle+)
+     (let ((to-room (real-room (room-number container))))
+       (cond
+         ((null to-room)
+          (act ch :item container
+               :subject-emit "Sorry, $p doesn't seem to have an interior right now."))
+         (t
+          (obj-from-char obj)
+          (obj-to-room obj to-room)))))
+    (t
+     (cond
+       ((> (+ (weight-of container) (weight-of obj))
+           (aref (value-of container) 0))
+        (act ch :item obj :target-item container
+             :subject-emit "$p won't fit in $P."))
+       ((and (is-obj-stat obj +item-nodrop+)
+             (not (immortalp ch)))
+        (act ch :item obj
+             :subject-emit "$p must be cursed!  You can't seem to let go of it..."))
+       (t
+        (obj-from-char obj)
+        (obj-to-obj obj container))))))
+
+
 (defun can-carry-items (ch)
   (+ 1
      (dex-of ch)
@@ -220,10 +261,11 @@
     (cond
       ((immortalp ch)
        (act ch :item obj
-            :subject-emit (format nil "You can't ~a $p, it must be CURSED!" sname)))
+             :subject-emit "You peel $p off your hand..."))
       (t
        (act ch :item obj
-             :subject-emit "You peel $p off your hand..."))))
+            :subject-emit (format nil "You can't ~a $p, it must be CURSED!" sname))
+       (return-from perform-drop nil))))
 
   (when displayp
     (act ch :item obj :all-emit (format nil "$n ~a$% $p." sname)))
@@ -275,6 +317,76 @@
            (dolist (container containers)
              (get-from-container ch thing container))
            (send-to-char ch "You don't see any '~a'.~%" container))))))
+
+(defcommand (ch "put") (:resting)
+  (send-to-char ch "Put what in what?~%"))
+
+(defcommand (ch "put" thing) (:resting)
+  (send-to-char ch "What do you want to put ~a in?"
+                (if (eql (find-all-dots thing) :find-indiv) "it" "them")))
+
+(defcommand (ch "put" thing "into" container-str) (:resting)
+  (let* ((locations (append (carrying-of ch)
+                            (coerce (remove nil (equipment-of ch)) 'list)
+                            (contents-of (in-room-of ch))))
+         (containers (get-matching-objects ch container-str locations))
+         (container (first containers))
+         (objs (get-matching-objects ch thing (carrying-of ch))))
+    (cond
+      ((null containers)
+       (send-to-char ch "You don't see ~a ~a here.~%"
+                     (a-or-an container-str) container-str))
+      ((> (length containers) 1)
+       (send-to-char ch "You can only put things into one container at a time.~%"))
+      ((and (is-obj-kind container +item-container+)
+            (is-obj-kind container +item-vehicle+)
+            (is-obj-kind container +item-pipe+))
+       (act ch :item container
+            :subject-emit "$p is not a container.~%"))
+      ((and (not (is-obj-kind container +item-pipe+))
+            (logtest (aref (value-of container) 1) +cont-closed+))
+       (send-to-char ch "You'd better open it first!~%"))
+      ((null objs)
+       (send-to-char ch "You aren't carrying ~a ~a.~%"
+                     (a-or-an thing) thing))
+      (t
+       (loop
+          for obj-sublist on objs
+          as obj = (first obj-sublist)
+          as next-obj = (second obj-sublist)
+          as counter from 1
+          do
+          (cond
+            ((eql obj container)
+             (act ch :item obj
+                  :subject-emit "You attempt to fold $p into itself, but fail."))
+            ((and (is-obj-kind obj +item-bomb+)
+                  (contains-of obj)
+                  (is-obj-kind (contains-of obj) +item-fuse+)
+                  (plusp (fuse-state (contains-of obj))))
+             (act ch :item obj :target-item container
+                  :subject-emit "It would really be best if you didn't put $p into $P."))
+            ((and (is-obj-kind container +item-pipe+)
+                  (not (is-obj-kind obj +item-tobacco+)))
+             (act ch :item obj :target-item container
+                  :subject-emit "You can't pack $P with $p!"))
+            (t
+             (perform-put ch obj container)
+
+             (when (or (null next-obj)
+                       (string/= (name-of next-obj) (name-of obj)))
+               (cond
+                 ((= counter 1)
+                  (act ch :item obj :target-item container
+                       :all-emit "$n put$% $p into $P."))
+                 ((plusp counter)
+                  (act ch :item obj
+                       :target-item container
+                       :all-emit (format nil "$n put$% $p into $P. (x~d)" counter))))
+               (setf counter 0)))))
+       (when (is-obj-kind container +item-pipe+)
+         (loop while (contains-of container) do
+              (extract-obj (contains-of container))))))))
 
 
 (defcommand (ch "drop") (:resting)

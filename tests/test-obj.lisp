@@ -290,6 +290,37 @@
              (is (equal "You are carrying:~%some plate armor~%" (char-output alice))))
         (tempus::extract-obj obj)))))
 
+(test put-command
+  (object-command-test
+    (tempus::obj-to-char armor-2 alice)
+    (tempus::obj-to-char armor-1 alice)
+    (tempus::obj-to-room chest (tempus::in-room-of alice))
+    (do-cmd "put armor into chest")
+    (self-emit-is "You put some plate armor into a treasure chest.~%")
+    (other-emit-is "Alice puts some plate armor into a treasure chest.~%")
+    (is (eql chest (tempus::in-obj-of armor-1)))))
+
+(test put-command-numbered
+  (object-command-test
+    (tempus::obj-to-char armor-2 alice)
+    (tempus::obj-to-char armor-1 alice)
+    (tempus::obj-to-room chest (tempus::in-room-of alice))
+    (do-cmd "put 2.armor into chest")
+    (self-emit-is "You put some plate armor into a treasure chest.~%")
+    (other-emit-is "Alice puts some plate armor into a treasure chest.~%")
+   (is (eql chest (tempus::in-obj-of armor-2)))))
+
+(test put-command-all
+  (object-command-test
+    (tempus::obj-to-char armor-2 alice)
+    (tempus::obj-to-char armor-1 alice)
+    (tempus::obj-to-room chest (tempus::in-room-of alice))
+    (do-cmd "put all into chest")
+    (self-emit-is "You put some plate armor into a treasure chest. (x2)~%")
+    (other-emit-is "Alice puts some plate armor into a treasure chest. (x2)~%")
+    (is (eql chest (tempus::in-obj-of armor-1)))
+    (is (eql chest (tempus::in-obj-of armor-2)))))
+
 (test drop-command
   (object-command-test
     (tempus::obj-to-char armor-2 alice)

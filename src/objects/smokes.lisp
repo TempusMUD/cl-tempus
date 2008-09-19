@@ -1,4 +1,12 @@
 (in-package #:tempus)
 
+(defun smoke-type (obj)
+  (if (is-obj-kind obj +item-tobacco+)
+      (aref (value-of obj) 0)
+      (aref (value-of obj) 2)))
+(defun max-drags (obj)
+  (aref (value-of obj) 1))
+(defun cur-drags (obj)
+  (aref (value-of obj) 0))
 (defun smoke-lit (obj)
   (not (zerop (aref (value-of obj) 3))))
