@@ -890,9 +890,15 @@
 
 (defcommand (ch "look" thing) (:resting)
   (let ((vict (resolve-alias ch thing)))
-    (if vict
-        (look-at-char ch vict :look)
-        (send-to-char ch "There's no '~a' here.~%" thing))))
+    (cond
+      (vict
+       (look-at-char ch vict :look)
+       (when (can-see-creature vict ch)
+         (act ch :target vict
+              :target-emit "$n looks at you."
+              :not-target-emit "$n looks at $N.")))
+      (t
+       (send-to-char ch "There's no '~a' here.~%" thing)))))
 
 (defcommand (ch "look" "at" thing) (:resting)
   (let ((vict (resolve-alias ch thing)))

@@ -149,6 +149,8 @@
                       :depends-on ("defpackage"))
                (:file "test-comm" :pathname "tests/test-comm"
                       :depends-on ("helpers"))
+               (:file "test-informative" :pathname "tests/test-informative"
+                      :depends-on ("helpers"))
                (:file "test-move" :pathname "tests/test-move"
                       :depends-on ("helpers"))
                (:file "test-obj" :pathname "tests/test-obj"
