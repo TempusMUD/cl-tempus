@@ -94,46 +94,69 @@
        ,func
        (add-command (quote ,pattern) (quote ,flags) ',func-name))))
 
+(defparameter *parser-trace* nil)
+(defun trace-msg (fmt &rest args)
+  (when *parser-trace*
+    (slog "~?" fmt args)))
+
 (defun command-matches (cmd string)
   (loop
      with vars = nil
      with tokens = (command-info-pattern cmd)
      while tokens
      for token = (car tokens)
-     do (cond
+     do
+       (trace-msg "string=~s" string)
+       (trace-msg "vars=~s" vars)
+       (cond
           ((symbolp token)
            ;; wildcard matching
+           (trace-msg "Matching symbol ~a" token)
            (setf tokens (rest tokens))
            (cond
              ((string= string "")
               ;; wildcards don't match the empty string
+              (trace-msg "No match - empty string")
               (return-from command-matches nil))
              ((null tokens)
+              (trace-msg "Last token, rest of string is var")
               (push (string-trim '(#\space) string) vars))
              ((symbolp (first tokens))
               (let ((space-pos (position #\space string)))
                 (unless space-pos
+                  (trace-msg "No match - Next token is sym and no space found")
                   (return-from command-matches nil))
+                (trace-msg "Next tokens is sym - Pushing single word into var")
                 (push (subseq string 0 space-pos) vars)
                 (setf string (subseq string (1+ space-pos)))))
              ((stringp (first tokens))
               (let ((match-pos (search (first tokens) string)))
                 (unless match-pos
+                  (trace-msg "No match - Next token is string and not found")
                   (return-from command-matches nil))
+                (trace-msg "Next token is str - Pushing subseq into var")
                 (push (string-trim '(#\space)
                                    (subseq string 0 match-pos)) vars)
-                (setf string (subseq string (+ match-pos (length (first tokens)))))))))
+                ;; We skip the next token, since we've already matched it
+                (setf string (string-trim '(#\space) (subseq string (+ match-pos (length (first tokens))))))
+                (setf tokens (rest tokens))))))
           ((characterp token)
+           (trace-msg "Matching character ~a" token)
            (unless (eql token (char string 0))
+             (trace-msg "No match - single character didn't match")
              (return-from command-matches nil))
+           (trace-msg "Single character matched")
            (setf string (string-left-trim '(#\space) (subseq string 1)))
            (setf tokens (rest tokens)))
           ((rest tokens)
+           (trace-msg "Matching string ~a in middle" token)
            ;; string matching
            (let* ((space-pos (position #\space string))
                   (word (if space-pos (subseq string 0 space-pos) string)))
              (unless (string-abbrev word token)
+               (trace-msg "No match - didn't match string")
                (return-from command-matches nil))
+             (trace-msg "String matched")
              (if space-pos
                  (setf string (string-left-trim '(#\space)
                                                 (subseq string (1+ space-pos))))
@@ -141,6 +164,7 @@
              (setf tokens (rest tokens))))
           (t
            ;; end of string
+           (trace-msg "Matching string ~a at end" token)
            (unless (string-abbrev string token)
              (return-from command-matches nil))
            (setf tokens nil)))
