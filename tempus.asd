@@ -29,8 +29,6 @@
                          :depends-on ("defs" "creature" "obj-data" "zone-data" "room-data" "search" "artisan" "account" "spec-assign" "clan" "help" "act-social" "tongues" "act-physic" "dyntext" "spell-parser" "combat-messages" "quest" "artisan" "utils"))
              (:file "account" :pathname "db/account"
                               :depends-on ("defs" "utils"))
-             (:file "accstr" :pathname "util/accstr"
-                             :depends-on ("defs"))
              (:file "act-comm" :pathname "misc/act-comm"
                                :depends-on ("defs" "utils" "interpreter" "act-social"))
              (:file "act-informative" :pathname "misc/act-informative"
@@ -126,8 +124,6 @@
                                    :depends-on ("defs" "utils"))
              (:file "structs" :pathname "structs/structs"
                               :depends-on ("defs"))
-             (:file "tmpstr" :pathname "util/tmpstr"
-                             :depends-on ("defs"))
              (:file "tongues" :pathname "social/tongues"
                               :depends-on ("defs" "utils"))
              (:file "utils" :pathname "util/utils"
