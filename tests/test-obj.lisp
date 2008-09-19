@@ -208,6 +208,51 @@
              (is (equal "You get some plate armor.~%" (char-output alice))))
         (tempus::extract-obj obj)))))
 
+(test get-from-command
+  (with-mock-players (alice bob)
+    (let ((obj-a nil)
+          (obj-b nil))
+      (unwind-protect
+           (progn
+             (setf obj-a (make-mock-object "some plate armor"))
+             (setf obj-b (make-mock-object "a treasure chest"))
+             (setf (tempus::wear-flags-of obj-a) tempus::+item-wear-take+)
+             (setf (tempus::wear-flags-of obj-b) tempus::+item-wear-take+)
+             (tempus::obj-to-room obj-b (tempus::in-room-of alice))
+             (tempus::obj-to-obj obj-a obj-b)
+             (tempus::interpret-command alice "get armor from chest")
+             (is (equal "You get some plate armor from a treasure chest.~%" (char-output alice)))
+             (is (equal "Alice gets some plate armor from a treasure chest.~%" (char-output bob)))
+             (is (eql alice (tempus::carried-by-of obj-a))))
+        (progn
+          (tempus::extract-obj obj-a)
+          (tempus::extract-obj obj-b))))))
+
+(test get-all-from-command
+  (with-mock-players (alice bob)
+    (let ((obj-a nil)
+          (obj-b nil)
+          (obj-c nil))
+      (unwind-protect
+           (progn
+             (setf obj-a (make-mock-object "some plate armor"))
+             (setf obj-b (make-mock-object "some plate armor"))
+             (setf obj-c (make-mock-object "a treasure chest"))
+             (setf (tempus::wear-flags-of obj-a) tempus::+item-wear-take+)
+             (setf (tempus::wear-flags-of obj-b) tempus::+item-wear-take+)
+             (tempus::obj-to-room obj-c (tempus::in-room-of alice))
+             (tempus::obj-to-obj obj-a obj-c)
+             (tempus::obj-to-obj obj-b obj-c)
+             (tempus::interpret-command alice "get all.armor from chest")
+             (is (equal "You get some plate armor from a treasure chest. (x2)~%" (char-output alice)))
+             (is (equal "Alice gets some plate armor from a treasure chest. (x2)~%" (char-output bob)))
+             (is (eql alice (tempus::carried-by-of obj-a)))
+             (is (eql alice (tempus::carried-by-of obj-b))))
+        (progn
+          (tempus::extract-obj obj-a)
+          (tempus::extract-obj obj-b)
+          (tempus::extract-obj obj-c))))))
+
 (test inventory-command
   (with-mock-players (alice)
     (let ((obj nil))

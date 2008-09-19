@@ -147,6 +147,73 @@
     (when sigil-found
       (explode-all-sigils ch))))
 
+(defun get-from-container (ch thing container)
+  (let ((objs (get-matching-objects ch thing (contains-of container)))
+        (mode (find-all-dots thing))
+        (money-found nil)
+        (quad-found nil)
+        (sigil-found nil))
+    (cond
+      ((and (logtest (aref (value-of container) 1) +cont-closed+)
+            (not (zerop (aref (value-of container) 3)))
+            (not (immortalp ch)))
+       (act ch :item container
+            :subject-emit "$p is closed."))
+      ((and (is-corpse container)
+            (/= (corpse-idnum container) (idnum-of ch))
+            (not (immortalp ch))
+            (eql (pk-style-of (zone-of (in-room-of ch))) +zone-neutral-pk+)
+            (not (is-npc ch))
+            (plusp (corpse-idnum container)))
+       (send-to-char ch "You may not loot corpses in NPK zones.~%"))
+      (objs
+       (loop
+          for obj-sublist on objs
+          as obj = (first obj-sublist)
+          as next-obj = (second obj-sublist)
+          as counter from 1
+          do
+          (cond
+            ((can-take-obj ch obj t t)
+             (obj-from-obj obj)
+             (obj-to-char obj ch)
+             (cond
+               ((is-obj-kind obj +item-money+)
+                (setf money-found t))
+               ((eql (vnum-of obj) +quad-vnum+)
+                (setf quad-found t))
+               ((and (not (zerop (sigil-idnum-of obj)))
+                     (/= (sigil-idnum-of obj) (idnum-of ch)))
+                (setf sigil-found t)))
+             (when (or (null next-obj)
+                       (string/= (name-of next-obj) (name-of obj)))
+               (cond
+                 ((= counter 1)
+                  (act ch :item obj :target-item container
+                       :all-emit "$n get$% $p from $P."))
+                 ((plusp counter)
+                  (act ch :item obj
+                       :target-item container
+                       :all-emit (format nil "$n get$% $p from $P. (x~d)" counter))))
+               (setf counter 0))))))
+      ((eql mode :find-indiv)
+       (act ch :item container
+            :subject-emit (format nil "There doesn't seem to be ~a ~a in $p.~%"
+                                  (a-or-an thing) thing)))
+      ((eql mode :find-all)
+       (act ch :item container
+            :subject-emit "You didn't find anything to in $p.~%"))
+      (t
+       (act ch :item container
+            (format nil "You didn't find anything in $p to take that looks like a '~a'.~%"
+                    thing))))
+
+    (when money-found
+      (consolidate-char-money ch))
+    (when quad-found
+      (activate-char-quad ch))
+    (when sigil-found
+      (explode-all-sigils ch))))
 
 (defun perform-drop (ch obj mode sname dest-room displayp)
   (when (is-obj-stat obj +item-nodrop+)
@@ -183,14 +250,31 @@
     (:junk
      (extract-obj obj))))
 
+(defcommand (ch "get") (:resting)
+  (send-to-char ch "Get what?~%"))
+
 (defcommand (ch "get" thing) (:resting)
     (cond
       ((>= (carry-items-of ch) (can-carry-items ch))
        (send-to-char ch "Your arms are already full!~%"))
-      ((string= thing "")
-       (send-to-char ch "Get what?~%"))
       (t
        (get-from-room ch thing))))
+
+(defcommand (ch "get" thing "from" container) (:resting)
+  (cond
+    ((>= (carry-items-of ch) (can-carry-items ch))
+     (send-to-char ch "Your arms are already full!~%"))
+    (t
+     (let ((containers (append (get-matching-objects ch container
+                                                     (carrying-of ch))
+                               (get-matching-objects ch
+                                              container
+                                              (contents-of (in-room-of ch))))))
+       (if containers
+           (dolist (container containers)
+             (get-from-container ch thing container))
+           (send-to-char ch "You don't see any '~a'.~%" container))))))
+
 
 (defcommand (ch "drop") (:resting)
   (send-to-char ch "What do you want to drop?"))
