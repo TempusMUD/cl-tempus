@@ -248,7 +248,8 @@
      (act nil :item obj
           :place-emit "$p suddenly appears in a puff of smoke!"))
     (:junk
-     (extract-obj obj))))
+     (extract-obj obj)))
+  t)
 
 (defcommand (ch "get") (:resting)
   (send-to-char ch "Get what?~%"))
@@ -293,15 +294,16 @@
           as next-obj = (second obj-sublist)
           as counter from 1
           do
-            (perform-drop ch obj :drop "drop" (in-room-of ch) nil)
-            (when (or (null next-obj)
-                        (string/= (name-of next-obj) (name-of obj)))
-                (cond
-                  ((= counter 1)
-                   (act ch :item obj :all-emit "$n drop$% $p."))
-                  ((plusp counter)
-                   (act ch :item obj
-                        :all-emit (format nil "$n drop$% $p. (x~d)" counter))))
+            (if (perform-drop ch obj :drop "drop" (in-room-of ch) nil)
+                (when (or (null next-obj)
+                          (string/= (name-of next-obj) (name-of obj)))
+                  (cond
+                    ((= counter 1)
+                     (act ch :item obj :all-emit "$n drop$% $p."))
+                    ((plusp counter)
+                     (act ch :item obj
+                          :all-emit (format nil "$n drop$% $p. (x~d)" counter))))
+                  (setf counter 0))
                 (setf counter 0))))
       ((eql dot-mode :find-all)
        (send-to-char ch "You don't seem to be carrying anything.~%"))

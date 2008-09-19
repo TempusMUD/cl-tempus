@@ -113,6 +113,32 @@
       (is (eql 120 (tempus::max-hitp-of alice)))
       (is (eql 120 (tempus::max-mana-of alice))))))
 
+
+
+(defmacro object-command-test (&body body)
+  `(with-mock-players (alice bob)
+     (let ((armor-1 nil)
+           (armor-2 nil)
+           (chest nil))
+       (unwind-protect
+            (progn
+              (setf armor-1 (make-mock-object "some plate armor"))
+              (setf armor-2 (make-mock-object "some plate armor"))
+              (setf chest (make-mock-object "a treasure chest"))
+              (setf (tempus::wear-flags-of armor-1) tempus::+item-wear-take+)
+              (setf (tempus::wear-flags-of armor-2) tempus::+item-wear-take+)
+              (macrolet ((do-cmd (command-str)
+                           `(tempus::interpret-command alice ,command-str))
+                         (self-emit-is (emit-str)
+                           `(is (equal ,emit-str (char-output alice))))
+                         (other-emit-is (emit-str)
+                           `(is (equal ,emit-str (char-output bob)))))
+                ,@body))
+         (progn
+           (tempus::extract-obj armor-1)
+           (tempus::extract-obj armor-2)
+           (tempus::extract-obj chest))))))
+
 (test get-command-ok
   (with-mock-players (alice bob)
     (let ((obj nil))
@@ -265,27 +291,40 @@
         (tempus::extract-obj obj)))))
 
 (test drop-command
-  (with-mock-players (alice)
-    (let ((obj-a nil)
-          (obj-b nil)
-          (obj-c nil))
-      (unwind-protect
-           (progn
-             (setf obj-a (make-mock-object "some plate armor"))
-             (setf obj-b (make-mock-object "some plate armor"))
-             (setf obj-c (make-mock-object "some plate armor"))
-             (tempus::obj-to-char obj-a alice)
-             (tempus::interpret-command alice "drop armor")
-             (is (equal "You drop some plate armor.~%" (char-output alice)))
-             (is (eql (tempus::in-room-of alice) (tempus::in-room-of obj-a)))
-             (clear-mock-buffers alice)
-             (tempus::obj-from-room obj-a)
-             (tempus::obj-to-char obj-a alice)
-             (tempus::obj-to-char obj-b alice)
-             (tempus::obj-to-char obj-c alice)
-             (tempus::interpret-command alice "drop all")
-             (is (equal "You drop some plate armor. (x3)~%" (char-output alice))))
-        (progn
-          (tempus::extract-obj obj-a)
-          (tempus::extract-obj obj-b)
-          (tempus::extract-obj obj-c))))))
+  (object-command-test
+    (tempus::obj-to-char armor-2 alice)
+    (tempus::obj-to-char armor-1 alice)
+    (do-cmd "drop armor")
+    (self-emit-is "You drop some plate armor.~%")
+    (other-emit-is "Alice drops some plate armor.~%")
+    (is (eql (tempus::in-room-of alice) (tempus::in-room-of armor-1))))
+
+  (object-command-test
+    (tempus::obj-to-char armor-2 alice)
+    (tempus::obj-to-char armor-1 alice)
+    (do-cmd "drop all")
+    (self-emit-is "You drop some plate armor. (x2)~%")
+    (other-emit-is "Alice drops some plate armor. (x2)~%")
+    (is (eql (tempus::in-room-of alice) (tempus::in-room-of armor-1)))
+    (is (eql (tempus::in-room-of alice) (tempus::in-room-of armor-2)))))
+
+(test drop-command-cursed
+  (object-command-test
+    (tempus::obj-to-char armor-2 alice)
+    (tempus::obj-to-char armor-1 alice)
+    (setf (tempus::extra-flags-of armor-1)
+          (logior (tempus::extra-flags-of armor-1) tempus::+item-nodrop+))
+    (do-cmd "drop armor")
+    (self-emit-is "You can't drop some plate armor, it must be CURSED!~%")
+    (is (eql alice (tempus::carried-by-of armor-1)))))
+
+(test drop-command-cursed-imm
+  (object-command-test
+    (tempus::obj-to-char armor-2 alice)
+    (tempus::obj-to-char armor-1 alice)
+    (setf (tempus::level-of alice) 70)
+    (setf (tempus::extra-flags-of armor-1)
+          (logior (tempus::extra-flags-of armor-1) tempus::+item-nodrop+))
+    (do-cmd "drop armor")
+    (self-emit-is "You peel some plate armor off your hand...~%You drop some plate armor.~%")
+    (is (eql (tempus::in-room-of alice) (tempus::in-room-of armor-1)))))
