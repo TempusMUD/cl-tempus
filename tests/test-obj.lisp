@@ -300,6 +300,14 @@
     (other-emit-is "Alice puts some plate armor into a treasure chest.~%")
     (is (eql chest (tempus::in-obj-of armor-1)))))
 
+(test put-command-no-container
+  (object-command-test
+    (tempus::obj-to-char armor-2 alice)
+    (tempus::obj-to-char armor-1 alice)
+    (tempus::obj-to-room chest (tempus::in-room-of alice))
+    (do-cmd "put armor")
+    (self-emit-is "What do you want to put it in?~%")))
+
 (test put-command-numbered
   (object-command-test
     (tempus::obj-to-char armor-2 alice)

@@ -322,7 +322,7 @@
   (send-to-char ch "Put what in what?~%"))
 
 (defcommand (ch "put" thing) (:resting)
-  (send-to-char ch "What do you want to put ~a in?"
+  (send-to-char ch "What do you want to put ~a in?~%"
                 (if (eql (find-all-dots thing) :find-indiv) "it" "them")))
 
 (defcommand (ch "put" thing "into" container-str) (:resting)
