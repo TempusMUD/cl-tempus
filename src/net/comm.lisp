@@ -36,8 +36,6 @@
              no-zresets
              log-all
              production)
-  (tmp-string-init)
-  (acc-string-init)
   (when wizlock
     (setf *restrict* 50)
     (slog "Wizlocked to level 50"))
