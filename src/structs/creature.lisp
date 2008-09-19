@@ -435,40 +435,6 @@
 (defparameter +array-aff-2+ 2)
 (defparameter +array-aff-3+ 3)
 
-;;; Character equipment positions: used as index for Creature.equipment[]
-
-;; NOTE: Don't confuse these constants with the ITEM_ bitvectors
-;; which control the valid places you can wear a piece of equipment
-(defparameter +wear-light+ 0)
-(defparameter +wear-finger-r+ 1)
-(defparameter +wear-finger-l+ 2)
-(defparameter +wear-neck-1+ 3)
-(defparameter +wear-neck-2+ 4)
-(defparameter +wear-body+ 5)
-(defparameter +wear-head+ 6)
-(defparameter +wear-legs+ 7)
-(defparameter +wear-feet+ 8)
-(defparameter +wear-hands+ 9)
-(defparameter +wear-arms+ 10)
-(defparameter +wear-shield+ 11)
-(defparameter +wear-about+ 12)
-(defparameter +wear-waist+ 13)
-(defparameter +wear-wrist-r+ 14)
-(defparameter +wear-wrist-l+ 15)
-(defparameter +wear-wield+ 16)
-(defparameter +wear-hold+ 17)
-(defparameter +wear-crotch+ 18)
-(defparameter +wear-eyes+ 19)
-(defparameter +wear-back+ 20)
-(defparameter +wear-belt+ 21)
-(defparameter +wear-face+ 22)
-(defparameter +wear-ear-l+ 23)
-(defparameter +wear-ear-r+ 24)
-(defparameter +wear-wield-2+ 25)
-(defparameter +wear-ass+ 26)
-(defparameter +num-wears+ 27)	; This must be the # of eq positions!!
-(defparameter +wear-random+ 28)
-(defparameter +wear-mshield+ 29) ; This is for mana shield messages just increase it if new wear positions are added
 
 
 ;;; Modifier constants used with obj affects ('A' fields)

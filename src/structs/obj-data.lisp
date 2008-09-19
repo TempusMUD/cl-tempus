@@ -126,31 +126,6 @@
 (defparameter +apply-speed+ 50)
 (defparameter +num-applies+ 51)
 
-;;; Take/Wear flags: used by obj_data.obj_flags.wear_flags
-(defparameter +item-wear-take+ (ash 1 0))	; Item can be takes
-(defparameter +item-wear-finger+ (ash 1 1))	; Can be worn on finger
-(defparameter +item-wear-neck+ (ash 1 2))	; Can be worn around neck
-(defparameter +item-wear-body+ (ash 1 3))	; Can be worn on body
-(defparameter +item-wear-head+ (ash 1 4))	; Can be worn on head
-(defparameter +item-wear-legs+ (ash 1 5))	; Can be worn on legs
-(defparameter +item-wear-feet+ (ash 1 6))	; Can be worn on feet
-(defparameter +item-wear-hands+ (ash 1 7))	; Can be worn on hands
-(defparameter +item-wear-arms+ (ash 1 8))	; Can be worn on arms
-(defparameter +item-wear-shield+ (ash 1 9))	; Can be used as a shield
-(defparameter +item-wear-about+ (ash 1 10))	; Can be worn about body
-(defparameter +item-wear-waist+ (ash 1 11))	; Can be worn around waist
-(defparameter +item-wear-wrist+ (ash 1 12))	; Can be worn on wrist
-(defparameter +item-wear-wield+ (ash 1 13))	; Can be wielded
-(defparameter +item-wear-hold+ (ash 1 14))	; Can be held
-(defparameter +item-wear-crotch+ (ash 1 15))	; guess where
-(defparameter +item-wear-eyes+ (ash 1 16))	; eyes
-(defparameter +item-wear-back+ (ash 1 17))	;Worn on back
-(defparameter +item-wear-belt+ (ash 1 18))	; Worn on a belt(ie, pouch)
-(defparameter +item-wear-face+ (ash 1 19))
-(defparameter +item-wear-ear+ (ash 1 20))
-(defparameter +item-wear-ass+ (ash 1 21))	;Can be RAMMED up an asshole
-(defparameter +num-wear-flags+ 22)
-
 ;;; Extra object flags: used by obj_data.obj_flags.extra_flags
 (defparameter +item-glow+ (ash 1 0))	; Item is glowing
 (defparameter +item-hum+ (ash 1 1))	; Item is humming

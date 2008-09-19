@@ -5,7 +5,6 @@
 (defun rl-sec (pulses)
   (* pulses +passes-per-sec+))
 
-
 (defparameter +pulse-zone+ (rl-sec 10))
 (defparameter +pulse-mobile+ (rl-sec 4))
 (defparameter +pulse-mobile-spec+ (rl-sec 2))
@@ -810,6 +809,41 @@
 (defparameter +soil-char+ (ash 1 16))
 (defparameter +top-soil+ 17)
 
+;;; Character equipment positions: used as index for Creature.equipment[]
+
+;; NOTE: Don't confuse these constants with the ITEM_ bitvectors
+;; which control the valid places you can wear a piece of equipment
+(defparameter +wear-light+ 0)
+(defparameter +wear-finger-r+ 1)
+(defparameter +wear-finger-l+ 2)
+(defparameter +wear-neck-1+ 3)
+(defparameter +wear-neck-2+ 4)
+(defparameter +wear-body+ 5)
+(defparameter +wear-head+ 6)
+(defparameter +wear-legs+ 7)
+(defparameter +wear-feet+ 8)
+(defparameter +wear-hands+ 9)
+(defparameter +wear-arms+ 10)
+(defparameter +wear-shield+ 11)
+(defparameter +wear-about+ 12)
+(defparameter +wear-waist+ 13)
+(defparameter +wear-wrist-r+ 14)
+(defparameter +wear-wrist-l+ 15)
+(defparameter +wear-wield+ 16)
+(defparameter +wear-hold+ 17)
+(defparameter +wear-crotch+ 18)
+(defparameter +wear-eyes+ 19)
+(defparameter +wear-back+ 20)
+(defparameter +wear-belt+ 21)
+(defparameter +wear-face+ 22)
+(defparameter +wear-ear-l+ 23)
+(defparameter +wear-ear-r+ 24)
+(defparameter +wear-wield-2+ 25)
+(defparameter +wear-ass+ 26)
+(defparameter +num-wears+ 27)	; This must be the # of eq positions!!
+(defparameter +wear-random+ 28)
+(defparameter +wear-mshield+ 29) ; This is for mana shield messages just increase it if new wear positions are added
+
 (defparameter +eq-pos-order+
   (coerce (list +wear-head+ +wear-face+ +wear-eyes+ +wear-ear-l+
                 +wear-ear-r+ +wear-neck-1+ +wear-neck-2+ +wear-about+
@@ -998,7 +1032,30 @@
 (defun str-app-type-to-hit (plist)
   (getf plist :to-hit))
 
-
+;;; Take/Wear flags: used by obj_data.obj_flags.wear_flags
+(defparameter +item-wear-take+ (ash 1 0))	; Item can be takes
+(defparameter +item-wear-finger+ (ash 1 1))	; Can be worn on finger
+(defparameter +item-wear-neck+ (ash 1 2))	; Can be worn around neck
+(defparameter +item-wear-body+ (ash 1 3))	; Can be worn on body
+(defparameter +item-wear-head+ (ash 1 4))	; Can be worn on head
+(defparameter +item-wear-legs+ (ash 1 5))	; Can be worn on legs
+(defparameter +item-wear-feet+ (ash 1 6))	; Can be worn on feet
+(defparameter +item-wear-hands+ (ash 1 7))	; Can be worn on hands
+(defparameter +item-wear-arms+ (ash 1 8))	; Can be worn on arms
+(defparameter +item-wear-shield+ (ash 1 9))	; Can be used as a shield
+(defparameter +item-wear-about+ (ash 1 10))	; Can be worn about body
+(defparameter +item-wear-waist+ (ash 1 11))	; Can be worn around waist
+(defparameter +item-wear-wrist+ (ash 1 12))	; Can be worn on wrist
+(defparameter +item-wear-wield+ (ash 1 13))	; Can be wielded
+(defparameter +item-wear-hold+ (ash 1 14))	; Can be held
+(defparameter +item-wear-crotch+ (ash 1 15))	; guess where
+(defparameter +item-wear-eyes+ (ash 1 16))	; eyes
+(defparameter +item-wear-back+ (ash 1 17))	;Worn on back
+(defparameter +item-wear-belt+ (ash 1 18))	; Worn on a belt(ie, pouch)
+(defparameter +item-wear-face+ (ash 1 19))
+(defparameter +item-wear-ear+ (ash 1 20))
+(defparameter +item-wear-ass+ (ash 1 21))	;Can be RAMMED up an asshole
+(defparameter +num-wear-flags+ 22)
 
 (defparameter +wear-bitvectors+
   (coerce (list +item-wear-take+ +item-wear-finger+ +item-wear-finger+
