@@ -550,7 +550,7 @@
   (assert (<= 0 pos +num-wears+) nil "Illegal pos in equip-char")
   (assert (not (carried-by-of obj)) nil "Object is carried-by when equipped")
   (assert (not (in-room-of obj)) nil "Object is in-room when equipped")
-  (case mode
+  (ecase mode
     (:worn
      (assert (not (get-eq ch pos)) nil "~a is already equipped: ~a"
              (name-of ch)
@@ -586,7 +586,7 @@
 (defun unequip-char (ch pos mode disable-checks)
   (assert (< 0 pos +num-wears+) nil "Illegal pos in unequip-char")
   (let ((obj nil))
-    (case mode
+    (ecase mode
       (:worn
        (assert (get-eq ch pos) nil
                "eq NIL at pos ~d" pos)
@@ -639,13 +639,18 @@
   "Extract an object from the world"
   (cond
     ((worn-by-of obj)
-     (when (unequip-char (worn-by-of obj) (worn-on-of obj)
-                         (if (eql obj (aref (equipment-of (worn-by-of obj))
-                                            (worn-on-of obj)))
-                             :worn
-                             :implant)
-                         nil)
-       (error "Inconsistent worn-by and worn-on references!")))
+     (unequip-char (worn-by-of obj)
+                   (worn-on-of obj)
+                   (cond
+                     ((eql obj (aref (equipment-of (worn-by-of obj))
+                                      (worn-on-of obj)))
+                      :worn)
+                     ((eql obj (aref (implants-of (worn-by-of obj))
+                                      (worn-on-of obj)))
+                      :implant)
+                     (t
+                      :tattoo))
+                   nil))
     ((in-room-of obj)
      (obj-from-room obj))
     ((carried-by-of obj)
