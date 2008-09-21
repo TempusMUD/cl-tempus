@@ -3,8 +3,8 @@
 (in-suite* #:tempus.obj :in :tempus)
 
 (test objs-containing-objs
-  (let ((obj-a (make-mock-object))
-        (obj-b (make-mock-object)))
+  (with-mock-objects ((obj-a "obj-a")
+                      (obj-b "obj-b"))
     (tempus::obj-to-obj obj-a obj-b)
     (is (equal (list obj-a) (tempus::contains-of obj-b)))
     (is (equal (tempus::in-obj-of obj-a) obj-b))
@@ -42,7 +42,7 @@
 
 (test obj-equip
   (with-mock-players (alice)
-    (let ((obj (make-mock-object)))
+    (with-mock-objects ((obj "a magic ring"))
       ;; Make the object give glowlight and wis+2
       (setf (aref (tempus::bitvector-of obj) 0) tempus::+aff-glowlight+)
       (setf (tempus::location-of (aref (tempus::affected-of obj) 0)) tempus::+apply-wis+)
@@ -57,7 +57,7 @@
 
 (test obj-unequip
   (with-mock-players (alice)
-    (let ((obj (make-mock-object)))
+    (with-mock-objects ((obj "a magic ring"))
       ;; Make the object give glowlight and wis+2
       (setf (aref (tempus::bitvector-of obj) 0) tempus::+aff-glowlight+)
       (setf (tempus::location-of (aref (tempus::affected-of obj) 0)) tempus::+apply-wis+)
@@ -73,7 +73,7 @@
 
 (test obj-implant
   (with-mock-players (alice)
-    (let ((obj (make-mock-object)))
+    (with-mock-objects ((obj "a magic ring"))
       ;; Make the object give glowlight and wis+2
       (setf (tempus::kind-of obj) tempus::+item-armor+)
       (setf (tempus::wear-flags-of obj) (logior tempus::+item-wear-body+
@@ -92,8 +92,8 @@
 
 (test affect-total
   (with-mock-players (alice)
-    (let ((equip (make-mock-object))
-          (implant (make-mock-object)))
+    (with-mock-objects ((equip "a magic ring")
+                        (implant "an internal booster"))
       ;; Set up alice
       (setf (tempus::max-hitp-of alice) 100)
       (setf (tempus::max-mana-of alice) 100)
@@ -117,212 +117,146 @@
 
 (defmacro object-command-test (&body body)
   `(with-mock-players (alice bob)
-     (let ((armor-1 nil)
-           (armor-2 nil)
-           (chest nil))
-       (unwind-protect
-            (progn
-              (setf armor-1 (make-mock-object "some plate armor"))
-              (setf armor-2 (make-mock-object "some plate armor"))
-              (setf chest (make-mock-object "a treasure chest"))
-              (setf (tempus::wear-flags-of armor-1) tempus::+item-wear-take+)
-              (setf (tempus::wear-flags-of armor-2) tempus::+item-wear-take+)
-              (macrolet ((do-cmd (command-str)
-                           `(tempus::interpret-command alice ,command-str))
-                         (self-emit-is (emit-str)
-                           `(is (equal ,emit-str (char-output alice))))
-                         (other-emit-is (emit-str)
-                           `(is (equal ,emit-str (char-output bob)))))
-                ,@body))
-         (progn
-           (tempus::extract-obj armor-1)
-           (tempus::extract-obj armor-2)
-           (tempus::extract-obj chest))))))
+     (with-mock-objects ((armor-1 "some plate armor")
+                         (armor-2 "some plate armor")
+                         (chest "a treasure chest"))
+       (setf (tempus::wear-flags-of armor-1) tempus::+item-wear-take+)
+       (setf (tempus::wear-flags-of armor-2) tempus::+item-wear-take+)
+       (macrolet ((do-cmd (command-str)
+                    `(tempus::interpret-command alice ,command-str))
+                  (self-emit-is (emit-str)
+                    `(is (equal ,emit-str (char-output alice))))
+                  (other-emit-is (emit-str)
+                    `(is (equal ,emit-str (char-output bob)))))
+         ,@body))))
 
 (test get-command-ok
   (with-mock-players (alice bob)
-    (let ((obj nil))
-      (unwind-protect
-           (progn
-             (setf obj (make-mock-object "some plate armor"))
-             (setf (tempus::wear-flags-of obj) tempus::+item-wear-take+)
-             (tempus::obj-to-room obj (tempus::in-room-of alice))
-             (tempus::interpret-command alice "get armor")
-             (is (eql (tempus::carried-by-of obj) alice))
-             (is (null (tempus::in-room-of obj)))
-             (is (equal (list obj) (tempus::carrying-of alice)))
-             (is (equal "You get some plate armor.~%" (char-output alice)))
-             (is (equal "Alice gets some plate armor.~%" (char-output bob))))
-        (tempus::extract-obj obj)))))
+    (with-mock-objects ((obj "some plate armor"))
+      (setf (tempus::wear-flags-of obj) tempus::+item-wear-take+)
+      (tempus::obj-to-room obj (tempus::in-room-of alice))
+      (tempus::interpret-command alice "get armor")
+      (is (eql (tempus::carried-by-of obj) alice))
+      (is (null (tempus::in-room-of obj)))
+      (is (equal (list obj) (tempus::carrying-of alice)))
+      (is (equal "You get some plate armor.~%" (char-output alice)))
+      (is (equal "Alice gets some plate armor.~%" (char-output bob))))))
 
 (test get-all-command
   (with-mock-players (alice)
-    (let ((obj-a nil)
-          (obj-b nil)
-          (obj-c nil))
-      (unwind-protect
-           (progn
-             (setf obj-a (make-mock-object "some plate armor"))
-             (setf obj-b (make-mock-object "some plate armor"))
-             (setf obj-c (make-mock-object "some plate armor"))
-             (setf (tempus::wear-flags-of obj-a) tempus::+item-wear-take+)
-             (setf (tempus::wear-flags-of obj-b) tempus::+item-wear-take+)
-             (setf (tempus::wear-flags-of obj-c) tempus::+item-wear-take+)
-             (tempus::obj-to-room obj-a (tempus::in-room-of alice))
-             (tempus::obj-to-room obj-b (tempus::in-room-of alice))
-             (tempus::obj-to-room obj-c (tempus::in-room-of alice))
-             (tempus::interpret-command alice "get all")
-             (is (equal "You get some plate armor. (x3)~%" (char-output alice)))
-             (is (eql alice (tempus::carried-by-of obj-a)))
-             (is (eql alice (tempus::carried-by-of obj-b)))
-             (is (eql alice (tempus::carried-by-of obj-c))))
-        (progn
-          (tempus::extract-obj obj-a)
-          (tempus::extract-obj obj-b)
-          (tempus::extract-obj obj-c))))))
+    (with-mock-objects ((armor-1 "some plate armor")
+                        (armor-2 "some plate armor")
+                        (chest "a treasure chest"))
+      (setf (tempus::wear-flags-of armor-1) tempus::+item-wear-take+)
+      (setf (tempus::wear-flags-of armor-2) tempus::+item-wear-take+)
+      (setf (tempus::wear-flags-of chest) tempus::+item-wear-take+)
+      (tempus::obj-to-room armor-1 (tempus::in-room-of alice))
+      (tempus::obj-to-room armor-2 (tempus::in-room-of alice))
+      (tempus::obj-to-room chest (tempus::in-room-of alice))
+      (tempus::interpret-command alice "get all")
+      (is (equal "You get a treasure chest.~%You get some plate armor. (x2)~%" (char-output alice)))
+      (is (eql alice (tempus::carried-by-of armor-1)))
+      (is (eql alice (tempus::carried-by-of armor-2)))
+      (is (eql alice (tempus::carried-by-of chest))))))
 
 (test get-all-dot-command
   (with-mock-players (alice)
-    (let ((obj-a nil)
-          (obj-b nil)
-          (obj-c nil))
-      (unwind-protect
-           (progn
-             (setf obj-a (make-mock-object "some plate armor"))
-             (setf obj-b (make-mock-object "some plate armor"))
-             (setf obj-c (make-mock-object "some plate armor"))
-             (setf (tempus::wear-flags-of obj-a) tempus::+item-wear-take+)
-             (setf (tempus::wear-flags-of obj-b) tempus::+item-wear-take+)
-             (setf (tempus::wear-flags-of obj-c) tempus::+item-wear-take+)
-             (tempus::obj-to-room obj-a (tempus::in-room-of alice))
-             (tempus::obj-to-room obj-b (tempus::in-room-of alice))
-             (tempus::obj-to-room obj-c (tempus::in-room-of alice))
-             (tempus::interpret-command alice "get all.armor")
-             (is (equal "You get some plate armor. (x3)~%" (char-output alice)))
-             (is (eql alice (tempus::carried-by-of obj-a)))
-             (is (eql alice (tempus::carried-by-of obj-b)))
-             (is (eql alice (tempus::carried-by-of obj-c))))
-        (progn
-          (tempus::extract-obj obj-a)
-          (tempus::extract-obj obj-b)
-          (tempus::extract-obj obj-c))))))
+    (with-mock-objects ((armor-1 "some plate armor")
+                        (armor-2 "some plate armor")
+                        (chest "a treasure chest"))
+      (setf (tempus::wear-flags-of armor-1) tempus::+item-wear-take+)
+      (setf (tempus::wear-flags-of armor-2) tempus::+item-wear-take+)
+      (setf (tempus::wear-flags-of chest) tempus::+item-wear-take+)
+      (tempus::obj-to-room armor-1 (tempus::in-room-of alice))
+      (tempus::obj-to-room armor-2 (tempus::in-room-of alice))
+      (tempus::obj-to-room chest (tempus::in-room-of alice))
+      (tempus::interpret-command alice "get all.armor")
+      (is (equal "You get some plate armor. (x2)~%" (char-output alice)))
+      (is (eql alice (tempus::carried-by-of armor-1)))
+      (is (eql alice (tempus::carried-by-of armor-2))))))
 
 (test get-command-no-take
   (with-mock-players (alice)
-    (let ((obj (make-mock-object "some plate armor")))
-      (unwind-protect
-           (progn
-             (tempus::obj-to-room obj (tempus::in-room-of alice))
-             (tempus::interpret-command alice "get armor")
-             (is (eql (tempus::in-room-of obj) (tempus::in-room-of alice)))
-             (is (null (tempus::carried-by-of obj)))
-             (is (equal "Some plate armor: you can't take that!~%" (char-output alice))))
-        (tempus::extract-obj obj)))))
+    (with-mock-objects ((obj "some plate armor"))
+      (tempus::obj-to-room obj (tempus::in-room-of alice))
+      (tempus::interpret-command alice "get armor")
+      (is (eql (tempus::in-room-of obj) (tempus::in-room-of alice)))
+      (is (null (tempus::carried-by-of obj)))
+      (is (equal "Some plate armor: you can't take that!~%" (char-output alice))))))
 
 
 (test get-command-imm-no-take
   (with-mock-players (alice)
-    (let ((obj nil))
-      (unwind-protect
-           (progn
-             (setf obj (make-mock-object "some plate armor"))
-             (setf (tempus::level-of alice) 55)
-             (tempus::obj-to-room obj (tempus::in-room-of alice))
-             (tempus::interpret-command alice "get armor")
-             (is (eql (tempus::carried-by-of obj) alice))
-             (is (null (tempus::in-room-of obj)))
-             (is (equal "You get some plate armor.~%" (char-output alice))))
-        (tempus::extract-obj obj)))))
+    (with-mock-objects ((obj "some plate armor"))
+      (setf (tempus::level-of alice) 55)
+      (tempus::obj-to-room obj (tempus::in-room-of alice))
+      (tempus::interpret-command alice "get armor")
+      (is (eql (tempus::carried-by-of obj) alice))
+      (is (null (tempus::in-room-of obj)))
+      (is (equal "You get some plate armor.~%" (char-output alice))))))
 
 (test get-gold
   (with-mock-players (alice)
-    (let ((obj nil))
-      (unwind-protect
-           (progn
-             (setf obj (make-mock-object "a pile of gold"))
-             (setf (tempus::wear-flags-of obj) tempus::+item-wear-take+)
-             (setf (tempus::kind-of obj) tempus::+item-money+)
-             (setf (aref (tempus::value-of obj) 0) 12345)
-             (setf (aref (tempus::value-of obj) 1) 0)
-             (tempus::obj-to-room obj (tempus::in-room-of alice))
-             (tempus::interpret-command alice "get gold")
-             (is (null (tempus::carrying-of alice)))
-             (is (= 12345 (tempus::gold-of alice)))
-             (is (equal "You get a pile of gold.~%There were 12345 coins.~%" (char-output alice))))
-        (tempus::extract-obj obj)))))
+    (with-mock-objects ((obj "a pile of gold"))
+      (setf obj (make-mock-object "a pile of gold"))
+      (setf (tempus::wear-flags-of obj) tempus::+item-wear-take+)
+      (setf (tempus::kind-of obj) tempus::+item-money+)
+      (setf (aref (tempus::value-of obj) 0) 12345)
+      (setf (aref (tempus::value-of obj) 1) 0)
+      (tempus::obj-to-room obj (tempus::in-room-of alice))
+      (tempus::interpret-command alice "get gold")
+      (is (null (tempus::carrying-of alice)))
+      (is (= 12345 (tempus::gold-of alice)))
+      (is (equal "You get a pile of gold.~%There were 12345 coins.~%" (char-output alice))))))
 
 (test get-cash
   (with-mock-players (alice)
-    (let ((obj nil))
-      (unwind-protect
-           (progn
-             (setf obj (make-mock-object "a pile of cash"))
-             (setf (tempus::wear-flags-of obj) tempus::+item-wear-take+)
-             (setf (tempus::kind-of obj) tempus::+item-money+)
-             (setf (aref (tempus::value-of obj) 0) 12345)
-             (setf (aref (tempus::value-of obj) 1) 1)
-             (tempus::obj-to-room obj (tempus::in-room-of alice))
-             (tempus::interpret-command alice "get cash")
-             (is (null (tempus::carrying-of alice)))
-             (is (= 12345 (tempus::cash-of alice)))
-             (is (equal "You get a pile of cash.~%There were 12345 credits.~%" (char-output alice))))
-        (tempus::extract-obj obj)))))
+    (with-mock-objects ((obj "a pile of cash"))
+      (setf (tempus::wear-flags-of obj) tempus::+item-wear-take+)
+      (setf (tempus::kind-of obj) tempus::+item-money+)
+      (setf (aref (tempus::value-of obj) 0) 12345)
+      (setf (aref (tempus::value-of obj) 1) 1)
+      (tempus::obj-to-room obj (tempus::in-room-of alice))
+      (tempus::interpret-command alice "get cash")
+      (is (null (tempus::carrying-of alice)))
+      (is (= 12345 (tempus::cash-of alice)))
+      (is (equal "You get a pile of cash.~%There were 12345 credits.~%" (char-output alice))))))
 
 (test get-from-command
   (with-mock-players (alice bob)
-    (let ((obj-a nil)
-          (obj-b nil))
-      (unwind-protect
-           (progn
-             (setf obj-a (make-mock-object "some plate armor"))
-             (setf obj-b (make-mock-object "a treasure chest"))
-             (setf (tempus::wear-flags-of obj-a) tempus::+item-wear-take+)
-             (setf (tempus::wear-flags-of obj-b) tempus::+item-wear-take+)
-             (tempus::obj-to-room obj-b (tempus::in-room-of alice))
-             (tempus::obj-to-obj obj-a obj-b)
-             (tempus::interpret-command alice "get armor from chest")
-             (is (equal "You get some plate armor from a treasure chest.~%" (char-output alice)))
-             (is (equal "Alice gets some plate armor from a treasure chest.~%" (char-output bob)))
-             (is (eql alice (tempus::carried-by-of obj-a))))
-        (progn
-          (tempus::extract-obj obj-a)
-          (tempus::extract-obj obj-b))))))
+    (with-mock-objects ((armor-1 "some plate armor")
+                        (chest "a treasure chest"))
+      (setf (tempus::wear-flags-of armor-1) tempus::+item-wear-take+)
+      (setf (tempus::wear-flags-of chest) tempus::+item-wear-take+)
+      (tempus::obj-to-room chest (tempus::in-room-of alice))
+      (tempus::obj-to-obj armor-1 chest)
+      (tempus::interpret-command alice "get armor from chest")
+      (is (equal "You get some plate armor from a treasure chest.~%" (char-output alice)))
+      (is (equal "Alice gets some plate armor from a treasure chest.~%" (char-output bob)))
+      (is (eql alice (tempus::carried-by-of armor-1))))))
 
 (test get-all-from-command
   (with-mock-players (alice bob)
-    (let ((obj-a nil)
-          (obj-b nil)
-          (obj-c nil))
-      (unwind-protect
-           (progn
-             (setf obj-a (make-mock-object "some plate armor"))
-             (setf obj-b (make-mock-object "some plate armor"))
-             (setf obj-c (make-mock-object "a treasure chest"))
-             (setf (tempus::wear-flags-of obj-a) tempus::+item-wear-take+)
-             (setf (tempus::wear-flags-of obj-b) tempus::+item-wear-take+)
-             (tempus::obj-to-room obj-c (tempus::in-room-of alice))
-             (tempus::obj-to-obj obj-a obj-c)
-             (tempus::obj-to-obj obj-b obj-c)
-             (tempus::interpret-command alice "get all.armor from chest")
-             (is (equal "You get some plate armor from a treasure chest. (x2)~%" (char-output alice)))
-             (is (equal "Alice gets some plate armor from a treasure chest. (x2)~%" (char-output bob)))
-             (is (eql alice (tempus::carried-by-of obj-a)))
-             (is (eql alice (tempus::carried-by-of obj-b))))
-        (progn
-          (tempus::extract-obj obj-a)
-          (tempus::extract-obj obj-b)
-          (tempus::extract-obj obj-c))))))
+    (with-mock-objects ((armor-1 "some plate armor")
+                        (armor-2 "some plate armor")
+                        (chest "a treasure chest"))
+      (setf (tempus::wear-flags-of armor-1) tempus::+item-wear-take+)
+      (setf (tempus::wear-flags-of armor-2) tempus::+item-wear-take+)
+      (tempus::obj-to-room chest (tempus::in-room-of alice))
+      (tempus::obj-to-obj armor-1 chest)
+      (tempus::obj-to-obj armor-2 chest)
+      (tempus::interpret-command alice "get all.armor from chest")
+      (is (equal "You get some plate armor from a treasure chest. (x2)~%" (char-output alice)))
+      (is (equal "Alice gets some plate armor from a treasure chest. (x2)~%" (char-output bob)))
+      (is (eql alice (tempus::carried-by-of armor-1)))
+      (is (eql alice (tempus::carried-by-of armor-2))))))
 
 (test inventory-command
   (with-mock-players (alice)
-    (let ((obj nil))
-      (unwind-protect
-           (progn
-             (setf obj (make-mock-object "some plate armor"))
+    (with-mock-objects ((obj "some plate armor"))
              (tempus::obj-to-char obj alice)
              (tempus::interpret-command alice "i")
-             (is (equal "You are carrying:~%some plate armor~%" (char-output alice))))
-        (tempus::extract-obj obj)))))
+             (is (equal "You are carrying:~%some plate armor~%" (char-output alice))))))
 
 (test put-command
   (object-command-test
