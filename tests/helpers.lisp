@@ -81,6 +81,25 @@
     (setf (tempus::line-desc-of obj) (format nil "~:(~a~) is here." name))
     obj))
 
+(defun destroy-mock-object (obj)
+  (tempus::extract-obj obj))
+
+(defmacro with-mock-objects (obj-specifiers &body body)
+  (let ((vars (mapcar #'first obj-specifiers)))
+    `(let ,vars
+       (unwind-protect
+            ,@(loop
+                 for (var name) in obj-specifiers
+                 collect `(setf ,var
+                                (make-mock-object ,name)))
+            ,@body)
+       (handler-case
+           (progn
+             ,@(loop for var in vars
+                    collect `(destroy-mock-object ,var)))
+         (t (err)
+           (fail "Signal caught in unwind-protect: ~a" err))))))
+
 (defmacro with-mock-players (vars &body body)
   `(let ,vars
      (unwind-protect
