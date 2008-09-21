@@ -191,7 +191,6 @@
        :scope zone
        :desc-color #\y
        :text-color #\c
-       :not-on-message "Turn off your noshout flag first!"
        :muted-message "You cannot shout!!")
       (:name "gossip"
        :scope plane
@@ -324,7 +323,8 @@
      (send-to-char ch "~a" (getf chan :muted-message))
      nil)
     ;; Make sure the char is on the channel
-    ((pref-flagged ch (getf chan :deaf-flag))
+    ((let ((flag (getf chan :deaf-flag)))
+           (and flag (pref-flagged ch flag)))
      (send-to-char ch "~a~%" (getf chan :not-on-message))
      nil)
     ;; Afterwards are all restrictions to which immortals and npcs are uncaring
@@ -395,7 +395,9 @@
      target
      (not (or (plr-flagged target +plr-writing+)
               (plr-flagged target +plr-olc+)))
-     (not (pref-flagged target (getf chan :deaf-flag)))
+     (let ((deaf-flag (getf chan :deaf-flag)))
+       (or (not deaf-flag)
+           (not (pref-flagged target deaf-flag))))
      (or (is-npc ch)
          (immortalp ch)
          (immortalp target)
