@@ -234,6 +234,40 @@
              (is (equal "You get some plate armor.~%" (char-output alice))))
         (tempus::extract-obj obj)))))
 
+(test get-gold
+  (with-mock-players (alice)
+    (let ((obj nil))
+      (unwind-protect
+           (progn
+             (setf obj (make-mock-object "a pile of gold"))
+             (setf (tempus::wear-flags-of obj) tempus::+item-wear-take+)
+             (setf (tempus::kind-of obj) tempus::+item-money+)
+             (setf (aref (tempus::value-of obj) 0) 12345)
+             (setf (aref (tempus::value-of obj) 1) 0)
+             (tempus::obj-to-room obj (tempus::in-room-of alice))
+             (tempus::interpret-command alice "get gold")
+             (is (null (tempus::carrying-of alice)))
+             (is (= 12345 (tempus::gold-of alice)))
+             (is (equal "You get a pile of gold.~%There were 12345 coins.~%" (char-output alice))))
+        (tempus::extract-obj obj)))))
+
+(test get-cash
+  (with-mock-players (alice)
+    (let ((obj nil))
+      (unwind-protect
+           (progn
+             (setf obj (make-mock-object "a pile of cash"))
+             (setf (tempus::wear-flags-of obj) tempus::+item-wear-take+)
+             (setf (tempus::kind-of obj) tempus::+item-money+)
+             (setf (aref (tempus::value-of obj) 0) 12345)
+             (setf (aref (tempus::value-of obj) 1) 1)
+             (tempus::obj-to-room obj (tempus::in-room-of alice))
+             (tempus::interpret-command alice "get cash")
+             (is (null (tempus::carrying-of alice)))
+             (is (= 12345 (tempus::cash-of alice)))
+             (is (equal "You get a pile of cash.~%There were 12345 credits.~%" (char-output alice))))
+        (tempus::extract-obj obj)))))
+
 (test get-from-command
   (with-mock-players (alice bob)
     (let ((obj-a nil)
