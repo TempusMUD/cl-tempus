@@ -16,3 +16,16 @@
     (tempus::interpret-command alice "l bob")
     (is (equal "This is bob.~%Bob appears to be a 100 cm tall, 100 pound male human.~%&yBob is in excellent condition.&n~%&n" (char-output alice)))
     (is (equal "Alice looks at you.~%" (char-output bob)))))
+
+(test equipment
+  (with-mock-players (alice)
+    (with-mock-objects ((armor "some plate armor"))
+      (setf (tempus::wear-flags-of armor) tempus::+item-wear-body+)
+      (tempus::equip-char alice armor tempus::+wear-body+ :worn)
+      (tempus::interpret-command alice "eq")
+      (is (equal "You are using:~%&g<on body>        &nsome plate armor~%"
+                 (char-output alice)))
+      (clear-mock-buffers alice)
+      (tempus::interpret-command alice "eq all")
+      (is-true (search "<on head>        Nothing!~%"
+                       (char-output alice))))))

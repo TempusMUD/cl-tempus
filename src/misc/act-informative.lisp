@@ -645,6 +645,50 @@
                 (with-output-to-string (s)
                   (list-char-to-char s (people-of room) ch))))
 
+(defun list-equipment (stream ch mode show-empty-p)
+    (when show-empty-p
+      (format stream "You are using:~%"))
+    (loop
+       with found = nil
+       with pos-array = (case mode
+                         (:equipment (equipment-of ch))
+                         (:tattoos (tattoos-of ch)))
+       with pos-descs = (case mode
+                         (:equipment +eq-pos-descs+)
+                         (:tattoos +tattoo-pos-descs+))
+       for idx from 0 upto +num-wears+
+       as pos = (aref +eq-pos-order+ idx)
+       as obj = (aref pos-array pos)
+       do
+         (cond
+           ((null obj)
+            (when (and show-empty-p (/= pos +wear-ass+))
+              (format stream "~aNothing!~%" (aref pos-descs pos))))
+           ((can-see-object ch obj)
+            (unless (or found show-empty-p)
+              (format stream "You are using:~%"))
+            (setf found t)
+            (format stream "&g~a&n" (aref pos-descs pos))
+            (show-obj-to-char stream obj ch :inv 0))
+           (t
+            (unless (or found show-empty-p)
+              (format stream "You are using:~%"))
+            (setf found t)
+            (format stream "~aSomething" (aref pos-descs pos))))
+       finally
+         (unless (or found show-empty-p)
+           (format stream "You're totally naked!~%"))))
+
+(defcommand (ch "equipment") (:sleeping)
+  (send-to-char ch "~a"
+                (with-output-to-string (s)
+                  (list-equipment s ch :equipment nil))))
+
+(defcommand (ch "equipment" "all") (:sleeping)
+  (send-to-char ch "~a"
+                (with-output-to-string (s)
+                  (list-equipment s ch :equipment t))))
+
 (defun parse-who-args (args)
   (let ((options nil))
     (dolist (term (cl-ppcre:split #/\s+/ args))
