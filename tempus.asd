@@ -77,6 +77,8 @@
                                   :depends-on ("creature"))
              (:file "dyntext" :pathname "dyntext/dyntext"
                               :depends-on ("defs" "utils"))
+             (:file "fight" :pathname "combat/fight"
+                             :depends-on ("defs" "utils"))
              (:file "groups" :pathname "interpreter/groups"
                              :depends-on ("defs" "utils"))
              (:file "handler" :pathname "util/handler"
