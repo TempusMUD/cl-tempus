@@ -267,21 +267,21 @@
    (cur-flow-pulse :accessor cur-flow-pulse-of :initform 0)
    (affected :accessor affected-of :initarg :affected
              :initform (make-array +max-obj-affect+))
-   (name :accessor name-of :initarg :name)
-   (aliases :accessor aliases-of :initarg :aliases)
-   (line-desc :accessor line-desc-of :initarg :line-desc)
-   (action-desc :accessor action-desc-of :initarg :action-desc)
+   (name :accessor name-of :initarg :name :initform nil)
+   (aliases :accessor aliases-of :initarg :aliases :initform nil)
+   (line-desc :accessor line-desc-of :initarg :line-desc :initform nil)
+   (action-desc :accessor action-desc-of :initarg :action-desc :initform nil)
    (plrtext-len :accessor plrtext-len-of :initarg :plrtext-len :initform 0)
    (ex-description :accessor ex-description-of :initarg :ex-description :initform nil)
    (carried-by :accessor carried-by-of :initarg :carried-by :initform nil)
    (worn-by :accessor worn-by-of :initarg :worn-by :initform nil)
    (worn-on :accessor worn-on-of :initarg :worn-on :initform 0)
    (soilage :accessor soilage-of :initarg :soilage :initform 0)
-   (func-data :accessor func-data-of :initarg :func-data)
-   (unique-id :accessor unique-id-of :initarg :unique-id)
-   (creation-time :accessor creation-time-of :initarg :creation-time)
-   (creation-method :accessor creation-method-of :initarg :creation-method)
-   (creator :accessor creator-of :initarg :creator)
+   (func-data :accessor func-data-of :initarg :func-data :initform nil)
+   (unique-id :accessor unique-id-of :initarg :unique-id :initform 0)
+   (creation-time :accessor creation-time-of :initarg :creation-time :initform (now))
+   (creation-method :accessor creation-method-of :initarg :creation-method :initform nil)
+   (creator :accessor creator-of :initarg :creator :initform nil)
    (tmp-affects :accessor tmp-affects-of :initarg :tmp-affects :initform nil)
    (in-obj :accessor in-obj-of :initarg :in-obj :initform nil)
    (contains :accessor contains-of :initarg :contains :initform nil)
@@ -467,3 +467,156 @@
   (aref (value-of obj) 1))
 (defun corpse-idnum (obj)
   (aref (value-of obj) 2))
+
+(defun get-worn-type (obj)
+  (cond
+    ((or (= (worn-on-of obj) -1)
+         (null (worn-by-of obj)))
+     "none")
+    ((eql obj (aref (equipment-of (worn-by-of obj)) (worn-on-of obj)))
+     "equipped")
+    ((eql obj (aref (implants-of (worn-by-of obj)) (worn-on-of obj)))
+     "implanted")
+    ((eql obj (aref (tattoos-of (worn-by-of obj)) (worn-on-of obj)))
+     "tattooed")
+    (t
+     "unknown")))
+
+(defun unserialize-object (container victim room object-node)
+  (let* ((vnum (xml-attr object-node "vnum" :numeric t))
+         (obj (if (plusp vnum)
+                  (read-object vnum)
+                  (make-instance 'obj-data :shared +null-obj-shared+)))
+         (placed nil))
+    (dolist (node (cddr object-node))
+      (when (consp node)
+        (string-case (first node)
+          ("name"
+           (setf (name-of obj) (third node)))
+          ("aliases"
+           (setf (aliases-of obj) (third node)))
+          ("line_desc"
+           (setf (line-desc-of obj) (third node)))
+          ("action_desc"
+           (setf (action-desc-of obj) (third node)))
+          ("extra_desc"
+           (push (make-instance 'extra-descr-data
+                                :keyword (xml-attr node "keywords")
+                                :description (third node))
+                 (ex-description-of obj)))
+          ("points"
+           (setf (kind-of obj) (xml-attr node "type" :numeric t))
+           (setf (soilage-of obj) (xml-attr node "soilage" :numeric t))
+           (setf (weight-of obj) (xml-attr node "weight" :numeric t))
+           (setf (material-of obj) (xml-attr node "material" :numeric t))
+           (setf (timer-of obj) (xml-attr node "timer" :numeric t)))
+          ("tracking"
+           (setf (unique-id-of obj) (xml-attr node "id" :numeric t))
+           (setf (creation-method-of obj) (xml-attr node "method" :numeric t))
+           (setf (creator-of obj) (xml-attr node "creator" :numeric t))
+           (setf (creation-time-of obj) (unix-to-timestamp (xml-attr node "time" :numeric t))))
+          ("damage"
+           (setf (damage-of obj) (xml-attr node "current" :numeric t))
+           (setf (max-dam-of obj) (xml-attr node "max" :numeric t))
+           (setf (sigil-idnum-of obj) (xml-attr node "sigil_id" :numeric t))
+           (setf (sigil-level-of obj) (xml-attr node "sigil_level" :numeric t)))
+          ("flags"
+           (setf (extra-flags-of obj) (xml-attr node "extra" :hex t))
+           (setf (extra2-flags-of obj) (xml-attr node "extra2" :hex t))
+           (setf (extra3-flags-of obj) (xml-attr node "extra3" :hex t)))
+          ("values"
+           (setf (aref (value-of obj) 0) (xml-attr node "v0" :numeric t))
+           (setf (aref (value-of obj) 1) (xml-attr node "v1" :numeric t))
+           (setf (aref (value-of obj) 2) (xml-attr node "v2" :numeric t))
+           (setf (aref (value-of obj) 3) (xml-attr node "v3" :numeric t)))
+          ("affectbits"
+           (setf (aref (bitvector-of obj) 0) (xml-attr node "aff1" :hex t))
+           (setf (aref (bitvector-of obj) 1) (xml-attr node "aff2" :hex t))
+           (setf (aref (bitvector-of obj) 2) (xml-attr node "aff3" :hex t)))
+          ("affect"
+           (let ((idx (position 0 (affected-of obj) :key 'location-of)))
+             (setf (location-of (aref (affected-of obj) idx))
+                   (xml-attr node "location" :numeric t))
+             (setf (modifier-of (aref (affected-of obj) idx))
+                   (xml-attr node "modifier" :numeric t))))
+          ("object"
+           (unserialize-object obj victim room node))
+          ("worn"
+           (setf (wear-flags-of obj) (xml-attr node "possible" :hex t))
+           (let ((position (xml-attr node "pos" :numeric t)))
+             (cond
+               ((string= (xml-attr node "type") "equipped")
+                (equip-char victim obj position :worn))
+               ((string= (xml-attr node "type") "implanted")
+                (equip-char victim obj position :implant))
+               ((string= (xml-attr node "type") "tattooed")
+                (equip-char victim obj position :tattoo))
+               (container
+                (obj-to-obj obj container nil))
+               (victim
+                (obj-to-char obj victim nil))
+               (room
+                (obj-to-room obj room))
+               (t
+                (errlog "Don't know where to put object!"))))
+           (setf placed t)))))
+
+    (unless placed
+      (cond
+        (container
+         (obj-to-obj obj container nil))
+        (victim
+         (obj-to-char obj victim nil))
+        (room
+         (obj-to-room obj room))))
+
+    obj))
+
+
+(defun serialize-object (obj)
+  ;; TODO: unapply temp affects from object
+  `("object"
+    (("vnum" ,(write-to-string (vnum-of (shared-of obj)))))
+    ("name" () ,(name-of obj))
+    ("aliases" () ,(aliases-of obj))
+    ("line_desc" () ,(line-desc-of obj))
+    ,@(loop for desc in (ex-description-of obj)
+           collect `("extra_desc" (("keywords" ,(keyword-of desc)))
+                                ,(description-of desc)))
+    ,@(unless (string= "" (action-desc-of obj))
+            `(("action_desc" () ,(action-desc-of obj))))
+    ("points" (("type" ,(write-to-string (kind-of obj)))
+               ("soilage" ,(write-to-string (soilage-of obj)))
+               ("weight" ,(write-to-string (weight-of obj)))
+               ("material" ,(write-to-string (material-of obj)))
+               ("timer" ,(write-to-string (timer-of obj)))))
+    ("tracking" (("id" ,(write-to-string (unique-id-of obj)))
+               ("method" ,(write-to-string (creation-method-of obj)))
+               ("creator" ,(write-to-string (creator-of obj)))
+               ("time" ,(write-to-string (timestamp-to-unix (creation-time-of obj))))))
+    ("damage" (("current" ,(write-to-string (damage-of obj)))
+               ("max" ,(write-to-string (max-dam-of obj)))
+               ("sigil_id" ,(write-to-string (sigil-idnum-of obj)))
+               ("sigil_level" ,(write-to-string (sigil-level-of obj)))))
+    ("flags" (("extra" ,(write-to-string (extra-flags-of obj) :base 16))
+               ("extra2" ,(write-to-string (extra2-flags-of obj) :base 16))
+               ("extra3" ,(write-to-string (extra3-flags-of obj) :base 16))))
+    ("values" (("v0" ,(write-to-string (aref (value-of obj) 0)))
+               ("v1" ,(write-to-string (aref (value-of obj) 1)))
+               ("v2" ,(write-to-string (aref (value-of obj) 2)))
+               ("v3" ,(write-to-string (aref (value-of obj) 3)))))
+    ("affectbits" (("aff1" ,(write-to-string (aref (bitvector-of obj) 0)))
+                   ("aff2" ,(write-to-string (aref (bitvector-of obj) 1)))
+                   ("aff3" ,(write-to-string (aref (bitvector-of obj) 2)))))
+    ,@(loop for aff across (affected-of obj)
+           when (plusp (location-of aff))
+           collect `("affect" (("modifier" ,(write-to-string (modifier-of aff)))
+                               ("location" ,(write-to-string (location-of aff))))))
+    ,@(mapcar 'serialize-object (contains-of obj))
+    ;; Intentionally last since reading this propery in load-from-xml causes
+    ;; the eq to be worn on the character
+    ("worn" (("possible" ,(write-to-string (wear-flags-of obj)))
+             ("pos" ,(write-to-string (worn-on-of obj)))
+             ("type" ,(get-worn-type obj)))))
+  ;; TODO: reapply temp affects from object
+  )

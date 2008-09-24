@@ -81,9 +81,14 @@
                          "You now hear the hollering."))
 
 
+(defcommand (ch "save") ()
+  (save-player-to-xml ch)
+  (send-to-char ch "Saved.~%"))
+
 (defcommand (ch "quit") ()
   (char-from-room ch)
   (setf *characters* (delete ch *characters*))
+  (save-player-to-xml ch)
   (setf (state-of (link-of ch)) 'main-menu))
 
 (defcommand (ch "title") ()

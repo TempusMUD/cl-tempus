@@ -219,8 +219,7 @@
   (act player :place-emit "$n enter$% the game.")
 
   (setf (load-room-of player) nil)
-#+nil  (dolist (equip (load-equipment (idnum-of player)))
-	(item-to-actor equip player))
+  (unrent player)
   (unless (plusp (hitp-of player))
 	(setf (hitp-of player) 1))
   (push player *characters*)
