@@ -154,7 +154,8 @@
                 ,@(map 'list 'serialize-object
                        (remove-if-not #'identity (implants-of ch)))
                 ,@(map 'list 'serialize-object
-                       (remove-if-not #'identity (tattoos-of ch)))))
+                       (remove-if-not #'identity (tattoos-of ch))))
+      :indent t)
      ouf)))
 
 (defun save-player-to-xml (ch)

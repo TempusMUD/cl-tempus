@@ -605,9 +605,9 @@
                ("v1" ,(write-to-string (aref (value-of obj) 1)))
                ("v2" ,(write-to-string (aref (value-of obj) 2)))
                ("v3" ,(write-to-string (aref (value-of obj) 3)))))
-    ("affectbits" (("aff1" ,(write-to-string (aref (bitvector-of obj) 0)))
-                   ("aff2" ,(write-to-string (aref (bitvector-of obj) 1)))
-                   ("aff3" ,(write-to-string (aref (bitvector-of obj) 2)))))
+    ("affectbits" (("aff1" ,(write-to-string (aref (bitvector-of obj) 0) :base 16))
+                   ("aff2" ,(write-to-string (aref (bitvector-of obj) 1) :base 16))
+                   ("aff3" ,(write-to-string (aref (bitvector-of obj) 2) :base 16))))
     ,@(loop for aff across (affected-of obj)
            when (plusp (location-of aff))
            collect `("affect" (("modifier" ,(write-to-string (modifier-of aff)))
@@ -615,7 +615,7 @@
     ,@(mapcar 'serialize-object (contains-of obj))
     ;; Intentionally last since reading this propery in load-from-xml causes
     ;; the eq to be worn on the character
-    ("worn" (("possible" ,(write-to-string (wear-flags-of obj)))
+    ("worn" (("possible" ,(write-to-string (wear-flags-of obj) :base 16))
              ("pos" ,(write-to-string (worn-on-of obj)))
              ("type" ,(get-worn-type obj)))))
   ;; TODO: reapply temp affects from object
