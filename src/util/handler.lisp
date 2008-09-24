@@ -584,7 +584,7 @@
   (affect-total ch))
 
 (defun unequip-char (ch pos mode disable-checks)
-  (assert (< 0 pos +num-wears+) nil "Illegal pos in unequip-char")
+  (assert (<= 0 pos (1- +num-wears+)) nil "Illegal pos in unequip-char")
   (let ((obj nil))
     (ecase mode
       (:worn
@@ -634,6 +634,52 @@
                     +wear-wield+ :worn)))
 
     obj))
+
+(defun check-eq-align (ch)
+  (unless (and (in-room-of ch) (not (immortalp ch)))
+    (dotimes (pos +num-wears+)
+      (let ((obj (aref (equipment-of ch) pos))
+            (implant (aref (implants-of ch) pos)))
+        (when (and implant
+                   (or (and (is-good ch) (is-obj-stat implant +item-damned+))
+                       (and (is-evil ch) (is-obj-stat implant +item-bless+))))
+          (obj-to-char (unequip-char ch pos :implant nil) ch)
+          (act ch :item implant
+               :subject-emit "$p burns its way out through your flesh!"
+               :place-emit "$n screams in horror as $p burns its way out through $s flesh!")
+          (damage-eq nil implant (floor (damage-of obj) 2))
+          (damage ch ch (dice (floor
+                               (cond
+                                 ((= pos +wear-body+)
+                                  (* 2 (abs (alignment-of ch))))
+                                 ((= pos +wear-head+)
+                                  (* 2 (abs (alignment-of ch))))
+                                 (t
+                                  (abs (alignment-of ch))))
+                               8)
+                              3)
+                  +top-spell-define+
+                  pos))
+        (when (and obj
+                   (or (and (is-good ch) (is-obj-stat obj +item-damned+))
+                       (and (is-evil ch) (is-obj-stat obj +item-bless+))))
+          (act ch :item obj
+               :subject-emit "You are burned by $p and frantically take it off!"
+               :place-emit "$n franctically takes off $p as $e screams in agony!")
+          (obj-to-char (unequip-char ch pos :worn nil) ch)
+          (damage ch ch (dice (max (floor (abs (alignment-of ch)) 32) 1) 2)
+                  +top-spell-define+ pos))
+        (when (and obj
+                   (or (and (is-evil ch) (is-obj-stat obj +item-anti-evil+))
+                       (and (is-good ch) (is-obj-stat obj +item-anti-good+))
+                       (and (is-neutral ch) (is-obj-stat obj +item-anti-neutral+))))
+          (act ch :item obj
+               :subject-emit "You are zapped by $p and instantly let go of it."
+               :place-emit "$n is zapped by $p and instantly lets go of it.")
+          (obj-to-char (unequip-char ch pos :worn nil) ch)
+          (when (is-npc ch)
+            (obj-from-char obj)
+            (obj-to-room obj (in-room-of ch))))))))
 
 (defun extract-obj (obj)
   "Extract an object from the world"

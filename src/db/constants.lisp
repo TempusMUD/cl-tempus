@@ -1069,61 +1069,196 @@
                 +item-wear-ear+ +item-wear-wield+ +item-wear-ass+)
           'vector))
 
+(defparameter +wear-eq-positions+
+  (list (cons +item-wear-finger+ +wear-finger-r+)
+        (cons +item-wear-neck+ +wear-neck-1+)
+        (cons +item-wear-body+ +wear-body+)
+        (cons +item-wear-head+ +wear-head+)
+        (cons +item-wear-legs+ +wear-legs+)
+        (cons +item-wear-feet+ +wear-feet+)
+        (cons +item-wear-hands+ +wear-hands+)
+        (cons +item-wear-arms+ +wear-arms+)
+        (cons +item-wear-shield+ +wear-shield+)
+        (cons +item-wear-about+ +wear-about+)
+        (cons +item-wear-waist+ +wear-waist+)
+        (cons +item-wear-wrist+ +wear-wrist-r+)
+        (cons +item-wear-crotch+ +wear-crotch+)
+        (cons +item-wear-eyes+ +wear-eyes+)
+        (cons +item-wear-back+ +wear-back+)
+        (cons +item-wear-belt+ +wear-belt+)
+        (cons +item-wear-face+ +wear-face+)
+        (cons +item-wear-ear+ +wear-ear-l+)
+        (cons +item-wear-ass+ +wear-ass+)))
+
+(defparameter +wear-keywords+
+  #("!RESERVED! (light)"
+	"finger"
+	"!RESERVED! (finger)"
+	"neck"
+	"!RESERVED! (neck)"
+	"body"
+	"head"
+	"legs"
+	"feet"
+	"hands"
+	"arms"
+	"shield"
+	"about"
+	"waist"
+	"wrist"
+	"!RESERVED! (wrist)"
+	"!RESERVED! (wield)"
+	"!RESERVED! (hold)"
+	"crotch"
+	"eyes"
+	"back"
+	"belt"
+	"face"
+	"ear"
+	"!RESERVED! (ear)"
+	"WIELD 2"
+	"ass"))
+
+
 (defparameter +eq-pos-descs+
-  (coerce '("<as light>       "
-            "<on finger>      "
-            "<on finger>      "
-            "<around neck>    "
-            "<around neck>    "
-            "<on body>        "
-            "<on head>        "
-            "<on legs>        "
-            "<on feet>        "
-            "<on hands>       "
-            "<on arms>        "
-            "<as shield>      "
-            "<about body>     "
-            "<about waist>    "
-            "<around wrist>   "
-            "<around wrist>   "
-            "<wielded>        "
-            "<held>           "
-            "<on crotch>      "
-            "<on eyes>        "
-            "<on back>        "
-            "<on belt>        "
-            "<on face>        "
-            "<on left ear>    "
-            "<on right ear>   "
-            "<second wielded> "
-            "<stuck up ass>   ") 'vector))
+  #("<as light>       "
+    "<on finger>      "
+    "<on finger>      "
+    "<around neck>    "
+    "<around neck>    "
+    "<on body>        "
+    "<on head>        "
+    "<on legs>        "
+    "<on feet>        "
+    "<on hands>       "
+    "<on arms>        "
+    "<as shield>      "
+    "<about body>     "
+    "<about waist>    "
+    "<around wrist>   "
+    "<around wrist>   "
+    "<wielded>        "
+    "<held>           "
+    "<on crotch>      "
+    "<on eyes>        "
+    "<on back>        "
+    "<on belt>        "
+    "<on face>        "
+    "<on left ear>    "
+    "<on right ear>   "
+    "<second wielded> "
+    "<stuck up ass>   "))
 
 (defparameter +tattoo-pos-descs+
-  (coerce '("<INVALID>        "
-            "<INVALID>        "
-            "<INVALID>        "
-            "<on neck>        "
-            "<INVALID>        "
-            "<on chest>       "
-            "<on scalp>       "
-            "<on legs>        "
-            "<on feet>        "
-            "<on hands>       "
-            "<on arms>        "
-            "<INVALID>        "
-            "<INVALID>        "
-            "<about waist>    "
-            "<around wrist>   "
-            "<around wrist>   "
-            "<INVALID>        "
-            "<INVALID>        "
-            "<around crotch>  "
-            "<INVALID>        "
-            "<on back>        "
-            "<INVALID>        "
-            "<on face>        "
-            "<on left ear>    "
-            "<on right ear>   "
-            "<INVALID>        "
-            "<on buttocks>    ") 'vector))
+  #("<INVALID>        "
+    "<INVALID>        "
+    "<INVALID>        "
+    "<on neck>        "
+    "<INVALID>        "
+    "<on chest>       "
+    "<on scalp>       "
+    "<on legs>        "
+    "<on feet>        "
+    "<on hands>       "
+    "<on arms>        "
+    "<INVALID>        "
+    "<INVALID>        "
+    "<about waist>    "
+    "<around wrist>   "
+    "<around wrist>   "
+    "<INVALID>        "
+    "<INVALID>        "
+    "<around crotch>  "
+    "<INVALID>        "
+    "<on back>        "
+    "<INVALID>        "
+    "<on face>        "
+    "<on left ear>    "
+    "<on right ear>   "
+    "<INVALID>        "
+    "<on buttocks>    "))
 
+(defparameter +already-wearing+
+  #("You're already using a light."
+    "YOU SHOULD NEVER SEE THIS MESSAGE.  PLEASE REPORT."
+    "You're already wearing something on both of your ring fingers."
+    "YOU SHOULD NEVER SEE THIS MESSAGE.  PLEASE REPORT."
+    "You can't wear anything else around your neck."
+    "You're already wearing something on your body."
+    "You're already wearing something on your head."
+    "You're already wearing something on your legs."
+    "You're already wearing something on your feet."
+    "You're already wearing something on your hands."
+    "You're already wearing something on your arms."
+    "You're already using a shield."
+    "You're already wearing something about your body."
+    "You already have something around your waist."
+    "YOU SHOULD NEVER SEE THIS MESSAGE.  PLEASE REPORT."
+    "You're already wearing something around both of your wrists."
+    "You're already wielding a weapon."
+    "You're already holding something."
+    "You've already got something on your crotch."
+    "You already have something on your eyes."
+    "You already have something on your back."
+    "There is already something attached to your belt."
+    "You are already wearing something on your face."
+    "YOU SHOULD NEVER SEE THIS MESSAGE.  PLEASE REPORT."
+    "You are wearing something in both ears already."
+    "You are already wielding something in your off hand."
+    "You already have something stuck up yer butt!"))
+
+(defparameter +wear-messages+
+  #2A(("$n lights $p and holds it."
+       "You light $p and hold it.")
+      ("$n slides $p on to $s right ring finger."
+       "You slide $p on to your right ring finger.")
+      ("$n slides $p on to $s left ring finger."
+       "You slide $p on to your left ring finger.")
+      ("$n wears $p around $s neck."
+       "You wear $p around your neck.")
+      ("$n wears $p around $s neck."
+       "You wear $p around your neck.")
+      ("$n wears $p on $s body."
+       "You wear $p on your body.")
+      ("$n wears $p on $s head."
+       "You wear $p on your head.")
+      ("$n puts $p on $s legs."
+       "You put $p on your legs.")
+      ("$n wears $p on $s feet."
+       "You wear $p on your feet.")
+      ("$n puts $p on $s hands."
+       "You put $p on your hands.")
+      ("$n wears $p on $s arms."
+       "You wear $p on your arms.")
+      ("$n straps $p around $s arm as a shield."
+       "You start to use $p as a shield.")
+      ("$n wears $p about $s body."
+       "You wear $p around your body.")
+      ("$n wears $p around $s waist."
+       "You wear $p around your waist.")
+      ("$n puts $p around $s right wrist."
+       "You put $p around your right wrist.")
+      ("$n puts $p around $s left wrist."
+       "You put $p around your left wrist.")
+      ("$n wields $p."
+       "You wield $p.")
+      ("$n grabs $p."
+       "You grab $p.")
+      ("$n puts $p on $s crotch."
+       "You put $p on your crotch.")
+      ("$n puts $p on $s eyes."
+       "You put $p on your eyes.")
+      ("$n wears $p on $s back."
+       "You wear $p on your back.")
+      ("$n attaches $p to $s belt."
+       "You attach $p to your belt.")
+      ("$n wears $p on $s face."
+       "You wear $p on your face.")
+      ("$n puts $p in $s left ear lobe."
+       "You wear $p in your left ear.")
+      ("$n puts $p in $s right ear lobe."
+       "You wear $p in your right ear.")
+      ("$n wields $p in $s off hand."
+       "You wield $p in your off hand.")
+      ("$n RAMS $p up $s ass!!!"
+       "You RAM $p up your ass!!!")))

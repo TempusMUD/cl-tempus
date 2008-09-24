@@ -293,6 +293,95 @@
      (extract-obj obj)))
   t)
 
+(defun perform-wear (ch obj pos)
+  (cond
+    ((is-animal ch)
+     (send-to-char ch "Animals don't wear things.~%"))
+    ((not (can-wear obj (aref +wear-bitvectors+ pos)))
+     (act ch :item obj
+          :subject-emit "You can't wear $p there."))
+    ((or (and (is-implant obj) (/= pos +wear-hold+))
+         (is-obj-kind obj +item-tattoo+))
+     (act ch :item obj
+          :subject-emit "You cannot wear $p."))
+    ((and (or (= pos +wear-finger-r+)
+              (= pos +wear-neck-1+)
+              (= pos +wear-wrist-r+)
+              (= pos +wear-ear-l+))
+          (aref (equipment-of ch) pos))
+     (perform-wear ch obj (1+ pos)))
+    ((aref (equipment-of ch) pos)
+     (send-to-char ch "~a~%" (aref +already-wearing+ pos)))
+    ((and (= pos +wear-belt+)
+          (null (aref (equipment-of ch) +wear-waist+)))
+     (act ch :item obj
+          :subject-emit "You need to be WEARING a belt to put $p on it."))
+    ((and (= pos +wear-hands+)
+          (is-obj-stat2 obj +item2-two-handed+)
+          (aref (equipment-of ch) +wear-wield+))
+     (act ch :item obj
+          :subject-emit "You can't be using your hands for anything else to use $p."))
+    ((and (= pos +wear-shield+)
+          (> (weight-of obj) (* 1.5 (getf (aref +str-app+
+                                                (strength-apply-index ch))
+                                          :wield-w))))
+     (send-to-char ch "It's too damn heavy.~%"))
+    ((and (not (approvedp obj))
+          (not (immortal-level-p ch)))
+     (act ch :item obj
+          :subject-emit "$p has not been approved for mortal use."))
+    ((and (is-obj-stat2 obj +item2-broken+)
+          (not (immortalp ch)))
+     (act ch :item obj
+          :subject-emit "$p is broken and unusable until it is repaired."))
+    ((and (or (= pos +wear-wield+) (= pos +wear-wield-2+))
+          (not (is-obj-kind obj +item-weapon+))
+          (not (is-obj-kind obj +item-energy-gun+))
+          (not (is-obj-kind obj +item-gun+)))
+     (send-to-char ch "You cannot wield non-weapons.~%"))
+    ((and (not (is-npc ch))
+          (not (zerop (owner-id-of (shared-of obj))))
+          (/= (owner-id-of (shared-of obj)) (idnum-of ch)))
+     (act ch :item obj :subject-emit "You may not use $p."))
+    ((and (is-obj-stat2 obj +item2-no-mort+)
+          (not (is-remort ch))
+          (not (immortalp ch)))
+     (act ch :item obj
+          :subject-emit "You feel a strange sensation as you attempt to use $p."))
+    ((and (is-obj-stat2 obj +item2-req-mort+)
+          (is-remort ch)
+          (not (immortalp ch)))
+     (act ch :item obj
+          :subject-emit "You feel a strange sensation as you attempt to use $p."))
+    ((and (is-obj-stat2 obj +item2-singular+)
+          (find (vnum-of obj) (remove nil (equipment-of ch)) :key 'vnum-of))
+     (act ch :item obj
+          :subject-emit "You cannot use more than one of $p."))
+    ((and (is-obj-stat2 obj +item2-godeq+)
+          (not (immortal-level-p ch)))
+     (act ch :item obj
+          :subject-emit "$p swiftly leaps off your body into your hands."))
+    (t
+     (act ch :item obj
+          :subject-emit (aref +wear-messages+ pos 1)
+          :place-emit (aref +wear-messages+ pos 0))
+     (when (and (action-desc-of obj)
+                (or (is-obj-kind obj +item-worn+)
+                    (is-obj-kind obj +item-armor+)
+                    (is-obj-kind obj +item-weapon+)))
+       (act ch :item obj
+            :subject-emit (action-desc-of obj)))
+     (obj-from-char obj)
+     (equip-char ch obj pos :worn)
+     (check-eq-align ch))))
+
+(defun find-eq-pos (ch obj arg)
+  (cond
+    (t
+     (cdr (find-if (lambda (tuple) (can-wear obj (car tuple)))
+                   +wear-eq-positions+)))))
+
+
 (defcommand (ch "get") (:resting)
   (send-to-char ch "Get what?~%"))
 
@@ -421,3 +510,53 @@
        (send-to-char ch "You don't seem to be carrying anything.~%"))
       (t
        (send-to-char ch "You don't seem to have any ~as.~%" thing)))))
+
+(defcommand (ch "wear") (:resting)
+  (send-to-char ch "What do you want to wear?~%"))
+
+(defcommand (ch "wear" thing) (:resting)
+  (let* ((objs (get-matching-objects ch thing (carrying-of ch)))
+         (wear-objs (delete nil
+                            (mapcar (lambda (obj)
+                                      (let ((pos (find-eq-pos ch obj nil)))
+                                        (when pos
+                                          (cons obj pos))))
+                                    objs))))
+    (cond
+      ((null objs)
+       (case (find-all-dots thing)
+         (:find-all
+          (send-to-char ch "You aren't carrying anything.~%"))
+         (:find-alldot
+          (send-to-char ch "You don't seem to have any '~a'.~%"
+                        thing))
+         (:find-indiv
+          (send-to-char ch "You don't seem to have ~a ~a.~%"
+                        (a-or-an thing) thing))))
+      ((null wear-objs)
+       (case (find-all-dots thing)
+         (:find-all
+          (send-to-char ch "You don't seem to have anything wearable.~%"))
+         (:find-alldot
+          (send-to-char ch "You don't seem to have any wearable '~a'.~%"
+                        thing))
+         (:find-indiv
+          (act ch :item (first objs)
+               :subject-emit "You can't wear $p."))))
+      (t
+       (dolist (tuple wear-objs)
+         (perform-wear ch (car tuple) (cdr tuple)))))))
+
+(defcommand (ch "wear" thing "on" pos-str) (:resting)
+    (let ((pos (position pos-str +wear-keywords+ :test #'string-abbrev))
+          (objs (get-matching-objects ch thing (carrying-of ch))))
+      (cond
+        ((null objs)
+         (send-to-char "You don't seem to have any '~a'.~%"
+                       thing))
+        ((> (length objs) 1)
+         (send-to-char "You can't wear more than one item on a position.~%"))
+        ((null pos)
+         (send-to-char ch "'~a'?  What part of your body is THAT?~%" pos-str))
+        (t
+         (perform-wear ch (car objs) pos)))))

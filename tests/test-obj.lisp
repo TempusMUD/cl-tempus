@@ -120,8 +120,13 @@
      (with-mock-objects ((armor-1 "some plate armor")
                          (armor-2 "some plate armor")
                          (chest "a treasure chest"))
-       (setf (tempus::wear-flags-of armor-1) tempus::+item-wear-take+)
-       (setf (tempus::wear-flags-of armor-2) tempus::+item-wear-take+)
+       (setf (tempus::sex-of alice) 'tempus::female)
+       (setf (tempus::wear-flags-of armor-1) (logior
+                                              tempus::+item-wear-take+
+                                              tempus::+item-wear-body+))
+       (setf (tempus::wear-flags-of armor-2) (logior
+                                              tempus::+item-wear-take+
+                                              tempus::+item-wear-body+))
        (macrolet ((do-cmd (command-str)
                     `(tempus::interpret-command alice ,command-str))
                   (self-emit-is (emit-str)
@@ -323,15 +328,50 @@
           (logior (tempus::extra-flags-of armor-1) tempus::+item-nodrop+))
     (do-cmd "drop armor")
     (self-emit-is "You can't drop some plate armor, it must be CURSED!~%")
-    (is (eql alice (tempus::carried-by-of armor-1)))))
-
-(test drop-command-cursed-imm
-  (object-command-test
-    (tempus::obj-to-char armor-2 alice)
-    (tempus::obj-to-char armor-1 alice)
+    (is (eql alice (tempus::carried-by-of armor-1)))
+    ;; Check immortal drop
+    (clear-mock-buffers alice bob)
     (setf (tempus::level-of alice) 70)
-    (setf (tempus::extra-flags-of armor-1)
-          (logior (tempus::extra-flags-of armor-1) tempus::+item-nodrop+))
     (do-cmd "drop armor")
     (self-emit-is "You peel some plate armor off your hand...~%You drop some plate armor.~%")
     (is (eql (tempus::in-room-of alice) (tempus::in-room-of armor-1)))))
+
+(test wear-command
+  (object-command-test
+    (tempus::obj-to-char armor-2 alice)
+    (tempus::obj-to-char armor-1 alice)
+    (do-cmd "wear armor")
+    (self-emit-is "You wear some plate armor on your body.~%")
+    (other-emit-is "Alice wears some plate armor on her body.~%")
+    (is (null (tempus::carried-by-of armor-1)))
+    (is (not (member armor-1 (tempus::carrying-of alice))))
+    (is (eql alice (tempus::worn-by-of armor-1)))
+    (is (eql tempus::+wear-body+ (tempus::worn-on-of armor-1)))
+    (is (eql armor-1 (aref (tempus::equipment-of alice) tempus::+wear-body+)))
+    (clear-mock-buffers alice bob)
+    (do-cmd "wear armor")
+    (self-emit-is "You're already wearing something on your body.~%")))
+
+(test wear-command-failure
+  (object-command-test
+    (tempus::obj-to-char armor-1 alice)
+    (setf (tempus::wear-flags-of armor-1) tempus::+item-wear-hold+)
+    (do-cmd "wear armor")
+    (self-emit-is "You can't wear some plate armor.~%")))
+
+(test wear-command-on-pos
+  (object-command-test
+    (tempus::obj-to-char armor-2 alice)
+    (tempus::obj-to-char armor-1 alice)
+    (do-cmd "wear armor on body")
+    (self-emit-is "You wear some plate armor on your body.~%")
+    (other-emit-is "Alice wears some plate armor on her body.~%")
+    (is (null (tempus::carried-by-of armor-1)))
+    (is (not (member armor-1 (tempus::carrying-of alice))))
+    (is (eql alice (tempus::worn-by-of armor-1)))
+    (is (eql tempus::+wear-body+ (tempus::worn-on-of armor-1)))
+    (is (eql armor-1 (aref (tempus::equipment-of alice) tempus::+wear-body+)))
+    (clear-mock-buffers alice bob)
+    (do-cmd "wear armor on eyes")
+    (self-emit-is "You can't wear some plate armor there.~%")))
+
