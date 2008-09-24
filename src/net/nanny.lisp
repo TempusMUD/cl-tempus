@@ -187,7 +187,7 @@
 
 (defun equipment-pathname (idnum)
   (make-pathname :name (princ-to-string idnum)
-				 :type "equip"
+				 :type "dat"
 				 :defaults (tempus-path (format nil "lib/players/equipment/~d/"
 										  (mod idnum 10)))))
 
