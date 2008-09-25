@@ -375,12 +375,31 @@
      (equip-char ch obj pos :worn)
      (check-eq-align ch))))
 
-(defun find-eq-pos (ch obj arg)
-  (cond
-    (t
-     (cdr (find-if (lambda (tuple) (can-wear obj (car tuple)))
-                   +wear-eq-positions+)))))
-
+(defun perform-remove (ch pos)
+  (let ((obj (aref (equipment-of ch) pos)))
+    (assert obj nil "Bad pos passed to perform-remove")
+    (cond
+      ((>= (carry-items-of ch) (can-carry-items ch))
+       (act ch :item obj :subject-emit "$p: you can't carry that many items!"))
+      ((and (= (position-of ch) +pos-flying+)
+            (is-obj-kind obj +item-wings+)
+            (not (aff-flagged ch +aff-inflight+)))
+       (act ch :item obj :subject-emit "$p: you probably shouldn't remove those while flying!"))
+      ((is-obj-kind obj +item-tattoo+)
+       (act ch :item obj :subject-emit "$p: you must have this removed by a professional."))
+      ((and (is-obj-stat2 obj +item2-noremove+)
+            (not (immortalp ch)))
+       (act ch :item obj :subject-emit "$p: you cannot convince yourself to stop using it."))
+      (t
+       (if (and (= (worn-on-of obj) +wear-wield+)
+                (aref (equipment-of ch) +wear-wield-2+))
+           (act ch
+                :item obj
+                :target-item (aref (equipment-of ch) +wear-wield-2+)
+                :all-emit "$n stop$% using $p and wield$% $P.")
+           (act ch :item obj
+                :all-emit "$n stop$% using $p."))
+       (obj-to-char (unequip-char ch (worn-on-of obj) :worn nil) ch)))))
 
 (defcommand (ch "get") (:resting)
   (send-to-char ch "Get what?~%"))
@@ -560,3 +579,41 @@
          (send-to-char ch "'~a'?  What part of your body is THAT?~%" pos-str))
         (t
          (perform-wear ch (car objs) pos)))))
+
+(defcommand (ch "remove") (:resting)
+  (send-to-char ch "Remove what?~%"))
+
+(defcommand (ch "remove" thing) (:resting)
+  (let* ((objs (get-matching-objects ch thing
+                                     (coerce (remove nil (equipment-of ch)) 'list))))
+    (cond
+      ((and (aff3-flagged ch +aff3-attraction-field+)
+            (not (pref-flagged ch +pref-nohassle+)))
+       (send-to-char ch "You cannot remove anything while generating an attraction field!"))
+      ((null objs)
+       (case (find-all-dots thing)
+         (:find-all
+          (send-to-char ch "You're not using anything.~%"))
+         (:find-alldot
+          (send-to-char ch "You don't seem to be using any ~as.~%"
+                        thing))
+         (:find-indiv
+          (send-to-char ch "You don't seem to have ~a ~a.~%"
+                        (a-or-an thing) thing))))
+      (t
+       (dolist (obj objs)
+         (perform-remove ch (worn-on-of obj)))))))
+
+(defcommand (ch "remove" thing "from" pos-str) (:resting)
+  (let* ((pos (position pos-str +wear-keywords+ :test #'string-abbrev))
+         (obj (when pos (aref (equipment-of ch) pos))))
+    (cond
+      ((null pos)
+       (send-to-char ch "'~a'?  What part of your body is THAT?~%" pos-str))
+      ((null obj)
+       (send-to-char ch "You aren't wearing anything there.~%"))
+      ((not (is-name thing (aliases-of obj)))
+       (send-to-char ch "You aren't wearing ~a ~a there.~%"
+                     (a-or-an thing) thing))
+      (t
+       (perform-remove ch pos)))))

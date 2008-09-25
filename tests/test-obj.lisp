@@ -385,3 +385,27 @@
     (do-cmd "wear armor on foo")
     (self-emit-is "'foo'?  What part of your body is THAT?~%")))
 
+
+(test remove-command
+  (object-command-test
+    (tempus::equip-char alice armor-1 tempus::+wear-body+ :worn)
+    (do-cmd "remove armor")
+    (self-emit-is "You stop using some plate armor.~%")
+    (other-emit-is "Alice stops using some plate armor.~%")
+    (is (null (tempus::worn-by-of armor-1)))
+    (is (equal (list armor-1) (tempus::carrying-of alice)))))
+
+(test remove-command-from-pos
+  (object-command-test
+    (tempus::equip-char alice armor-1 tempus::+wear-body+ :worn)
+    (do-cmd "remove earring from body")
+    (self-emit-is "You aren't wearing an earring there.~%")
+    (clear-mock-buffers alice)
+    (do-cmd "remove armor from body")
+    (self-emit-is "You stop using some plate armor.~%")
+    (other-emit-is "Alice stops using some plate armor.~%")
+    (is (null (tempus::worn-by-of armor-1)))
+    (is (equal (list armor-1) (tempus::carrying-of alice)))
+    (clear-mock-buffers alice)
+    (do-cmd "remove armor from arms")
+    (self-emit-is "You aren't wearing anything there.~%")))
