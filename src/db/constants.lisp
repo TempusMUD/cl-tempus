@@ -809,6 +809,540 @@
 (defparameter +soil-char+ (ash 1 16))
 (defparameter +top-soil+ 17)
 
+;;; PC char_classes
+(defparameter +class-help+ -2)
+(defparameter +class-undefined+ -1)
+(defparameter +class-none+ -1)
+(defparameter +class-magic-user+ 0)
+(defparameter +class-mage+ +class-magic-user+)
+(defparameter +class-cleric+ 1)
+(defparameter +class-thief+ 2)
+(defparameter +class-warrior+ 3)
+(defparameter +class-barb+ 4)
+(defparameter +class-psionic+ 5)	; F
+(defparameter +class-physic+ 6)	; F
+(defparameter +class-cyborg+ 7)	; F
+(defparameter +class-knight+ 8)
+(defparameter +class-ranger+ 9)
+(defparameter +class-bard+ 10)	; N
+(defparameter +class-monk+ 11)
+(defparameter +class-vampire+ 12)
+(defparameter +class-mercenary+ 13)
+(defparameter +class-spare1+ 14)
+(defparameter +class-spare2+ 15)
+(defparameter +class-spare3+ 16)
+
+(defparameter +num-classes+ 17)	; This must be the number of char_classes!!
+(defparameter +class-normal+ 50)
+(defparameter +class-bird+ 51)
+(defparameter +class-predator+ 52)
+(defparameter +class-snake+ 53)
+(defparameter +class-horse+ 54)
+(defparameter +class-small+ 55)
+(defparameter +class-medium+ 56)
+(defparameter +class-large+ 57)
+(defparameter +class-scientist+ 58)
+(defparameter +class-skeleton+ 60)
+(defparameter +class-ghoul+ 61)
+(defparameter +class-shadow+ 62)
+(defparameter +class-wight+ 63)
+(defparameter +class-wraith+ 64)
+(defparameter +class-mummy+ 65)
+(defparameter +class-spectre+ 66)
+(defparameter +class-npc-vampire+ 67)
+(defparameter +class-ghost+ 68)
+(defparameter +class-lich+ 69)
+(defparameter +class-zombie+ 70)
+
+(defparameter +class-earth+ 81)	; Elementals
+(defparameter +class-fire+ 82)
+(defparameter +class-water+ 83)
+(defparameter +class-air+ 84)
+(defparameter +class-lightning+ 85)
+(defparameter +class-green+ 91)	; Dragons
+(defparameter +class-white+ 92)
+(defparameter +class-black+ 93)
+(defparameter +class-blue+ 94)
+(defparameter +class-red+ 95)
+(defparameter +class-silver+ 96)
+(defparameter +class-shadow-d+ 97)
+(defparameter +class-deep+ 98)
+(defparameter +class-turtle+ 99)
+(defparameter +class-least+ 101)	; Devils
+(defparameter +class-lesser+ 102)
+(defparameter +class-greater+ 103)
+(defparameter +class-duke+ 104)
+(defparameter +class-arch+ 105)
+(defparameter +class-hill+ 111)
+(defparameter +class-stone+ 112)
+(defparameter +class-frost+ 113)
+(defparameter +class-fire-g+ 114)
+(defparameter +class-cloud+ 115)
+(defparameter +class-storm+ 116)
+(defparameter +class-slaad-red+ 120)	; Slaad
+(defparameter +class-slaad-blue+ 121)
+(defparameter +class-slaad-green+ 122)
+(defparameter +class-slaad-grey+ 123)
+(defparameter +class-slaad-death+ 124)
+(defparameter +class-slaad-lord+ 125)
+(defparameter +class-demon-i+ 130)	; Demons of the Abyss
+(defparameter +class-demon-ii+ 131)
+(defparameter +class-demon-iii+ 132)
+(defparameter +class-demon-iv+ 133)
+(defparameter +class-demon-v+ 134)
+(defparameter +class-demon-vi+ 135)
+(defparameter +class-demon-semi+ 136)
+(defparameter +class-demon-minor+ 137)
+(defparameter +class-demon-major+ 138)
+(defparameter +class-demon-lord+ 139)
+(defparameter +class-demon-prince+ 140)
+(defparameter +class-deva-astral+ 150)
+(defparameter +class-deva-monadic+ 151)
+(defparameter +class-deva-movanic+ 152)
+(defparameter +class-mephit-fire+ 160)
+(defparameter +class-mephit-lava+ 161)
+(defparameter +class-mephit-smoke+ 162)
+(defparameter +class-mephit-steam+ 163)
+(defparameter +class-daemon-arcana+ 170)	// daemons
+(defparameter +class-daemon-charona+ 171)
+(defparameter +class-daemon-dergho+ 172)
+(defparameter +class-daemon-hydro+ 173)
+(defparameter +class-daemon-pisco+ 174)
+(defparameter +class-daemon-ultro+ 175)
+(defparameter +class-daemon-yagno+ 176)
+(defparameter +class-daemon-pyro+ 177)
+(defparameter +class-godling+ 178)
+(defparameter +class-diety+ 179)
+
+(defparameter +top-class+ 180)
+
+(defparameter +race-human+ 0)
+(defparameter +race-elf+ 1)
+(defparameter +race-dwarf+ 2)
+(defparameter +race-half-orc+ 3)
+(defparameter +race-klingon+ 4)
+(defparameter +race-halfling+ 5)
+(defparameter +race-tabaxi+ 6)
+(defparameter +race-drow+ 7)
+(defparameter +race-mobile+ 10)
+(defparameter +race-undead+ 11)
+(defparameter +race-humanoid+ 12)
+(defparameter +race-animal+ 13)
+(defparameter +race-dragon+ 14)
+(defparameter +race-giant+ 15)
+(defparameter +race-orc+ 16)
+(defparameter +race-goblin+ 17)
+(defparameter +race-hafling+ 18)
+(defparameter +race-minotaur+ 19)
+(defparameter +race-troll+ 20)
+(defparameter +race-golem+ 21)
+(defparameter +race-elemental+ 22)
+(defparameter +race-ogre+ 23)
+(defparameter +race-devil+ 24)
+(defparameter +race-troglodyte+ 25)
+(defparameter +race-manticore+ 26)
+(defparameter +race-bugbear+ 27)
+(defparameter +race-draconian+ 28)
+(defparameter +race-duergar+ 29)
+(defparameter +race-slaad+ 30)
+(defparameter +race-robot+ 31)
+(defparameter +race-demon+ 32)
+(defparameter +race-deva+ 33)
+(defparameter +race-plant+ 34)
+(defparameter +race-archon+ 35)
+(defparameter +race-pudding+ 36)
+(defparameter +race-alien-1+ 37)
+(defparameter +race-pred-alien+ 38)
+(defparameter +race-slime+ 39)
+(defparameter +race-illithid+ 40)
+(defparameter +race-fish+ 41)
+(defparameter +race-beholder+ 42)
+(defparameter +race-gaseous+ 43)
+(defparameter +race-githyanki+ 44)
+(defparameter +race-insect+ 45)
+(defparameter +race-daemon+ 46)
+(defparameter +race-mephit+ 47)
+(defparameter +race-kobold+ 48)
+(defparameter +race-umber-hulk+ 49)
+(defparameter +race-wemic+ 50)
+(defparameter +race-rakshasa+ 51)
+(defparameter +race-spider+ 52)
+(defparameter +race-griffin+ 53)
+(defparameter +race-rotarian+ 54)
+(defparameter +race-half-elf+ 55)
+(defparameter +race-celestial+ 56)
+(defparameter +race-guardinal+ 57)
+(defparameter +race-olympian+ 58)
+(defparameter +race-yugoloth+ 59)
+(defparameter +race-rowlahr+ 60)
+(defparameter +race-githzerai+ 61)
+(defparameter +num-races+ 62)
+(defparameter +num-pc-races+ 9)
+
+(defparameter +sex-neuter+ 0)
+(defparameter +sex-male+ 1)
+(defparameter +sex-female+ 2)
+
+;;; Positions
+(defparameter +bottom-pos+ 0)
+(defparameter +pos-dead+ 0)	; dead
+(defparameter +pos-mortallyw+ 1)	; mortally wounded
+(defparameter +pos-incap+ 2)	; incapacitated
+(defparameter +pos-stunned+ 3)	; stunned
+(defparameter +pos-sleeping+ 4)	; sleeping
+(defparameter +pos-resting+ 5)	; resting
+(defparameter +pos-sitting+ 6)	; sitting
+(defparameter +pos-fighting+ 7)	; fighting
+(defparameter +pos-standing+ 8)	; standing
+(defparameter +pos-flying+ 9)	; flying around
+(defparameter +pos-mounted+ 10)
+(defparameter +pos-swimming+ 11)
+(defparameter +top-pos+ 11)
+
+;;; Player flags: used by Creature.char_specials.act
+(defparameter +plr-killer+ (ash 1 0))	; Player is a player-killer
+(defparameter +plr-thief+ (ash 1 1))	; Player is a player-thief
+(defparameter +plr-frozen+ (ash 1 2))	; Player is frozen
+(defparameter +plr-dontset+ (ash 1 3))	; Don't EVER set (ISNPC bit)
+(defparameter +plr-writing+ (ash 1 4))	; Player writing (board/mail/olc)
+(defparameter +plr-mailing+ (ash 1 5))	; Player is writing mail
+(defparameter +plr-crash+ (ash 1 6))	; Player needs to be crash-saved
+(defparameter +plr-siteok+ (ash 1 7))	; Player has been site-cleared
+(defparameter +plr-noshout+ (ash 1 8))	; Player not allowed to shout/goss
+(defparameter +plr-notitle+ (ash 1 9))	; Player not allowed to set title
+(defparameter +plr-deleted+ (ash 1 10))	; Player deleted - space reusable
+(defparameter +plr-loadroom+ (ash 1 11))	; Player uses nonstandard loadroom
+(defparameter +plr-noclanmail+ (ash 1 12))	; Player doesn't get clanmail
+(defparameter +plr-nodelete+ (ash 1 13))	; Player shouldn't be deleted
+(defparameter +plr-invstart+ (ash 1 14))	; Player should enter game wizinvis
+(defparameter +plr-cryo+ (ash 1 15))	; Player is cryo-saved (purge prog)
+(defparameter +plr-afk+ (ash 1 16))	; Player is away from keyboard
+(defparameter +plr-clan-leader+ (ash 1 17))	; The head of the respective clan
+(defparameter +plr-unused2+ (ash 1 18))
+(defparameter +plr-olc+ (ash 1 19))	; Player is descripting olc
+(defparameter +plr-halt+ (ash 1 20))	; Player is halted
+(defparameter +plr-olcgod+ (ash 1 21))	; Player can edit at will
+(defparameter +plr-tester+ (ash 1 22))	; Player is a tester
+(defparameter +plr-unused3+ (ash 1 23))	; Quest god
+(defparameter +plr-mortalized+ (ash 1 24))	; God can be killed
+(defparameter +plr-unused4+ (ash 1 25))
+(defparameter +plr-unused6+ (ash 1 26))
+(defparameter +plr-nopost+ (ash 1 27))
+(defparameter +plr-log+ (ash 1 28))	; log all cmds
+(defparameter +plr-unused5+ (ash 1 29))	; player approved for port olc
+(defparameter +plr-nopk+ (ash 1 30))	; player cannot pk
+
+;; Player Flags Mark II
+(defparameter +plr2-soulless+ (ash 1 0))	; Signing the Unholy Compact.
+(defparameter +plr2-buried+ (ash 1 1))	; Player has died way too many times.
+(defparameter +plr2-in-combat+ (ash 1 2))
+
+(defparameter +mob-spec+ (ash 1 0))	; Mob has a callable spec-proc
+(defparameter +mob-sentinel+ (ash 1 1))	; Mob should not move
+(defparameter +mob-scavenger+ (ash 1 2))	; Mob picks up stuff on the ground
+(defparameter +mob-isnpc+ (ash 1 3))	; (R) Automatically set on all Mobs
+(defparameter +mob-aware+ (ash 1 4))	; Mob can't be backstabbed
+(defparameter +mob-aggressive+ (ash 1 5))	; Mob hits players in the room
+(defparameter +mob-stay-zone+ (ash 1 6))	; Mob shouldn't wander out of zone
+(defparameter +mob-wimpy+ (ash 1 7))	; Mob flees if severely injured
+(defparameter +mob-aggr-evil+ (ash 1 8))	; auto attack evil PC's
+(defparameter +mob-aggr-good+ (ash 1 9))	; auto attack good PC's
+(defparameter +mob-aggr-neutral+ (ash 1 10))	; auto attack neutral PC's
+(defparameter +mob-memory+ (ash 1 11))	; remember attackers if attacked
+(defparameter +mob-helper+ (ash 1 12))	; attack PCs fighting other NPCs
+(defparameter +mob-nocharm+ (ash 1 13))	; Mob can't be charmed
+(defparameter +mob-nosummon+ (ash 1 14))	; Mob can't be summoned
+(defparameter +mob-nosleep+ (ash 1 15))	; Mob can't be slept
+(defparameter +mob-nobash+ (ash 1 16))	; Mob can't be bashed (e.g. trees)
+(defparameter +mob-noblind+ (ash 1 17))	; Mob can't be blinded
+(defparameter +mob-noturn+ (ash 1 18))	; Hard to turn
+(defparameter +mob-nopetri+ (ash 1 19))	; Cannot be petrified
+(defparameter +mob-pet+ (ash 1 20))	; Mob is a conjured pet and shouldn't
+										 ; get nor give any xp in any way.
+(defparameter +mob-soulless+ (ash 1 21))	; Mobile is Soulless - Unholy compact.
+(defparameter +mob-spirit-tracker+ (ash 1 22))	; Can track through !track
+(defparameter +mob-utility+ (ash 1 23)) ; Can't be seen, hit, etc...
+
+(defparameter +mob2-script+ (ash 1 0))
+(defparameter +mob2-mount+ (ash 1 1))
+(defparameter +mob2-stay-sect+ (ash 1 2))	; Can't leave SECT-type.
+(defparameter +mob2-atk-mobs+ (ash 1 3))	; Aggro Mobs will attack other mobs
+(defparameter +mob2-hunt+ (ash 1 4))	; Mob will hunt attacker
+(defparameter +mob2-looter+ (ash 1 5))	; Loots corpses
+(defparameter +mob2-nostun+ (ash 1 6))
+(defparameter +mob2-seller+ (ash 1 7))	; If shopkeeper, sells anywhere.
+(defparameter +mob2-wont-wear+ (ash 1 8))	; Wont wear shit it picks up (SHPKPER)
+(defparameter +mob2-silent-hunter+ (ash 1 9))
+(defparameter +mob2-familiar+ (ash 1 10))	; mages familiar
+(defparameter +mob2-no-flow+ (ash 1 11))	; Mob doesn't flow
+(defparameter +mob2-unapproved+ (ash 1 12))	; Mobile not approved for game play
+(defparameter +mob2-renamed+ (ash 1 13))	; Mobile renamed
+(defparameter +mob2-noaggro-race+ (ash 1 14))	; wont attack members of own race
+
+(defparameter +pref-brief+ 0) ; Room descs won't normally be shown
+(defparameter +pref-nohaggle+ 1) ;
+(defparameter +pref-deaf+ 2)     ; Can't hear shouts
+(defparameter +pref-notell+ 3)   ; Can't receive tells
+(defparameter +pref-disphp+ 4)	; Display hit points in prompt
+(defparameter +pref-dispmana+ 5) ; Display mana points in prompt
+(defparameter +pref-dispmove+ 6) ; Display move points in prompt
+(defparameter +pref-autoexit+ 7) ; Display exits in a room
+(defparameter +pref-nohassle+ 8) ; Aggr mobs won't attack
+(defparameter +pref-nasty+ 9) ; Can hear nasty words on channel
+(defparameter +pref-summonable+ 10)	; Can be summoned
+(defparameter +pref-unused-2+ 11) ; No repetition of comm commands
+(defparameter +pref-holylight+ 12)	; Can see in dark
+(defparameter +pref-color-1+ 13)	; Color (low bit)
+(defparameter +pref-color-2+ 14)	; Color (high bit)
+(defparameter +pref-nowiz+ 15)      ; Can't hear wizline
+(defparameter +pref-log1+ 16)	; On-line System Log (low bit)
+(defparameter +pref-log2+ 17)  ; On-line System Log (high bit)
+(defparameter +pref-noauct+ 18)	; Can't hear auction channel
+(defparameter +pref-nogoss+ 19)	; Can't hear gossip channel
+(defparameter +pref-nogratz+ 20)	; Can't hear grats channel
+(defparameter +pref-roomflags+ 21) ; Can see room flags (ROOM-x)
+(defparameter +pref-nosnoop+ 22) ; Can not be snooped by immortals
+(defparameter +pref-nomusic+ 23) ; Can't hear music channel
+(defparameter +pref-nospew+ 24)  ; Can't hear spews
+(defparameter +pref-gagmiss+ 25) ; Doesn't see misses during fight
+(defparameter +pref-noproject+ 26) ; Cannot hear the remort channel
+(defparameter +pref-nopetition+ 27) ;
+(defparameter +pref-noclansay+ 28) ; Doesnt hear clan says and such
+(defparameter +pref-noidentify+ 29)	; Saving throw is made when id'd
+(defparameter +pref-nodream+ 30)
+
+;; PREF 2 Flags
+
+(defparameter +pref-debug+ 31)          ; Sees info on fight.
+(defparameter +pref-newbie-helper+ 32)	; sees newbie arrivals
+(defparameter +pref-auto-diagnose+ 33) ; automatically see condition of enemy
+(defparameter +pref-autopage+ 34) ; Beeps when ch receives a tell
+(defparameter +pref-noaffects+ 35) ; Affects are not shown in score
+(defparameter +pref-noholler+ 36)  ; Gods only
+(defparameter +pref-noimmchat+ 37) ; Gods only
+(defparameter +pref-unused-1+ 38) ; auto-sets title to clan stuff
+(defparameter +pref-clan-hide+ 39) ; don't show badge in who list
+(defparameter +pref-unused-2+ 40) ; interrupts while d->showstr-point
+(defparameter +pref-autoprompt+ 41)	; always draw new prompt
+(defparameter +pref-nowho+ 42)      ; don't show in who
+(defparameter +pref-anonymous+ 43) ; don't show char-class, level
+(defparameter +pref-notrailers+ 44)	; don't show trailer affects
+(defparameter +pref-vt100+ 45)	; Players uses VT100 inferface
+(defparameter +pref-autosplit+ 46) ;
+(defparameter +pref-autoloot+ 47)  ;
+(defparameter +pref-pkiller+ 48) ; player can attack other players
+(defparameter +pref-nogecho+ 49) ; Silly Gecho things
+(defparameter +pref-nowrap+ 50)	; turns off autowrap temporarily.
+(defparameter +pref-dispalign+ 51)  ;
+(defparameter +pref-worldwrite+ 52) ; allows worldwrite to work
+(defparameter +pref-noguildsay+ 53) ;
+(defparameter +pref-disptime+ 54) ; show localtime in the prompt
+(defparameter +pref-disp-vnums+ 55) ; show vnums after items ldesc
+(defparameter +pref-count+ 56)
+
+;;; Affect bits: used in Creature.char_specials.saved.affected_by
+;;; WARNING: In the world files, NEVER set the bits marked "R" ("Reserved")
+(defparameter +aff-blind+ (ash 1 0))	; (R) Char is blind
+(defparameter +aff-invisible+ (ash 1 1))	; Char is invisible
+(defparameter +aff-detect-align+ (ash 1 2))	; Char is sensitive to align
+(defparameter +aff-detect-invis+ (ash 1 3))	; Char can see invis chars
+(defparameter +aff-detect-magic+ (ash 1 4))	; Char is sensitive to magic
+(defparameter +aff-sense-life+ (ash 1 5))	; Char can sense hidden life
+(defparameter +aff-waterwalk+ (ash 1 6))	; Char can walk on water
+(defparameter +aff-sanctuary+ (ash 1 7))	; Char protected by sanct.
+(defparameter +aff-group+ (ash 1 8))	; (R) Char is grouped
+(defparameter +aff-curse+ (ash 1 9))	; Char is cursed
+(defparameter +aff-infravision+ (ash 1 10))	; Char can see in dark
+(defparameter +aff-poison+ (ash 1 11))	; (R) Char is poisoned
+(defparameter +aff-protect-evil+ (ash 1 12))	; Char protected from evil
+(defparameter +aff-protect-good+ (ash 1 13))	; Char protected from good
+(defparameter +aff-sleep+ (ash 1 14))	; (R) Char magically asleep
+(defparameter +aff-notrack+ (ash 1 15))	; Char can't be tracked
+(defparameter +aff-inflight+ (ash 1 16))	; Room for future expansion
+(defparameter +aff-time-warp+ (ash 1 17))	; Room for future expansion
+(defparameter +aff-sneak+ (ash 1 18))	; Char can move quietly
+(defparameter +aff-hide+ (ash 1 19))	; Char is hidden
+(defparameter +aff-waterbreath+ (ash 1 20))	; Room for future expansion
+(defparameter +aff-charm+ (ash 1 21))	; Char is charmed
+(defparameter +aff-confusion+ (ash 1 22))	; Char is confused
+(defparameter +aff-nopain+ (ash 1 23))	; Char feels no pain
+(defparameter +aff-retina+ (ash 1 24))	; Char's retina is stimulated
+(defparameter +aff-adrenaline+ (ash 1 25))	; Char's adrenaline is pumping
+(defparameter +aff-confidence+ (ash 1 26))	; Char is confident
+(defparameter +aff-rejuv+ (ash 1 27))	; Char is rejuvenating
+(defparameter +aff-regen+ (ash 1 28))	; Body is regenerating
+(defparameter +aff-glowlight+ (ash 1 29))	; Light spell is operating
+(defparameter +aff-blur+ (ash 1 30))	; Blurry image
+(defparameter +num-aff-flags+ 31)
+
+(defparameter +aff2-fluorescent+ (ash 1 0))
+(defparameter +aff2-transparent+ (ash 1 1))
+(defparameter +aff2-slow+ (ash 1 2))
+(defparameter +aff2-haste+ (ash 1 3))
+(defparameter +aff2-mounted+ (ash 1 4))	;DO NOT SET THIS IN MOB FILE
+(defparameter +aff2-fire-shield+ (ash 1 5))	; affected by Fire Shield
+(defparameter +aff2-berserk+ (ash 1 6))
+(defparameter +aff2-intimidated+ (ash 1 7))
+(defparameter +aff2-true-seeing+ (ash 1 8))
+(defparameter +aff2-divine-illumination+ (ash 1 9))
+(defparameter +aff2-protect-undead+ (ash 1 10))
+(defparameter +aff2-invis-to-undead+ (ash 1 11))
+(defparameter +aff2-animal-kin+ (ash 1 12))
+(defparameter +aff2-endure-cold+ (ash 1 13))
+(defparameter +aff2-paralyzed+ (ash 1 14))
+(defparameter +aff2-prot-lightning+ (ash 1 15))
+(defparameter +aff2-prot-fire+ (ash 1 16))
+(defparameter +aff2-telekinesis+ (ash 1 17))	; Char can carry more stuff
+(defparameter +aff2-prot-rad+ (ash 1 18))	; Enables Autoexits ! :)
+(defparameter +aff2-ablaze+ (ash 1 19))
+(defparameter +aff2-neck-protected+ (ash 1 20))	; Can't be beheaded
+(defparameter +aff2-displacement+ (ash 1 21))
+(defparameter +aff2-prot-devils+ (ash 1 22))
+(defparameter +aff2-meditate+ (ash 1 23))
+(defparameter +aff2-evade+ (ash 1 24))
+(defparameter +aff2-blade-barrier+ (ash 1 25))
+(defparameter +aff2-oblivity+ (ash 1 26))
+(defparameter +aff2-energy-field+ (ash 1 27))
+(defparameter +aff2-petrified+ (ash 1 28))
+(defparameter +aff2-vertigo+ (ash 1 29))
+(defparameter +aff2-prot-demons+ (ash 1 30))
+(defparameter +num-aff2-flags+ 31)
+
+(defparameter +aff3-attraction-field+ (ash 1 0))
+(defparameter +aff3-energy-leak+ (ash 1 1))
+(defparameter +aff3-poison-2+ (ash 1 2))
+(defparameter +aff3-poison-3+ (ash 1 3))
+(defparameter +aff3-sickness+ (ash 1 4))
+(defparameter +aff3-self-destruct+ (ash 1 5))	; Self-destruct sequence init
+(defparameter +aff3-damage-control+ (ash 1 6))	; Damage control for cyborgs
+(defparameter +aff3-stasis+ (ash 1 7))	; Borg is in static state
+(defparameter +aff3-prismatic-sphere+ (ash 1 8))	; Defensive
+(defparameter +aff3-radioactive+ (ash 1 9))
+(defparameter +aff3-detect-poison+ (ash 1 10))
+(defparameter +aff3-mana-tap+ (ash 1 11))
+(defparameter +aff3-energy-tap+ (ash 1 12))
+(defparameter +aff3-sonic-imagery+ (ash 1 13))
+(defparameter +aff3-shroud-obscurement+ (ash 1 14))
+(defparameter +aff3-nobreathe+ (ash 1 15))
+(defparameter +aff3-prot-heat+ (ash 1 16))
+(defparameter +aff3-psishield+ (ash 1 17))
+(defparameter +aff3-psychic-crush+ (ash 1 18))
+(defparameter +aff3-double-damage+ (ash 1 19))
+(defparameter +aff3-acidity+ (ash 1 20))
+(defparameter +aff3-hamstrung+ (ash 1 21))	; Bleeding badly from the leg
+(defparameter +aff3-gravity-well+ (ash 1 22))	; Pissed off a phyz and got hit by gravity well
+(defparameter +aff3-symbol-of-pain+ (ash 1 23))	; Char's mind is burning with pain
+(defparameter +aff3-emp-shield+ (ash 1 24))	; EMP SHIELDING
+(defparameter +aff3-inst-aff+ (ash 1 25))	; Affected by an instant affect
+(defparameter +aff3-tainted+ (ash 1 27))	; Knight spell, "taint"
+(defparameter +aff3-infiltrate+ (ash 1 28))	; Merc skill infiltrate
+(defparameter +aff3-divine-power+ (ash 1 29))
+(defparameter +aff3-mana-leak+ (ash 1 30))
+(defparameter +num-aff3-flags+ 31)
+
+(defparameter +array-aff-1+ 1)
+(defparameter +array-aff-2+ 2)
+(defparameter +array-aff-3+ 3)
+
+
+
+;;; Modifier constants used with obj affects ('A' fields)
+(defparameter +apply-none+ 0)	; No effect
+(defparameter +apply-str+ 1)	; Apply to strength
+(defparameter +apply-dex+ 2)	; Apply to dexterity
+(defparameter +apply-int+ 3)	; Apply to intellegence
+(defparameter +apply-wis+ 4)	; Apply to wisdom
+(defparameter +apply-con+ 5)	; Apply to constitution
+(defparameter +apply-cha+ 6)	; Apply to charisma
+(defparameter +apply-class+ 7)	; Reserved
+(defparameter +apply-level+ 8)	; Reserved
+(defparameter +apply-age+ 9)	; Apply to age
+(defparameter +apply-char-weight+ 10)	; Apply to weight
+(defparameter +apply-char-height+ 11)	; Apply to height
+(defparameter +apply-mana+ 12)	; Apply to max mana
+(defparameter +apply-hit+ 13)	; Apply to max hit points
+(defparameter +apply-move+ 14)	; Apply to max move points
+(defparameter +apply-gold+ 15)	; Reserved
+(defparameter +apply-exp+ 16)	; Reserved
+(defparameter +apply-ac+ 17)	; Apply to Armor Class
+(defparameter +apply-hitroll+ 18)	; Apply to hitroll
+(defparameter +apply-damroll+ 19)	; Apply to damage roll
+(defparameter +apply-saving-para+ 20)	; Apply to save throw: paralz
+(defparameter +apply-saving-rod+ 21)	; Apply to save throw: rods
+(defparameter +apply-saving-petri+ 22)	; Apply to save throw: petrif
+(defparameter +apply-saving-breath+ 23)	; Apply to save throw: breath
+(defparameter +apply-saving-spell+ 24)	; Apply to save throw: spells
+(defparameter +apply-sneak+ 25)
+(defparameter +apply-hide+ 26)
+(defparameter +apply-race+ 27)
+(defparameter +apply-sex+ 28)
+(defparameter +apply-backstab+ 29)
+(defparameter +apply-pick-lock+ 30)
+(defparameter +apply-punch+ 31)
+(defparameter +apply-shoot+ 32)
+(defparameter +apply-kick+ 33)
+(defparameter +apply-track+ 34)
+(defparameter +apply-impale+ 35)
+(defparameter +apply-behead+ 36)
+(defparameter +apply-throwing+ 37)
+(defparameter +apply-riding+ 38)
+(defparameter +apply-turn+ 39)
+(defparameter +apply-saving-chem+ 40)
+(defparameter +apply-saving-psi+ 41)
+(defparameter +apply-align+ 42)
+(defparameter +apply-saving-phy+ 43)
+(defparameter +apply-caster+ 44)	; special usage
+(defparameter +apply-weaponspeed+ 45)
+(defparameter +apply-disguise+ 46)
+(defparameter +apply-nothirst+ 47)
+(defparameter +apply-nohunger+ 48)
+(defparameter +apply-nodrunk+ 49)
+(defparameter +apply-speed+ 50)
+(defparameter +num-applies+ 51)
+
+
+;;; other miscellaneous defines ******************************************
+
+
+;;; Player conditions
+(defparameter +drunk+ 0)
+(defparameter +full+ 1)
+(defparameter +thirst+ 2)
+
+
+
+;;; other #defined constants *********************************************
+
+(defparameter +lvl-grimp+ 72)
+(defparameter +lvl-lucifer+ 70)
+(defparameter +lvl-impl+ 69)
+(defparameter +lvl-entity+ 68)
+(defparameter +lvl-ancient+ +lvl-entity+)
+(defparameter +lvl-creator+ 67)
+(defparameter +lvl-grgod+ 66)
+(defparameter +lvl-timegod+ 65)
+(defparameter +lvl-deity+ 64)
+(defparameter +lvl-god+ 63)	; Lesser God
+(defparameter +lvl-energy+ 62)
+(defparameter +lvl-force+ 61)
+(defparameter +lvl-power+ 60)
+(defparameter +lvl-being+ 59)
+(defparameter +lvl-spirit+ 58)
+(defparameter +lvl-element+ 57)
+(defparameter +lvl-demi+ 56)
+(defparameter +lvl-eternal+ 55)
+(defparameter +lvl-ethereal+ 54)
+(defparameter +lvl-luminary+ 53)
+(defparameter +lvl-builder+ 52)
+(defparameter +lvl-immort+ 51)
+(defparameter +lvl-ambassador+ 50)
+
+(defparameter +lvl-freeze+ +lvl-immort+)
+(defparameter +lvl-can-ban+ +lvl-god+)
+(defparameter +lvl-violence+ +lvl-creator+)
+(defparameter +lvl-logall+ +lvl-creator+)
+(defparameter +lvl-can-return+ 10)
+
 ;;; Character equipment positions: used as index for Creature.equipment[]
 
 ;; NOTE: Don't confuse these constants with the ITEM_ bitvectors

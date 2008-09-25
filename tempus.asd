@@ -26,7 +26,7 @@
              (:file "config" :pathname "misc/config"
                              :depends-on ("defpackage"))
              (:file "db" :pathname "db/db"
-                         :depends-on ("defs" "creature" "obj-data" "zone-data" "room-data" "search" "artisan" "account" "spec-assign" "clan" "help" "act-social" "tongues" "act-physic" "dyntext" "spell-parser" "combat-messages" "quest" "artisan" "utils"))
+                         :depends-on ("defs" "constants" "creature" "obj-data" "zone-data" "room-data" "search" "artisan" "account" "spec-assign" "clan" "help" "act-social" "tongues" "act-physic" "dyntext" "spell-parser" "combat-messages" "quest" "artisan" "utils"))
              (:file "account" :pathname "db/account"
                               :depends-on ("defs" "utils"))
              (:file "act-comm" :pathname "misc/act-comm"
