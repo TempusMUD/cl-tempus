@@ -901,7 +901,7 @@
                          (remove-duplicates
                           (mapcar #'first
                                   (mapcar #'command-info-pattern
-                                          (delete-if (lambda (cmd)
+                                          (remove-if (lambda (cmd)
                                                        (or (member :mood (command-info-flags cmd))
                                                            (member :social (command-info-flags cmd))))
                                                      *commands*)))
@@ -922,7 +922,7 @@
                          (remove-duplicates
                           (mapcar #'first
                                   (mapcar #'command-info-pattern
-                                          (delete-if-not
+                                          (remove-if-not
                                            (lambda (cmd)
                                              (member :social (command-info-flags cmd)))
                                            *commands*)))
