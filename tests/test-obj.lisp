@@ -375,3 +375,13 @@
     (do-cmd "wear armor on eyes")
     (self-emit-is "You can't wear some plate armor there.~%")))
 
+(test wear-command-on-pos-failure
+  (object-command-test
+    (tempus::obj-to-char armor-2 alice)
+    (tempus::obj-to-char armor-1 alice)
+    (do-cmd "wear all.armor on body")
+    (self-emit-is "You can't wear more than one item on a position.~%")
+    (clear-mock-buffers alice)
+    (do-cmd "wear armor on foo")
+    (self-emit-is "'foo'?  What part of your body is THAT?~%")))
+

@@ -555,7 +555,7 @@
          (send-to-char "You don't seem to have any '~a'.~%"
                        thing))
         ((> (length objs) 1)
-         (send-to-char "You can't wear more than one item on a position.~%"))
+         (send-to-char ch "You can't wear more than one item on a position.~%"))
         ((null pos)
          (send-to-char ch "'~a'?  What part of your body is THAT?~%" pos-str))
         (t
