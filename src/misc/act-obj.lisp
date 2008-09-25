@@ -656,7 +656,7 @@
 (defcommand (ch "give") (:resting)
   (send-to-char ch "Give what to who?~%"))
 
-(defcommand (ch "give" thing "to") (:resting)
+(defcommand (ch "give" thing) (:resting)
   (declare (ignore thing))
   (send-to-char ch "Who do you want to give it to?~%"))
 
