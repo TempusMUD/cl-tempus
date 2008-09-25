@@ -409,3 +409,19 @@
     (clear-mock-buffers alice)
     (do-cmd "remove armor from arms")
     (self-emit-is "You aren't wearing anything there.~%")))
+
+(test give-command
+  (object-command-test
+    (tempus::obj-to-char armor-2 alice)
+    (tempus::obj-to-char armor-1 alice)
+    (do-cmd "give armor to bob")
+    (self-emit-is "You give some plate armor to Bob.~%")
+    (other-emit-is "Alice gives some plate armor to you.~%")
+    (is (equal (list armor-2) (tempus::carrying-of alice)))
+    (is (equal (list armor-1) (tempus::carrying-of bob)))
+    (clear-mock-buffers alice bob)
+    (tempus::obj-from-char armor-1)
+    (tempus::obj-to-char armor-1 alice)
+    (do-cmd "give all to bob")
+    (self-emit-is "You give some plate armor to Bob. (x2)~%")
+    (other-emit-is "Alice gives some plate armor to you. (x2)~%")))

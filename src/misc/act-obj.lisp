@@ -256,42 +256,48 @@
     (when sigil-found
       (explode-all-sigils ch))))
 
+
+
+(defun check-object-nodrop (ch obj verb)
+  "Checks to see if OBJ can be dropped by CH.  May emit messages to CH.  Returns T if the object may be dropped, otherwise returns NIL."
+  (cond
+    ((not (is-obj-stat obj +item-nodrop+))
+     t)
+    ((immortalp ch)
+     (act ch :item obj :subject-emit "You peel $p off your hand...")
+     t)
+    (t
+     (act ch :item obj
+          :subject-emit (format nil "You can't ~a $p, it must be CURSED!" verb))
+     nil)))
+
 (defun perform-drop (ch obj mode sname dest-room displayp)
-  (when (is-obj-stat obj +item-nodrop+)
-    (cond
-      ((immortalp ch)
-       (act ch :item obj
-             :subject-emit "You peel $p off your hand..."))
-      (t
-       (act ch :item obj
-            :subject-emit (format nil "You can't ~a $p, it must be CURSED!" sname))
-       (return-from perform-drop nil))))
+  (when (check-object-nodrop ch obj sname)
+    (when displayp
+      (act ch :item obj :all-emit (format nil "$n ~a$% $p." sname)))
 
-  (when displayp
-    (act ch :item obj :all-emit (format nil "$n ~a$% $p." sname)))
+    (obj-from-char obj)
 
-  (obj-from-char obj)
-
-  (case mode
-    (:drop
-     (obj-to-room obj (in-room-of ch))
-     (when (and (room-is-open-air (in-room-of ch))
-                (exit ch +down+)
-                (to-room-of (exit ch +down+))
-                (not (logtest (exit-info-of (exit ch +down+)) +ex-closed+)))
-       (act ch :item obj
-            :all-emit "$p falls downward through the air, out of sight!")
-       (obj-from-room obj)
-       (obj-to-room obj (to-room-of (exit ch +down+)))
+    (case mode
+      (:drop
+       (obj-to-room obj (in-room-of ch))
+       (when (and (room-is-open-air (in-room-of ch))
+                  (exit ch +down+)
+                  (to-room-of (exit ch +down+))
+                  (not (logtest (exit-info-of (exit ch +down+)) +ex-closed+)))
+         (act ch :item obj
+              :all-emit "$p falls downward through the air, out of sight!")
+         (obj-from-room obj)
+         (obj-to-room obj (to-room-of (exit ch +down+)))
+         (act nil :item obj
+              :place-emit "$p falls from the sky and lands by your feet.")))
+      (:donate
+       (obj-to-room obj dest-room)
        (act nil :item obj
-            :place-emit "$p falls from the sky and lands by your feet.")))
-    (:donate
-     (obj-to-room obj dest-room)
-     (act nil :item obj
-          :place-emit "$p suddenly appears in a puff of smoke!"))
-    (:junk
-     (extract-obj obj)))
-  t)
+            :place-emit "$p suddenly appears in a puff of smoke!"))
+      (:junk
+       (extract-obj obj)))
+    t))
 
 (defun perform-wear (ch obj pos)
   (cond
@@ -366,6 +372,7 @@
           :subject-emit (aref +wear-messages+ pos 1)
           :place-emit (aref +wear-messages+ pos 0))
      (when (and (action-desc-of obj)
+                (string/= (action-desc-of obj) "")
                 (or (is-obj-kind obj +item-worn+)
                     (is-obj-kind obj +item-armor+)
                     (is-obj-kind obj +item-weapon+)))
@@ -400,6 +407,34 @@
            (act ch :item obj
                 :all-emit "$n stop$% using $p."))
        (obj-to-char (unequip-char ch (worn-on-of obj) :worn nil) ch)))))
+
+(defun perform-give (ch vict obj)
+  (cond
+    ((not (check-object-nodrop ch obj "let go"))
+     nil)
+    ((and (not (immortalp ch))
+          (<= (position-of vict) +pos-sleeping+))
+     (act ch :target vict
+          :subject-emit "$E is currently unconscious."))
+    ((>= (carry-items-of vict) (can-carry-items vict))
+     (act ch :target vict
+          :subject-emit "$E seems to have $S hands full."))
+    ((>= (+ (weight-of obj) (carry-weight-of vict)) (can-carry-weight vict))
+     (act ch :target vict
+          :subject-emit "$E can't carry that much weight."))
+    (t
+     (obj-from-char obj)
+     (obj-to-char obj vict)
+     (when (and (is-obj-kind obj +item-money+)
+                (> (aref (value-of obj) 0) +money-log-limit+))
+       (slog "MONEY: ~a has given obj #~d (~a) worth ~d ~a to ~a in room #~d (~a)"
+             (name-of ch) (vnum-of obj) (name-of obj)
+             (aref (value-of obj) 0)
+             (if (zerop (aref (value-of obj) 1)) "gold" "credits")
+             (name-of vict)
+             (number-of (in-room-of vict))
+             (title-of (in-room-of vict)))))))
+
 
 (defcommand (ch "get") (:resting)
   (send-to-char ch "Get what?~%"))
@@ -617,3 +652,47 @@
                      (a-or-an thing) thing))
       (t
        (perform-remove ch pos)))))
+
+(defcommand (ch "give") (:resting)
+  (send-to-char ch "Give what to who?~%"))
+
+(defcommand (ch "give" thing "to") (:resting)
+  (declare (ignore thing))
+  (send-to-char ch "Who do you want to give it to?~%"))
+
+(defcommand (ch "give" thing "to" target) (:resting)
+  (let* ((objs (get-matching-objects ch thing (carrying-of ch)))
+         (victs (get-matching-objects ch target (people-of (in-room-of ch))))
+         (vict (first victs))
+         (mode (find-all-dots thing)))
+    (cond
+      ((null vict)
+       (send-to-char ch "No-one by that name here.~%"))
+      ((rest victs)
+       (send-to-char ch "You can't give to more than one person.~%"))
+      ((eql ch vict)
+       (send-to-char ch "What's the point of that?~%"))
+      (objs
+       (loop
+          for obj-sublist on objs
+          as obj = (first obj-sublist)
+          as next-obj = (second obj-sublist)
+          as counter from 1
+          do
+          (perform-give ch (first victs) obj)
+          (when (or (null next-obj)
+                    (string/= (name-of next-obj) (name-of obj)))
+            (cond
+              ((= counter 1)
+               (act ch :target vict :item obj
+                    :all-emit "$n give$% $p to $N."))
+              ((plusp counter)
+               (act ch :target vict :item obj
+                    :all-emit (format nil "$n give$% $p to $N. (x~d)" counter))))
+            (setf counter 0))))
+      ((eql mode :find-indiv)
+       (send-to-char ch "You aren't carrying ~a ~a.~%" (a-or-an thing) thing))
+      ((eql mode :find-all)
+       (send-to-char ch "You aren't carrying anything.~%"))
+      (t
+       (send-to-char ch "You aren't carrying any ~as.~%" (a-or-an thing) thing)))))
