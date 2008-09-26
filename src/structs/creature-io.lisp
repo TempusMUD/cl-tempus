@@ -157,5 +157,8 @@
                        (remove-if-not #'identity (tattoos-of ch)))))
      ouf)))
 
+(defmethod save-player-to-xml ((ch mobile))
+  nil)
+
 (defmethod save-player-to-xml ((ch player))
   (save-player-objects ch))
