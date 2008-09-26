@@ -94,7 +94,8 @@
             "First token of pattern must not be a symbol.")
     `(progn
        ,func
-       (add-command (quote ,pattern) (quote ,flags) ',func-name))))
+       (add-command (quote ,pattern) (quote ,flags) ',func-name)
+       ',func-name)))
 
 (defparameter *parser-trace* nil)
 (defun trace-msg (fmt &rest args)
