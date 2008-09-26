@@ -256,8 +256,6 @@
     (when sigil-found
       (explode-all-sigils ch))))
 
-
-
 (defun check-object-nodrop (ch obj verb)
   "Checks to see if OBJ can be dropped by CH.  May emit messages to CH.  Returns T if the object may be dropped, otherwise returns NIL."
   (cond
@@ -298,6 +296,12 @@
       (:junk
        (extract-obj obj)))
     t))
+
+(defun find-eq-pos (ch obj)
+  (cdr
+   (find-if (lambda (tuple)
+              (can-wear obj (car tuple)))
+            +wear-eq-positions+)))
 
 (defun perform-wear (ch obj pos)
   (cond
@@ -572,7 +576,7 @@
   (let* ((objs (get-matching-objects ch thing (carrying-of ch)))
          (wear-objs (delete nil
                             (mapcar (lambda (obj)
-                                      (let ((pos (find-eq-pos ch obj nil)))
+                                      (let ((pos (find-eq-pos ch obj)))
                                         (when pos
                                           (cons obj pos))))
                                     objs))))
