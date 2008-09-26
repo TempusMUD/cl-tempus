@@ -130,7 +130,7 @@
     (is (= (tempus::position-of alice) tempus::+pos-standing+))
     (is (string= (char-output alice) "You can't seem to relax.~%"))
     (setf (tempus::aff-flags-of alice) 0)
-    
+
     (clear-mock-buffers alice)
     (setf (tempus::position-of alice) tempus::+pos-standing+)
     (setf (tempus::aff2-flags-of alice) (logior (tempus::aff2-flags-of alice)
@@ -139,7 +139,7 @@
     (is (= (tempus::position-of alice) tempus::+pos-standing+))
     (is (string= (char-output alice) "What, sleep while in a berserk rage??~%"))
     (setf (tempus::aff2-flags-of alice) 0)
-    
+
     (clear-mock-buffers alice)
     (setf (tempus::position-of alice) tempus::+pos-standing+)
     (tempus::interpret-command alice "sleep")
@@ -178,4 +178,11 @@
     (tempus::interpret-command alice "wake")
     (is (= (tempus::position-of alice) tempus::+pos-sitting+))
     (is (string= (char-output alice) "Reactivating processes...~%"))))
-  
+
+(test goto-command
+  (with-mock-players (alice bob)
+    (tempus::interpret-command alice "goto 3001")
+    (is (= 3001 (tempus::number-of (tempus::in-room-of alice))))
+    (tempus::interpret-command alice "goto bob")
+    (is (= (tempus::number-of (tempus::in-room-of bob))
+           (tempus::number-of (tempus::in-room-of alice))))))

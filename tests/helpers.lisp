@@ -57,6 +57,7 @@
     (setf (tempus::account-of link) account)
     (setf (tempus::account-of player) account)
     (setf (tempus::state-of link) 'tempus::playing)
+    (push player tempus::*characters*)
     player))
 
 (defun setup-mock-player (ch room-num)

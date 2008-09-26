@@ -1,18 +1,28 @@
 (in-package #:tempus)
 
-(defun perform-goto (ch room-num)
-  (let ((destination (real-room room-num)))
-    (cond
-      ((null destination)
-       (send-to-char ch "No room exists with that number.~%"))
-      (t
-       (when (in-room-of ch)
-         (char-from-room ch))
-       (char-to-room ch destination)
-       (look-at-room ch destination nil)))))
+(defun perform-goto (ch room)
+  (act ch :place-emit (if (poofout-of ch)
+                          (format nil "$n ~a" (poofout-of ch))
+                          "$n disappears in a cloud of smoke!"))
+  (when (in-room-of ch)
+    (char-from-room ch))
+  (char-to-room ch room)
+  (act ch :place-emit (if (poofout-of ch)
+                          (format nil "$n ~a" (poofout-of ch))
+                          "$n appears in a puff of smoke!"))
+  (look-at-room ch room nil))
 
-(defcommand (ch "goto" room-num) (:immortal)
-  (perform-goto ch (parse-integer room-num)))
+(defcommand (ch "goto" target) (:immortal)
+  (if (every #'digit-char-p target)
+      (let ((destination (real-room (parse-integer target))))
+        (if destination
+            (perform-goto ch destination)
+            (send-to-char ch "No room exists with that number.~%")))
+      (let ((target-chs (get-matching-objects ch target *characters*)))
+        (if target-chs
+            (perform-goto ch (in-room-of (first target-chs)))
+            (send-to-char ch "Couldn't find any '~a'~%" target)))))
+
 (defcommand (ch "shutdown") (:immortal)
   (send-to-char ch "Shutting down...~%")
   (setf *shutdown* t))
