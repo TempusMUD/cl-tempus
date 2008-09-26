@@ -342,6 +342,12 @@
 (defun check-skill (ch skill)
   (aref (skills-of ch) skill))
 
+(defun skill-of (ch skill)
+  (aref (skills-of ch) skill))
+
+(defun (setf skill-of) (val ch skill)
+  (setf (aref (skills-of ch) skill) val))
+
 (defun is-soulless (ch)
   (or (mob-flagged ch +mob-soulless+)
       (plr2-flagged ch +plr2-soulless+)))

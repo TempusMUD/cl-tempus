@@ -126,6 +126,8 @@
                                   :depends-on ("defs" "utils"))
              (:file "spec-procs" :pathname "specials/spec-procs"
                                  :depends-on ("defs" "utils"))
+             (:file "spells" :pathname "magic/spells"
+                                   :depends-on ("defs" "utils"))
              (:file "spell-parser" :pathname "magic/spell-parser"
                                    :depends-on ("defs" "utils"))
              (:file "structs" :pathname "structs/structs"
