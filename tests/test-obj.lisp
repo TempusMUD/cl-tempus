@@ -443,3 +443,15 @@
     (is (equal "Alice gives some credits to Bob.~%" (char-output eva)))
     (is (= (tempus::cash-of alice) 5000))
     (is (= (tempus::cash-of bob) 5000))))
+
+(test plant-command
+  (object-command-test
+    (tempus::obj-to-char armor-2 alice)
+    (tempus::obj-to-char armor-1 alice)
+    (do-cmd "plant armor on bob")
+    (self-emit-is "You plant some plate armor on Bob.~%")
+    (is-true (or (equal "" (char-output bob))
+                 (equal "Alice puts some plate armor in your pocket.~%"
+                        (char-output bob))))
+    (is (equal (list armor-2) (tempus::carrying-of alice)))
+    (is (equal (list armor-1) (tempus::carrying-of bob)))))

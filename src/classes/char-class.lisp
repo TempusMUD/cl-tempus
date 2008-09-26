@@ -60,4 +60,5 @@
     (t
      t)))
 
-
+(defun gain-skill-proficiency (ch skill)
+  nil)

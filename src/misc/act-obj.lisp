@@ -488,6 +488,38 @@
     (save-player-to-xml ch)
     (save-player-to-xml target)))
 
+(defun perform-plant (ch vict obj)
+  (cond
+    ((not (check-object-nodrop ch obj "let go"))
+     nil)
+    ((>= (carry-items-of vict) (can-carry-items vict))
+     (act ch :target vict
+          :subject-emit "$E seems to have $S hands full."))
+    ((>= (+ (weight-of obj) (carry-weight-of vict)) (can-carry-weight vict))
+     (act ch :target vict
+          :subject-emit "$E can't carry that much weight."))
+    (t
+     (obj-from-char obj)
+     (obj-to-char obj vict)
+     (when (and (is-obj-kind obj +item-money+)
+                (> (aref (value-of obj) 0) +money-log-limit+))
+       (slog "MONEY: ~a has planted obj #~d (~a) worth ~d ~a onto ~a in room #~d (~a)"
+             (name-of ch) (vnum-of obj) (name-of obj)
+             (aref (value-of obj) 0)
+             (if (zerop (aref (value-of obj) 1)) "gold" "credits")
+             (name-of vict)
+             (number-of (in-room-of vict))
+             (title-of (in-room-of vict))))
+
+     (act ch :target vict :item obj
+          :subject-emit "You plant $p on $N.")
+     (if (or (< (+ (check-skill ch +skill-plant+) (dex-of ch))
+                (+ (random-range 0 83) (wis-of vict)))
+             (aff2-flagged vict +aff2-true-seeing+))
+         (act ch :target vict :item obj
+              :target-emit "$n puts $p in your pocket.")
+         (gain-skill-proficiency ch +skill-plant+)))))
+
 (defcommand (ch "get") (:resting)
   (send-to-char ch "Get what?~%"))
 
@@ -779,3 +811,30 @@
        (send-to-char ch "You can't give money to multiple people at once.~%"))
       (t
        (perform-give-money ch (first targets) amount :cash)))))
+
+(defcommand (ch "plant" thing) (:resting)
+  (declare (ignore thing))
+  (send-to-char ch "Plant what on whom?~%"))
+
+(defcommand (ch "plant" thing "on" target) (:resting)
+  (let* ((objs (get-matching-objects ch thing (carrying-of ch)))
+         (victs (get-matching-objects ch target (people-of (in-room-of ch))))
+         (vict (first victs))
+         (mode (find-all-dots thing)))
+    (cond
+      ((null vict)
+       (send-to-char ch "No-one by that name here.~%"))
+      ((rest objs)
+       (send-to-char ch "You can't plant more than one item at a time.~%"))
+      ((rest victs)
+       (send-to-char ch "You can't give to more than one person.~%"))
+      ((eql ch vict)
+       (send-to-char ch "What's the point of that?~%"))
+      (objs
+       (perform-plant ch (first victs) (first objs)))
+      ((eql mode :find-indiv)
+       (send-to-char ch "You aren't carrying ~a ~a.~%" (a-or-an thing) thing))
+      ((eql mode :find-all)
+       (send-to-char ch "You aren't carrying anything.~%"))
+      (t
+       (send-to-char ch "You aren't carrying any ~as.~%" (a-or-an thing) thing)))))
