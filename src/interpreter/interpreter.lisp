@@ -90,6 +90,8 @@
                       (progn ,@body)
                     (parser-error (,err)
                       (send-to-char ,actor "~a~%" ,err))))))
+    (assert (not (symbolp (first pattern))) nil
+            "First token of pattern must not be a symbol.")
     `(progn
        ,func
        (add-command (quote ,pattern) (quote ,flags) ',func-name))))
