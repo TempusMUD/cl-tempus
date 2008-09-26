@@ -973,3 +973,21 @@
 
 (defcommand (ch "who" flags) ()
   (perform-who ch (parse-who-args flags)))
+
+(defcommand (ch "gold") ()
+  (cond
+    ((zerop (gold-of ch))
+     (send-to-char ch "You're broke!~%"))
+    ((= 1 (gold-of ch))
+     (send-to-char ch "You have one miserable little gold coin.~%"))
+    (t
+     (send-to-char ch "You have ~a gold coins.~%" (gold-of ch)))))
+
+(defcommand (ch "cash") ()
+  (cond
+    ((zerop (cash-of ch))
+     (send-to-char ch "You're broke!~%"))
+    ((= 1 (cash-of ch))
+     (send-to-char ch "You have one miserable little credit.~%"))
+    (t
+     (send-to-char ch "You have ~a credits.~%" (cash-of ch)))))

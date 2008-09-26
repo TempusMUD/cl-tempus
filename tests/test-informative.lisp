@@ -29,3 +29,13 @@
       (tempus::interpret-command alice "eq all")
       (is-true (search "<on head>        Nothing!~%"
                        (char-output alice))))))
+
+(test money-balance
+  (with-mock-players (alice)
+    (setf (tempus::gold-of alice) 12345)
+    (setf (tempus::cash-of alice) 54321)
+    (tempus::interpret-command alice "gold")
+    (is (equal "You have 12345 gold coins.~%" (char-output alice)))
+    (clear-mock-buffers alice)
+    (tempus::interpret-command alice "cash")
+    (is (equal "You have 54321 credits.~%" (char-output alice)))))
