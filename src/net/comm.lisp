@@ -152,6 +152,10 @@ control code."
                                     :end (1+ first-char-pos))
                      str)))))
 
+(defun send-to-room (room fmt &rest args)
+  (dolist (ch (people-of room))
+    (send-to-char ch "~?" fmt args)))
+
 (defun verify-environment ()
   (let ((+player-subdirs+ '("character" "equipment" "housing" "mail" "corpses")))
     (dolist (subdir +player-subdirs+)

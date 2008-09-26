@@ -48,7 +48,32 @@
         (perform-split ch credits :credits)))))
 
 (defun activate-char-quad (ch)
-  nil)
+  (let ((quad (find +quad-vnum+ (carrying-of ch) :key 'vnum-of)))
+    (when quad
+      (call-magic ch ch nil nil +spell-quad-damage+ +lvl-grimp+ :spell)
+      (extract-obj quad)
+      (slog "~a got the Quad Damage at ~d"
+            (name-of ch)
+            (number-of (in-room-of ch)))
+
+      ;; Notify the world of this momentous event
+      (unless (or (room-flagged (in-room-of ch) +room-soundproof+)
+                  (zone-flagged (zone-of (in-room-of ch)) +zone-soundproof+)
+                  (zone-flagged (zone-of (in-room-of ch)) +zone-isolated+))
+        (dolist (zone *zone-table*)
+          (unless (or (zone-flagged zone +zone-soundproof+)
+                      (zone-flagged zone +zone-isolated+)
+                      (eql zone (zone-of (in-room-of ch)))
+                      (/= (plane-of zone) (plane-of (zone-of (in-room-of ch)))))
+            (dolist (room (world-of zone))
+              (when (and (people-of room)
+                         (not (room-flagged room +room-soundproof+)))
+                (send-to-room room "You hear a screaming roar in the distance.~%"))))))
+      (dolist (room (world-of (zone-of (in-room-of ch))))
+        (when (and (people-of room)
+                   (not (room-flagged room +room-soundproof+)))
+          (send-to-room room "You hear a screaming roar nearby!~%"))))))
+
 
 (defun perform-put (ch obj container)
   (cond
