@@ -464,6 +464,29 @@
              (number-of (in-room-of vict))
              (title-of (in-room-of vict)))))))
 
+(defun perform-give-money (ch target amount kind)
+  (let ((money-desc (if (eql kind :gold) "coin" "credit")))
+    (ecase kind
+      (:gold
+       (decf (gold-of ch) amount)
+       (incf (gold-of target) amount))
+      (:cash
+       (decf (cash-of ch) amount)
+       (incf (cash-of target) amount)))
+
+    (if (= amount 1)
+        (act ch :target target
+             :all-emit (format nil "$n give$% a single ~a to $N." money-desc))
+        (act ch :target target
+             :subject-emit (format nil "You give ~d ~as to $N."
+                                   amount
+                                   money-desc)
+             :target-emit (format nil "$n gives ~d ~as to you."
+                                  amount
+                                  money-desc)
+             :not-target-emit (format nil "$n gives some ~as to $N." money-desc)))
+    (save-player-to-xml ch)
+    (save-player-to-xml target)))
 
 (defcommand (ch "get") (:resting)
   (send-to-char ch "Get what?~%"))
@@ -725,3 +748,34 @@
        (send-to-char ch "You aren't carrying anything.~%"))
       (t
        (send-to-char ch "You aren't carrying any ~as.~%" (a-or-an thing) thing)))))
+
+(defcommand (ch "give" amount-str "coins" "to" target) (:resting)
+  (let ((amount (parse-integer amount-str :junk-allowed t))
+        (targets (get-matching-objects ch target (people-of (in-room-of ch)))))
+    (cond
+      ((notevery #'digit-char-p amount-str)
+       (send-to-char ch "That's a bogus number of coins.~%"))
+      ((> amount (gold-of ch))
+       (send-to-char ch "You don't have that much money!~%"))
+      ((null targets)
+       (send-to-char ch "No-one by that name here.~%"))
+      ((rest targets)
+       (send-to-char ch "You can't give money to multiple people at once.~%"))
+      (t
+       (perform-give-money ch (first targets) amount :gold)))))
+
+
+(defcommand (ch "give" amount-str "credits" "to" target) (:resting)
+  (let ((amount (parse-integer amount-str :junk-allowed t))
+        (targets (get-matching-objects ch target (people-of (in-room-of ch)))))
+    (cond
+      ((notevery #'digit-char-p amount-str)
+       (send-to-char ch "That's a bogus number of credits.~%"))
+      ((> amount (gold-of ch))
+       (send-to-char ch "You don't have that much money!~%"))
+      ((null targets)
+       (send-to-char ch "No-one by that name here.~%"))
+      ((rest targets)
+       (send-to-char ch "You can't give money to multiple people at once.~%"))
+      (t
+       (perform-give-money ch (first targets) amount :cash)))))

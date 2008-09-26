@@ -5,6 +5,9 @@
 (defclass mock-cxn (tempus::tempus-cxn)
   ())
 
+(defclass mock-player (tempus::player)
+  ((savedp :accessor savedp :initarg :savedp :initform nil)))
+
 (defun escape-mock-str (str)
   (with-output-to-string (result)
     (loop for idx from 0 to (1- (length str)) do
@@ -30,6 +33,9 @@
   (let ((str (format nil "~?" fmt args)))
     (call-next-method cxn "~a" (escape-mock-str str))))
 
+(defmethod tempus::save-player-to-xml ((player mock-player))
+  (setf (savedp player) t))
+
 (defun mock-cxn-input (cxn fmt &rest args)
   (let ((msg (format nil "~?" fmt args)))
     (setf (tempus::cxn-input-buf cxn)
@@ -47,7 +53,7 @@
 
 (defun make-mock-player (name)
   (let* ((link (make-instance 'mock-cxn))
-         (player (make-instance 'tempus::player
+         (player (make-instance 'mock-player
                                :name name
                                :aliases (format nil "~(~a .~:*~a~)" name)
                                :link link))
