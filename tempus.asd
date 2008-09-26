@@ -30,7 +30,11 @@
              (:file "account" :pathname "db/account"
                               :depends-on ("defs" "utils"))
              (:file "act-comm" :pathname "misc/act-comm"
-                               :depends-on ("defs" "utils" "interpreter" "act-social"))
+                               :depends-on ("defs"
+                                            "utils"
+                                            "constants"
+                                            "interpreter"
+                                            "act-social"))
              (:file "act-informative" :pathname "misc/act-informative"
                                       :depends-on ("defs"
                                                    "utils"
@@ -148,6 +152,8 @@
                (:file "test-comm" :pathname "tests/test-comm"
                       :depends-on ("helpers"))
                (:file "test-informative" :pathname "tests/test-informative"
+                      :depends-on ("helpers"))
+               (:file "test-misc" :pathname "tests/test-misc"
                       :depends-on ("helpers"))
                (:file "test-move" :pathname "tests/test-move"
                       :depends-on ("helpers"))

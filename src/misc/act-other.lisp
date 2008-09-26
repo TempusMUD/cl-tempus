@@ -104,3 +104,28 @@
     (t
      (setf (title-of ch) (concatenate 'string " " title))
      (send-to-char ch "Okay, you're now ~a~a.~%" (name-of ch) (title-of ch)))))
+
+(defun perform-feedback (ch kind msg)
+  (with-open-file (ouf (tempus-path (format nil "lib/misc/~as" kind))
+                   :direction :output
+                   :if-exists :append
+                   :if-does-not-exist :create)
+    (format ouf "~8a (~a) [~5d] ~a~%"
+            (name-of ch)
+            (format-timestring nil (now)
+                               :format '(:short-month #\space (:day 2)))
+            (number-of (in-room-of ch))
+            msg))
+  (send-to-char ch "Your ~a has been recorded.  Thanks!~%" kind))
+
+(macrolet ((define-feedback-command (str)
+             `(progn
+                (defcommand (ch ,str) ()
+                  (send-to-char ch "You had ~a ~a to submit?~%"
+                                (a-or-an ,str)
+                                ,str))
+                (defcommand (ch ,str msg) ()
+                  (perform-feedback ch ,str msg)))))
+  (define-feedback-command "idea")
+  (define-feedback-command "bug")
+  (define-feedback-command "typo"))
