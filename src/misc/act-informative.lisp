@@ -27,8 +27,8 @@
              (plusp (engine-state object)))
     (format stream " (active)"))
 
-  (when (or (and (or (= (kind-of object) +item-cigarette+)
-                     (= (kind-of object) +item-pipe+))
+  (when (or (and (or (is-obj-kind object +item-cigarette+)
+                     (is-obj-kind object +item-pipe+))
                  (plusp (aref (value-of object) 3)))
             (and (is-obj-kind object +item-bomb+)
                  (contains-of object)
@@ -115,7 +115,7 @@
       (format stream " [~d]" count))
     (format stream "~%")
 
-    (when (and (= (kind-of object) +item-vehicle+)
+    (when (and (is-obj-kind object +item-vehicle+)
                (eql mode :bits)
                (car-openable object))
       (format stream "The door of ~a is ~a."
