@@ -147,14 +147,14 @@
     (write-string
      (xmls:toxml
       `("objects" NIL
-                ,@(mapcar 'serialize-object
-                          (remove-if-not #'identity (carrying-of ch)))
                 ,@(map 'list 'serialize-object
-                       (remove-if-not #'identity (equipment-of ch)))
+                       (remove nil (carrying-of ch)))
                 ,@(map 'list 'serialize-object
-                       (remove-if-not #'identity (implants-of ch)))
+                       (remove nil (equipment-of ch)))
                 ,@(map 'list 'serialize-object
-                       (remove-if-not #'identity (tattoos-of ch)))))
+                       (remove nil (implants-of ch)))
+                ,@(map 'list 'serialize-object
+                       (remove nil (tattoos-of ch)))))
      ouf)))
 
 (defmethod save-player-to-xml ((ch mobile))
