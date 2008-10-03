@@ -142,7 +142,8 @@
    (tongues :accessor tongues-of :initarg :tongues
             :initform (make-array +max-tongues+ :initial-element nil))
    (current-tongue :accessor current-tongue-of :initarg :current-tongue :initform nil)
-   ))
+   (last-command :accessor last-command-of :initform nil)
+   (repeat-cmd-count :accessor repeat-cmd-count-of :initform 0)))
 
 (defclass mobile (creature)
   ((shared :accessor shared-of :initarg :shared :initform nil)

@@ -455,3 +455,38 @@
                         (char-output bob))))
     (is (equal (list armor-2) (tempus::carrying-of alice)))
     (is (equal (list armor-1) (tempus::carrying-of bob)))))
+
+(test drink-command
+  (with-mock-players (alice bob)
+    (with-mock-objects ((glass "a glass of water"))
+      (setf (tempus::kind-of glass) tempus::+item-drinkcon+)
+      (setf (tempus::value-of glass) (coerce '(8 8 0 0) 'vector))
+      (tempus::obj-to-char glass alice)
+      (setf (tempus::conditions-of alice) (coerce '(0 12 12) 'vector))
+      (tempus::interpret-command alice "drink water")
+      (is (equal "Your thirst has been quenched.~%" (char-output alice)))
+      (is (equal "Alice drinks water from a glass of water.~%"
+                 (char-output bob)))
+      (destructuring-bind (drunk full thirst)
+          (coerce (tempus::conditions-of alice) 'list)
+        (is (= drunk 0))
+        (is (>= full 13))
+        (is (>= thirst 22))))))
+
+(test drink-command-poison
+  (with-mock-players (alice bob)
+    (with-mock-objects ((glass "a glass of water"))
+      (setf (tempus::kind-of glass) tempus::+item-drinkcon+)
+      (setf (tempus::value-of glass) (coerce '(8 8 0 1) 'vector))
+      (tempus::obj-to-char glass alice)
+      (setf (tempus::conditions-of alice) (coerce '(0 12 12) 'vector))
+      (tempus::interpret-command alice "drink water")
+      (is (equal "Your thirst has been quenched.~%Oops, it tasted rather strange!~%" (char-output alice)))
+      (is (equal "Alice drinks water from a glass of water.~%Alice chokes and utters some strange sounds.~%"
+                 (char-output bob)))
+      (is (tempus::affected-by-spell alice tempus::+spell-poison+))
+      (destructuring-bind (drunk full thirst)
+          (coerce (tempus::conditions-of alice) 'list)
+        (is (= drunk 0))
+        (is (>= full 13))
+        (is (>= thirst 22))))))

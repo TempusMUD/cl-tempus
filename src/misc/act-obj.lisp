@@ -520,6 +520,131 @@
               :target-emit "$n puts $p in your pocket.")
          (gain-skill-proficiency ch +skill-plant+)))))
 
+(defun name-from-drinkcon (obj drink)
+  (setf (aliases-of obj)
+        (cl-ppcre:regex-replace-all
+         (cl-ppcre:create-scanner
+          `((:greedy-repetition :whitespace-char-class)
+            ,(aref +drink-names+ drink)
+            (:greedy-repetition :whitespace-char-class)))
+         (aliases-of obj) "")))
+
+(defun perform-drink (ch obj)
+  (cond
+    ((is-obj-kind obj +item-potion+)
+     (send-to-char ch "You must QUAFF that!~%"))
+    ((not (or (is-obj-kind obj +item-drinkcon+)
+              (is-obj-kind obj +item-fountain+)))
+     (send-to-char ch "You can't drink from that!~%"))
+    ((and (in-room-of obj)
+          (is-obj-kind obj +item-drinkcon+))
+     (send-to-char ch "You have to be carrying that to drink from it.~%"))
+    ((or (= (get-condition ch +drunk+) 24)
+         (> (get-condition ch +drunk+) (* (con-of ch) 2)))
+     ;; The pig is drunk
+     (act ch
+          :subject-emit "You can't seem to get it close enough to your mouth."
+          :place-emit "$n tries to drink but misses $s mouth!"))
+    ((and (> (get-condition ch +full+) 20)
+          (plusp (get-condition ch +thirst+)))
+     (send-to-char ch "Your stomach can't contain anymore!~%"))
+    ((zerop (aref (value-of obj) 1))
+     (send-to-char ch "It's empty.~%"))
+    (t
+     (when (or (null (link-of ch))
+               (zerop (repeat-cmd-count-of ch)))
+       (act ch :item obj
+            :place-emit (format nil "$n drink$% ~a from $p."
+                                (aref +drinks+ (aref (value-of obj) 2)))))
+     (if (string= "" (action-desc-of obj))
+         (send-to-char ch "You drink the ~a.~%"
+                       (aref +drinks+ (aref (value-of obj) 2)))
+         (act ch :item obj :subject-emit (action-desc-of obj)))
+     (let ((amount (if (> (aref (value-of obj) 1) -1)
+                       (min (aref (value-of obj) 1) (random-range 1 3))
+                       (random-range 1 3))))
+       ;; Change weight of container
+       (when (and (/= (aref (value-of obj) 1) -1)
+                  (/= (vnum-of obj) -1))
+         (setf (weight-of obj) (+ (weight-of (real-object-proto (vnum-of obj)))
+                                  (floor (aref (value-of obj) 1) 10))))
+       (let ((drunk (floor (* (aref +drink-affects+
+                                    (aref (value-of obj) 2) +drunk+)
+                              amount)
+                           (if (is-monk ch) 4 16)))
+             (full (floor (* (aref +drink-affects+
+                                   (aref (value-of obj) 2) +full+)
+                             amount)))
+             (thirst (floor (* (aref +drink-affects+
+                                     (aref (value-of obj) 2) +thirst+)
+                               amount))))
+         (when (pref-flagged ch +pref-debug+)
+           (send-to-char ch "&c[DRINK] amount: ~d   drunk: ~d   full: ~d   thirst: ~d&n~%"
+                         amount drunk full thirst))
+         (gain-condition ch +drunk+ drunk)
+         (gain-condition ch +full+ full)
+         (gain-condition ch +thirst+ thirst))
+
+       (cond
+         ((or (> (get-condition ch +drunk+) (* (con-of ch) 2))
+              (= (get-condition ch +drunk+) 24))
+          (send-to-char ch "You are on the verge of passing out!~%"))
+         ((> (get-condition ch +drunk+) (/ (* (con-of ch) 3) 4))
+          (send-to-char ch "You are feeling no pain.~%"))
+         ((> (get-condition ch +drunk+) (con-of ch))
+          (send-to-char ch "You feel pretty damn drunk.~%"))
+         ((> (get-condition ch +drunk+) (/ (con-of ch) 2))
+          (send-to-char ch "You feel pretty good.~%")))
+
+       (when (> (get-condition ch +thirst+) 20)
+         (send-to-char ch "Your thirst has been quenched.~%"))
+
+       (when (> (get-condition ch +full+) 20)
+         (send-to-char ch "Your belly is satiated.~%"))
+
+       ;; TODO: do something useful with radioactive drinks
+
+       (when (plusp (aref (value-of obj) 3))
+         (send-to-char ch "Oops, it tasted rather strange!~%")
+         (act ch :place-emit
+              (if (zerop (random-range 0 1))
+                  "$n chokes and utters some strange sounds."
+                  "$n sputters and coughs."))
+         (let ((af (make-instance 'affected-type
+                                  :location +apply-str+
+                                  :modifier -2
+                                  :duration (* 3 amount)
+                                  :bitvector 0
+                                  :kind +spell-poison+
+                                  :level 30
+                                  :owner 0)))
+           (case (aref (value-of obj) 3)
+             (2
+              (if (has-poison-3 ch)
+                  (setf (duration-of af) amount)
+                  (setf (bitvector-of af) +aff3-poison-2+))
+              (setf (aff-index-of af) 3))
+             (3
+              (setf (bitvector-of af) +aff3-poison-3+)
+              (setf (aff-index-of af) 3))
+             (4
+              (setf (kind-of af) +spell-sickness+)
+              (setf (bitvector-of af) +aff3-sickness+)
+              (setf (aff-index-of af) 3))
+             (t
+              (if (or (has-poison-3 ch) (has-poison-2 ch))
+                  (setf (duration-of af) amount)
+                  (setf (bitvector-of af) +aff-poison+))
+              (setf (aff-index-of af) 1)))
+           (affect-join ch af t t t nil)))
+
+       (unless (= (aref (value-of obj) 1) -1)
+         (decf (aref (value-of obj) 1) amount)
+         (when (zerop (aref (value-of obj) 1))
+           (setf (aref (value-of obj) 2) 0)
+           (setf (aref (value-of obj) 3) 0)
+           (name-from-drinkcon obj (aref (value-of obj) 2))))))))
+
 (defcommand (ch "get") (:resting)
   (send-to-char ch "Get what?~%"))
 
@@ -838,3 +963,16 @@
        (send-to-char ch "You aren't carrying anything.~%"))
       (t
        (send-to-char ch "You aren't carrying any ~as.~%" (a-or-an thing) thing)))))
+
+(defcommand (ch "drink" thing) (:resting)
+  (let* ((objs (get-matching-objects ch thing (append
+                                               (carrying-of ch)
+                                               (contents-of (in-room-of ch)))))
+         (obj (first objs)))
+    (cond
+      ((null obj)
+       (send-to-char ch "You can't find it!~%"))
+      ((rest objs)
+       (send-to-char ch "You can only drink from one thing at a time!~%"))
+      (t
+       (perform-drink ch obj)))))

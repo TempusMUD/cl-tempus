@@ -1796,3 +1796,128 @@
        "You wield $p in your off hand.")
       ("$n RAMS $p up $s ass!!!"
        "You RAM $p up your ass!!!")))
+
+(defparameter +drinks+
+  #("water"
+	"beer"
+	"wine"
+	"ale"
+	"dark ale"
+	"whiskey"
+	"lemonade"
+	"firebreather"
+	"local specialty"
+	"slime"
+	"milk"
+	"tea"
+	"coffee"
+	"blood"
+	"salt water"
+	"clear water"
+	"coke"
+	"firetalon"
+	"soup"
+	"mud"
+	"holy water"
+	"orange juice"
+	"goatsmilk"
+	"mucus"
+	"pus"
+	"sprite"
+	"diet coke"
+	"root beer"
+	"vodka"
+	"beer"
+	"urine"
+	"stout"
+	"souls"
+	"champagne"
+	"cappucino"
+	"rum"
+	"sake"
+	"chocolate milk"
+	"juice"
+    "mead"))
+
+(defparameter +drink-names+
+  #("water"
+	"beer"
+	"wine"
+	"ale"
+	"ale"
+	"whiskey"
+	"lemonade"
+	"firebreather"
+	"local"
+	"slime mold juice"
+	"milk"
+	"tea"
+	"coffee"
+	"blood"
+	"salt water"
+	"water clear"
+	"coke"
+	"firetalon"
+	"soup"
+	"mud"
+	"holy water"
+	"orange juice"
+	"goatsmilk"
+	"mucus"
+	"pus"
+	"sprite"
+	"diet"
+	"root"
+	"vodka"
+	"beer"
+	"urine"
+	"stout"
+	"souls"
+	"champagne bubbly"
+	"cappucino coffee"
+	"rum"
+	"sake"
+	"chocolate milk"
+    "juice"
+    "mead"))
+
+(defparameter +drink-affects+
+  #2A((0 1 10)                          ;water
+      (3 2 5)                           ; beer
+      (5 2 5)                           ; wine
+      (2 2 5)                           ; ale
+      (1 2 5)                           ; darkale
+      (6 1 4)                           ; whiskey; 5
+      (0 1 8)                           ; lemonade
+      (10 0 0)                          ; firebreather
+      (3 3 3)                           ; local specialty
+      (0 4 -8)                          ; slime
+      (0 3 6)                           ; milk; 10
+      (0 1 6)                           ; tea
+      (0 1 6)                           ; coffee
+      (0 2 -1)                          ; blood
+      (0 1 -2)                          ; saltwater
+      (0 0 13)                          ; clear water; 15
+      (0 1 10)                          ; coke
+      (10 0 1)                          ; fire talon
+      (0 5 5)                           ; soup
+      (0 3 -2)                          ; mud
+      (0 1 10)                          ; holy water; 20
+      (0 2 8)                           ; orange juice
+      (0 3 8)                           ; goatsmilk
+      (0 3 -5)                          ; mucus
+      (0 1 0)                           ; pus
+      (0 1 10)                          ; sprite 25
+      (0 1 10)                          ; diet coke
+      (0 1 10)                          ; root beer
+      (12 0 2)                          ; vodka
+      (1 1 6)                           ; city beer
+      (0 0 -2)                          ; urine 30
+      (5 3 6)                           ; stout
+      (2 1 8)                           ; souls
+      (1 2 2)                           ; champagne
+      (0 1 6)                           ; cappucino
+      (10 0 2)                          ; rum
+      (12 0 2)                          ; sake
+      (0 3 6)                           ; chocolate milk
+      ))
