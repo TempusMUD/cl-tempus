@@ -529,6 +529,40 @@
             (:greedy-repetition :whitespace-char-class)))
          (aliases-of obj) "")))
 
+(defun poison-char (ch level amount)
+  (send-to-char ch "Oops, it tasted rather strange!~%")
+  (act ch :place-emit
+       (if (zerop (random-range 0 1))
+           "$n chokes and utters some strange sounds."
+           "$n sputters and coughs."))
+  (let ((af (make-instance 'affected-type
+                           :location +apply-str+
+                           :modifier -2
+                           :duration (* 3 amount)
+                           :bitvector 0
+                           :kind +spell-poison+
+                           :level 30
+                           :owner 0)))
+    (case level
+      (2
+       (if (has-poison-3 ch)
+           (setf (duration-of af) amount)
+           (setf (bitvector-of af) +aff3-poison-2+))
+       (setf (aff-index-of af) 3))
+      (3
+       (setf (bitvector-of af) +aff3-poison-3+)
+       (setf (aff-index-of af) 3))
+      (4
+       (setf (kind-of af) +spell-sickness+)
+       (setf (bitvector-of af) +aff3-sickness+)
+       (setf (aff-index-of af) 3))
+      (t
+       (if (or (has-poison-3 ch) (has-poison-2 ch))
+           (setf (duration-of af) amount)
+           (setf (bitvector-of af) +aff-poison+))
+       (setf (aff-index-of af) 1)))
+    (affect-join ch af t t t nil)))
+
 (defun perform-drink (ch obj)
   (cond
     ((is-obj-kind obj +item-potion+)
@@ -605,38 +639,7 @@
        ;; TODO: do something useful with radioactive drinks
 
        (when (plusp (aref (value-of obj) 3))
-         (send-to-char ch "Oops, it tasted rather strange!~%")
-         (act ch :place-emit
-              (if (zerop (random-range 0 1))
-                  "$n chokes and utters some strange sounds."
-                  "$n sputters and coughs."))
-         (let ((af (make-instance 'affected-type
-                                  :location +apply-str+
-                                  :modifier -2
-                                  :duration (* 3 amount)
-                                  :bitvector 0
-                                  :kind +spell-poison+
-                                  :level 30
-                                  :owner 0)))
-           (case (aref (value-of obj) 3)
-             (2
-              (if (has-poison-3 ch)
-                  (setf (duration-of af) amount)
-                  (setf (bitvector-of af) +aff3-poison-2+))
-              (setf (aff-index-of af) 3))
-             (3
-              (setf (bitvector-of af) +aff3-poison-3+)
-              (setf (aff-index-of af) 3))
-             (4
-              (setf (kind-of af) +spell-sickness+)
-              (setf (bitvector-of af) +aff3-sickness+)
-              (setf (aff-index-of af) 3))
-             (t
-              (if (or (has-poison-3 ch) (has-poison-2 ch))
-                  (setf (duration-of af) amount)
-                  (setf (bitvector-of af) +aff-poison+))
-              (setf (aff-index-of af) 1)))
-           (affect-join ch af t t t nil)))
+         (poison-char ch (aref (value-of obj) 3) amount))
 
        (unless (= (aref (value-of obj) 1) -1)
          (decf (aref (value-of obj) 1) amount)
@@ -644,6 +647,30 @@
            (setf (aref (value-of obj) 2) 0)
            (setf (aref (value-of obj) 3) 0)
            (name-from-drinkcon obj (aref (value-of obj) 2))))))))
+
+(defun perform-eating (ch obj)
+  (cond
+    ((and (not (is-obj-kind obj +item-food+))
+          (not (immortalp ch)))
+     (send-to-char ch "You can't eat THAT!~%"))
+    ((> (get-condition ch +full+) 20)   ; stomach full
+     (send-to-char ch "Your belly is stuffed to capacity!~%"))
+    (t
+     (act ch :item obj :all-emit "$n eat$% $p.")
+     (let ((amount (aref (value-of obj) 0)))
+       (gain-condition ch +full+ amount)
+       ;; perform foody magics
+       (when (and (is-obj-kind obj +item-food+)
+                  (plusp (aref (value-of obj) 1))
+                  (plusp (aref (value-of obj) 2)))
+         (mag-objectmagic ch obj))
+       (when (and (is-obj-kind obj +item-food+)
+                  (> (get-condition ch +full+) 20))
+         (send-to-char ch "You are satiated.~%"))
+       (when (and (plusp (aref (value-of obj) 3))
+                  (not (immortalp ch)))
+         (poison-char ch (aref (value-of obj) 3) amount))
+       (extract-obj obj)))))
 
 (defcommand (ch "get") (:resting)
   (send-to-char ch "Get what?~%"))
@@ -976,3 +1003,50 @@
        (send-to-char ch "You can only drink from one thing at a time!~%"))
       (t
        (perform-drink ch obj)))))
+
+(defcommand (ch "eat") (:resting)
+  (send-to-char ch "Eat what?~%"))
+
+(defcommand (ch "eat" thing) (:resting)
+  (let* ((objs (get-matching-objects ch thing (append
+                                               (carrying-of ch)
+                                               (contents-of (in-room-of ch)))))
+         (obj (first objs)))
+    (cond
+      ((null obj)
+       (send-to-char ch "You don't seem to have ~a ~a.~%"
+                     (a-or-an thing) thing))
+      ((rest objs)
+       (send-to-char ch "You can only eat one thing at a time!~%"))
+      (t
+       (perform-eating ch obj)))))
+
+(defcommand (ch "pour" thing) (:resting)
+  nil)
+
+(defcommand (ch "wield" thing) (:resting)
+  nil)
+
+(defcommand (ch "grab" thing) (:resting)
+  nil)
+
+(defcommand (ch "attach" thing "to" other-thing) (:resting)
+  nil)
+
+(defcommand (ch "conceal" thing) (:resting)
+  nil)
+
+(defcommand (ch "sacrifice" thing) (:resting)
+  nil)
+
+(defcommand (ch "junk" thing) (:resting)
+  nil)
+
+(defcommand (ch "donate" thing) (:resting)
+  nil)
+
+(defcommand (ch "empty" thing) (:resting)
+  nil)
+
+(defcommand (ch "empty" thing "into" container) (:resting)
+  nil)
