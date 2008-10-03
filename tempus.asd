@@ -93,6 +93,8 @@
                             :depends-on ("defs" "utils"))
              (:file "interpreter" :pathname "interpreter/interpreter"
                                   :depends-on ("defs" "utils"))
+             (:file "limits" :pathname "misc/limits"
+                            :depends-on ("defs" "creature"))
              (:file "login" :pathname "misc/login"
                             :depends-on ("defs" "char-class"))
              (:file "mail" :pathname "mobiles/mail"
@@ -153,15 +155,19 @@
                       :depends-on ("defpackage"))
                (:file "test-comm" :pathname "tests/test-comm"
                       :depends-on ("helpers"))
+               (:file "test-creature" :pathname "tests/test-creature"
+                      :depends-on ("helpers"))
                (:file "test-informative" :pathname "tests/test-informative"
                       :depends-on ("helpers"))
                (:file "test-misc" :pathname "tests/test-misc"
                       :depends-on ("helpers"))
                (:file "test-move" :pathname "tests/test-move"
                       :depends-on ("helpers"))
+               (:file "test-network" :pathname "tests/test-network"
+                      :depends-on ("helpers"))
                (:file "test-obj" :pathname "tests/test-obj"
                       :depends-on ("helpers"))
-               (:file "test-network" :pathname "tests/test-network"
+               (:file "test-parser" :pathname "tests/test-parser"
                       :depends-on ("helpers"))
                (:file "test-random" :pathname "tests/test-random"
                       :depends-on ("helpers"))

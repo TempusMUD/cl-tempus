@@ -495,9 +495,6 @@
            (eql tch (master-of ch))
            (eql (master-of ch) (master-of tch)))))
 
-(defun affected-by-spell (ch spell)
-  nil)
-
 (defun illegal-soilpos (pos)
   (member pos (list +wear-light+
                     +wear-shield+

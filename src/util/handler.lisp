@@ -348,6 +348,55 @@
        (setf (str-of (aff-abils-of ch)) 18)
        (setf (str-add-of (aff-abils-of ch)) 100)))))
 
+(defun affect-to-char (ch af)
+  "Insert an affect type in a creature, setting appropriate bits and applies"
+  (push af (affected-of ch))
+  (affect-modify ch
+                 (location-of af)
+                 (modifier-of af)
+                 (bitvector-of af)
+                 (aff-index-of af)
+                 t)
+  (affect-total ch))
+
+(defmethod affected-by-spell ((ch creature) kind)
+  (find kind (affected-of ch) :key 'kind-of))
+
+(defmethod affected-by-spell ((obj obj-data) kind)
+  (find kind (tmp-affects-of obj) :key 'kind-of))
+
+(defun affect-join (ch af
+                    add-duration-p
+                    average-duration-p
+                    add-modifier-p
+                    average-modifier-p)
+  (let ((old-af (find-if (lambda (a)
+                           (and (= (kind-of af) (kind-of a))
+                                (= (location-of af) (location-of a))
+                                (= (aff-index-of af) (aff-index-of a))))
+                         (affected-of ch))))
+    (cond
+      (old-af
+       ;; join with old affect
+       (when add-duration-p
+         (setf (duration-of af) (pin (+ (duration-of af)
+                                        (duration-of old-af))
+                                     0 666)))
+       (when average-duration-p
+         (setf (duration-of af) (floor (duration-of old-af))))
+       (when add-modifier-p
+         (setf (modifier-of af) (pin (+ (modifier-of af)
+                                        (modifier-of old-af))
+                                     -666 666)))
+       (when average-modifier-p
+         (setf (modifier-of af) (floor (modifier-of old-af))))
+       (affect-remove ch old-af)
+       (affect-to-char ch af))
+      (t
+       ;; Add fresh affect
+       (affect-to-char ch af)))))
+
+
 (defun char-to-room (ch room &optional check-specials)
   (assert (null(in-room-of ch)) nil "creature already in a room in char-to-room!")
   (assert (and ch room) nil "Illegal values passed to char-to-room")
