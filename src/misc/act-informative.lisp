@@ -773,10 +773,6 @@
        (send-to-char ch " &c)~a(" (name-of clan)))))
   (when (and (plusp (invis-level-of player)) (immortalp ch))
     (send-to-char ch " &b(&mi~d&b)" (invis-level-of player)))
-  (when (aff-flagged player +aff-invisible+)
-    (send-to-char ch " &c(invis)"))
-  (when (aff2-flagged player +aff2-transparent+)
-    (send-to-char ch " &c(transp)"))
   (cond
     ((plr-flagged player +plr-mailing+)
      (send-to-char ch " &g(mailing)"))
@@ -814,9 +810,7 @@
                    (char-class-name (char-class-of player)))))
 
   (send-to-char ch "~a~@[~a~]&n"
-                (if (can-see-creature ch player)
-                    (name-of player)
-                    "Someone")
+                (name-of player)
                 (title-of player))
 
   (unless (member :noflags options)
