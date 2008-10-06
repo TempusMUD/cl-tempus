@@ -524,10 +524,17 @@
   (setf (aliases-of obj)
         (cl-ppcre:regex-replace-all
          (cl-ppcre:create-scanner
-          `((:greedy-repetition :whitespace-char-class)
+          `(:sequence
+            (:greedy-repetition 0 nil :whitespace-char-class)
             ,(aref +drink-names+ drink)
-            (:greedy-repetition :whitespace-char-class)))
+            (:greedy-repetition 0 nil :whitespace-char-class)))
          (aliases-of obj) "")))
+
+(defun name-to-drinkcon (obj drink)
+  (setf (aliases-of obj) (concatenate 'string
+                                      (aliases-of obj)
+                                      " "
+                                      (aref +drink-names+ drink))))
 
 (defun poison-char (ch level amount)
   (send-to-char ch "Oops, it tasted rather strange!~%")
@@ -671,6 +678,59 @@
                   (not (immortalp ch)))
          (poison-char ch (aref (value-of obj) 3) amount))
        (extract-obj obj)))))
+
+(defun transfer-liquid (from-obj to-obj)
+  (when (zerop (aref (value-of to-obj) 1))
+    (name-to-drinkcon to-obj (aref (value-of from-obj) 2)))
+  (setf (aref (value-of to-obj) 2) (aref (value-of from-obj) 2))
+  (let ((amount (min (aref (value-of from-obj) 1)
+                     (- (aref (value-of to-obj) 0) (aref (value-of to-obj) 1)))))
+    (unless (= -1 (aref (value-of from-obj) 0))
+      (decf (aref (value-of from-obj) 1) amount))
+    (incf (aref (value-of to-obj) 1) amount))
+  ;; Handle emptied container
+  (when (zerop (aref (value-of from-obj) 1))
+    (name-from-drinkcon from-obj (aref (value-of from-obj) 2))
+    (setf (aref (value-of from-obj) 1) 0)
+    (setf (aref (value-of from-obj) 2) 0)
+    (setf (aref (value-of from-obj) 3) 0))
+  ;; Transfer poison
+  (setf (aref (value-of to-obj) 3)
+        (if (not (and (zerop (aref (value-of from-obj) 3))
+                      (zerop (aref (value-of to-obj) 3))))
+            1 0))
+  ;; Transfer weight
+  (unless (= -1 (vnum-of from-obj))
+    (let ((proto (real-object-proto (vnum-of from-obj))))
+      (setf (weight-of from-obj) (+ (weight-of proto)
+                                    (floor (aref (value-of from-obj) 1) 10)))))
+  (unless (= -1 (vnum-of to-obj))
+    (let ((proto (real-object-proto (vnum-of to-obj))))
+      (setf (weight-of to-obj) (+ (weight-of proto)
+                                    (floor (aref (value-of to-obj) 1) 10))))))
+
+(defun perform-pour (ch from-obj to-obj)
+  (cond
+      ((not (or (is-obj-kind from-obj +item-drinkcon+)
+                (is-obj-kind from-obj +item-fountain+)))
+       (act ch :item from-obj :subject-emit "$p doesn't contain any liquids."))
+      ((not (or (is-obj-kind to-obj +item-drinkcon+)
+                (is-obj-kind to-obj +item-fountain+)))
+       (act ch :item to-obj :subject-emit "$p can't contain liquids."))
+      ((eql from-obj to-obj)
+       (send-to-char ch "A most unproductive effort.~%"))
+      ((or (minusp (aref (value-of to-obj) 0))
+           (>= (aref (value-of to-obj) 1) (aref (value-of to-obj) 0)))
+       (act ch :item to-obj :subject-emit "$p can't hold any more."))
+      ((and (plusp (aref (value-of to-obj) 1))
+            (/= (aref (value-of from-obj) 2) (aref (value-of to-obj) 2)))
+       (send-to-char ch "There is already another liquid in it!~%"))
+      (t
+       (act ch :item to-obj
+            :all-emit (format nil "$n pour$% ~a into $p."
+                              (aref +drink-names+
+                                    (aref (value-of from-obj) 2))))
+       (transfer-liquid from-obj to-obj))))
 
 (defcommand (ch "get") (:resting)
   (send-to-char ch "Get what?~%"))
@@ -1021,32 +1081,25 @@
       (t
        (perform-eating ch obj)))))
 
-(defcommand (ch "pour" thing) (:resting)
-  nil)
-
-(defcommand (ch "wield" thing) (:resting)
-  nil)
-
-(defcommand (ch "grab" thing) (:resting)
-  nil)
-
-(defcommand (ch "attach" thing "to" other-thing) (:resting)
-  nil)
-
-(defcommand (ch "conceal" thing) (:resting)
-  nil)
-
-(defcommand (ch "sacrifice" thing) (:resting)
-  nil)
-
-(defcommand (ch "junk" thing) (:resting)
-  nil)
-
-(defcommand (ch "donate" thing) (:resting)
-  nil)
-
-(defcommand (ch "empty" thing) (:resting)
-  nil)
-
-(defcommand (ch "empty" thing "into" container) (:resting)
-  nil)
+(defcommand (ch "pour" from-thing "into" to-thing) (:resting)
+  (let* ((from-objs (get-matching-objects ch from-thing (carrying-of ch)))
+         (from-obj (first from-objs))
+         (to-objs (get-matching-objects ch to-thing (append
+                                                     (carrying-of ch)
+                                                     (contents-of (in-room-of ch)))))
+         (to-obj (first to-objs)))
+    (cond
+      ((null from-obj)
+       (send-to-char ch "You can't find ~a ~a.~%"
+                     (a-or-an from-thing)
+                     from-thing))
+      ((null to-obj)
+       (send-to-char ch "You can't find ~a ~a.~%"
+                     (a-or-an to-thing)
+                     to-thing))
+      ((rest from-objs)
+       (send-to-char ch "You can't pour from more than one container at a time!~%"))
+      ((rest to-objs)
+       (send-to-char ch "You can't pour into more than one container at a time!~%"))
+      (t
+       (perform-pour ch from-obj to-obj)))))
