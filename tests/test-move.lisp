@@ -1,8 +1,8 @@
 (in-package #:tempus.tests)
 
-(in-suite* #:tempus.move :in :tempus)
+(in-suite (defsuite (tempus.move :in test)))
 
-(test basic-movement
+(deftest basic-movement ()
   (with-mock-players (alice bob)
     (let ((orig-room (tempus::in-room-of alice)))
       (setf (tempus::bitp (tempus::prefs-of alice) tempus::+pref-autoexit+) t)
@@ -10,9 +10,9 @@
       (is (eql (tempus::to-room-of
                 (aref (tempus::dir-option-of orig-room) tempus::+east+))
                (tempus::number-of (tempus::in-room-of alice))))
-      (is-true (search "East Goddess Street" (char-output alice)))
-      (is-true (search "[ Exits: n e s w u ]" (char-output alice)))
-      (is-true (search "The broad tree-lined avenue leads east"
+      (is (search "East Goddess Street" (char-output alice)))
+      (is (search "[ Exits: n e s w u ]" (char-output alice)))
+      (is (search "The broad tree-lined avenue leads east"
                        (char-output alice)))
       (is (or (string= (char-output bob) "Alice walks east.~%")
               (string= (char-output bob) "Alice strolls east.~%")
@@ -23,21 +23,21 @@
 
       (tempus::interpret-command alice "w")
       (is (eql (tempus::in-room-of alice) orig-room))
-      (is-true (search "Holy Square" (char-output alice)))
+      (is (search "Holy Square" (char-output alice)))
       (is (or (string= (char-output bob) "Alice walks in from the east.~%")
               (string= (char-output bob) "Alice strolls in from the east.~%")
               (string= (char-output bob) "Alice has arrived from the east.~%")
               (char-output bob))))))
 
-(test movement-with-brief
+(deftest movement-with-brief ()
   (with-mock-players (alice)
     (setf (tempus::bitp (tempus::prefs-of alice) tempus::+pref-brief+) t)
     (tempus::interpret-command alice "e")
-    (is-true (search "East Goddess Street" (char-output alice)))
-    (is-false (search "The broad tree-lined avenue leads east"
-                      (char-output alice)))))
+    (is (search "East Goddess Street" (char-output alice)))
+    (is (null (search "The broad tree-lined avenue leads east"
+                      (char-output alice))))))
 
-(test standing
+(deftest standing ()
   (with-mock-players (alice)
     (setf (tempus::position-of alice) tempus::+pos-sitting+)
     (tempus::interpret-command alice "stand")
@@ -73,7 +73,7 @@
     (is (= (tempus::position-of alice) tempus::+pos-standing+))
     (is (string= (char-output alice) "You settle lightly to the ground.~%"))))
 
-(test resting
+(deftest resting ()
   (with-mock-players (alice)
     (setf (tempus::position-of alice) tempus::+pos-sitting+)
     (tempus::interpret-command alice "rest")
@@ -109,7 +109,7 @@
     (is (= (tempus::position-of alice) tempus::+pos-flying+))
     (is (string= (char-output alice) "You better not try that while flying.~%"))))
 
-(test sleeping
+(deftest sleeping ()
   (with-mock-players (alice)
     (setf (tempus::position-of alice) tempus::+pos-sitting+)
     (tempus::interpret-command alice "sleep")
@@ -158,7 +158,7 @@
     (is (= (tempus::position-of alice) tempus::+pos-flying+))
     (is (string= (char-output alice) "That's a really bad idea while flying!~%"))))
 
-(test waking
+(deftest waking ()
   (with-mock-players (alice)
     (setf (tempus::position-of alice) tempus::+pos-sleeping+)
     (tempus::interpret-command alice "wake")
@@ -179,7 +179,7 @@
     (is (= (tempus::position-of alice) tempus::+pos-sitting+))
     (is (string= (char-output alice) "Reactivating processes...~%"))))
 
-(test goto-command
+(deftest goto-command ()
   (with-mock-players (alice bob)
     (tempus::interpret-command alice "goto 3001")
     (is (= 3001 (tempus::number-of (tempus::in-room-of alice))))

@@ -1,6 +1,7 @@
 (in-package #:tempus.tests)
 
-(def-suite :tempus)
+(in-root-suite)
+(defsuite (test :documentation "Tempus tests"))
 
 (defclass mock-cxn (tempus::tempus-cxn)
   ())
@@ -105,7 +106,7 @@
              ,@(loop for var in vars
                     collect `(destroy-mock-object ,var)))
          (t (err)
-           (fail "Signal caught in unwind-protect: ~a" err))))))
+           (stefil::record-failure 'unexpected-error :condition err))))))
 
 (defmacro with-mock-players (vars &body body)
   `(let ,vars
@@ -124,4 +125,4 @@
              ,@(loop for var in vars
                     collect `(destroy-mock-player ,var)))
          (t (err)
-           (fail "Signal caught in unwind-protect: ~a" err))))))
+           (stefil::record-failure 'unexpected-error :condition err))))))

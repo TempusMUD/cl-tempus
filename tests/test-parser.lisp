@@ -1,15 +1,15 @@
 (in-package #:tempus.tests)
 
-(in-suite* #:tempus.parser :in :tempus)
+(in-suite (defsuite (tempus.parser :in test)))
 
-(test command-match
+(deftest command-match ()
   (is (equal '(t nil)
              (tempus::command-matches (tempus::make-command-info
                                        :pattern '("look"))
                                       "look")))
-  (is-false (tempus::command-matches (tempus::make-command-info
-                                     :pattern '("look" "at" thing))
-                                     "look at"))
+  (is (null (tempus::command-matches (tempus::make-command-info
+                                      :pattern '("look" "at" thing))
+                                     "look at")))
   (is (equal '(t ("foo"))
              (tempus::command-matches (tempus::make-command-info
                                        :pattern '("look" "at" thing))

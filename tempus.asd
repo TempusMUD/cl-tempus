@@ -149,7 +149,7 @@
   :version "1.0.0d"
   :author "Daniel Lowe <dlowe@bitmuse.com>"
   :description "Testing code for the TempusMUD"
-  :depends-on (:tempus :fiveam)
+  :depends-on (:tempus :stefil)
   :components ((:file "defpackage" :pathname "tests/test-defpackage")
                (:file "helpers" :pathname "tests/helpers"
                       :depends-on ("defpackage"))
@@ -178,7 +178,7 @@
   (operate 'load-op '#:tempus.test)
   (funcall (read-from-string "tempus::boot-world"))
   (funcall (read-from-string "tempus::sort-commands"))
-  (funcall (read-from-string "5am:run!") :tempus))
+  (write-line (princ-to-string (funcall (read-from-string "tempus.tests::test")))))
 
 
 (defmethod operation-done-p ((op test-op) (system (eql (find-system :tempus))))

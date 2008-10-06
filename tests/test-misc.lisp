@@ -1,10 +1,10 @@
 (in-package #:tempus.tests)
 
-(in-suite* #:tempus.misc :in :tempus)
+(in-suite (defsuite (tempus.misc :in test)))
 
 (tempus::enable-regex-reader-syntax)
 
-(test feedback-command
+(deftest feedback-command ()
   (let ((path (tempus::tempus-path "lib/misc/ideas"))
         (real-path (tempus::tempus-path "lib/misc/ideas.real")))
     (with-mock-players (alice)
@@ -19,6 +19,6 @@
                   for read-line = (read-line inf nil nil)
                   as last-line = (if read-line read-line last-line)
                   while read-line
-                  finally (is-true (cl-ppcre:scan #/^Alice    \(... ..\) \[ 3013\] I have an idea!$/ last-line)))))
+                  finally (is (cl-ppcre:scan #/^Alice    \(... ..\) \[ 3013\] I have an idea!$/ last-line)))))
         (when (probe-file real-path)
           (rename-file real-path path))))))

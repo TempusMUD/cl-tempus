@@ -1,8 +1,8 @@
 (in-package #:tempus.tests)
 
-(in-suite* #:tempus.creature :in :tempus)
+(in-suite (defsuite (tempus.creature :in test)))
 
-(test gain-condition
+(deftest gain-condition ()
   (with-mock-players (alice)
     (setf (tempus::conditions-of alice) (coerce '(12 12 12) 'vector))
     (tempus::gain-condition alice tempus::+full+ 5)
@@ -18,7 +18,7 @@
     (tempus::gain-condition alice tempus::+drunk+ 10)
     (is (= 24 (tempus::get-condition alice tempus::+drunk+)))))
 
-(test affect-to-char
+(deftest affect-to-char ()
   (with-mock-players (alice)
     (let ((af (make-instance 'tempus::affected-type
                              :kind tempus::+spell-invisible+
@@ -31,4 +31,4 @@
       (tempus::affect-to-char alice af)
       (is (= (tempus::max-hitp-of alice) 110))
       (is (equal (list af) (tempus::affected-of alice)))
-      (is-true (tempus::affected-by-spell alice tempus::+spell-invisible+)))))
+      (is (tempus::affected-by-spell alice tempus::+spell-invisible+)))))

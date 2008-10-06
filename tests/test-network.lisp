@@ -1,8 +1,8 @@
 (in-package #:tempus.tests)
 
-(in-suite* #:tempus.net :in :tempus)
+(in-suite (defsuite (tempus.net :in test)))
 
-(test prompts
+(deftest prompts ()
   (with-mock-players (alice)
     ;; Odd compact level must be set
     (setf (tempus::compact-level-of (tempus::account-of alice)) 1)

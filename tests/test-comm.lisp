@@ -1,8 +1,8 @@
 (in-package #:tempus.tests)
 
-(in-suite* #:tempus.comm :in :tempus)
+(in-suite (defsuite (tempus.comm :in test)))
 
-(test say
+(deftest say ()
   (with-mock-players (alice bob eva)
     (tempus::interpret-command alice "say foo bar")
     (is (equal "&BYou say, &c'foo bar'&n~%" (char-output alice)))
@@ -21,7 +21,7 @@
     (is (equal "&BAlice says, &c'foo bar'&n~%" (char-output bob)))
     (is (equal "&BAlice says, &c'foo bar'&n~%" (char-output eva)))))
 
-(test say-with-escapes
+(deftest say-with-escapes ()
   (with-mock-players (alice)
     (tempus::interpret-command alice "' $ is a dollar sign")
     (is (equal "&BYou say, &c'$ is a dollar sign'&n~%" (char-output alice)))
@@ -35,7 +35,7 @@
     (tempus::interpret-command alice "' ] is a right bracket")
     (is (equal "&BYou say, &c'] is a right bracket'&n~%" (char-output alice)))))
 
-(test sayto
+(deftest sayto ()
   (with-mock-players (alice bob eva)
     (clear-mock-buffers alice bob eva)
     (tempus::interpret-command alice ">bob foo bar")
@@ -44,7 +44,7 @@
     (is (equal "&BAlice says to Bob, &c'foo bar'&n~%" (char-output eva)))
     (clear-mock-buffers alice bob eva)))
 
-(test gossip
+(deftest gossip ()
   (with-mock-players (alice bob)
     (setf (tempus::level-of alice) 10)
     (tempus::interpret-command alice "gossip I did it my way")

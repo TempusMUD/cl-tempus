@@ -1,18 +1,18 @@
 (in-package #:tempus.tests)
 
-(in-suite* #:tempus.obj :in :tempus)
+(in-suite (defsuite (tempus.obj :in test)))
 
-(test objs-containing-objs
+(deftest objs-containing-objs ()
   (with-mock-objects ((obj-a "obj-a")
                       (obj-b "obj-b"))
     (tempus::obj-to-obj obj-a obj-b)
     (is (equal (list obj-a) (tempus::contains-of obj-b)))
     (is (equal (tempus::in-obj-of obj-a) obj-b))
     (tempus::obj-from-obj obj-a)
-    (is-false (tempus::contains-of obj-b))
-    (is-false (tempus::in-obj-of obj-a))))
+    (is (null (tempus::contains-of obj-b)))
+    (is (null (tempus::in-obj-of obj-a)))))
 
-(test can-carry-items
+(deftest can-carry-items ()
   (with-mock-players (alice)
     (setf (tempus::dex-of (tempus::aff-abils-of alice)) 11)
     (setf (tempus::level-of alice) 40)
@@ -22,25 +22,25 @@
     (setf (tempus::level-of alice) 55)
     (is (> (tempus::can-carry-items alice) 10000))))
 
-(test can-carry-weight
+(deftest can-carry-weight ()
   (with-mock-players (alice)
     (setf (tempus::str-of (tempus::aff-abils-of alice)) 1)
     (is (= 10 (tempus::can-carry-weight alice)))
     (setf (tempus::str-of (tempus::aff-abils-of alice)) 12)
     (is (= 140 (tempus::can-carry-weight alice)))))
 
-(test affect-modify
+(deftest affect-modify ()
   (with-mock-players (alice)
     (tempus::affect-modify alice tempus::+apply-wis+ 2 0 0 t)
     (is (eql (tempus::wis-of alice) 13))
     (tempus::affect-modify alice tempus::+apply-wis+ 2 0 0 nil)
     (is (eql (tempus::wis-of alice) 11))
     (tempus::affect-modify alice 0 0 tempus::+aff-glowlight+ 1 t)
-    (is-true (logtest (tempus::aff-flags-of alice) tempus::+aff-glowlight+))
+    (is (logtest (tempus::aff-flags-of alice) tempus::+aff-glowlight+))
     (tempus::affect-modify alice 0 0 tempus::+aff-glowlight+ 1 nil)
-    (is-false (logtest (tempus::aff-flags-of alice) tempus::+aff-glowlight+))))
+    (is (not (logtest (tempus::aff-flags-of alice) tempus::+aff-glowlight+)))))
 
-(test obj-equip
+(deftest obj-equip ()
   (with-mock-players (alice)
     (with-mock-objects ((obj "a magic ring"))
       ;; Make the object give glowlight and wis+2
@@ -53,9 +53,9 @@
       (is (eql alice (tempus::worn-by-of obj)))
       (is (eql tempus::+wear-body+ (tempus::worn-on-of obj)))
       (is (eql 12 (tempus::wis-of (tempus::aff-abils-of alice))))
-      (is-true (logtest (tempus::aff-flags-of alice) tempus::+aff-glowlight+)))))
+      (is (logtest (tempus::aff-flags-of alice) tempus::+aff-glowlight+)))))
 
-(test obj-unequip
+(deftest obj-unequip ()
   (with-mock-players (alice)
     (with-mock-objects ((obj "a magic ring"))
       ;; Make the object give glowlight and wis+2
@@ -69,9 +69,9 @@
       (is (eql nil (tempus::worn-by-of obj)))
       (is (eql -1 (tempus::worn-on-of obj)))
       (is (eql 10 (tempus::wis-of (tempus::aff-abils-of alice))))
-      (is-false (logtest (tempus::aff-flags-of alice) tempus::+aff-glowlight+)))))
+      (is (not (logtest (tempus::aff-flags-of alice) tempus::+aff-glowlight+))))))
 
-(test obj-implant
+(deftest obj-implant ()
   (with-mock-players (alice)
     (with-mock-objects ((obj "a magic ring"))
       ;; Make the object give glowlight and wis+2
@@ -88,9 +88,9 @@
       (is (eql alice (tempus::worn-by-of obj)))
       (is (eql tempus::+wear-body+ (tempus::worn-on-of obj)))
       (is (eql 12 (tempus::wis-of (tempus::aff-abils-of alice))))
-      (is-true (logtest (tempus::aff-flags-of alice) tempus::+aff-glowlight+)))))
+      (is (logtest (tempus::aff-flags-of alice) tempus::+aff-glowlight+)))))
 
-(test affect-total
+(deftest affect-total ()
   (with-mock-players (alice)
     (with-mock-objects ((equip "a magic ring")
                         (implant "an internal booster"))
@@ -135,7 +135,7 @@
                     `(is (equal ,emit-str (char-output bob)))))
          ,@body))))
 
-(test get-command-ok
+(deftest get-command-ok ()
   (with-mock-players (alice bob)
     (with-mock-objects ((obj "some plate armor"))
       (setf (tempus::wear-flags-of obj) tempus::+item-wear-take+)
@@ -147,7 +147,7 @@
       (is (equal "You get some plate armor.~%" (char-output alice)))
       (is (equal "Alice gets some plate armor.~%" (char-output bob))))))
 
-(test get-all-command
+(deftest get-all-command ()
   (with-mock-players (alice)
     (with-mock-objects ((armor-1 "some plate armor")
                         (armor-2 "some plate armor")
@@ -164,7 +164,7 @@
       (is (eql alice (tempus::carried-by-of armor-2)))
       (is (eql alice (tempus::carried-by-of chest))))))
 
-(test get-all-dot-command
+(deftest get-all-dot-command ()
   (with-mock-players (alice)
     (with-mock-objects ((armor-1 "some plate armor")
                         (armor-2 "some plate armor")
@@ -180,7 +180,7 @@
       (is (eql alice (tempus::carried-by-of armor-1)))
       (is (eql alice (tempus::carried-by-of armor-2))))))
 
-(test get-command-no-take
+(deftest get-command-no-take ()
   (with-mock-players (alice)
     (with-mock-objects ((obj "some plate armor"))
       (tempus::obj-to-room obj (tempus::in-room-of alice))
@@ -190,7 +190,7 @@
       (is (equal "Some plate armor: you can't take that!~%" (char-output alice))))))
 
 
-(test get-command-imm-no-take
+(deftest get-command-imm-no-take ()
   (with-mock-players (alice)
     (with-mock-objects ((obj "some plate armor"))
       (setf (tempus::level-of alice) 55)
@@ -200,7 +200,7 @@
       (is (null (tempus::in-room-of obj)))
       (is (equal "You get some plate armor.~%" (char-output alice))))))
 
-(test get-gold
+(deftest get-gold ()
   (with-mock-players (alice)
     (with-mock-objects ((obj "a pile of gold"))
       (setf obj (make-mock-object "a pile of gold"))
@@ -214,7 +214,7 @@
       (is (= 12345 (tempus::gold-of alice)))
       (is (equal "You get a pile of gold.~%There were 12345 coins.~%" (char-output alice))))))
 
-(test get-cash
+(deftest get-cash ()
   (with-mock-players (alice)
     (with-mock-objects ((obj "a pile of cash"))
       (setf (tempus::wear-flags-of obj) tempus::+item-wear-take+)
@@ -227,7 +227,7 @@
       (is (= 12345 (tempus::cash-of alice)))
       (is (equal "You get a pile of cash.~%There were 12345 credits.~%" (char-output alice))))))
 
-(test get-from-command
+(deftest get-from-command ()
   (with-mock-players (alice bob)
     (with-mock-objects ((armor-1 "some plate armor")
                         (chest "a treasure chest"))
@@ -240,7 +240,7 @@
       (is (equal "Alice gets some plate armor from a treasure chest.~%" (char-output bob)))
       (is (eql alice (tempus::carried-by-of armor-1))))))
 
-(test get-all-from-command
+(deftest get-all-from-command ()
   (with-mock-players (alice bob)
     (with-mock-objects ((armor-1 "some plate armor")
                         (armor-2 "some plate armor")
@@ -256,14 +256,14 @@
       (is (eql alice (tempus::carried-by-of armor-1)))
       (is (eql alice (tempus::carried-by-of armor-2))))))
 
-(test inventory-command
+(deftest inventory-command ()
   (with-mock-players (alice)
     (with-mock-objects ((obj "some plate armor"))
              (tempus::obj-to-char obj alice)
              (tempus::interpret-command alice "i")
              (is (equal "You are carrying:~%some plate armor~%" (char-output alice))))))
 
-(test put-command
+(deftest put-command ()
   (object-command-test
     (tempus::obj-to-char armor-2 alice)
     (tempus::obj-to-char armor-1 alice)
@@ -273,7 +273,7 @@
     (other-emit-is "Alice puts some plate armor into a treasure chest.~%")
     (is (eql chest (tempus::in-obj-of armor-1)))))
 
-(test put-command-no-container
+(deftest put-command-no-container ()
   (object-command-test
     (tempus::obj-to-char armor-2 alice)
     (tempus::obj-to-char armor-1 alice)
@@ -281,7 +281,7 @@
     (do-cmd "put armor")
     (self-emit-is "What do you want to put it in?~%")))
 
-(test put-command-numbered
+(deftest put-command-numbered ()
   (object-command-test
     (tempus::obj-to-char armor-2 alice)
     (tempus::obj-to-char armor-1 alice)
@@ -291,7 +291,7 @@
     (other-emit-is "Alice puts some plate armor into a treasure chest.~%")
    (is (eql chest (tempus::in-obj-of armor-2)))))
 
-(test put-command-all
+(deftest put-command-all ()
   (object-command-test
     (tempus::obj-to-char armor-2 alice)
     (tempus::obj-to-char armor-1 alice)
@@ -302,7 +302,7 @@
     (is (eql chest (tempus::in-obj-of armor-1)))
     (is (eql chest (tempus::in-obj-of armor-2)))))
 
-(test drop-command
+(deftest drop-command ()
   (object-command-test
     (tempus::obj-to-char armor-2 alice)
     (tempus::obj-to-char armor-1 alice)
@@ -320,7 +320,7 @@
     (is (eql (tempus::in-room-of alice) (tempus::in-room-of armor-1)))
     (is (eql (tempus::in-room-of alice) (tempus::in-room-of armor-2)))))
 
-(test drop-command-cursed
+(deftest drop-command-cursed ()
   (object-command-test
     (tempus::obj-to-char armor-2 alice)
     (tempus::obj-to-char armor-1 alice)
@@ -336,7 +336,7 @@
     (self-emit-is "You peel some plate armor off your hand...~%You drop some plate armor.~%")
     (is (eql (tempus::in-room-of alice) (tempus::in-room-of armor-1)))))
 
-(test wear-command
+(deftest wear-command ()
   (object-command-test
     (tempus::obj-to-char armor-2 alice)
     (tempus::obj-to-char armor-1 alice)
@@ -352,14 +352,14 @@
     (do-cmd "wear armor")
     (self-emit-is "You're already wearing something on your body.~%")))
 
-(test wear-command-failure
+(deftest wear-command-failure ()
   (object-command-test
     (tempus::obj-to-char armor-1 alice)
     (setf (tempus::wear-flags-of armor-1) tempus::+item-wear-hold+)
     (do-cmd "wear armor")
     (self-emit-is "You can't wear some plate armor.~%")))
 
-(test wear-command-on-pos
+(deftest wear-command-on-pos ()
   (object-command-test
     (tempus::obj-to-char armor-2 alice)
     (tempus::obj-to-char armor-1 alice)
@@ -375,7 +375,7 @@
     (do-cmd "wear armor on eyes")
     (self-emit-is "You can't wear some plate armor there.~%")))
 
-(test wear-command-on-pos-failure
+(deftest wear-command-on-pos-failure ()
   (object-command-test
     (tempus::obj-to-char armor-2 alice)
     (tempus::obj-to-char armor-1 alice)
@@ -386,7 +386,7 @@
     (self-emit-is "'foo'?  What part of your body is THAT?~%")))
 
 
-(test remove-command
+(deftest remove-command ()
   (object-command-test
     (tempus::equip-char alice armor-1 tempus::+wear-body+ :worn)
     (do-cmd "remove armor")
@@ -395,7 +395,7 @@
     (is (null (tempus::worn-by-of armor-1)))
     (is (equal (list armor-1) (tempus::carrying-of alice)))))
 
-(test remove-command-from-pos
+(deftest remove-command-from-pos ()
   (object-command-test
     (tempus::equip-char alice armor-1 tempus::+wear-body+ :worn)
     (do-cmd "remove earring from body")
@@ -410,7 +410,7 @@
     (do-cmd "remove armor from arms")
     (self-emit-is "You aren't wearing anything there.~%")))
 
-(test give-command
+(deftest give-command ()
   (object-command-test
     (tempus::obj-to-char armor-2 alice)
     (tempus::obj-to-char armor-1 alice)
@@ -426,7 +426,7 @@
     (self-emit-is "You give some plate armor to Bob. (x2)~%")
     (other-emit-is "Alice gives some plate armor to you. (x2)~%")))
 
-(test give-money-commands
+(deftest give-money-commands ()
   (with-mock-players (alice bob eva)
     (setf (tempus::gold-of alice) 10000)
     (setf (tempus::cash-of alice) 10000)
@@ -444,19 +444,19 @@
     (is (= (tempus::cash-of alice) 5000))
     (is (= (tempus::cash-of bob) 5000))))
 
-(test plant-command
+(deftest plant-command ()
   (object-command-test
     (tempus::obj-to-char armor-2 alice)
     (tempus::obj-to-char armor-1 alice)
     (do-cmd "plant armor on bob")
     (self-emit-is "You plant some plate armor on Bob.~%")
-    (is-true (or (equal "" (char-output bob))
+    (is (or (equal "" (char-output bob))
                  (equal "Alice puts some plate armor in your pocket.~%"
                         (char-output bob))))
     (is (equal (list armor-2) (tempus::carrying-of alice)))
     (is (equal (list armor-1) (tempus::carrying-of bob)))))
 
-(test drink-command
+(deftest drink-command ()
   (with-mock-players (alice bob)
     (with-mock-objects ((glass "a glass of water"))
       (setf (tempus::kind-of glass) tempus::+item-drinkcon+)
@@ -473,7 +473,7 @@
         (is (>= full 13))
         (is (>= thirst 22))))))
 
-(test drink-command-poison
+(deftest drink-command-poison ()
   (with-mock-players (alice bob)
     (with-mock-objects ((glass "a glass of water"))
       (setf (tempus::kind-of glass) tempus::+item-drinkcon+)
@@ -491,7 +491,7 @@
         (is (>= full 13))
         (is (>= thirst 22))))))
 
-(test eat-command
+(deftest eat-command ()
   (with-mock-players (alice bob)
     (with-mock-objects ((sandwich "a tasty sandwich"))
       (tempus::obj-to-char sandwich alice)
