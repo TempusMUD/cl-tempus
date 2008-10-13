@@ -680,7 +680,7 @@
        (when (and (is-obj-kind obj +item-food+)
                   (plusp (aref (value-of obj) 1))
                   (plusp (aref (value-of obj) 2)))
-         (mag-objectmagic ch obj))
+         (mag-objectmagic ch obj nil))
        (when (and (is-obj-kind obj +item-food+)
                   (> (get-condition ch +full+) 20))
          (send-to-char ch "You are satiated.~%"))
