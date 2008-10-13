@@ -198,13 +198,18 @@
                        :all-emit (format nil "$n get$% $p. (x~d)" counter))))
                (setf counter 0))))))
       ((eql mode :find-indiv)
-       (send-to-char ch "You don't see ~a ~a here.~%"
-                     (a-or-an arg) arg))
+       (multiple-value-bind (ignore name)
+           (get-number arg)
+         (declare (ignore ignore))
+         (send-to-char ch "You don't see ~a ~a here.~%"
+                       (a-or-an name) name)))
       ((eql mode :find-all)
        (send-to-char ch "You didn't find anything to take.~%"))
       (t
-       (send-to-char ch "You didn't find anything to take that looks like a '~a'.~%"
-                     arg)))
+       (let ((name (subseq arg 4)))
+         (send-to-char ch "You didn't find anything that looks like ~a ~a.~%"
+                       (a-or-an name)
+                       name))))
 
     (when money-found
       (consolidate-char-money ch))
@@ -263,16 +268,21 @@
                        :all-emit (format nil "$n get$% $p from $P. (x~d)" counter))))
                (setf counter 0))))))
       ((eql mode :find-indiv)
-       (act ch :item container
-            :subject-emit (format nil "There doesn't seem to be ~a ~a in $p.~%"
-                                  (a-or-an thing) thing)))
+       (multiple-value-bind (ignore name)
+           (get-number thing)
+         (declare (ignore ignore))
+         (act ch :item container
+              :subject-emit (format nil "There doesn't seem to be ~a ~a in $p."
+                                    (a-or-an name) name))))
       ((eql mode :find-all)
        (act ch :item container
-            :subject-emit "You didn't find anything to in $p.~%"))
+            :subject-emit "You didn't find anything to take in $p."))
       (t
-       (act ch :item container
-            (format nil "You didn't find anything in $p to take that looks like a '~a'.~%"
-                    thing))))
+       (let ((name (subseq thing 4)))
+         (act ch :item container
+              :subject-emit (format nil "You didn't find anything in $p that looks like ~a ~a."
+                                    (a-or-an name)
+                                    name)))))
 
     (when money-found
       (consolidate-char-money ch))
