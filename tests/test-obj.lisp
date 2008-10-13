@@ -594,3 +594,61 @@
       (is (equal "Alice pours water out of a canteen.~%" (char-output bob)))
       (is (equal '(10 0 0 0) (coerce (tempus::value-of canteen) 'list)))
       (is (null (search "water" (tempus::aliases-of canteen)))))))
+
+(deftest wield-command/normal/success ()
+  (with-mock-players (alice bob)
+    (with-mock-objects ((sword "an elvish sword"))
+      (setf (tempus::kind-of sword) tempus::+item-weapon+)
+      (tempus::obj-to-char sword alice)
+      (setf (tempus::wear-flags-of sword) (logior
+                                             tempus::+item-wear-take+
+                                             tempus::+item-wear-wield+))
+      (tempus::interpret-command alice "wield sword")
+      (is (equal "You wield an elvish sword.~%"
+                 (char-output alice)))
+      (is (equal "Alice wields an elvish sword.~%" (char-output bob)))
+      (is (null (tempus::carried-by-of sword)))
+      (is (not (member sword (tempus::carrying-of alice))))
+      (is (eql alice (tempus::worn-by-of sword)))
+      (is (eql tempus::+wear-wield+ (tempus::worn-on-of sword)))
+      (is (eql sword (aref (tempus::equipment-of alice) tempus::+wear-wield+))))))
+
+(deftest wield/already-wielding/dual-wield ()
+  (with-mock-players (alice)
+    (with-mock-objects ((sword-1 "an elvish sword")
+                        (sword-2 "an elvish sword"))
+      (setf (tempus::kind-of sword-1) tempus::+item-weapon+)
+      (setf (tempus::kind-of sword-2) tempus::+item-weapon+)
+      (tempus::equip-char alice sword-1 tempus::+wear-wield+ :worn)
+      (tempus::obj-to-char sword-2 alice)
+      (setf (tempus::wear-flags-of sword-1) (logior
+                                             tempus::+item-wear-take+
+                                             tempus::+item-wear-wield+))
+      (setf (tempus::wear-flags-of sword-2) (logior
+                                             tempus::+item-wear-take+
+                                             tempus::+item-wear-wield+))
+      (tempus::interpret-command alice "wield sword")
+      (is (equal "You wield an elvish sword in your off hand.~%" (char-output alice))))))
+
+(deftest wield/already-dual-wielding/failure ()
+  (with-mock-players (alice)
+    (with-mock-objects ((sword-1 "an elvish sword")
+                        (sword-2 "an elvish sword")
+                        (sword-3 "an elvish sword"))
+      (setf (tempus::kind-of sword-1) tempus::+item-weapon+)
+      (setf (tempus::kind-of sword-2) tempus::+item-weapon+)
+      (setf (tempus::kind-of sword-3) tempus::+item-weapon+)
+      (setf (tempus::wear-flags-of sword-1) (logior
+                                             tempus::+item-wear-take+
+                                             tempus::+item-wear-wield+))
+      (setf (tempus::wear-flags-of sword-2) (logior
+                                             tempus::+item-wear-take+
+                                             tempus::+item-wear-wield+))
+      (setf (tempus::wear-flags-of sword-3) (logior
+                                             tempus::+item-wear-take+
+                                             tempus::+item-wear-wield+))
+      (tempus::equip-char alice sword-1 tempus::+wear-wield+ :worn)
+      (tempus::equip-char alice sword-2 tempus::+wear-wield-2+ :worn)
+      (tempus::obj-to-char sword-3 alice)
+      (tempus::interpret-command alice "wield sword")
+      (is (equal "You don't have a hand free to wield it with.~%" (char-output alice))))))

@@ -764,6 +764,21 @@
        (let ((proto (real-object-proto (vnum-of obj))))
          (setf (weight-of obj) (weight-of proto)))))))
 
+(defun char-hands-free (ch)
+  (flet ((count-eq-position (pos)
+           (let ((obj (get-eq ch pos)))
+             (cond
+               ((null obj) 0)
+               ((is-obj-stat2 obj +item2-two-handed+) 2)
+               (t 1)))))
+    (let ((hands-free (- 2
+                         (count-eq-position +wear-wield+)
+                         (count-eq-position +wear-wield-2+)
+                         (count-eq-position +wear-shield+)
+                         (count-eq-position +wear-hold+))))
+      (assert (not (minusp hands-free)))
+      hands-free)))
+
 (defcommand (ch "get") (:resting)
   (send-to-char ch "Get what?~%"))
 
@@ -1151,3 +1166,60 @@
        (send-to-char ch "You can't pour into more than one container at a time!~%"))
       (t
        (perform-pour ch from-obj to-obj)))))
+
+(defcommand (ch "wield") (:resting)
+  (send-to-char ch "Wield what?~%"))
+
+(defcommand (ch "wield" thing) (:resting)
+  (let* ((objs (get-matching-objects ch thing (carrying-of ch)))
+         (obj (first objs))
+         (hands-free (char-hands-free ch)))
+    (cond
+      ((null objs)
+       (send-to-char ch "You don't seem to have ~a ~a.~%"
+                     (a-or-an thing)
+                     thing))
+      ((is-animal ch)
+       (send-to-char ch "Animals don't wield weapons.~%"))
+      ((not (can-wear obj +item-wear-wield+))
+       (send-to-char ch "You can't wield that.~%"))
+      ((> (weight-of obj) (getf (aref +str-app+
+                                                (strength-apply-index ch))
+                                          :wield-w))
+       (send-to-char ch "It's too damn heavy.~%"))
+      ((and (is-cleric ch)
+            (not (is-evil ch))
+            (member (+ (aref (value-of obj) 3) +type-hit+)
+                    (list +type-slash+
+                          +type-pierce+
+                          +type-stab+
+                          +type-rip+
+                          +type-chop+
+                          +type-claw+)))
+       (send-to-char ch "You can't wield that as a cleric.~%"))
+      ((zerop hands-free)
+       (send-to-char ch "You don't have a hand free to wield it with.~%"))
+      ((and (/= hands-free 2)
+            (is-obj-stat2 obj +item2-two-handed+))
+       (act ch :item obj
+            :subject-emit "You need both hands free to wield $p."))
+      ((and (get-eq ch +wear-hands+)
+            (is-obj-stat2 (get-eq ch +wear-hands+) +item2-two-handed+))
+       (act ch :item (get-eq ch +wear-hands+)
+            :subject-emit "You can't wield anything while wearing $p on your hands."))
+      ((null (get-eq ch +wear-wield+))
+       ;; normal wield
+       (perform-wear ch obj +wear-wield+))
+      ((and (is-merc ch)
+            (is-any-gun (get-eq ch +wear-wield+))
+            (is-any-gun obj))
+       ;; mercs can dual wield any gun
+       (perform-wear ch obj +wear-wield-2+))
+      ((if (<= (weight-of (get-eq ch +wear-wield+)) 6)
+           (> (weight-of obj) (weight-of (get-eq ch +wear-wield+)))
+           (> (weight-of obj) (floor (weight-of (get-eq ch +wear-wield+)) 2)))
+       ;; dual wield weight restrictions
+       (send-to-char ch "Your secondary weapon must weigh less than half of your primary weapon,~%if your primary weighs more than six pounds.~%"))
+      (t
+       ;; dual wield
+       (perform-wear ch obj +wear-wield-2+)))))
