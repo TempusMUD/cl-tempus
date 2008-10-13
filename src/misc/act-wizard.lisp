@@ -40,3 +40,19 @@
                    results))
     (error (err)
         (cxn-write (link-of ch) "ERROR: ~a~%" err))))
+
+(defcommand (ch "force") (:wizard)
+  (send-to-char ch "You want to force who what?~%"))
+
+(defcommand (ch "force" target) (:wizard)
+  (send-to-char ch "What do you want to force them to do?~%"))
+
+(defcommand (ch "force" target "to" command) (:wizard)
+  (let ((victs (get-matching-objects ch target (people-of (in-room-of ch)))))
+    (cond
+      ((null victs)
+       (send-to-char ch "You don't see any '~a' here.~%" target))
+      (t
+       (send-to-char ch "You got it.~%")
+       (dolist (vict victs)
+         (tempus::interpret-command vict command))))))

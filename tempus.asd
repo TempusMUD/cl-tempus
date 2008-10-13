@@ -172,6 +172,8 @@
                (:file "test-random" :pathname "tests/test-random"
                       :depends-on ("helpers"))
                (:file "test-utils" :pathname "tests/test-utils"
+                      :depends-on ("helpers"))
+               (:file "test-wizard" :pathname "tests/test-wizard"
                       :depends-on ("helpers"))))
 
 (defmethod perform ((op test-op) (system (eql (find-system :tempus))))
