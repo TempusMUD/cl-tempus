@@ -742,6 +742,28 @@
                                     (aref (value-of from-obj) 2))))
        (transfer-liquid from-obj to-obj))))
 
+(defun perform-pour-out (ch obj)
+  (cond
+    ((not (or (is-obj-kind obj +item-drinkcon+)
+              (is-obj-kind obj +item-fountain+)))
+     (act ch :item obj :subject-emit "$p doesn't contain any liquids."))
+    ((zerop (aref (value-of obj) 1))
+     (act ch :item obj :subject-emit "$p is empty."))
+    ((= -1 (aref (value-of obj) 0))
+     (act ch :item obj :subject-emit "$p will never run out."))
+    (t
+     (act ch :item obj
+          :all-emit (format nil "$n pour$% ~a out of $p."
+                            (aref +drinks+
+                                  (aref (value-of obj) 2))))
+     (name-from-drinkcon obj (aref (value-of obj) 2))
+     (setf (aref (value-of obj) 1) 0)
+     (setf (aref (value-of obj) 2) 0)
+     (setf (aref (value-of obj) 3) 0)
+     (unless (= -1 (vnum-of obj))
+       (let ((proto (real-object-proto (vnum-of obj))))
+         (setf (weight-of obj) (weight-of proto)))))))
+
 (defcommand (ch "get") (:resting)
   (send-to-char ch "Get what?~%"))
 
@@ -1090,6 +1112,22 @@
        (send-to-char ch "You can only eat one thing at a time!~%"))
       (t
        (perform-eating ch obj)))))
+
+(defcommand (ch "pour") (:resting)
+  (send-to-char ch "What do you want to pour?~%"))
+
+(defcommand (ch "pour" "out") (:resting)
+  (send-to-char ch "What do you want to pour out?~%"))
+
+(defcommand (ch "pour" "out" thing) (:resting)
+  (let* ((objs (get-matching-objects ch thing (carrying-of ch))))
+    (cond
+      ((null objs)
+       (send-to-char ch "You can't find ~a ~a.~%" (a-or-an thing) thing))
+      ((rest objs)
+       (send-to-char ch "You can't pour out than one container at a time!~%"))
+      (t
+       (perform-pour-out ch (first objs))))))
 
 (defcommand (ch "pour" from-thing "into" to-thing) (:resting)
   (let* ((from-objs (get-matching-objects ch from-thing (carrying-of ch)))

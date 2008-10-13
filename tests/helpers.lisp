@@ -126,3 +126,45 @@
                     collect `(destroy-mock-player ,var)))
          (t (err)
            (stefil::record-failure 'unexpected-error :condition err))))))
+
+
+
+(defvar *function-traces* (make-hash-table))
+
+(defmacro tracing-function (func-names &body body)
+  `(unwind-protect
+        (progn
+          ,@(loop for func in func-names collect
+                 `(sb-int::encapsulate ',func
+                                       'tracer
+                                       '(progn
+                                         (push sb-int:arg-list
+                                          (gethash ',func *function-traces*))
+                                         (apply sb-int::basic-definition
+                                          sb-int:arg-list))))
+          ,@body)
+     (progn
+       ,@(loop for func in func-names collect
+              `(sb-int::unencapsulate ',func 'tracer)))))
+
+(defmacro function-trace-bind (bindings form &body body)
+  `(unwind-protect
+        (progn
+          (clrhash *function-traces*)
+          ,@(loop for binding in bindings
+               as func = (second binding) collect
+                 `(sb-int::encapsulate ',func
+                                       'tracer
+                                       '(progn
+                                         (push (symbol-value 'sb-int:arg-list)
+                                          (gethash ',func *function-traces*))
+                                         (apply sb-int::basic-definition
+                                          sb-int:arg-list))))
+          ,form
+          (let ,(loop for binding in bindings collect
+                    `(,(first binding)
+                       (gethash ',(second binding) *function-traces*)))
+            ,@body))
+     (progn
+       ,@(loop for binding in bindings collect
+              `(sb-int::unencapsulate ',(second binding) 'tracer)))))
