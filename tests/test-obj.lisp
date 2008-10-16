@@ -761,8 +761,6 @@
       (is (null (tempus::aux-obj-of mask)))
       (is (null (tempus::aux-obj-of tank))))))
 
-
-
 (deftest perform-conceal/normal/success ()
   (with-mock-players (alice bob)
     (with-mock-objects ((wand "a scarred wand"))
@@ -775,3 +773,17 @@
       (is (equal "You conceal a scarred wand.~%"
                  (char-output alice)))
       (is (equal "Alice conceals something.~%" (char-output bob))))))
+
+(deftest perform-sacrifice/normal/success ()
+  (with-mock-players (alice bob)
+    (with-mock-objects ((wand "a scarred wand"))
+      (setf (tempus::kind-of wand) tempus::+item-wand+)
+      (tempus::obj-to-char wand alice)
+      (setf (tempus::wear-flags-of wand) (logior
+                                             tempus::+item-wear-take+
+                                             tempus::+item-wear-hold+))
+      (tempus::perform-sacrifice alice wand)
+      (is (equal "You sacrifice a scarred wand.~%"
+                 (char-output alice)))
+      (is (equal "Alice sacrifices a scarred wand.~%" (char-output bob)))
+      (is (null (tempus::carrying-of alice))))))

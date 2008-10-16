@@ -7,3 +7,8 @@
 
 (defun spell-level (spell class)
   (aref (remort-gen-of (aref *spell-info* spell)) class))
+
+(defun load-corpse-owner (obj)
+  (if (minusp (corpse-idnum obj))
+      (real-mobile-proto (- (corpse-idnum obj)))
+      (load-player-from-xml (corpse-idnum obj))))

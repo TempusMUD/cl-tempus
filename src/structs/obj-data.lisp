@@ -368,6 +368,9 @@
 (defmethod vnum-of ((obj obj-data))
   (vnum-of (shared-of obj)))
 
+(defmethod cost-of ((obj obj-data))
+  (cost-of (shared-of obj)))
+
 (defun is-obj-kind (obj type)
   (= (kind-of obj) type))
 

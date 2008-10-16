@@ -304,6 +304,32 @@
           :subject-emit (format nil "You can't ~a $p, it must be CURSED!" verb))
      nil)))
 
+(defun undisposablep (ch cmdstr obj displayp)
+  (cond
+    ((and (is-corpse obj)
+          (plusp (corpse-idnum obj))
+          (contains-of obj)
+          (not (immortalp ch)))
+     (when displayp
+       (send-to-char "You can't ~a a player's corpse while it still has objects in it.~%" cmdstr))
+     t)
+    ((and (is-obj-kind obj +item-container+)
+          (not (is-corpse obj))
+          (contains-of obj))
+     (when displayp
+       (send-to-char "You can't ~a a container with items in it!~%" cmdstr))
+     t)
+    ((immortalp ch)
+     nil)
+    ((and (shared-of obj)
+          (not (minusp (vnum-of obj)))
+          (string/= (name-of obj) (name-of (real-object-proto (vnum-of obj)))))
+     (when displayp
+       (send-to-char ch "You can't ~a a renamed object!~%" cmdstr))
+     t)
+    (t
+     nil)))
+
 (defun perform-drop (ch obj mode sname dest-room displayp)
   (when (check-object-nodrop ch obj sname)
     (when displayp
@@ -867,6 +893,28 @@
        (setf (extra2-flags-of obj) (logior (extra2-flags-of obj) +item2-hidden+))
        (gain-skill-proficiency ch +skill-conceal+)))))
 
+(defun perform-sacrifice (ch obj)
+  (cond
+    ((and (not (can-wear obj +item-wear-take+))
+          (immortalp ch))
+     (send-to-char ch "You can't sacrifice that.~%"))
+    ((undisposablep ch "sacrifice" obj t)
+     nil)
+    (t
+     (act ch :item obj :all-emit "$n sacrifice$% $p.")
+     (let ((mana (cond
+                   ((not (is-corpse obj))
+                    (max 0 (floor (cost-of obj) 100000)))
+                   ((is-corpse obj)
+                    (let ((orig-char (load-corpse-owner obj)))
+                      (if orig-char
+                          (random-range 1 (get-level-bonus orig-char))
+                          0))))))
+       (when (plusp mana)
+         (send-to-char ch "You sense your deity's favor upon you.~%")
+         (setf (mana-of ch) (pin (+ (mana-of ch) mana) 0 (max-mana-of ch)))))
+     (extract-obj obj))))
+
 (defcommand (ch "get") (:resting)
   (send-to-char ch "Get what?~%"))
 
@@ -1400,3 +1448,19 @@
        (send-to-char ch "You can conceal only one thing at a time!~%"))
       (t
        (perform-conceal ch obj)))))
+
+(defcommand (ch "sacrifice") (:resting)
+  (send-to-char ch "Sacrifice what object?~%"))
+
+(defcommand (ch "sacrifice" thing) (:resting)
+  (let* ((objs (get-matching-objects ch thing (contents-of (in-room-of ch))))
+         (obj (first objs)))
+    (cond
+      ((null objs)
+       (send-to-char ch "You don't seem to have ~a ~a.~%"
+                     (a-or-an thing)
+                     thing))
+      ((rest objs)
+       (send-to-char ch "You can sacrifice only one thing at a time!~%"))
+      (t
+       (perform-sacrifice ch obj)))))
