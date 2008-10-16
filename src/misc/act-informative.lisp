@@ -746,7 +746,7 @@
   (aref +char-class-abbrevs+ class))
 
 (defun parse-pc-char-class (class-name)
-  (position class-name +class-names+ :test #'string-equal))
+  (position class-name +class-names+ :test #'string-abbrev))
 
 (defun get-reputation-rank (ch)
   (cond

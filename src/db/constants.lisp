@@ -999,6 +999,9 @@
 (defparameter +pos-swimming+ 11)
 (defparameter +top-pos+ 11)
 
+(defparameter +position-types+
+  #("dead" "mortally wounded" "incapacitated" "stunned" "sleeping" "resting" "sitting" "fighting" "standing" "flying" "mounted" "swimming"))
+
 ;;; Player flags: used by Creature.char_specials.act
 (defparameter +plr-killer+ (ash 1 0))	; Player is a player-killer
 (defparameter +plr-thief+ (ash 1 1))	; Player is a player-thief
@@ -1565,6 +1568,14 @@
 
 (defun str-app-type-to-hit (plist)
   (getf plist :to-hit))
+
+
+(defparameter +spell-bit-keywords+
+  #("damage" "affects" "unaffects" "points" "alterations" "groups"
+    "masses" "areas" "summons" "creations" "manual" "objects"
+    "touch" "magic" "divine" "physics" "psionic" "biologic"
+    "cybernetic" "evil" "good" "exits" "outdoors" "nowater"
+    "waterzap" "nosun" "zen" "mercenary" "song"))
 
 ;;; Take/Wear flags: used by obj_data.obj_flags.wear_flags
 (defparameter +item-wear-take+ (ash 1 0))	; Item can be takes

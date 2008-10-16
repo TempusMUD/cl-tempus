@@ -159,6 +159,8 @@
                       :depends-on ("helpers"))
                (:file "test-informative" :pathname "tests/test-informative"
                       :depends-on ("helpers"))
+               (:file "test-io" :pathname "tests/test-io"
+                      :depends-on ("helpers"))
                (:file "test-misc" :pathname "tests/test-misc"
                       :depends-on ("helpers"))
                (:file "test-move" :pathname "tests/test-move"
