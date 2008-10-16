@@ -704,3 +704,59 @@
                  (char-output alice)))
       (is (eql alice (tempus::carried-by-of torch)))
       (is (eql torch (first (tempus::carrying-of alice)))))))
+
+(deftest perform-attach/normal-scuba/success ()
+  (with-mock-players (alice bob)
+    (with-mock-objects ((mask "a scuba mask")
+                        (tank "a scuba tank"))
+      (setf (tempus::kind-of mask) tempus::+item-scuba-mask+)
+      (setf (tempus::kind-of tank) tempus::+item-scuba-tank+)
+      (tempus::obj-to-char mask alice)
+      (tempus::obj-to-char tank alice)
+      (setf (tempus::wear-flags-of mask) (logior
+                                             tempus::+item-wear-take+
+                                             tempus::+item-wear-face+))
+      (setf (tempus::wear-flags-of tank) (logior
+                                             tempus::+item-wear-take+
+                                             tempus::+item-wear-back+))
+      (tempus::perform-attach alice mask tank)
+      (is (equal "You attach a scuba mask to a scuba tank.~%"
+                 (char-output alice)))
+      (is (equal "Alice attaches a scuba mask to a scuba tank.~%"
+                 (char-output bob)))
+      (is (eql tank (tempus::aux-obj-of mask)))
+      (is (eql mask (tempus::aux-obj-of tank))))))
+
+(deftest perform-attach/normal-bomb/success ()
+  (with-mock-players (alice bob)
+    (with-mock-objects ((fuse "a fuse")
+                        (bomb "a bomb"))
+      (setf (tempus::kind-of fuse) tempus::+item-fuse+)
+      (setf (tempus::kind-of bomb) tempus::+item-bomb+)
+      (tempus::obj-to-char fuse alice)
+      (tempus::obj-to-char bomb alice)
+      (tempus::perform-attach alice fuse bomb)
+      (is (equal "You attach a fuse to a bomb.~%"
+                 (char-output alice)))
+      (is (equal "Alice attaches a fuse to a bomb.~%"
+                 (char-output bob)))
+      (is (equal (list fuse)
+                 (tempus::contains-of bomb))))))
+
+(deftest perform-detach/normal-scuba/success ()
+  (with-mock-players (alice bob)
+    (with-mock-objects ((mask "a scuba mask")
+                        (tank "a scuba tank"))
+      (setf (tempus::kind-of mask) tempus::+item-scuba-mask+)
+      (setf (tempus::kind-of tank) tempus::+item-scuba-tank+)
+      (setf (tempus::aux-obj-of mask) tank)
+      (setf (tempus::aux-obj-of tank) mask)
+      (tempus::obj-to-char mask alice)
+      (tempus::obj-to-char tank alice)
+      (tempus::perform-detach alice mask tank)
+      (is (equal "You detach a scuba mask from a scuba tank.~%"
+                 (char-output alice)))
+      (is (equal "Alice detaches a scuba mask from a scuba tank.~%"
+                 (char-output bob)))
+      (is (null (tempus::aux-obj-of mask)))
+      (is (null (tempus::aux-obj-of tank))))))

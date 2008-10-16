@@ -795,6 +795,63 @@
       (send-to-char ch "You can't hold that.~%")
       (perform-wear ch obj +wear-hold+)))
 
+(defun perform-attach (ch obj to-obj)
+  (cond
+    ((or (and (is-obj-kind obj +item-scuba-mask+)
+              (is-obj-kind to-obj +item-scuba-tank+))
+         (and (is-obj-kind obj +item-scuba-tank+)
+              (is-obj-kind to-obj +item-scuba-mask+)))
+       (cond
+         ((or (eql (aux-obj-of obj) to-obj)
+              (eql (aux-obj-of to-obj) obj))
+          (act ch :item obj :target-item to-obj
+               :subject-emit "$p is already attached to $P."))
+         (t
+          (setf (aux-obj-of obj) to-obj)
+          (setf (aux-obj-of to-obj) obj)
+          (act ch :item obj :target-item to-obj
+               :subject-emit "You attach $p to $P."
+               :place-emit "$n attaches $p to $P."))))
+    ((not (and (is-obj-kind obj +item-fuse+)
+               (is-obj-kind to-obj +item-bomb+)))
+     (act ch :item obj :target-item to-obj
+          :subject-emit "You cannot attach $p to $P."))
+    ((and (contains-of to-obj)
+          (is-obj-kind (first (contains-of to-obj)) +item-fuse+))
+     (act ch :item obj :target-item to-obj
+          :subject-emit "$p is already attached to $P."))
+    ((contains-of to-obj)
+     (act ch :item obj :target-item to-obj
+          :subject-emit "$P is jammed with $p."))
+    ((plusp (fuse-state obj))
+     (act ch :item obj :subject-emit "Better not do that -- $p is active!"))
+    ((null (carried-by-of obj))
+     (act ch :item obj
+          :subject-emit "You can't attach $p while you are using it."))
+    (t
+     (obj-from-char obj)
+     (obj-to-obj obj to-obj)
+     (act ch :item obj :target-item to-obj
+          :subject-emit "You attach $p to $P."
+          :place-emit "$n attaches $p to $P."))))
+
+(defun perform-detach (ch obj from-obj)
+  (cond
+    ((or (null (aux-obj-of obj))
+         (not (eql from-obj (aux-obj-of obj))))
+     (act ch :item obj :target-item from-obj
+          :subject-emit "$p is not attached to $P."))
+    ((not (or (is-obj-kind obj +item-scuba-mask+)
+              (is-obj-kind obj +item-scuba-tank+)))
+     (send-to-char ch "...~%"))
+    (t
+     (setf (aux-obj-of obj) nil)
+     (setf (aux-obj-of from-obj) nil)
+     (act ch :item obj :target-item from-obj
+          :subject-emit "You detach $p from $P."
+          :place-emit "$n detaches $p from $P."))))
+
+
 (defcommand (ch "get") (:resting)
   (send-to-char ch "Get what?~%"))
 
@@ -1257,3 +1314,55 @@
        (perform-hold-light ch obj))
       (t
        (perform-hold ch obj)))))
+
+(defcommand (ch "attach") (:resting)
+  (send-to-char ch "Attach what to what?~%"))
+
+(defcommand (ch "attach" thing) (:resting)
+  (declare (ignore thing))
+  (send-to-char ch "Attach what to what?~%"))
+
+(defcommand (ch "attach" thing "to" to-thing) (:resting)
+  (let ((objs (get-matching-objects ch thing (carrying-of ch)))
+        (to-objs (get-matching-objects ch to-thing (append
+                                                          (carrying-of ch)
+                                                          (contents-of (in-room-of ch))))))
+    (cond
+      ((null objs)
+       (send-to-char ch "You don't seem to have ~a ~a.~%"
+                     (a-or-an thing)
+                     thing))
+      ((null to-objs)
+       (send-to-char ch "You don't see any '~a'.~%" to-thing))
+      ((cdr objs)
+       (send-to-char ch "You can only attach one thing at a time.~%"))
+      ((cdr to-objs)
+       (send-to-char ch "You can only attach to one thing at a time.~%"))
+      (t
+       (perform-attach ch (first objs) (first to-objs))))))
+
+(defcommand (ch "detach") (:resting)
+  (send-to-char ch "Detach what from what?~%"))
+
+(defcommand (ch "detach" thing) (:resting)
+  (declare (ignore thing))
+  (send-to-char ch "Detach what from what?~%"))
+
+(defcommand (ch "detach" thing "from" from-thing) (:resting)
+  (let ((objs (get-matching-objects ch thing (carrying-of ch)))
+        (from-objs (get-matching-objects ch from-thing (append
+                                                          (carrying-of ch)
+                                                          (contents-of (in-room-of ch))))))
+    (cond
+      ((null objs)
+       (send-to-char ch "You don't seem to have ~a ~a.~%"
+                     (a-or-an thing)
+                     thing))
+      ((null from-objs)
+       (send-to-char ch "You don't see any '~a'.~%" from-thing))
+      ((cdr objs)
+       (send-to-char ch "You can only detach one thing at a time.~%"))
+      ((cdr from-objs)
+       (send-to-char ch "You can only detach to one thing at a time.~%"))
+      (t
+       (perform-detach ch (first objs) (first from-objs))))))
