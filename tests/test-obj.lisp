@@ -778,7 +778,7 @@
   (with-mock-players (alice bob)
     (with-mock-objects ((wand "a scarred wand"))
       (setf (tempus::kind-of wand) tempus::+item-wand+)
-      (tempus::obj-to-char wand alice)
+      (tempus::obj-to-room wand (tempus::in-room-of alice))
       (setf (tempus::wear-flags-of wand) (logior
                                              tempus::+item-wear-take+
                                              tempus::+item-wear-hold+))
@@ -787,3 +787,18 @@
                  (char-output alice)))
       (is (equal "Alice sacrifices a scarred wand.~%" (char-output bob)))
       (is (null (tempus::carrying-of alice))))))
+
+(deftest donate/normal/success ()
+  (with-mock-players (alice bob)
+    (with-mock-objects ((wand "a scarred wand"))
+      (setf (tempus::kind-of wand) tempus::+item-wand+)
+      (tempus::obj-to-char wand alice)
+      (setf (tempus::wear-flags-of wand) (logior
+                                             tempus::+item-wear-take+
+                                             tempus::+item-wear-hold+))
+      (tempus::interpret-command alice "donate wand")
+      (is (equal "You donate a scarred wand.~%"
+                 (char-output alice)))
+      (is (equal "Alice donates a scarred wand.~%" (char-output bob)))
+      (is (null (tempus::carrying-of alice)))
+      (is (not (null (tempus::in-room-of wand)))))))

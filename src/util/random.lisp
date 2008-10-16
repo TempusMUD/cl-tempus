@@ -21,3 +21,6 @@
             (variance-max (+ val variance)))
         (random-range (if min (max min variance-min) variance-min)
                       (if max (min max variance-max) variance-max)))))
+
+(defun random-elt (seq)
+  (elt seq (random (length seq))))
