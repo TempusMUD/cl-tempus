@@ -851,6 +851,21 @@
           :subject-emit "You detach $p from $P."
           :place-emit "$n detaches $p from $P."))))
 
+(defun perform-conceal (ch obj)
+  (cond
+    ((and (in-room-of obj) (not (can-take-obj ch obj t nil)))
+     (send-to-char ch "You'd have a hard time concealing that.~%"))
+    (t
+     (act ch :item obj
+          :subject-emit "You conceal $p."
+          :place-emit (if (in-room-of obj)
+                          "$n conceals $p."
+                          "$n conceals something."))
+     (wait-state ch (rl-sec 1))
+     (when (> (+ (check-skill ch +skill-conceal+) (level-of ch))
+              (random-range 60 120))
+       (setf (extra2-flags-of obj) (logior (extra2-flags-of obj) +item2-hidden+))
+       (gain-skill-proficiency ch +skill-conceal+)))))
 
 (defcommand (ch "get") (:resting)
   (send-to-char ch "Get what?~%"))
@@ -1366,3 +1381,22 @@
        (send-to-char ch "You can only detach to one thing at a time.~%"))
       (t
        (perform-detach ch (first objs) (first from-objs))))))
+
+(defcommand (ch "conceal") (:resting)
+  (send-to-char ch "Conceal what?~%"))
+
+(defcommand (ch "conceal" thing) (:resting)
+  (let* ((objs (get-matching-objects ch thing (append
+                                               (carrying-of ch)
+                                               (equipment-of ch)
+                                               (contents-of (in-room-of ch)))))
+         (obj (first objs)))
+    (cond
+      ((null objs)
+       (send-to-char ch "You don't seem to have ~a ~a.~%"
+                     (a-or-an thing)
+                     thing))
+      ((rest objs)
+       (send-to-char ch "You can conceal only one thing at a time!~%"))
+      (t
+       (perform-conceal ch obj)))))
