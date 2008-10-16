@@ -127,6 +127,7 @@
        (setf (tempus::wear-flags-of armor-2) (logior
                                               tempus::+item-wear-take+
                                               tempus::+item-wear-body+))
+       (setf (tempus::kind-of chest) tempus::+item-container+)
        (macrolet ((do-cmd (command-str)
                     `(tempus::interpret-command alice ,command-str))
                   (self-emit-is (emit-str)
@@ -802,3 +803,39 @@
       (is (equal "Alice donates a scarred wand.~%" (char-output bob)))
       (is (null (tempus::carrying-of alice)))
       (is (not (null (tempus::in-room-of wand)))))))
+
+(deftest perform-empty/normal/success ()
+  (object-command-test
+    (tempus::obj-to-obj armor-2 chest)
+    (tempus::obj-to-obj armor-1 chest)
+    (tempus::obj-to-char chest alice)
+    (tempus::perform-empty alice chest)
+    (self-emit-is "You carefully empty the contents of a treasure chest.~%")
+    (other-emit-is "Alice empties the contents of a treasure chest.~%")
+    (is (eql (tempus::in-room-of alice) (tempus::in-room-of armor-1)))
+    (is (eql (tempus::in-room-of alice) (tempus::in-room-of armor-2)))))
+
+(deftest perform-empty-into/normal/success ()
+  (object-command-test
+    (with-mock-objects ((bag "a leather bag"))
+      (setf (tempus::kind-of bag) tempus::+item-container+)
+      (tempus::obj-to-obj armor-2 chest)
+      (tempus::obj-to-obj armor-1 chest)
+      (tempus::obj-to-char chest alice)
+      (tempus::obj-to-char bag alice)
+      (tempus::perform-empty-into alice chest bag)
+      (self-emit-is "You carefully empty the contents of a treasure chest into a leather bag.~%")
+      (other-emit-is "Alice empties the contents of a treasure chest into a leather bag.~%")
+      (is (eql bag (tempus::in-obj-of armor-1)))
+      (is (eql bag (tempus::in-obj-of armor-2))))))
+
+(deftest perform-empty-into/into-non-container/failure ()
+  (object-command-test
+    (with-mock-objects ((bag "a leather belt"))
+      (tempus::obj-to-obj armor-2 chest)
+      (tempus::obj-to-obj armor-1 chest)
+      (tempus::obj-to-char chest alice)
+      (tempus::obj-to-char bag alice)
+      (tempus::perform-empty-into alice chest bag)
+      (self-emit-is "You can't empty into that.~%")
+      (other-emit-is ""))))

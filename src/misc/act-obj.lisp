@@ -917,6 +917,80 @@
          (setf (mana-of ch) (pin (+ (mana-of ch) mana) 0 (max-mana-of ch)))))
      (extract-obj obj))))
 
+(defun perform-empty (ch container)
+  (cond
+    ((is-obj-kind container +item-drinkcon+)
+     (perform-pour-out ch container))
+    ((not (is-obj-kind container +item-container+))
+     (send-to-char ch "You can't empty that.~%"))
+    ((and (not (is-corpse container))
+          (logtest (aref (value-of container) 1) +cont-closeable+)
+          (logtest (aref (value-of container) 1) +cont-closed+))
+     (send-to-char ch "It seems to be closed.~%"))
+    ((and (is-corpse container)
+          (plusp (corpse-idnum container))
+          (/= (idnum-of ch) (corpse-idnum container))
+          (not (immortalp ch)))
+     (send-to-char ch "You can't empty a player's corpse.~%"))
+    ((null (contains-of container))
+     (act ch :item container :subject-emit "$p is already empty."))
+    (t
+     (dolist (obj (copy-list (contains-of container)))
+       (when (and (not (is-obj-stat obj +item-nodrop+))
+                  (can-wear obj +item-wear-take+))
+         (obj-from-obj obj)
+         (obj-to-room obj (in-room-of ch))))
+     (act ch :item container
+          :subject-emit "You carefully empty the contents of $p."
+          :place-emit "$n empties the contents of $p.")
+     (when (contains-of container)
+       (send-to-char ch "There seems to be something still stuck in it.~%")))))
+
+(defun perform-empty-into (ch from-obj to-obj)
+  (cond
+    ((eql from-obj to-obj)
+     (send-to-char ch "Ha ha.  Very funny.~%"))
+    ((and (is-obj-kind from-obj +item-drinkcon+)
+          (is-obj-kind to-obj +item-drinkcon+))
+     (perform-pour ch from-obj to-obj))
+    ((and (not (is-obj-kind from-obj +item-drinkcon+))
+          (is-obj-kind to-obj +item-drinkcon+))
+     (send-to-char ch "You can't pour non-liquids into a drink container.~%"))
+    ((and (is-obj-kind from-obj +item-drinkcon+)
+          (not (is-obj-kind to-obj +item-drinkcon+)))
+     (send-to-char ch "The liquid would leak out!~%"))
+    ((not (is-obj-kind from-obj +item-container+))
+     (send-to-char ch "You can't empty that.~%"))
+    ((not (is-obj-kind to-obj +item-container+))
+     (send-to-char ch "You can't empty into that.~%"))
+    ((is-corpse to-obj)
+     (send-to-char ch "You can't empty things into a corpse.~%"))
+    ((and (not (is-corpse from-obj))
+          (logtest (aref (value-of from-obj) 1) +cont-closeable+)
+          (logtest (aref (value-of from-obj) 1) +cont-closed+))
+     (act ch :item from-obj :subject-emit "$p seems to be closed."))
+    ((and (logtest (aref (value-of from-obj) 1) +cont-closeable+)
+          (logtest (aref (value-of from-obj) 1) +cont-closed+))
+     (act ch :item to-obj :subject-emit "$p seems to be closed."))
+    ((and (is-corpse from-obj)
+          (plusp (corpse-idnum from-obj))
+          (/= (idnum-of ch) (corpse-idnum from-obj))
+          (not (immortalp ch)))
+     (send-to-char ch "You can't empty a player's corpse.~%"))
+    ((null (contains-of from-obj))
+     (act ch :item from-obj :subject-emit "$p is already empty."))
+    (t
+     (dolist (obj (copy-list (contains-of from-obj)))
+       (when (and (not (is-obj-stat obj +item-nodrop+))
+                  (can-wear obj +item-wear-take+))
+         (obj-from-obj obj)
+         (obj-to-obj obj to-obj)))
+     (act ch :item from-obj :target-item to-obj
+          :subject-emit "You carefully empty the contents of $p into $P."
+          :place-emit "$n empties the contents of $p into $P.")
+     (when (contains-of from-obj)
+       (send-to-char ch "There seems to be something still stuck in it.~%")))))
+
 (defcommand (ch "get") (:resting)
   (send-to-char ch "Get what?~%"))
 
@@ -1531,3 +1605,39 @@
         (send-to-char ch "You don't seem to be carrying anything.~%"))
        (t
         (send-to-char ch "You don't seem to have any ~as.~%" thing)))))
+
+(defcommand (ch "empty" thing) (:resting)
+  (let* ((objs (get-matching-objects ch thing (carrying-of ch)))
+         (obj (first objs)))
+    (cond
+      ((null objs)
+       (send-to-char ch "You don't seem to have ~a ~a.~%"
+                     (a-or-an thing)
+                     thing))
+      ((rest objs)
+       (send-to-char ch "You can only empty one thing at a time!~%"))
+      (t
+       (perform-empty ch obj)))))
+
+(defcommand (ch "empty" thing "into" container) (:resting)
+  (let* ((from-objs (get-matching-objects ch from-thing (carrying-of ch)))
+         (from-obj (first from-objs))
+         (to-objs (get-matching-objects ch to-thing (append
+                                                     (carrying-of ch)
+                                                     (contents-of (in-room-of ch)))))
+         (to-obj (first to-objs)))
+    (cond
+      ((null from-obj)
+       (send-to-char ch "You can't find ~a ~a.~%"
+                     (a-or-an from-thing)
+                     from-thing))
+      ((null to-obj)
+       (send-to-char ch "You can't find ~a ~a.~%"
+                     (a-or-an to-thing)
+                     to-thing))
+      ((rest from-objs)
+       (send-to-char ch "You can't empty from more than one container at a time!~%"))
+      ((rest to-objs)
+       (send-to-char ch "You can't empty into more than one container at a time!~%"))
+      (t
+       (perform-empty-into ch from-obj to-obj)))))
