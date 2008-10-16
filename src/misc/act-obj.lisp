@@ -779,6 +779,22 @@
       (assert (not (minusp hands-free)))
       hands-free)))
 
+(defun perform-hold-light (ch obj)
+  (assert (is-obj-kind obj +item-light+) nil "PERFORM-HOLD-LIGHT called on non-light")
+  (if (zerop (aref (value-of obj) 2))
+      (act ch :item obj :subject-emit "$p is no longer usable as a light.")
+      (perform-wear ch obj +wear-light+)))
+
+(defun perform-hold (ch obj)
+  (if (and (not (can-wear obj +item-wear-hold+))
+           (not (is-obj-kind obj +item-wand+))
+           (not (is-obj-kind obj +item-staff+))
+           (not (is-obj-kind obj +item-scroll+))
+           (not (is-obj-kind obj +item-potion+))
+           (not (is-obj-kind obj +item-syringe+)))
+      (send-to-char ch "You can't hold that.~%")
+      (perform-wear ch obj +wear-hold+)))
+
 (defcommand (ch "get") (:resting)
   (send-to-char ch "Get what?~%"))
 
@@ -1223,3 +1239,21 @@
       (t
        ;; dual wield
        (perform-wear ch obj +wear-wield-2+)))))
+
+(defcommand (ch "hold") (:resting)
+  (send-to-char "Hold what?"))
+
+(defcommand (ch "hold" thing) (:resting)
+  (let* ((objs (get-matching-objects ch thing (carrying-of ch)))
+         (obj (first objs)))
+    (cond
+      ((null objs)
+       (send-to-char ch "You don't seem to have ~a ~a.~%"
+                     (a-or-an thing)
+                     thing))
+      ((cdr objs)
+       (send-to-char ch "You can only hold one thing at a time!~%"))
+      ((is-obj-kind obj +item-light+)
+       (perform-hold-light ch obj))
+      (t
+       (perform-hold ch obj)))))

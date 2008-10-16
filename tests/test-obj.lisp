@@ -652,3 +652,55 @@
       (tempus::obj-to-char sword-3 alice)
       (tempus::interpret-command alice "wield sword")
       (is (equal "You don't have a hand free to wield it with.~%" (char-output alice))))))
+
+(deftest perform-hold/holding-object/success ()
+  (with-mock-players (alice bob)
+    (with-mock-objects ((wand "a scarred wand"))
+      (setf (tempus::kind-of wand) tempus::+item-wand+)
+      (tempus::obj-to-char wand alice)
+      (setf (tempus::wear-flags-of wand) (logior
+                                             tempus::+item-wear-take+
+                                             tempus::+item-wear-hold+))
+      (tempus::perform-hold alice wand)
+      (is (equal "You grab a scarred wand.~%"
+                 (char-output alice)))
+      (is (equal "Alice grabs a scarred wand.~%" (char-output bob)))
+      (is (null (tempus::carried-by-of wand)))
+      (is (not (member wand (tempus::carrying-of alice))))
+      (is (eql alice (tempus::worn-by-of wand)))
+      (is (eql tempus::+wear-hold+ (tempus::worn-on-of wand)))
+      (is (eql wand (aref (tempus::equipment-of alice) tempus::+wear-hold+))))))
+
+(deftest perform-hold-light/normal/success ()
+  (with-mock-players (alice bob)
+    (with-mock-objects ((torch "a torch"))
+      (setf (tempus::kind-of torch) tempus::+item-light+)
+      (setf (aref (tempus::value-of torch) 2) 10)
+      (tempus::obj-to-char torch alice)
+      (setf (tempus::wear-flags-of torch) (logior
+                                             tempus::+item-wear-take+
+                                             tempus::+item-wear-hold+))
+      (tempus::perform-hold-light alice torch)
+      (is (equal "You light a torch and hold it.~%"
+                 (char-output alice)))
+      (is (equal "Alice lights a torch and holds it.~%" (char-output bob)))
+      (is (null (tempus::carried-by-of torch)))
+      (is (not (member torch (tempus::carrying-of alice))))
+      (is (eql alice (tempus::worn-by-of torch)))
+      (is (eql tempus::+wear-light+ (tempus::worn-on-of torch)))
+      (is (eql torch (aref (tempus::equipment-of alice) tempus::+wear-light+))))))
+
+(deftest perform-hold-light/burned-out/failure ()
+  (with-mock-players (alice bob)
+    (with-mock-objects ((torch "a torch"))
+      (setf (tempus::kind-of torch) tempus::+item-light+)
+      (setf (aref (tempus::value-of torch) 2) 0)
+      (tempus::obj-to-char torch alice)
+      (setf (tempus::wear-flags-of torch) (logior
+                                             tempus::+item-wear-take+
+                                             tempus::+item-wear-hold+))
+      (tempus::perform-hold-light alice torch)
+      (is (equal "A torch is no longer usable as a light.~%"
+                 (char-output alice)))
+      (is (eql alice (tempus::carried-by-of torch)))
+      (is (eql torch (first (tempus::carrying-of alice)))))))
