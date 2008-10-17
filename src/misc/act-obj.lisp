@@ -1510,10 +1510,10 @@
   (send-to-char ch "Conceal what?~%"))
 
 (defcommand (ch "conceal" thing) (:resting)
-  (let* ((objs (get-matching-objects ch thing (append
-                                               (carrying-of ch)
-                                               (equipment-of ch)
-                                               (contents-of (in-room-of ch)))))
+  (let* ((locations (append (carrying-of ch)
+                            (coerce (remove nil (equipment-of ch)) 'list)
+                            (contents-of (in-room-of ch))))
+         (objs (get-matching-objects ch thing locations))
          (obj (first objs)))
     (cond
       ((null objs)

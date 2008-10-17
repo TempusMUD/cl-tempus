@@ -762,6 +762,19 @@
       (is (null (tempus::aux-obj-of mask)))
       (is (null (tempus::aux-obj-of tank))))))
 
+(deftest conceal/normal/calls-perform-conceal ()
+  (with-mock-players (alice)
+    (with-mock-objects ((wand "a scarred wand"))
+      (setf (tempus::kind-of wand) tempus::+item-wand+)
+      (tempus::obj-to-char wand alice)
+      (setf (tempus::wear-flags-of wand) (logior
+                                             tempus::+item-wear-take+
+                                             tempus::+item-wear-hold+))
+      (function-trace-bind ((calls tempus::perform-conceal))
+          (tempus::interpret-command alice "conceal wand")
+        (is (= 1 (length calls)))
+        (is (equal (list alice wand) (first calls)))))))
+
 (deftest perform-conceal/normal/success ()
   (with-mock-players (alice bob)
     (with-mock-objects ((wand "a scarred wand"))
