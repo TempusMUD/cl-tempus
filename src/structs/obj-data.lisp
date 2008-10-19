@@ -420,6 +420,9 @@
 (defun is-chip (obj)
   (= (kind-of obj) +item-microchip+))
 
+(defun destroyedp (obj)
+  (minusp (damage-of obj)))
+
 (defmethod approvedp ((obj obj-data))
   "Returns T if the object has been approved."
   (not (is-obj-stat2 obj +item2-unapproved+)))

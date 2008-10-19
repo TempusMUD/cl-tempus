@@ -194,7 +194,7 @@
    (broken-component :accessor broken-component-of :initarg :broken-component :initform nil)
    (imm-qp :accessor imm-qp-of :initarg :imm-qp :initform nil)
    (qlog-level :accessor qlog-level-of :initarg :qlog-level :initform nil)
-   (speed :accessor speed-of :initarg :speed :initform nil)
+   (speed :accessor speed-of :initarg :speed :initform 0)
    (qp-allowance :accessor qp-allowance-of :initarg :qp-allowance :initform nil)
    (badge :accessor badge-of :initarg :badge :initform nil)
    (deity :accessor deity-of :initarg :deity :initform nil)
@@ -322,6 +322,9 @@
 (defun mob2-flagged (ch flag)
   (and (not (typep ch 'player))
        (logtest flag (mob2-flags-of ch))))
+
+(defun deadp (ch)
+  (= (position-of ch) +pos-dead+))
 
 (defun immortalp (ch)
   (>= (level-of ch) 50))

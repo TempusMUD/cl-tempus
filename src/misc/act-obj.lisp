@@ -5,8 +5,30 @@
 (defun perform-split (ch amount kind)
   nil)
 
+(defun explode-sigil (ch obj)
+  (cond
+    ((or (room-flagged (in-room-of ch) +room-peaceful+)
+         (eql (pk-style-of (zone-of (in-room-of ch))) :nopk))
+     (act ch :item obj
+          :subject-emit "$p feels rather warm to the touch and shudders violently."))
+    (t
+     (let* ((raw-dam (random-range (sigil-level-of obj) (* (sigil-level-of obj) 4)))
+            (dam (if (mag-savingthrow ch (sigil-level-of obj) +saving-spell+)
+                     (floor raw-dam 2)
+                     raw-dam)))
+       (act ch :item obj
+            :all-emit "$p explodes when $n pick$% it up!!")
+       (damage nil ch dam +type-blast+ +wear-hands+)
+
+       (setf (sigil-idnum-of obj) 0)
+       (setf (sigil-level-of obj) 0)))))
+
 (defun explode-all-sigils (ch)
-  nil)
+  (loop for obj in (copy-list (carrying-of ch))
+       until (or (destroyedp obj) (deadp ch))
+       when (and (plusp (sigil-idnum-of obj))
+                 (/= (sigil-idnum-of obj) (idnum-of ch)))
+       do (explode-sigil ch obj)))
 
 (defun consolidate-char-money (ch)
   (let ((credits 0)
