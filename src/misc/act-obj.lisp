@@ -291,7 +291,7 @@
     (when sigil-found
       (explode-all-sigils ch))))
 
-(defun check-object-nodrop (ch obj verb)
+(defun check-object-nodrop (ch obj mode)
   "Checks to see if OBJ can be dropped by CH.  May emit messages to CH.  Returns T if the object may be dropped, otherwise returns NIL."
   (cond
     ((not (is-obj-stat obj +item-nodrop+))
@@ -301,7 +301,7 @@
      t)
     (t
      (act ch :item obj
-          :subject-emit (format nil "You can't ~a $p, it must be CURSED!" verb))
+          :subject-emit (format nil "You can't ~(~a~) $p, it must be CURSED!" mode))
      nil)))
 
 (defun undisposablep (ch cmdstr obj displayp)
@@ -330,11 +330,8 @@
     (t
      nil)))
 
-(defun perform-drop (ch obj mode sname dest-room displayp)
-  (when (check-object-nodrop ch obj sname)
-    (when displayp
-      (act ch :item obj :all-emit (format nil "$n ~a$% $p." sname)))
-
+(defun perform-single-drop (ch obj mode)
+  (when (check-object-nodrop ch obj mode)
     (obj-from-char obj)
 
     (case mode
@@ -351,16 +348,42 @@
          (act nil :item obj
               :place-emit "$p falls from the sky and lands by your feet.")))
       (:donate
-       (assert dest-room nil "NIL dest-room passed to perform-drop")
-       (obj-to-room obj dest-room)
-       (when (people-of dest-room)
-         (act (first (people-of dest-room)) :item obj
-              :place-emit "$p suddenly appears in a puff of smoke!")))
+       (let ((dest-room (real-room
+                         (random-elt '(3032
+                                       30032
+                                       5510
+                                       20470
+                                       63102
+                                       22942
+                                       22807)))))
+         (obj-to-room obj dest-room)
+         (when (people-of dest-room)
+           (act (first (people-of dest-room)) :item obj
+                :place-emit "$p suddenly appears in a puff of smoke!"))))
       (:junk
        (extract-obj obj)))
     t))
 
-(defun find-eq-pos (ch obj)
+(defun perform-drop (ch objects mode)
+  (loop
+     for obj-sublist on (copy-list objects)
+     as obj = (first obj-sublist)
+     as next-obj = (second obj-sublist)
+     as counter from 1
+     do
+       (if (perform-single-drop ch obj mode)
+           (when (or (null next-obj)
+                     (string/= (name-of next-obj) (name-of obj)))
+             (cond
+               ((= counter 1)
+                (act ch :item obj :all-emit (format nil "$n ~(~a~)$% $p." mode)))
+               ((plusp counter)
+                (act ch :item obj
+                     :all-emit (format nil "$n ~(~a~)$% $p. (x~d)" mode counter))
+                (setf counter 0))))
+           (setf counter 0))))
+
+(defun find-eq-pos (obj)
   (cdr
    (find-if (lambda (tuple)
               (can-wear obj (car tuple)))
@@ -1098,23 +1121,7 @@
                   (get-matching-objects ch thing (carrying-of ch)))))
     (cond
       (objs
-       (loop
-          for obj-sublist on objs
-          as obj = (first obj-sublist)
-          as next-obj = (second obj-sublist)
-          as counter from 1
-          do
-            (if (perform-drop ch obj :drop "drop" (in-room-of ch) nil)
-                (when (or (null next-obj)
-                          (string/= (name-of next-obj) (name-of obj)))
-                  (cond
-                    ((= counter 1)
-                     (act ch :item obj :all-emit "$n drop$% $p."))
-                    ((plusp counter)
-                     (act ch :item obj
-                          :all-emit (format nil "$n drop$% $p. (x~d)" counter))))
-                  (setf counter 0))
-                (setf counter 0))))
+       (perform-drop ch objs :drop))
       ((eql dot-mode :find-all)
        (send-to-char ch "You don't seem to be carrying anything.~%"))
       (t
@@ -1127,7 +1134,7 @@
   (let* ((objs (get-matching-objects ch thing (carrying-of ch)))
          (wear-objs (delete nil
                             (mapcar (lambda (obj)
-                                      (let ((pos (find-eq-pos ch obj)))
+                                      (let ((pos (find-eq-pos obj)))
                                         (when pos
                                           (cons obj pos))))
                                     objs))))
@@ -1437,7 +1444,7 @@
        (perform-wear ch obj +wear-wield-2+)))))
 
 (defcommand (ch "hold") (:resting)
-  (send-to-char "Hold what?"))
+  (send-to-char ch "Hold what?"))
 
 (defcommand (ch "hold" thing) (:resting)
   (let* ((objs (get-matching-objects ch thing (carrying-of ch)))
@@ -1548,23 +1555,7 @@
       ((and objs (eql dot-mode :find-all))
        (send-to-char ch "Go to the dump if you want to junk EVERYTHING!~%"))
       (objs
-       (loop
-          for obj-sublist on objs
-          as obj = (first obj-sublist)
-          as next-obj = (second obj-sublist)
-          as counter from 1
-          do
-          (if (perform-drop ch obj :junk "junk" (in-room-of ch) nil)
-              (when (or (null next-obj)
-                        (string/= (name-of next-obj) (name-of obj)))
-                (cond
-                  ((= counter 1)
-                   (act ch :item obj :all-emit "$n junk$% $p."))
-                  ((plusp counter)
-                   (act ch :item obj
-                        :all-emit (format nil "$n junk$% $p. (x~d)" counter))))
-                (setf counter 0))
-              (setf counter 0))))
+       (perform-drop ch objs :junk))
       ((eql dot-mode :find-all)
        (send-to-char ch "You don't seem to be carrying anything.~%"))
       (t
@@ -1577,34 +1568,11 @@
       ((and objs (eql dot-mode :find-all))
        (send-to-char ch "Go to the donation room if you want to donate EVERYTHING!~%"))
       (objs
-       (loop
-          for obj-sublist on objs
-          as obj = (first obj-sublist)
-          as next-obj = (second obj-sublist)
-          as counter from 1
-          do
-          (let ((room-num (random-elt '(3032
-                                        30032
-                                        5510
-                                        20470
-                                        63102
-                                        22942
-                                        22807))))
-            (if (perform-drop ch obj :donate "donate" (real-room room-num) nil)
-                (when (or (null next-obj)
-                          (string/= (name-of next-obj) (name-of obj)))
-                  (cond
-                    ((= counter 1)
-                     (act ch :item obj :all-emit "$n donate$% $p."))
-                    ((plusp counter)
-                     (act ch :item obj
-                          :all-emit (format nil "$n donate$% $p. (x~d)" counter))))
-                  (setf counter 0))
-                (setf counter 0)))))
-       ((eql dot-mode :find-all)
-        (send-to-char ch "You don't seem to be carrying anything.~%"))
-       (t
-        (send-to-char ch "You don't seem to have any ~as.~%" thing)))))
+       (perform-drop ch objs :donate))
+      ((eql dot-mode :find-all)
+       (send-to-char ch "You don't seem to be carrying anything.~%"))
+      (t
+       (send-to-char ch "You don't seem to have any ~as.~%" thing)))))
 
 (defcommand (ch "empty" thing) (:resting)
   (let* ((objs (get-matching-objects ch thing (carrying-of ch)))
@@ -1619,7 +1587,7 @@
       (t
        (perform-empty ch obj)))))
 
-(defcommand (ch "empty" thing "into" container) (:resting)
+(defcommand (ch "empty" from-thing "into" to-thing) (:resting)
   (let* ((from-objs (get-matching-objects ch from-thing (carrying-of ch)))
          (from-obj (first from-objs))
          (to-objs (get-matching-objects ch to-thing (append
