@@ -2,6 +2,22 @@
 
 (in-suite (defsuite (tempus.wizard :in test)))
 
+(deftest echo/normal/displays-to-room ()
+  (with-mock-players (alice bob chuck)
+    (setf (tempus::level-of alice) 51)
+    (setf (tempus::level-of bob) 49)
+    (setf (tempus::level-of chuck) 52)
+    (tempus::interpret-command alice "echo testing")
+    (is (equal "Testing~%" (char-output alice)))
+    (is (equal "Testing~%" (char-output bob)))
+    (is (equal "[Alice] testing~%" (char-output chuck)))))
+
+(deftest send/normal/sends-to-char ()
+  (with-mock-players (alice bob)
+    (tempus::interpret-command alice "send .bob testing")
+    (is (equal "You send 'testing' to Bob.~%" (char-output alice)))
+    (is (equal "Testing~%" (char-output bob)))))
+
 (deftest force-command ()
   (with-mock-players (alice bob)
     (function-trace-bind ((calls tempus::interpret-command))

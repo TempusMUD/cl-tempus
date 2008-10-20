@@ -1,5 +1,34 @@
 (in-package #:tempus)
 
+(defcommand (ch "echo") (:immortal :dead)
+  (send-to-char ch "Yes, but what?~%"))
+
+(defcommand (ch "echo" str) (:immortal :dead)
+  (let* ((mort-see (act-escape str))
+         (imm-see (format nil "[$n] ~a" mort-see)))
+    (dolist (tch (people-of (in-room-of ch)))
+      (act ch :target tch
+           :target-emit (if (> (level-of tch) (level-of ch))
+                            imm-see
+                            mort-see)))))
+
+(defcommand (ch "send") (:immortal)
+  (send-to-char ch "Send what to who?~%"))
+
+(defcommand (ch "send" stuff) (:immortal)
+  (declare (ignore stuff))
+  (send-to-char ch "What do you want to send?~%"))
+
+(defcommand (ch "send" name stuff) (:immortal)
+  (let* ((tchs (get-matching-objects ch name (mapcar 'actor-of *cxns*)))
+         (tch (first tchs)))
+    (cond
+      ((null tchs)
+       (send-to-char ch "Nobody by that name.~%"))
+      (t
+       (send-to-char ch "You send '~a' to ~a.~%" stuff (name-of tch))
+       (send-to-char tch "~a~%" stuff)))))
+
 (defun perform-goto (ch room)
   (act ch :place-emit (if (poofout-of ch)
                           (format nil "$n ~a" (poofout-of ch))
