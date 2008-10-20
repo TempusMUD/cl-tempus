@@ -214,6 +214,16 @@
    (mana-shield-low :accessor mana-shield-low-of :initarg :mana-shield-low :initform nil)
    (mana-shield-pct :accessor mana-shield-pct-of :initarg :mana-shield-pct :initform nil)))
 
+(defmethod print-object ((ch mobile) stream)
+  (print-unreadable-object (ch stream :type t)
+    (format stream "~a ~s"
+            (when (shared-of ch) (tempus::vnum-of (shared-of ch)))
+            (tempus::name-of ch))))
+
+(defmethod print-object ((ch player) stream)
+  (print-unreadable-object (ch stream :type t)
+    (format stream "~a ~s" (idnum-of ch) (name-of ch))))
+
 (defun copy-abilities (abils)
   (make-instance 'char-ability-data
                  :str (str-of abils)
