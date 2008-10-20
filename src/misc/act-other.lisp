@@ -179,17 +179,20 @@
          (t
           (send-to-char ch "You don't see anyone to split it with.~%")))))))
 
+(defcommand (ch "split") (:resting)
+  (send-to-char ch "You may split an amount of gold or cash.~%"))
+
 (defcommand (ch "split" amount) (:resting)
   (if (notevery #'digit-char-p amount)
       (send-to-char ch "That's not a proper amount.~%")
-      (perform-split ch amount :gold)))
+      (perform-split ch (parse-integer amount) :gold)))
 
 (defcommand (ch "split" amount "gold") (:resting)
   (if (notevery #'digit-char-p amount)
       (send-to-char ch "That's not a proper amount.~%")
-      (perform-split ch amount :gold)))
+      (perform-split ch (parse-integer amount) :gold)))
 
 (defcommand (ch "split" amount "credits") (:resting)
   (if (notevery #'digit-char-p amount)
       (send-to-char ch "That's not a proper amount.~%")
-      (perform-split ch amount :cash)))
+      (perform-split ch (parse-integer amount) :cash)))
