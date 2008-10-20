@@ -2,9 +2,6 @@
 
 (defvar +money-log-limit+ 1000000)
 
-(defun perform-split (ch amount kind)
-  nil)
-
 (defun explode-sigil (ch obj)
   (cond
     ((or (room-flagged (in-room-of ch) +room-peaceful+)

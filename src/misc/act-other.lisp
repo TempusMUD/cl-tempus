@@ -129,3 +129,67 @@
   (define-feedback-command "idea")
   (define-feedback-command "bug")
   (define-feedback-command "typo"))
+
+(defun find-visible-group-members (ch)
+  "Returns a list containing the group members of CH.  If CH is not in a group, returns NIL."
+  (when (aff-flagged ch +aff-group+)
+    (loop for follower in (if (master-of ch)
+                              (cons (master-of ch)
+                                    (followers-of (master-of ch)))
+                              (followers-of ch))
+       when (and (aff-flagged follower +aff-group+)
+                 (not (eql follower ch))
+                 (eql (in-room-of follower) (in-room-of ch))
+                 (can-see-creature ch follower))
+       collect follower)))
+
+(defun perform-split (ch amount mode)
+  (cond
+    ((<= amount 0)
+     (send-to-char ch "Sorry, you can't do that.~%"))
+    ((and (eql mode :cash) (> amount (cash-of ch)))
+     (send-to-char ch "You don't seem to have that many credits.~%"))
+    ((and (eql mode :gold) (> amount (gold-of ch)))
+     (send-to-char ch "You don't seem to have that much gold.~%"))
+    ((not (aff-flagged ch +aff-group+))
+     (send-to-char ch "You aren't in a group.~%"))
+    (t
+     (let ((members (find-visible-group-members ch)))
+       (cond
+         (members
+          (let* ((member-count (length members))
+                 (share (floor amount (1+ member-count))))
+            (if (eql mode :gold)
+                (decf (gold-of ch) (* share member-count))
+                (decf (cash-of ch) (* share member-count)))
+            (dolist (member members)
+              (if (eql mode :gold)
+                  (incf (gold-of member) share)
+                  (incf (cash-of member) share))
+              (act ch :target member
+                   :target-emit (format nil "$n splits ~d ~a; you receive ~d."
+                                        amount
+                                        (if (eql mode :gold) "coins" "credits")
+                                        share)))
+            (send-to-char ch "You split ~d ~a among ~d member~:*~p -- ~d each.~%"
+                          amount
+                          (if (eql mode :gold) "coins" "credits")
+                          (1+ member-count)
+                          share)))
+         (t
+          (send-to-char ch "You don't see anyone to split it with.~%")))))))
+
+(defcommand (ch "split" amount) (:resting)
+  (if (notevery #'digit-char-p amount)
+      (send-to-char ch "That's not a proper amount.~%")
+      (perform-split ch amount :gold)))
+
+(defcommand (ch "split" amount "gold") (:resting)
+  (if (notevery #'digit-char-p amount)
+      (send-to-char ch "That's not a proper amount.~%")
+      (perform-split ch amount :gold)))
+
+(defcommand (ch "split" amount "credits") (:resting)
+  (if (notevery #'digit-char-p amount)
+      (send-to-char ch "That's not a proper amount.~%")
+      (perform-split ch amount :cash)))
