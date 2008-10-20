@@ -99,6 +99,8 @@
                             :depends-on ("defs" "creature"))
              (:file "login" :pathname "misc/login"
                             :depends-on ("defs" "char-class"))
+             (:file "magic" :pathname "magic/magic"
+                           :depends-on ("defs" "creature"))
              (:file "mail" :pathname "mobiles/mail"
                            :depends-on ("defs" "creature"))
              (:file "nanny" :pathname "net/nanny"
