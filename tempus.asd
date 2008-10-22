@@ -87,6 +87,8 @@
                              :depends-on ("defs" "utils"))
              (:file "groups" :pathname "interpreter/groups"
                              :depends-on ("defs" "utils"))
+             (:file "graph" :pathname "util/graph"
+                             :depends-on ("creature" "room-data"))
              (:file "handler" :pathname "util/handler"
                               :depends-on ("defs"))
              (:file "help" :pathname "help/help"
@@ -160,6 +162,8 @@
                (:file "test-comm" :pathname "tests/test-comm"
                       :depends-on ("helpers"))
                (:file "test-creature" :pathname "tests/test-creature"
+                      :depends-on ("helpers"))
+               (:file "test-graph" :pathname "tests/test-graph"
                       :depends-on ("helpers"))
                (:file "test-informative" :pathname "tests/test-informative"
                       :depends-on ("helpers"))

@@ -182,6 +182,7 @@
    (affects :accessor affects-of :initarg :affects :initform nil)
    (trail :accessor trail-of :initarg :trail :initform nil)
    (flags :accessor flags-of :initarg :room-flags :initform nil)
+   (find-path-index :accessor find-path-index-of :initform 0)
    (max-occupancy :accessor max-occupancy-of :initarg :max-occupancy :initform nil)
    (light :accessor light-of :initarg :light :initform 0)
    (flow-dir :accessor flow-dir-of :initarg :flow-dir :initform nil)

@@ -42,6 +42,16 @@
     (is (= 3013 (tempus::number-of (tempus::in-room-of alice))))
     (is (equal "Alice appears in a puff of smoke!~%" (char-output bob)))))
 
+(deftest distance/valid-rooms/returns-distance ()
+  (with-mock-players (alice bob)
+    (tempus::interpret-command alice "distance 24800")
+    (is (equal "Room 24800 is 40 steps away.~%" (char-output alice)))))
+
+(deftest distance/no-connection/returns-error ()
+  (with-mock-players (alice bob)
+    (tempus::interpret-command alice "distance 43000")
+    (is (equal "There is no valid path to room 43000.~%" (char-output alice)))))
+
 (deftest force-command ()
   (with-mock-players (alice bob)
     (function-trace-bind ((calls tempus::interpret-command))

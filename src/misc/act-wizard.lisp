@@ -119,6 +119,18 @@
     (when destination
         (perform-goto ch destination))))
 
+(defcommand (ch "distance" target) (:immortal)
+  (let ((room (find-target-room ch target)))
+    (when room
+      (let ((steps (find-distance (in-room-of ch) room)))
+        (if steps
+            (send-to-char ch "Room ~d is ~d steps away.~%"
+                          (number-of room)
+                          steps)
+            (send-to-char ch "There is no valid path to room ~d.~%"
+                          (number-of room)))))))
+
+
 (defcommand (ch "shutdown") (:immortal)
   (send-to-char ch "Shutting down...~%")
   (setf *shutdown* t))
