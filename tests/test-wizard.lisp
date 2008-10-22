@@ -32,7 +32,7 @@
     (tempus::char-to-room alice (tempus::real-room 3001))
     (tempus::interpret-command alice "goto 3013")
     (is (= 3013 (tempus::number-of (tempus::in-room-of alice))))
-    (is (equal "Alice appears in a puff of smoke!~%" (char-output bob)))))
+    (is (equal "Alice appears with an ear-splitting bang.~%" (char-output bob)))))
 
 (deftest goto/char-target/changes-room ()
   (with-mock-players (alice bob)
@@ -40,7 +40,18 @@
     (tempus::char-to-room alice (tempus::real-room 3001))
     (tempus::interpret-command alice "goto .bob")
     (is (= 3013 (tempus::number-of (tempus::in-room-of alice))))
-    (is (equal "Alice appears in a puff of smoke!~%" (char-output bob)))))
+    (is (equal "Alice appears with an ear-splitting bang.~%" (char-output bob)))))
+
+(deftest goto/following-imm/imm-in-same-room ()
+  (with-mock-players (alice bob)
+    (setf (tempus::level-of bob) 51)
+    (tempus::add-follower bob alice)
+    (clear-mock-buffers bob alice)
+    (tempus::interpret-command alice "goto 3001")
+    (is (= 3001 (tempus::number-of (tempus::in-room-of alice))))
+    (is (= 3001 (tempus::number-of (tempus::in-room-of bob))))
+    (is (search "Bob appears with an ear-splitting bang.~%" (char-output alice)))
+    (is (search "Alice disappears in a puff of smoke.~%" (char-output bob)))))
 
 (deftest distance/valid-rooms/returns-distance ()
   (with-mock-players (alice bob)

@@ -73,11 +73,12 @@
 
 
 
-(defun perform-goto (ch room)
+(defun perform-goto (ch room allow-follow)
+  (let ((was-in (in-room-of ch)))
   (act ch :place-emit (cond
                         ((or (null (poofout-of ch))
                              (string= "" (poofout-of ch)))
-                          "$n disappears in a cloud of smoke!")
+                          "$n disappears in a puff of smoke.")
                         ((search "$n" (poofout-of ch))
                          (poofout-of ch))
                         (t
@@ -88,12 +89,19 @@
   (act ch :place-emit (cond
                         ((or (null (poofin-of ch))
                              (string= "" (poofin-of ch)))
-                          "$n appears in a puff of smoke!")
+                          "$n appears with an ear-splitting bang.")
                         ((search "$n" (poofin-of ch))
                          (poofin-of ch))
                         (t
                          (format nil "$n ~a" (poofin-of ch)))))
-  (look-at-room ch room nil))
+  (look-at-room ch room nil)
+  (when (and allow-follow (followers-of ch))
+    (dolist (tch (followers-of ch))
+      (when (and (eql was-in (in-room-of tch))
+                 (immortal-level-p tch)
+                 (not (plr-flagged ch (logior +plr-olc+ +plr-writing+ +plr-mailing+)))
+                 (can-see-creature tch ch))
+        (perform-goto tch room t))))))
 
 (defcommand (ch "at") (:immortal)
   (send-to-char ch "Where do you want to do something?~%"))
@@ -117,7 +125,7 @@
 (defcommand (ch "goto" target) (:immortal)
   (let ((destination (find-target-room ch target)))
     (when destination
-        (perform-goto ch destination))))
+        (perform-goto ch destination t))))
 
 (defcommand (ch "distance" target) (:immortal)
   (let ((room (find-target-room ch target)))
