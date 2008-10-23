@@ -113,7 +113,7 @@
                                                ,mood)))
                           moods)
                 ,@(mapcar (lambda (mood)
-                            `(defcommand (ch ,mood command) (:resting :mood)
+                            `(defcommand (ch ,mood command) (:mood)
                                (unwind-protect
                                     (progn
                                       (setf (mood-of ch) ,mood)
