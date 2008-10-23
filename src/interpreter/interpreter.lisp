@@ -47,10 +47,10 @@
      t)
     ((and (symbolp (car a)) (symbolp (car b)))
      ;; both a and b are symbols, so check the next element
-     (pattern-generality< (cdr a) (cdr b)))
+     (pattern-sort< (cdr a) (cdr b)))
     ((string= (car a) (car b))
      ;; a and b are the same strings, so check the next element
-     (pattern-generality< (cdr a) (cdr b)))
+     (pattern-sort< (cdr a) (cdr b)))
     ((/= (if (stringp (car a)) (length (car a)) 1)
          (if (stringp (car b)) (length (car b)) 1))
      ;; a and b are strings (or chars) of different length, so the
@@ -78,6 +78,8 @@
     ((not (eql (first (member :social (command-info-flags a)))
                (first (member :social (command-info-flags b)))))
      (member :social (command-info-flags b)))
+    ((/= (length (command-info-pattern a)) (length (command-info-pattern b)))
+     (> (length (command-info-pattern a)) (length (command-info-pattern b))))
     (t
      (pattern-sort< (command-info-pattern a) (command-info-pattern b)))))
 
