@@ -130,7 +130,13 @@
          (t (err)
            (stefil::record-failure 'unexpected-error :condition err))))))
 
-
+(defmacro with-captured-log (log expr &body body)
+  `(let ((tempus::*log-output* (make-string-output-stream)))
+     (unwind-protect
+          ,expr
+       (close tempus::*log-output*))
+     (let ((,log (get-output-stream-string tempus::*log-output*)))
+       ,@body)))
 
 (defvar *function-traces* (make-hash-table))
 

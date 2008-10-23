@@ -63,6 +63,52 @@
     (tempus::interpret-command alice "distance 43000")
     (is (equal "There is no valid path to room 43000.~%" (char-output alice)))))
 
+(deftest transport/normal/moves-target ()
+  (with-mock-players (alice bob)
+    (tempus::char-from-room alice)
+    (tempus::char-to-room alice (tempus::real-room 3001))
+    (with-captured-log log
+        (tempus::do-transport-targets alice ".bob")
+      (is (= 3001 (tempus::number-of (tempus::in-room-of bob))))
+      (is (equal "Bob arrives from a puff of smoke.~%" (char-output alice)))
+      (is (equal "Alice has transported you!~%" (char-output bob)))
+      (is (search "Alice has transported Bob" log)))))
+
+(deftest transport/no-such-target/error-message ()
+  (with-mock-players (alice)
+    (tempus::do-transport-targets alice ".zyzygy")
+    (is (equal "You can't detect any '.zyzygy'~%" (char-output alice)))))
+
+(deftest teleport/normal/moves-target ()
+  (with-mock-players (alice bob)
+    (with-captured-log log
+        (tempus::do-teleport-name-to-target alice ".bob" "3001")
+      (is (= 3001 (tempus::number-of (tempus::in-room-of bob))))
+      (is (equal "Okay.~%Bob disappears in a puff of smoke.~%" (char-output alice)))
+      (is (search "Alice has teleported you!~%" (char-output bob)))
+      (is (search "Alice has teleported Bob" log)))))
+
+(deftest vnum-mob/normal/lists-mobs ()
+  (with-mock-players (alice)
+    (tempus::do-vnum-mobiles-name alice "puff dragon")
+    (is (equal "  1. &g[&n    1&g] &yPuff&n~%" (char-output alice)))))
+
+(deftest vnum-mob/not-found/error-message ()
+  (with-mock-players (alice)
+    (tempus::do-vnum-mobiles-name alice "zyzygy")
+    (is (equal "No mobiles by that name.~%" (char-output alice)))))
+
+(deftest vnum-obj/normal/lists-objs ()
+  (with-mock-players (alice)
+    (tempus::do-vnum-objects-name alice "mixed potion")
+    (is (equal "  1. &g[&n   15&g] &ga mixed potion&n~%"
+                (char-output alice)))))
+
+(deftest vnum-obj/not-found/error-message ()
+  (with-mock-players (alice)
+    (tempus::do-vnum-objects-name alice "zyzygy")
+    (is (equal "No objects by that name.~%" (char-output alice)))))
+
 (deftest force-command ()
   (with-mock-players (alice bob)
     (function-trace-bind ((calls tempus::interpret-command))

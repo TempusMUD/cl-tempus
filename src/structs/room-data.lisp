@@ -210,3 +210,6 @@
         (= terrain +sect-elemental-radiance+)
         (= terrain +sect-elemental-lightning+)
         (= terrain +sect-elemental-vacuum+))))
+
+(defun can-enter-room (ch room)
+  t)

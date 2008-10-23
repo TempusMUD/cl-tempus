@@ -1,5 +1,7 @@
 (in-package :tempus)
 
+(defvar *log-output* *standard-output*)
+
 (defun interpret-scan-directive (stream format-idx format)
   (case (char format format-idx)
     (#\s
@@ -46,7 +48,7 @@
 (defun mlog (message &key group level type write-to-file)
   (declare (ignorable group level type))
   (when write-to-file
-    (format *standard-output* "(~s ~s)~%" (local-time:now) message)
+    (format *log-output* "(~s ~s)~%" (local-time:now) message)
     (force-output))
 
   (unless (and group level)
