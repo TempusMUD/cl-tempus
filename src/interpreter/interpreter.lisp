@@ -1,6 +1,7 @@
 (in-package :tempus)
 
 (defun expand-aliases (ch arg)
+  (declare (ignore ch))
   arg)
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
@@ -21,6 +22,45 @@
   (defmethod print-object ((err parser-error) stream)
     (princ (message-of err) stream)))
 
+;; "get" thing "from" container
+;; "get" thing "from"
+;; "get" thing container
+;; "get" thing
+;; "get"
+
+(defun pattern-sort< (a b)
+  (cond
+    ((and (null a) (null b))
+     ;; identical patterns
+     nil)
+    ((null b)
+     ;; a is longer, therefore should go first
+     t)
+    ((null a)
+     ;; a is shorter, therefore should go later
+     nil)
+    ((and (symbolp (car a)) (not (symbolp (car b))))
+     ;; a is a symbol and b isn't, so a should go later
+     nil)
+    ((and (not (symbolp (car a))) (symbolp (car b)))
+     ;; a isn't a symbol and b is, so a should go first
+     t)
+    ((and (symbolp (car a)) (symbolp (car b)))
+     ;; both a and b are symbols, so check the next element
+     (pattern-generality< (cdr a) (cdr b)))
+    ((string= (car a) (car b))
+     ;; a and b are the same strings, so check the next element
+     (pattern-generality< (cdr a) (cdr b)))
+    ((/= (if (stringp (car a)) (length (car a)) 1)
+         (if (stringp (car b)) (length (car b)) 1))
+     ;; a and b are strings (or chars) of different length, so the
+     ;; shorter goes first
+     (< (if (stringp (car a)) (length (car a)) 1)
+        (if (stringp (car b)) (length (car b)) 1)))
+    (t
+     ;; alphabetize in the absence of meaningful difference
+     (string< (car a) (car b)))))
+
 (defun command-sort-compare (a b)
   (cond
     ((not (eql (first (member :direction (command-info-flags a)))
@@ -38,11 +78,8 @@
     ((not (eql (first (member :social (command-info-flags a)))
                (first (member :social (command-info-flags b)))))
      (member :social (command-info-flags b)))
-    ((/= (command-info-arity a) (command-info-arity b))
-     (> (command-info-arity a) (command-info-arity b)))
     (t
-     (string< (first (command-info-pattern a))
-              (first (command-info-pattern b))))))
+     (pattern-sort< (command-info-pattern a) (command-info-pattern b)))))
 
 (defun sort-commands ()
   (setf *commands* (sort *commands* 'command-sort-compare)))
