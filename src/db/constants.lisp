@@ -903,7 +903,7 @@
 (defparameter +class-mephit-lava+ 161)
 (defparameter +class-mephit-smoke+ 162)
 (defparameter +class-mephit-steam+ 163)
-(defparameter +class-daemon-arcana+ 170)	// daemons
+(defparameter +class-daemon-arcana+ 170)
 (defparameter +class-daemon-charona+ 171)
 (defparameter +class-daemon-dergho+ 172)
 (defparameter +class-daemon-hydro+ 173)

@@ -181,7 +181,7 @@
 (defparameter +max-players+ 300)
 
 ;; maximum size of bug, typo and idea files (to prevent bombing)
-(defparameter +max-filesize+ 50000)n
+(defparameter +max-filesize+ 50000)
 
 ;; maximum number of password attempts before disconnection
 (defparameter +max-bad-pws+ 2)
@@ -233,7 +233,7 @@
 Welcome to the realms of Tempus, adventurer.
 ")
 
-(defparameter +start-message+ 
+(defparameter +start-message+
   "Welcome.  This is your new character in the world of Tempus!
 You must be strong to survive, but in time you may become powerful
 beyond your wildest dreams...
