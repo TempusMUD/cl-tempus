@@ -881,47 +881,34 @@
       (send-to-char ch "It is the ~d~a Day of the ~a, Year ~d~%"
                     day suf (aref +month-name+ month) year))))
 
+(defun send-commands-to-ch (ch preamble pred)
+  (let ((cmds (sort
+               (remove-duplicates
+                (mapcar #'first
+                        (mapcar #'command-info-pattern
+                                (remove-if-not pred *commands*)))
+                :test #'string=)
+               #'string<)))
+    (send-to-char ch "~a~%~a" preamble (print-columns-to-string 5 15 cmds))))
+
 (defcommand (ch "commands") ()
-  (send-to-char ch "Commands:~%~{~10a~}~%"
-                (mapcar (lambda (str)
-                          (cond
-                            ((not (stringp str))
-                             str)
-                            ((< (length str) 10)
-                             str)
-                            (t
-                             (subseq str 0 8))))
-                        (sort
-                         (remove-duplicates
-                          (mapcar #'first
-                                  (mapcar #'command-info-pattern
-                                          (remove-if (lambda (cmd)
-                                                       (or (member :mood (command-info-flags cmd))
-                                                           (member :social (command-info-flags cmd))))
-                                                     *commands*)))
-                          :test #'string=)
-                         #'string<))))
+  (send-commands-to-ch ch
+                       "Commands:"
+                       (lambda (cmd)
+                         (not (or (member :mood (command-info-flags cmd))
+                                  (member :social (command-info-flags cmd)))))))
 
 (defcommand (ch "socials") ()
-  (send-to-char ch "Socials:~%~{~10a~}~%"
-                (mapcar (lambda (str)
-                          (cond
-                            ((not (stringp str))
-                             str)
-                            ((< (length str) 10)
-                             str)
-                            (t
-                             (subseq str 0 8))))
-                        (sort
-                         (remove-duplicates
-                          (mapcar #'first
-                                  (mapcar #'command-info-pattern
-                                          (remove-if-not
-                                           (lambda (cmd)
-                                             (member :social (command-info-flags cmd)))
-                                           *commands*)))
-                          :test #'string=)
-                         #'string<))))
+  (send-commands-to-ch ch
+                       "Socials:"
+                       (lambda (cmd)
+                         (member :social (command-info-flags cmd)))))
+
+(defcommand (ch "moods") ()
+  (send-commands-to-ch ch
+                       "Moods:"
+                       (lambda (cmd)
+                         (member :mood (command-info-flags cmd)))))
 
 (defcommand (ch "look") (:resting)
   (look-at-room ch (in-room-of ch) t))

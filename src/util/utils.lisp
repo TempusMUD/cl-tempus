@@ -545,13 +545,19 @@ of immediately."
 	   (cxn-write cxn "~a" buf)
 	   (setf (cxn-page-buf cxn) ""))))))
 
-(defun columnar-list-to-cxn (cxn cols width list)
-  (let ((col 0))
-	(dolist (element list)
-	  (cxn-write cxn "~VA~[~%~]" width element
-                 (rem (incf col) cols)))
-    (unless (zerop (rem col cols))
-      (cxn-write cxn "~%"))))
+(defun print-columns-to-string (cols width list)
+  (with-output-to-string (result)
+    (let ((col 0))
+      (dolist (element list)
+        (let ((str (string element)))
+          (format result "~VA~[~%~]"
+                  width
+                  (if (< (length str) width)
+                      str
+                      (subseq str 0 width))
+                  (rem (incf col) cols))))
+      (unless (zerop (rem col cols))
+        (format result "~%")))))
 
 (defun safe-parse-integer (str)
   (ignore-errors (parse-integer str)))
