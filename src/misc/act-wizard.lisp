@@ -288,7 +288,9 @@
                                                     (declare (ignorable self))
                                                     ,(read-from-string expr))))))
         (cxn-write (link-of ch) "~a~{~s~%~}"
-                   (get-output-stream-string *standard-output*)
+                   (string-replace "&"
+                                   (get-output-stream-string *standard-output*)
+                                   "&&")
                    results))
     (error (err)
         (cxn-write (link-of ch) "ERROR: ~a~%" err))))
