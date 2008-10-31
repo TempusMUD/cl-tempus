@@ -1196,6 +1196,28 @@
         (t
          (perform-wear ch (car objs) pos)))))
 
+(defcommand (ch "wear" thing "about" "body") (:resting)
+    (let ((objs (get-matching-objects ch thing (carrying-of ch))))
+      (cond
+        ((null objs)
+         (send-to-char "You don't seem to have any '~a'.~%"
+                       thing))
+        ((> (length objs) 1)
+         (send-to-char ch "You can't wear more than one item on a position.~%"))
+        (t
+         (perform-wear ch (car objs) +wear-about+)))))
+
+(defcommand (ch "wear" thing "up" "ass") (:resting)
+    (let ((objs (get-matching-objects ch thing (carrying-of ch))))
+      (cond
+        ((null objs)
+         (send-to-char "You don't seem to have any '~a'.~%"
+                       thing))
+        ((> (length objs) 1)
+         (send-to-char ch "You can't wear more than one item on a position.~%"))
+        (t
+         (perform-wear ch (car objs) +wear-ass+)))))
+
 (defcommand (ch "remove") (:resting)
   (send-to-char ch "Remove what?~%"))
 
