@@ -822,44 +822,45 @@
   (send-to-char ch "~%"))
 
 (defun perform-who (ch options)
-  ;; Print header
-  (send-to-char ch "&W**************      &GVisible Players of TEMPUS      &W**************&n~%")
+  (with-pagination ((link-of ch))
+    ;; Print header
+    (send-to-char ch "&W**************      &GVisible Players of TEMPUS      &W**************&n~%")
 
-  ;; Filter out the players to be displayed
-  (let* ((players (remove-if-not (lambda (actor)
-                                   (and actor (in-room-of actor)))
-                                 (mapcar #'actor-of
-                                         (remove-if-not (lambda (cxn)
-                                                          (typep cxn 'tempus-cxn))
-                                                        *cxns*))))
-         (displayed (sort (remove-if-not (lambda (player)
-                                           (who-arg-matches ch player options))
-                                         players)
-                          #'> :key 'level-of)))
+    ;; Filter out the players to be displayed
+    (let* ((players (remove-if-not (lambda (actor)
+                                     (and actor (in-room-of actor)))
+                                   (mapcar #'actor-of
+                                           (remove-if-not (lambda (cxn)
+                                                            (typep cxn 'tempus-cxn))
+                                                          *cxns*))))
+           (displayed (sort (remove-if-not (lambda (player)
+                                             (who-arg-matches ch player options))
+                                           players)
+                            #'> :key 'level-of)))
 
-    ;; Display the proper players
-    (dolist (player displayed)
-      (send-who-line ch player options))
+      ;; Display the proper players
+      (dolist (player displayed)
+        (send-who-line ch player options))
 
-    ;; Send counts of the various kinds of players
-    (let* ((immortals-displayed (length (remove-if-not #'immortal-level-p displayed)))
-           (immortals-playing (length (remove-if-not #'immortal-level-p players)))
-           (testers-displayed (length (remove-if-not #'testerp displayed)))
-           (testers-playing (length (remove-if-not #'testerp players)))
-           (players-displayed (- (length displayed) immortals-displayed testers-displayed))
-           (players-playing (- (length players) immortals-playing testers-playing)))
-      (if (immortalp ch)
-          (send-to-char ch "&n~d of ~d immortal~:p, ~d tester~:p, and ~d player~:p displayed.~%"
-                        immortals-displayed
-                        immortals-playing
-                        testers-displayed
-                        players-displayed)
-          (send-to-char ch "&n~d of ~d immortal~:p and ~d of ~d player~:p displayed.~%"
+      ;; Send counts of the various kinds of players
+      (let* ((immortals-displayed (length (remove-if-not #'immortal-level-p displayed)))
+             (immortals-playing (length (remove-if-not #'immortal-level-p players)))
+             (testers-displayed (length (remove-if-not #'testerp displayed)))
+             (testers-playing (length (remove-if-not #'testerp players)))
+             (players-displayed (- (length displayed) immortals-displayed testers-displayed))
+             (players-playing (- (length players) immortals-playing testers-playing)))
+        (if (immortalp ch)
+            (send-to-char ch "&n~d of ~d immortal~:p, ~d tester~:p, and ~d player~:p displayed.~%"
+                          immortals-displayed
+                          immortals-playing
+                          testers-displayed
+                          players-displayed)
+            (send-to-char ch "&n~d of ~d immortal~:p and ~d of ~d player~:p displayed.~%"
 
-                        immortals-displayed
-                        immortals-playing
-                        players-displayed
-                        players-playing)))))
+                          immortals-displayed
+                          immortals-playing
+                          players-displayed
+                          players-playing))))))
 
 (defun show-mud-date-to-char (ch)
   (unless (in-room-of ch)
@@ -889,7 +890,8 @@
                                 (remove-if-not pred *commands*)))
                 :test #'string=)
                #'string<)))
-    (send-to-char ch "~a~%~a" preamble (print-columns-to-string 5 15 cmds))))
+    (with-pagination ((link-of ch))
+      (send-to-char ch "~a~%~a" preamble (print-columns-to-string 5 15 cmds)))))
 
 (defcommand (ch "commands") ()
   (send-commands-to-ch ch

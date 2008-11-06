@@ -132,7 +132,7 @@ On exit, it sends the first page to the cxn."
 	   (when ,cxn-sym
 		 (unwind-protect
 			 (progn
-			   (setf (cxn-page-buf ,cxn-sym) "")
+			   (setf (page-buf-of ,cxn-sym) "")
 			   (setf *cxn-paginate* ,cxn-sym)
 			   ,@body)
 		   (progn

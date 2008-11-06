@@ -413,20 +413,6 @@ sequences in seq-list with the delimiter between each element"
 		(send-act-str other place-emit subject target item target-item
 					  (if (eql other target) :target :other))))))
 
-(defun act-event (subject &key (target nil) (item nil) (subject-emit nil) (target-emit nil) (not-target-emit nil) (place-emit nil) (all-emit nil))
-  "Enqueues an emit event that acts like act, except in event order instead
-of immediately."
-  (enqueue-event 'emit
-				 :kind 'emit
-				 :actor subject
-				 :target target
-				 :item item
-				 :subject-emit subject-emit
-				 :target-emit target-emit
-				 :not-target-emit not-target-emit
-				 :place-emit place-emit
-				 :all-emit all-emit))
-
 (defun colorize (cxn str)
   (let ((ansi-level (if (account-of cxn)
 						(ansi-level-of (account-of cxn))
@@ -526,7 +512,7 @@ of immediately."
 
 (defun send-page (cxn)
   "Sends a single buffered page to CXN.  If any of the page is left, displays the more prompt."
-  (let* ((buf (cxn-page-buf cxn))
+  (let* ((buf (page-buf-of cxn))
 		 (buf-len (length buf)))
 	(loop
 	 for count = 1 then (1+ count)
@@ -540,10 +526,10 @@ of immediately."
 	   (cxn-write cxn "~a~a~%" (subseq buf 0 (1+ line-end))
 				  (colorize cxn
 				   "&r**** &nUse the 'more' command to continue. &r****&n"))
-	   (setf (cxn-page-buf cxn) (subseq buf (1+ line-end))))
+	   (setf (page-buf-of cxn) (subseq buf (1+ line-end))))
 	  (t
 	   (cxn-write cxn "~a" buf)
-	   (setf (cxn-page-buf cxn) ""))))))
+	   (setf (page-buf-of cxn) ""))))))
 
 (defun print-columns-to-string (cols width list)
   (with-output-to-string (result)

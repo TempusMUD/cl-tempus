@@ -196,3 +196,12 @@
   (if (notevery #'digit-char-p amount)
       (send-to-char ch "That's not a proper amount.~%")
       (perform-split ch (parse-integer amount) :cash)))
+
+(defcommand (ch "more") (:important)
+  (cond
+    ((null (link-of ch))
+     (send-to-char ch "You don't get more.~%"))
+    ((null (page-buf-of (link-of ch)))
+     (send-to-char ch "You weren't in the middle of reading anything.~%"))
+    (t
+     (send-page (link-of ch)))))

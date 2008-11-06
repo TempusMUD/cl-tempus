@@ -127,21 +127,22 @@
   (let ((count 0)
         (namelist (split-sequence #\space namelist-str
                                   :remove-empty-subseqs t)))
-    (send-to-char ch "~a"
-                  (with-output-to-string (str)
-                    (loop
-                       for vnum in (sort (hash-keys prototype-hash) #'<)
-                       as proto = (gethash vnum prototype-hash)
-                       when (every (lambda (name)
-                                     (is-name name (aliases-of proto)))
-                                   namelist)
-                       do
-                       (incf count)
-                       (format str "~3d. &g[&n~5d&g] &~c~a&n~%"
-                               count
-                               vnum
-                               name-color
-                               (name-of proto)))))
+    (with-pagination ((link-of ch))
+      (send-to-char ch "~a"
+                    (with-output-to-string (str)
+                      (loop
+                         for vnum in (sort (hash-keys prototype-hash) #'<)
+                         as proto = (gethash vnum prototype-hash)
+                         when (every (lambda (name)
+                                       (is-name name (aliases-of proto)))
+                                     namelist)
+                         do
+                           (incf count)
+                           (format str "~3d. &g[&n~5d&g] &~c~a&n~%"
+                                   count
+                                   vnum
+                                   name-color
+                                   (name-of proto))))))
     count))
 
 (defcommand (ch "echo") (:immortal :dead)
