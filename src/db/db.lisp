@@ -37,7 +37,7 @@
 (defparameter +typo-file+ "misc/typos")	;         'typo'
 (defparameter +bug-file+ "misc/bugs")	;         'bug'
 (defparameter +mess-file+ "misc/messages")	; damage messages
-(defparameter +socmess-file+ "misc/socials")	; messgs for social acts
+(defparameter +socmess-file+ "lib/misc/socials")	; messgs for social acts
 (defparameter +xname-file+ "misc/xnames")	; invalid name substrings
 (defparameter +nasty-file+ "misc/nasty")	; nasty words for public comm
 

@@ -103,7 +103,7 @@
             :not-target-emit (social-message-others-found social))))))
 
 (defun boot-social-messages (path)
-  (with-open-file (fl path)
+  (with-open-file (fl (tempus-path path))
     (loop
        for new-social = (read-social fl)
        while new-social do
