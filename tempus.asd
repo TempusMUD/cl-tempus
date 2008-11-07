@@ -190,8 +190,7 @@
 
 (defmethod perform ((op test-op) (system (eql (find-system :tempus))))
   (operate 'load-op '#:tempus.test)
-  (funcall (read-from-string "tempus::boot-world"))
-  (funcall (read-from-string "tempus::sort-commands"))
+  (funcall (read-from-string "tempus::boot-db"))
   (write-line (princ-to-string (funcall (read-from-string "tempus.tests::test")))))
 
 
