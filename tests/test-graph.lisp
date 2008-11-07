@@ -51,23 +51,21 @@
 
 (deftest bfs-enqueue/normal/new-element-in-queue ()
   (let ((room (tempus::real-room 3013)))
-    (let ((tempus::*find-path-queue* nil))
+    (let ((tempus::*find-path-head* nil))
       (tempus::bfs-enqueue room tempus::+south+)
-      (is (= 1 (length tempus::*find-path-queue*)))
+      (is (= 1 (length tempus::*find-path-head*)))
       (is (eql room (tempus::bfs-queue-element-room
-                     (first tempus::*find-path-queue*))))
+                     (first tempus::*find-path-head*))))
       (is (eql tempus::+south+
                (tempus::bfs-queue-element-dir
-                (first tempus::*find-path-queue*)))))))
+                (first tempus::*find-path-head*)))))))
 
 (deftest bfs-dequeue/normal/pops-element-off-end ()
   (let ((room (tempus::real-room 3013)))
-    (let ((tempus::*find-path-queue* nil))
+    (let ((tempus::*find-path-head* nil))
       (tempus::bfs-enqueue room tempus::+south+)
-      (let ((elem (tempus::bfs-dequeue)))
-        (is (null tempus::*find-path-queue*))
-        (is (eql room (tempus::bfs-queue-element-room elem)))
-        (is (eql tempus::+south+ (tempus::bfs-queue-element-dir elem)))))))
+      (tempus::bfs-dequeue)
+      (is (null tempus::*find-path-head*)))))
 
 (deftest find-first-step/same-room/returns-nil ()
   (let ((room (tempus::real-room 3013)))
@@ -92,7 +90,7 @@
         (end (tempus::real-room 3002)))
     (is (= 1 (tempus::find-distance start end)))))
 
-(deftest find-distance/forty-rooms-away/returns-forty ()
+(deftest find-distance/35-rooms-away/returns-35 ()
   (let ((start (tempus::real-room 3013))
         (end (tempus::real-room 24800)))
-    (is (= 40 (tempus::find-distance start end)))))
+    (is (= 35 (tempus::find-distance start end)))))

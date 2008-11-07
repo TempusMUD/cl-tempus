@@ -121,7 +121,7 @@
                                 (make-mock-player ,(string-capitalize var))))
             ,@(loop
                  for var in vars
-                 collect `(setup-mock-player ,var 3013))
+                 collect `(setup-mock-player ,var 3002))
             ,@body)
        (handler-case
            (progn

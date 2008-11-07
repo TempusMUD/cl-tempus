@@ -10,9 +10,9 @@
       (is (eql (tempus::to-room-of
                 (aref (tempus::dir-option-of orig-room) tempus::+east+))
                (tempus::number-of (tempus::in-room-of alice))))
-      (is (search "East Goddess Street" (char-output alice)))
-      (is (search "[ Exits: n e s w u ]" (char-output alice)))
-      (is (search "The broad tree-lined avenue leads east"
+      (is (search "The Chamber of Relics" (char-output alice)))
+      (is (search "[ Exits: s w ]" (char-output alice)))
+      (is (search "   In this alcove, which is at the northeastern corner"
                        (char-output alice)))
       (is (or (string= (char-output bob) "Alice walks east.~%")
               (string= (char-output bob) "Alice strolls east.~%")
@@ -23,7 +23,7 @@
 
       (tempus::interpret-command alice "w")
       (is (eql (tempus::in-room-of alice) orig-room))
-      (is (search "Holy Square" (char-output alice)))
+      (is (search "Inside the Great Silver Archway" (char-output alice)))
       (is (or (string= (char-output bob) "Alice walks in from the east.~%")
               (string= (char-output bob) "Alice strolls in from the east.~%")
               (string= (char-output bob) "Alice has arrived from the east.~%")
@@ -33,8 +33,8 @@
   (with-mock-players (alice)
     (setf (tempus::bitp (tempus::prefs-of alice) tempus::+pref-brief+) t)
     (tempus::interpret-command alice "e")
-    (is (search "East Goddess Street" (char-output alice)))
-    (is (null (search "The broad tree-lined avenue leads east"
+    (is (search "The Chamber of Relics" (char-output alice)))
+    (is (null (search "   In this alcove, which is at the northeastern corner"
                       (char-output alice))))))
 
 (deftest standing ()

@@ -6,9 +6,9 @@
   (with-mock-players (alice)
     (setf (tempus::bitp (tempus::prefs-of alice) tempus::+pref-autoexit+) t)
     (tempus::interpret-command alice "l")
-    (is (search "&cHoly Square" (char-output alice)))
-    (is (search "   This is the main junction" (char-output alice)))
-    (is (search "[ Exits: n e s w u ]" (char-output alice)))))
+    (is (search "&cInside the Great Silver Archway" (char-output alice)))
+    (is (search "   To the north, a giant silver arch" (char-output alice)))
+    (is (search "[ Exits: n e s w ]" (char-output alice)))))
 
 (deftest look-at-creature ()
   (with-mock-players (alice bob)

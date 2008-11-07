@@ -19,7 +19,7 @@
                   for read-line = (read-line inf nil nil)
                   as last-line = (if read-line read-line last-line)
                   while read-line
-                  finally (is (cl-ppcre:scan #/^Alice    \(... ..\) \[ 3013\] I have an idea!$/ last-line)))))
+                  finally (is (cl-ppcre:scan #/^Alice    \(... ..\) \[ 3002\] I have an idea!$/ last-line)))))
         (when (probe-file real-path)
           (rename-file real-path path))))))
 

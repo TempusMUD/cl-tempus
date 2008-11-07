@@ -22,7 +22,7 @@
   (with-mock-players (alice bob)
     (tempus::char-from-room alice)
     (tempus::char-to-room alice (tempus::real-room 3001))
-    (tempus::interpret-command alice "at 3013 say hi")
+    (tempus::interpret-command alice "at 3002 say hi")
     (is (equal "&BYou say, &c'hi'&n~%" (char-output alice)))
     (is (equal "&BAlice says, &c'hi'&n~%" (char-output bob)))))
 
@@ -30,8 +30,8 @@
   (with-mock-players (alice bob)
     (tempus::char-from-room alice)
     (tempus::char-to-room alice (tempus::real-room 3001))
-    (tempus::interpret-command alice "goto 3013")
-    (is (= 3013 (tempus::number-of (tempus::in-room-of alice))))
+    (tempus::interpret-command alice "goto 3002")
+    (is (= 3002 (tempus::number-of (tempus::in-room-of alice))))
     (is (equal "Alice appears with an ear-splitting bang.~%" (char-output bob)))))
 
 (deftest goto/char-target/changes-room ()
@@ -39,7 +39,7 @@
     (tempus::char-from-room alice)
     (tempus::char-to-room alice (tempus::real-room 3001))
     (tempus::interpret-command alice "goto .bob")
-    (is (= 3013 (tempus::number-of (tempus::in-room-of alice))))
+    (is (= 3002 (tempus::number-of (tempus::in-room-of alice))))
     (is (equal "Alice appears with an ear-splitting bang.~%" (char-output bob)))))
 
 (deftest goto/following-imm/imm-in-same-room ()
@@ -56,7 +56,7 @@
 (deftest distance/valid-rooms/returns-distance ()
   (with-mock-players (alice bob)
     (tempus::interpret-command alice "distance 24800")
-    (is (equal "Room 24800 is 40 steps away.~%" (char-output alice)))))
+    (is (equal "Room 24800 is 36 steps away.~%" (char-output alice)))))
 
 (deftest distance/no-connection/returns-error ()
   (with-mock-players (alice bob)
