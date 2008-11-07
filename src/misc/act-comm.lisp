@@ -483,7 +483,7 @@
 
     (when (and (room-flagged (in-room-of ch) +room-soundproof+)
                (not (immortalp ch))
-               (string/= (name-of chan) "petition"))
+               (string/= (getf chan :name) "petition"))
       (send-to-char ch "The walls seem to absorb your words...~%"))))
 
 (defun do-gen-comm (ch chan-name message)
@@ -500,13 +500,12 @@
 (macrolet ((define-channels ()
              `(progn
                 ,@(mapcar (lambda (command)
-                            (let ((msg (gensym "MSG")))
-                              `(progn
-                                 (defcommand (ch ,command ,msg) (:resting)
-                                   (do-gen-comm ch ,command ,msg))
-                                 (defcommand (ch ,command) (:resting)
-                                   (send-to-char ch "Yes, ~a, fine, ~a we must, but WHAT???~%"
+                            `(progn
+                               (defcommand (ch ,command msg) (:resting)
+                                 (do-gen-comm ch ,command msg))
+                               (defcommand (ch ,command) (:resting)
+                                 (send-to-char ch "Yes, ~a, fine, ~a we must, but WHAT???~%"
                                                  ,command
-                                                 ,command)))))
+                                                 ,command))))
                            (mapcar #'second +channels+)))))
            (define-channels))
