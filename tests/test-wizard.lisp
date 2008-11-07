@@ -114,6 +114,31 @@
     (tempus::do-stat-zone alice)
     (is (search "Zone #&y30: &cThe Holy City of Modrian&n~%" (char-output alice)))))
 
+(deftest do-stat-trails/no-trails/returns-error ()
+  (with-mock-players (alice)
+    (tempus::do-stat-trails alice)
+    (is (equal "No trails exist within this room.~%" (char-output alice)))))
+
+(deftest do-stat-trails/normal/displays-no-NIL ()
+  (with-mock-players (alice)
+    ;; add some trails
+    (unwind-protect
+         (progn
+           (push (make-instance 'tempus::room-trail-data
+                                :name "Alice"
+                                :aliases "alice .alice"
+                                :idnum 2
+                                :time (local-time:timestamp- (local-time:now)
+                                                             35 :sec)
+                                :from-dir 1
+                                :to-dir 2
+                                :track 60
+                                :flags 0)
+                 (tempus::trail-of (tempus::in-room-of alice)))
+           (tempus::do-stat-trails alice)
+           (is (null (search "NIL" (char-output alice)))))
+      (setf (tempus::trail-of (tempus::in-room-of alice)) nil))))
+
 (deftest force-command ()
   (with-mock-players (alice bob)
     (function-trace-bind ((calls tempus::interpret-command))

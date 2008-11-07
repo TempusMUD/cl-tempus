@@ -259,6 +259,33 @@
                     av-lev
                     av-lev-proto))))
 
+(defcommand (ch "stat" "trails") (:immortal)
+  (if (trail-of (in-room-of ch))
+      (with-pagination ((link-of ch))
+        (let ((now (now)))
+          (loop
+             :for trail :in (trail-of (in-room-of ch))
+             :as num :from 1
+             :as timediff := (timestamp-difference now (time-of trail))
+             :do (send-to-char ch "[~2d] -- Name: '~a', (~a), Idnum: [~5d]
+         Time Passed: ~d minutes, ~d seconds.
+         From dir: ~a, To dir: ~a, Track: [~2d]
+         Flags: ~a"
+                               num (name-of trail)
+                               (if (find (idnum-of trail) *characters* :key #'idnum-of)
+                                   "in world" "gone")
+                               (idnum-of trail)
+                               (floor timediff 60)
+                               (mod timediff 60)
+                               (if (plusp (from-dir-of trail))
+                                   (aref +dirs+ (from-dir-of trail)) "NONE")
+                               (if (plusp (to-dir-of trail))
+                                   (aref +dirs+ (to-dir-of trail)) "NONE")
+                               (track-of trail)
+                               (printbits (flags-of trail) +trail-flags+)))))
+      (send-to-char ch "No trails exist within this room.~%")))
+
+
 (defcommand (ch "echo") (:immortal :dead)
   (send-to-char ch "Yes, but what?~%"))
 

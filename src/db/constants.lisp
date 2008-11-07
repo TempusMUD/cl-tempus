@@ -1709,6 +1709,7 @@
 (defun str-app-type-to-hit (plist)
   (getf plist :to-hit))
 
+(defparameter +trail-flags+ #("BLOODPRINTS" "BLOOD_DROPS"))
 
 (defparameter +spell-bit-keywords+
   #("damage" "affects" "unaffects" "points" "alterations" "groups"
