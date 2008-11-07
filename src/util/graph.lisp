@@ -5,7 +5,8 @@
 
 (defparameter +find-path-index-reset+ 255)
 (defvar *find-path-index* +find-path-index-reset+)
-(defvar *find-path-queue* nil)
+(defvar *find-path-head* nil)
+(defvar *find-path-tail* nil)
 
 (defun mark (room)
   (setf (find-path-index-of room) *find-path-index*))
@@ -30,21 +31,24 @@
                       (room-flagged dest +room-death+)))))))
 
 (defun bfs-enqueue (room dir)
-  (push (make-bfs-queue-element :room room :dir dir)
-        *find-path-queue*))
+  (cond
+    (*find-path-head*
+     (setf (cdr *find-path-tail*)
+           (cons (make-bfs-queue-element :room room :dir dir) nil))
+     (setf *find-path-tail* (cdr *find-path-tail*)))
+    (t
+     (setf *find-path-head*
+           (list (make-bfs-queue-element :room room :dir dir)))
+     (setf *find-path-tail* *find-path-head*))))
 
 (defun bfs-dequeue ()
-  (cond
-    ((null (cdr *find-path-queue*))
-     (prog1 (car *find-path-queue*)
-       (setf *find-path-queue* nil)))
-    (t
-     (let ((prev (last *find-path-queue* 2)))
-       (prog1 (second prev)
-         (setf (cdr prev) nil))))))
+  (pop *find-path-head*)
+  (unless *find-path-head*
+    (setf *find-path-tail* nil)))
 
 (defun bfs-clear-queue ()
-  (setf *find-path-queue* nil))
+  (setf *find-path-head* nil)
+  (setf *find-path-tail* nil))
 
 (defun find-first-step (src target mode)
   (assert src nil "Illegal value SRC passed to find-first-step")
@@ -52,6 +56,7 @@
   (when (eql src target)
     (return-from find-first-step nil))
 
+  (bfs-clear-queue)
   (decf *find-path-index*)
 
   (when (zerop *find-path-index*)
@@ -68,28 +73,28 @@
 
   ;; Now, do the classic BFS
   (loop
-     for elem = (bfs-dequeue)
-     while elem
-     for room = (bfs-queue-element-room elem)
-     as dir = (bfs-queue-element-dir elem)
-     do (if (eql room target)
-            (progn
-              (bfs-clear-queue)
-              (return-from find-first-step dir))
+     while *find-path-head*
+     for elem = (car *find-path-head*)
+     as elem-room = (bfs-queue-element-room elem)
+     as elem-dir = (bfs-queue-element-dir elem)
+     do (if (eql elem-room target)
+            (return-from find-first-step elem-dir)
             (loop for dir from 0 upto (1- +num-dirs+)
-               when (valid-edge-p room dir mode)
-               do (mark (to-room room dir))
-                 (bfs-enqueue (to-room room dir) dir))))
+               when (valid-edge-p elem-room dir mode)
+               do (mark (to-room elem-room dir))
+                 (bfs-enqueue (to-room elem-room dir) elem-dir)
+               finally (bfs-dequeue))))
   ;; return nil if not found
   nil)
 
+(defun find-distance-recurse (current dest distance)
+  (if (eql current dest)
+      distance
+      (let ((dir (find-first-step current dest :god-mode)))
+        (when dir
+          (find-distance-recurse (to-room current dir)
+                                 dest
+                                 (1+ distance))))))
+
 (defun find-distance (start dest)
-  (labels ((find-distance-recurse (current dest distance)
-             (if (eql current dest)
-                 distance
-                 (let ((dir (find-first-step current dest :god-mode)))
-                   (when dir
-                     (find-distance-recurse (to-room current dir)
-                                            dest
-                                            (1+ distance)))))))
-    (find-distance-recurse start dest 0)))
+  (find-distance-recurse start dest 0))
