@@ -194,6 +194,10 @@
    (contents :accessor contents-of :initarg :contents :initform nil)
    (people :accessor people-of :initarg :people :initform nil)))
 
+(defmethod print-object ((room room-data) stream)
+  (print-unreadable-object (room stream :type t)
+    (format stream "~a ~s" (number-of room) (name-of room))))
+
 (defun room-flagged (room flag)
   (logtest flag (flags-of room)))
 
