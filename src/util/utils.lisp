@@ -495,6 +495,18 @@ sequences in seq-list with the delimiter between each element"
        (write-string (funcall func needle) result)
        finally (write-string haystack result :start left))))
 
+(defun hash-keys (hash)
+  (with-hash-table-iterator (next hash)
+    (loop for (more key value) = (multiple-value-list (next))
+         while more
+         collect key)))
+
+(defun hash-values (hash)
+  (with-hash-table-iterator (next hash)
+    (loop for (more key value) = (multiple-value-list (next))
+         while more
+         collect value)))
+
 (defun hash-table-keys (hash)
   "Returns all the keys of the hash table HASH"
   (with-hash-table-iterator (next-entry hash)

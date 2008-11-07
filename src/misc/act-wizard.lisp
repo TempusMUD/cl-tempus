@@ -116,12 +116,6 @@
              (name-of (in-room-of ch))
              (number-of (in-room-of ch)))))))
 
-(defun hash-keys (hash)
-  (with-hash-table-iterator (next hash)
-    (loop for (more key value) = (multiple-value-list (next))
-         while more
-         collect key)))
-
 (defun vnum-prototypes (ch namelist-str name-color prototype-hash)
   "Displays to CH a list of the objects or mobiles in PROTOTYPE-HASH which match NAME.  The name of the object or mobile will be in the color designated by NAME-COLOR.  Returns the number displayed."
   (let ((count 0)
