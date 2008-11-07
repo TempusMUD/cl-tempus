@@ -285,6 +285,181 @@
                                (printbits (flags-of trail) +trail-flags+)))))
       (send-to-char ch "No trails exist within this room.~%")))
 
+(defun find-spec-name (spec)
+  "TODO: Actually find the special"
+  (if spec
+      "Exists"
+      "None"))
+
+(defun clan-house-can-enter (ch room)
+  (declare (ignore ch room))
+  t)
+
+(defun format-search-data (ch room search)
+  (send-to-char ch "&rCommand triggers:&n ~a, &rkeywords:&n ~a~%"
+                (if (string/= "" (command-keys-of search))
+                    (command-keys-of search) "None.")
+                (cond
+                  ((string= "" (keywords-of search))
+                   "None.")
+                  ((and (logbitp (flags-of search) +search-clanpasswd+)
+                        room
+                        (not (clan-house-can-enter ch room)))
+                   "*******")
+                  (t
+                    (keywords-of search))))
+  (send-to-char ch " To_vict  : ~a~% To_room  : ~a~% To_remote: ~a~%"
+                (or (to-vict-of search) "None")
+                (or (to-room-of search) "None")
+                (or (to-remote-of search) "None"))
+  (send-to-char ch "Fail_chance: ~d~%" (fail-chance-of search))
+  (cond
+    ((= (command-of search) +search-com-door+)
+     (send-to-char ch "DOOR  Room #: ~d, Direction: ~d, Mode: ~d.~%"
+                   (aref (arg-of search) 0)
+                   (aref (arg-of search) 1)
+                   (aref (arg-of search) 2)))
+    ((= (command-of search) +search-com-mobile+)
+     (send-to-char ch "MOB   Vnum #: ~d (&y~a&n), to room: ~d, Max: ~d.~%"
+                   (aref (arg-of search) 0)
+                   (multiple-value-bind (mob existsp)
+                       (gethash (aref (arg-of search) 0) *mobile-prototypes*)
+                     (if existsp (name-of mob) "NULL"))
+                   (aref (arg-of search) 1)
+                   (aref (arg-of search) 2)))
+    ((= (command-of search) +search-com-object+)
+     (send-to-char ch "OBJ   Vnum #: ~d (&y~a&n), to room: ~d, Max: ~d.~%"
+                   (aref (arg-of search) 0)
+                   (multiple-value-bind (obj existsp)
+                       (gethash (aref (arg-of search) 0) *object-prototypes*)
+                     (if existsp (name-of obj) "NULL"))
+                   (aref (arg-of search) 1)
+                   (aref (arg-of search) 2)))
+    ((= (command-of search) +search-com-remove+)
+     (send-to-char ch "REMOVE  Obj Vnum #: ~d (&y~a&n), Room # : ~d, Val 2: ~d.~%"
+                   (aref (arg-of search) 0)
+                   (multiple-value-bind (obj existsp)
+                       (gethash (aref (arg-of search) 0) *object-prototypes*)
+                     (if existsp (name-of obj) "NULL"))
+                   (aref (arg-of search) 1)
+                   (aref (arg-of search) 2)))
+    ((= (command-of search) +search-com-equip+)
+     (send-to-char ch "EQUIP  ----- : ~d, Obj Vnum : ~d (&y~a&n), Pos : ~d.~%"
+                   (aref (arg-of search) 0)
+                   (aref (arg-of search) 1)
+                   (multiple-value-bind (obj existsp)
+                       (gethash (aref (arg-of search) 1) *object-prototypes*)
+                     (if existsp (name-of obj) "NULL"))
+                   (aref (arg-of search) 2)))
+    ((= (command-of search) +search-com-give+)
+     (send-to-char ch "GIVE  ----- : ~d, Obj Vnum : ~d (&y~a&n), Max : ~d.~%"
+                   (aref (arg-of search) 0)
+                   (aref (arg-of search) 1)
+                   (multiple-value-bind (obj existsp)
+                       (gethash (aref (arg-of search) 1) *object-prototypes*)
+                     (if existsp (name-of obj) "NULL"))
+                   (aref (arg-of search) 2)))
+    ((= (command-of search) +search-com-none+)
+     (send-to-char ch "NONE       ~5d        ~5d        ~5d~%"
+                   (aref (arg-of search) 0)
+                   (aref (arg-of search) 1)
+                   (aref (arg-of search) 2)))
+    ((= (command-of search) +search-com-transport+)
+     (send-to-char ch "TRANS      ~5d        ~5d        ~5d~%"
+                   (aref (arg-of search) 0)
+                   (aref (arg-of search) 1)
+                   (aref (arg-of search) 2)))
+    ((= (command-of search) +search-com-spell+)
+     (send-to-char ch "SPELL      ~5d        ~5d        ~5d (~a)~%"
+                   (aref (arg-of search) 0)
+                   (aref (arg-of search) 1)
+                   (aref (arg-of search) 2)
+                   (name-of (aref (aref (arg-of search) 2) *spell-info*))))
+    ((= (command-of search) +search-com-damage+)
+     (send-to-char ch "DAMAGE     ~5d        ~5d        ~5d (~a)~%"
+                   (aref (arg-of search) 0)
+                   (aref (arg-of search) 1)
+                   (aref (arg-of search) 2)
+                   (name-of (aref (aref (arg-of search) 2) *spell-info*))))
+    ((= (command-of search) +search-com-spawn+)
+     (send-to-char ch "SPAWN  Spawn_rm: ~5d   Targ_rm:~5d   Hunt: ~5d~%"
+                   (aref (arg-of search) 0)
+                   (aref (arg-of search) 1)
+                   (aref (arg-of search) 2)))
+    ((= (command-of search) +search-com-loadroom+)
+     (send-to-char ch "LOADROOM  NewLoad: ~5d   MaxLevel:~5d    ~5d~%"
+                   (aref (arg-of search) 0)
+                   (aref (arg-of search) 1)
+                   (aref (arg-of search) 2)))
+    (t
+     (send-to-char ch "ERROR (~d)  ~5d        ~5d       ~5d~%"
+                   (command-of search)
+                   (aref (arg-of search) 0)
+                   (aref (arg-of search) 1)
+                   (aref (arg-of search) 2)))))
+
+(defun display-room-stats (ch room)
+  (with-pagination ((link-of ch))
+    (send-to-char ch "Room name: &c~a&n~%" (name-of room))
+    (send-to-char ch "Zone: [&y~3d&n], VNum: [&g~5d&n], Type: ~a, Lighting: [~d], Max: [~d]~%"
+                  (number-of (zone-of room))
+                  (number-of room)
+                  (aref +sector-types+ (terrain-of room))
+                  (light-of room)
+                  (max-occupancy-of room))
+    (send-to-char ch "SpecProc: ~a, Flags: ~a~%"
+                  (find-spec-name (func-of room))
+                  (printbits (flags-of room) +room-bits+))
+    (when (plusp (flow-speed-of room))
+      (send-to-char ch "Flow (Direction: ~a, Speed: ~d, Type: ~a (~d)).~%"
+                    (aref +dirs+ (flow-dir-of room))
+                    (flow-speed-of room)
+                    (aref +flow-types+ (flow-kind-of room))
+                    (flow-kind-of room)))
+    (send-to-char ch "Description:~%~:[  None.~%~;~:*~a~]"
+                  (description-of room))
+    (when (sounds-of room)
+      (send-to-char ch "&gSound:&n~%~a" (sounds-of room)))
+    (when (ex-description-of room)
+      (send-to-char ch "Extra descs:&c~{ ~a~^;~}&n~%"
+                    (mapcar 'keyword-of (ex-description-of room))))
+    (send-to-char ch "Chars present: &y~{~a~^, ~}&n~%"
+                  (loop
+                     :for c :in (people-of (in-room-of ch))
+                     :when (can-see-creature ch c)
+                     :collect (format nil "~a(~:[PC~;MOB~])"
+                                      (name-of c) (is-npc c))))
+    (send-to-char ch "Contents: &g~{~a~^, ~}&n~%"
+                  (loop
+                     :for o :in (contents-of (in-room-of ch))
+                     :when (can-see-object ch o)
+                     :collect (name-of o)))
+    (when (searches-of room)
+      (send-to-char ch "SEARCHES:~%")
+      (dolist (search (searches-of room))
+        (format-search-data ch room search)))
+
+    (dotimes (dir +num-dirs+)
+      (when (abs-exit room dir)
+        (send-to-char ch "Exit &c~5a&n:  To: [&c~5a&n], Key: [~5d], Keywrd: ~a, Type: ~a~%"
+                      (aref +dirs+ dir)
+                      (or (to-room-of (abs-exit room dir)) "NONE")
+                      (key-of (abs-exit room dir))
+                      (if (string/= "" (keyword-of (abs-exit room dir)))
+                          (keyword-of (abs-exit room dir))
+                          "None")
+                      (printbits (exit-info-of (abs-exit room dir)) +exit-bits+))
+        (if (string/= "" (description-of (abs-exit room dir)))
+            (send-to-char ch "~a" (description-of (abs-exit room dir)))
+            (send-to-char ch "  No exit description.~%"))))))
+
+(defcommand (ch "stat" "room") (:immortal)
+  (display-room-stats ch (in-room-of ch)))
+
+(defcommand (ch "stat" "room" spec) (:immortal)
+  (let ((room (find-target-room ch spec)))
+    (when room
+     (display-room-stats ch room))))
 
 (defcommand (ch "echo") (:immortal :dead)
   (send-to-char ch "Yes, but what?~%"))

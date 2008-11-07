@@ -60,6 +60,13 @@
     "CLAN" "ARENA" "DOCK" "BURN" "FREEZ" "NULLMAG" "HOLYO" "RAD"
     "SLEEP" "EXPLOD" "POISON" "VACUUM" "\n"))
 
+(defparameter +exit-bits+
+  #("DOOR" "CLOSED" "LOCKED" "PICKPROOF" "HEAVY" "HARD-PICK"
+    "!MOB" "HIDDEN" "!SCAN" "TECH" "ONE-WAY" "NOPASS"
+    "THORNS" "THORNS_NOPASS" "STONE" "ICE" "FIRE" "FIRE_NOPASS"
+    "FLESH" "IRON" "ENERGY_F" "ENERGY_F_NOPASS" "FORCE" "SPECIAL"
+    "REINF" "SECRET"))
+
 (defparameter +sector-types+
   #("Inside" "City" "Field" "Forest" "Hills" "Mountains"
     "Water (Swim)" "Water (No Swim)" "Underwater" "Open Air" "Notime"
@@ -2073,3 +2080,10 @@
       (12 0 2)                          ; sake
       (0 3 6)                           ; chocolate milk
       ))
+
+(defparameter +flow-types+
+  #("None" "Wind" "Falling" "River" "Water Vortex" "Underwater"
+    "Conduit" "Conveyor" "Lava Flow" "River of Fire"
+    "Volcanic Updraft" "Rotating Disc" "Escalator"
+    "Sinking_Swamp" "Unseen_Force" "Elemental_Wind" "Quicksand"
+    "Crowds"))

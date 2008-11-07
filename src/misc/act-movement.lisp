@@ -1,7 +1,9 @@
 (in-package #:tempus)
 
+(defun abs-exit (room dir)
+  (aref (dir-option-of room) dir))
 (defun exit (ch dir)
-  (aref (dir-option-of (in-room-of ch)) dir))
+  (abs-exit (in-room-of ch)))
 
 (defun first-word (str)
   (let ((space-pos (position #\space str)))
@@ -74,8 +76,8 @@
                     (aff-flagged ch +aff-waterwalk+)
                     (is-carrying-boat ch))
           (send-to-char ch "You need a boat to go there.~%"))
-        
-        (when (= (position-of ch) +pos-flying+)        
+
+        (when (= (position-of ch) +pos-flying+)
           (send-to-char ch "You fly over the waters.~%")))
 
       (cond
@@ -90,7 +92,7 @@
          (act ch :place-emit (format nil "$n departs ~award." (aref +dirs+ dir))))
         (t
          (act ch :place-emit (format nil "$n leaves ~a." (aref +to-dirs+ dir)))))
-       
+
       (char-from-room ch)
 
       (char-to-room ch dest)
@@ -273,7 +275,7 @@
     (t
      (send-to-char ch "You stop floating around, and lie down to sleep.~%")
      (setf (position-of ch) +pos-sleeping+))))
-	
+
 (defcommand (ch "wake") ()
   (cond
     ((aff-flagged ch +aff-sleep+)

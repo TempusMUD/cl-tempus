@@ -442,7 +442,8 @@
           (let ((new-descr (make-instance 'extra-descr-data)))
             (setf (keyword-of new-descr) (fread-string inf))
             (setf (description-of new-descr) (fread-string inf))
-            (append (ex-description-of room) (list new-descr))))
+            (setf (ex-description-of room)
+                  (append (ex-description-of room) (list new-descr)))))
          (#\L
           (setf (sounds-of room) (fread-string inf)))
          (#\F
@@ -451,7 +452,7 @@
             (unless result
               (error "Flow field incorrect in room #~d.~%" vnum-nr))
 
-            (when (flow-speed-of room)
+            (when (plusp (flow-speed-of room))
               (errlog "Multiple flow states assigned to room #~d.~%" vnum-nr))
 
             (let ((flow-dir (parse-integer (regref result 1)))
