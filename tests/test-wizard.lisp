@@ -109,6 +109,11 @@
     (tempus::do-vnum-objects-name alice "zyzygy")
     (is (equal "No objects by that name.~%" (char-output alice)))))
 
+(deftest stat-zone/normal/returns-zone-info ()
+  (with-mock-players (alice)
+    (tempus::do-stat-zone alice)
+    (is (search "Zone #&y30: &cThe Holy City of Modrian&n~%" (char-output alice)))))
+
 (deftest force-command ()
   (with-mock-players (alice bob)
     (function-trace-bind ((calls tempus::interpret-command))

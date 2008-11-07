@@ -139,6 +139,126 @@
                                    (name-of proto))))))
     count))
 
+(defcommand (ch "stat" "zone") (:immortal)
+  (let ((zone (zone-of (in-room-of ch))))
+    (send-to-char ch "Zone #&y~d: &c~a&n~%"
+                  (number-of zone)
+                  (name-of zone))
+    (send-to-char ch "Authored by: ~a~%" (or (author-of zone) "<none>"))
+    (send-to-char ch "Rooms: [~d-~d]  Respawn Pt: [~d]  Reset mode: ~a~%"
+                  (* (number-of zone) 100)
+                  (top-of zone)
+                  (respawn-pt-of zone)
+                  (aref +reset-mode+(reset-mode-of zone)))
+    (send-to-char ch "TimeFrame: [~a]  Plane: [~a]   "
+                  (aref +time-frames+ (time-frame-of zone))
+                  (aref +planes+ (plane-of zone)))
+    (send-to-char ch "Owner: ~a  Co-Owner: ~a~%"
+                  (if (owner-idnum-of zone)
+                      (or (retrieve-player-name (owner-idnum-of zone))
+                          (format nil "<invalid #~d>" (owner-idnum-of zone)))
+                      "<none>")
+                  (if (co-owner-idnum-of zone)
+                      (or (retrieve-player-name (co-owner-idnum-of zone))
+                          (format nil "<#~d>" (co-owner-idnum-of zone)))
+                      "<none>"))
+    (let ((weather (weather-of zone)))
+      (send-to-char ch "Sun [~(~a~)] Sky: [~(~a~)] Moon: [~a (~d)] Pres: [~3d] Chng: [~3d]~%"
+                    (sunlight-of weather)
+                    (sky-of weather)
+                    (aref +moon-sky-types+ (moonlight-of weather))
+                    (moonlight-of weather)
+                    (pressure-of weather)
+                    (change-of weather)))
+    (send-to-char ch "Flags: &g~a ~a&n~%"
+                  (printbits (flags-of zone) +zone-flags+)
+                  (aref +zone-pk-flags+ (pk-style-of zone)))
+    (when (min-lvl-of zone)
+      (send-to-char ch "Target lvl/gen: [~2d/~2d - ~2d/~2d]~%"
+                    (min-lvl-of zone)
+                    (min-gen-of zone)
+                    (max-lvl-of zone)
+                    (max-gen-of zone)))
+    (when (public-desc-of zone)
+      (send-to-char ch "Public Description:~%~a" (public-desc-of zone)))
+    (when (private-desc-of zone)
+      (send-to-char ch "Private Description:~%~a" (private-desc-of zone)))
+
+    (let ((numm 0)
+          (numm-proto 0)
+          (numo 0)
+          (numo-proto 0)
+          (nump 0)
+          (numr 0)
+          (numur 0)
+          (nums 0)
+          (av-lev 0)
+          (av-lev-proto 0))
+      ;; count mob stats
+      (dolist (mob *characters*)
+        (when (and (is-npc mob)
+                   (in-room-of mob)
+                   (eql (zone-of (in-room-of mob)) zone))
+          (incf numm)
+          (incf av-lev (level-of mob))))
+      (unless (zerop numm)
+        (setf av-lev (floor av-lev numm)))
+
+      ;; count mob prototype stats
+      (dolist (proto (hash-values *mobile-prototypes*))
+        (when (and (<= (* (number-of zone) 100)
+                       (vnum-of proto)
+                       (top-of zone))
+                   (is-npc proto))
+          (incf numm-proto)
+          (incf av-lev-proto (level-of proto))))
+      (unless (zerop numm-proto)
+        (setf av-lev-proto (floor av-lev-proto numm-proto)))
+
+      ;; count object stats
+      (dolist (obj *object-list*)
+        (when (and (in-room-of obj)
+                   (eql (zone-of (in-room-of obj)) zone))
+          (incf numo)))
+
+      ;; count object prototype stats
+      (dolist (proto (hash-values *object-prototypes*))
+        (when (<= (* (number-of zone) 100) (vnum-of proto) (top-of zone))
+          (incf numo-proto)))
+
+      ;; count players
+      (dolist (cxn *cxns*)
+        (when (and (typep cxn 'tempus-cxn)
+                   (actor-of cxn)
+                   (in-room-of (actor-of cxn))
+                   (eql (zone-of (in-room-of (actor-of cxn))) zone))
+          (incf nump)))
+
+      ;; count room stats
+      (dolist (room (world-of zone))
+        (incf numr)
+        (when (string= (description-of room) "")
+          (incf numur))
+        (incf nums (length (searches-of room))))
+
+      (send-to-char ch "~%Zone Stats :-
+  mobs in zone : ~3d, ~3d protos;   objs in zone  : ~3d,~3d protos
+  players in zone: (~3d) ~3d   rooms in zone: ~3d   undescripted rooms: ~3d
+  search in zone: ~d
+  usage count: ~d
+  Avg. Level [&g~d&n]real, [&g~d&n] proto
+"
+                    numm numm-proto
+                    numo numo-proto
+                    (num-players-of zone)
+                    nump
+                    numr
+                    numur
+                    nums
+                    (enter-count-of zone)
+                    av-lev
+                    av-lev-proto))))
+
 (defcommand (ch "echo") (:immortal :dead)
   (send-to-char ch "Yes, but what?~%"))
 

@@ -13,6 +13,42 @@
 (defparameter +fire-tick+ (rl-sec 3))
 (defparameter +pulse-flows+ (rl-sec 1))
 
+(defparameter +zone-flags+
+  #("AUTOSAVE"
+	"RESETSAVE"
+	"NOTIFYOWNER"
+	"LOCKED"
+	"!MAGIC"
+	"!LAW"
+	"!WEATHER"
+	"!CRIME"
+	"FROZEN"
+	"ISOLATED"
+	"SNDPRF"
+	"NOIDLE"
+	"FULLCONTROL"
+	"PAUSED"
+	"EVILAMBIENCE"
+	"GOODAMBIENCE"
+	"NORECALC"
+	"17"
+	"18"
+	"SEARCH_APPR"
+	"MOBS_APPR"
+	"OBJS_APPR"
+	"ROOMS_APPR"
+	"ZCMDS_APPR"
+	"INPLAY"
+	"MOBS_MOD"
+	"OBJS_MOD"
+	"RMS_MOD"
+	"ZON_MOD"))
+
+(defparameter +reset-mode+
+  #("NEVER" "EMPTY" "ALWAYS"))
+(defparameter +zone-pk-flags+
+  #("!PK" "NPK" "CPK"))
+
 (defparameter +dirs+ #("north" "east" "south" "west" "up" "down" "future" "past"))
 (defparameter +to-dirs+ #("north" "east" "south" "west" "up" "down" "into the future" "into the past"))
 (defparameter +from-dirs+ #("the south" "the west" "the north" "the east" "below" "above" "the past" "the future"))
@@ -36,6 +72,89 @@
     "Elemental Radiance" "Elemental Minerals" "Elemental Vacuum"
     "Elemental Salt" "Elemental Ash" "Elemental Dust" "Blood" "Rock"
     "Muddy" "Trail" "Tundra" "Catacombs" "Cracked Road" "Deep Ocean"))
+
+(defparameter +planes+
+  #("Prime One"
+	"Prime Two"
+	"Neverwhere"
+	"Underdark"
+	"Western"
+	"Morbidian"
+	"Prime Seven"
+	"Prime Eight"
+	"Prime Nine"
+	"Prime Ten"
+	"Astral"
+	"Avernus--Hell"
+	"Dis--Hell"
+	"Minauros--Hell"
+	"Phlegethos--Hell"
+	"Stygia--Hell"
+	"Malbolge--Hell"
+	"Maladomini--Hell"
+	"Caina--Hell"
+	"Nessus--Hell"
+	"Ghenna"
+	"21"
+	"22"
+	"23"
+	"24"
+	"The Abyss"
+	"26"
+	"27"
+	"28"
+	"29"
+	"30"
+	"31"
+	"32"
+	"33"
+	"34"
+	"35"
+	"36"
+	"37"
+	"38"
+	"OLC"
+	"Olympus"
+	"Costal"
+	"42"
+	"Heaven"
+	"Elysium"
+	"45"
+	"46"
+	"47"
+	"48"
+	"49"
+	"DOOM"
+	"Shadow"
+	"52"
+	"53"
+	"54"
+	"55"
+	"56"
+	"57"
+	"58"
+	"59"
+	"60"
+	"61"
+	"62"
+	"63"
+	"64"
+	"65"
+	"Odyssey"
+	"Paraelemental Smoke"
+	"Paraelemental Ice"
+	"Paraelemental Magma"
+	"Elemental Water"
+	"Elemental Fire"
+	"Elemental Air"
+	"Elemental Earth"
+	"Elemental Positive"
+	"Elemental Negative"
+	"Paraelemental Magma"
+	"Paraelemental Ooze"))
+
+(defparameter +time-frames+
+  #("Timeless" "Modrian Era" "Electro Era"))
 
 (defparameter +default-staff-lvl+ 12)
 (defparameter +default-wand-lvl+ 12)
@@ -1380,6 +1499,27 @@
 (defparameter +num-wears+ 27)	; This must be the # of eq positions!!
 (defparameter +wear-random+ 28)
 (defparameter +wear-mshield+ 29) ; This is for mana shield messages just increase it if new wear positions are added
+
+(defparameter +sun-types+
+  #("dark" "rise" "light" "set"))
+(defparameter +sky-types+
+  #("clear" "cloudy" "rain" "storm"))
+(defparameter +lunar-phases+
+  #("new"
+    "waxing crescent"
+    "first quarter"
+	"waxing gibbous"
+	"full"
+	"waning gibbous"
+	"last quarter"
+	"waning crescent"))
+(defparameter +moon-sky-types+
+  #("not visible"
+    "rising"
+    "in the east"
+    "directly overhead"
+    "in the west"
+    "setting"))
 
 (defparameter +eq-pos-order+
   (coerce (list +wear-head+ +wear-face+ +wear-eyes+ +wear-ear-l+
