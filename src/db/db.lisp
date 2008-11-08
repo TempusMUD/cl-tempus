@@ -492,8 +492,8 @@
               (let ((str (regref result 6)))
                 (setf (fail-chance-of new-search) (if str (parse-integer str) 0))))
 
-            ;; place the search at the top of the list
-            (push new-search (searches-of room))))
+            ;; place the search at the end of the list
+            (setf (searches-of room) (nconc (searches-of room) (list new-search)))))
          (#\P
           (setf (func-param-of room) (fread-string inf)))
          (#\S                           ; end of room
@@ -501,7 +501,6 @@
           (when (real-room vnum-nr)
             (errlog "Duplicate room ~d detected.  Ignoring second instance." vnum-nr)
             (return))
-          #+nil (slog "Putting room ~a into zone ~a[~a]" vnum-nr (name-of zone) (number-of zone))
           (setf (gethash vnum-nr *rooms*) room)
           (push room (world-of zone))
           (return-from parse-room)))))))
