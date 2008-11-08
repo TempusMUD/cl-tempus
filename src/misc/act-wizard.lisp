@@ -398,6 +398,46 @@
                    (aref (arg-of search) 1)
                    (aref (arg-of search) 2)))))
 
+(defun format-prog (prog)
+  (with-output-to-string (result)
+    (with-input-from-string (str prog)
+      (loop
+         :with line-color := nil
+         :for raw-line := (read-line str nil)
+         :as line := (when raw-line (string-left-trim '(#\space) raw-line))
+         :as num :from 1
+         :while line
+         :do
+         (format result "&y~3d&b] " num)
+         (flet ((string-starts-with (str start)
+                  (let ((start-len (length start)))
+                    (and (>= (length str) start-len)
+                         (string= str start :end1 start-len)))))
+           (unless line-color
+             (setf line-color
+                   (cond
+                     ((string= line "")
+                      "")
+                     ((string-starts-with line "-")
+                      "&b")
+                     ((or (string-starts-with line "*before")
+                          (string-starts-with line "*handle")
+                          (string-starts-with line "*after"))
+                      "&c")
+                     ((or (string-starts-with line "*require")
+                          (string-starts-with line "*unless")
+                          (string-starts-with line "*randomly")
+                          (string-starts-with line "*or"))
+                      "&m")
+                     ((string-starts-with line "*")
+                      "&y")
+                     (t
+                      "&n"))))
+           (format result "~a~a~%" line-color line)
+           (when (and (plusp (length line))
+                      (char/= (char line (1- (length line))) #\\))
+             (setf line-color nil)))))))
+
 (defun display-room-stats (ch room)
   (with-pagination ((link-of ch))
     (send-to-char ch "Room name: &c~a&n~%" (name-of room))
@@ -451,7 +491,9 @@
                       (printbits (exit-info-of (abs-exit room dir)) +exit-bits+))
         (if (string/= "" (description-of (abs-exit room dir)))
             (send-to-char ch "~a" (description-of (abs-exit room dir)))
-            (send-to-char ch "  No exit description.~%"))))))
+            (send-to-char ch "  No exit description.~%"))))
+    (when (prog-text-of room)
+      (send-to-char ch "Prog:~%~a" (format-prog (prog-text-of room))))))
 
 (defcommand (ch "stat" "room") (:immortal)
   (display-room-stats ch (in-room-of ch)))
