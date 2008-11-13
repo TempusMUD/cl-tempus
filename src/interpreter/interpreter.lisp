@@ -33,12 +33,12 @@
     ((and (null a) (null b))
      ;; identical patterns
      nil)
-    ((null b)
-     ;; a is longer, therefore should go first
-     t)
     ((null a)
      ;; a is shorter, therefore should go later
      nil)
+    ((null b)
+     ;; a is longer, therefore should go first
+     t)
     ((and (symbolp (car a)) (not (symbolp (car b))))
      ;; a is a symbol and b isn't, so a should go later
      nil)
@@ -51,12 +51,12 @@
     ((string= (car a) (car b))
      ;; a and b are the same strings, so check the next element
      (pattern-sort< (cdr a) (cdr b)))
-    ((/= (if (stringp (car a)) (length (car a)) 1)
-         (if (stringp (car b)) (length (car b)) 1))
-     ;; a and b are strings (or chars) of different length, so the
-     ;; shorter goes first
-     (< (if (stringp (car a)) (length (car a)) 1)
-        (if (stringp (car b)) (length (car b)) 1)))
+    ;; a is an abbrevation of b, so a goes first
+    ((string-abbrev (string (car a)) (string (car b)))
+     t)
+    ;; b is an abbreviation of a, so b goes first
+    ((string-abbrev (string (car b)) (string (car a)))
+     nil)
     (t
      ;; alphabetize in the absence of meaningful difference
      (string< (car a) (car b)))))
@@ -78,8 +78,6 @@
     ((not (eql (first (member :social (command-info-flags a)))
                (first (member :social (command-info-flags b)))))
      (member :social (command-info-flags b)))
-    ((/= (length (command-info-pattern a)) (length (command-info-pattern b)))
-     (> (length (command-info-pattern a)) (length (command-info-pattern b))))
     (t
      (pattern-sort< (command-info-pattern a) (command-info-pattern b)))))
 
