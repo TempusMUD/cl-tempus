@@ -337,7 +337,7 @@
     (dotimes (j +max-obj-affect+)
       (let ((proto-af (aref (affected-of proto) j)))
         (setf (aref (affected-of obj) j)
-              (make-instance 'affected-type
+              (make-instance 'obj-affected-type
                              :location (location-of proto-af)
                              :modifier (modifier-of proto-af)))))
     obj))
@@ -521,7 +521,9 @@
            (setf (timer-of obj) (xml-attr node "timer" :numeric t)))
           ("tracking"
            (setf (unique-id-of obj) (xml-attr node "id" :numeric t))
-           (setf (creation-method-of obj) (xml-attr node "method" :numeric t))
+           (setf (creation-method-of obj)
+                 (aref #(:unknown :invalid :imm :search :zone :mob :prog :player)
+                       (xml-attr node "method" :numeric t)))
            (setf (creator-of obj) (xml-attr node "creator" :numeric t))
            (setf (creation-time-of obj) (unix-to-timestamp (xml-attr node "time" :numeric t))))
           ("damage"
@@ -543,9 +545,10 @@
            (setf (aref (bitvector-of obj) 1) (xml-attr node "aff2" :hex t))
            (setf (aref (bitvector-of obj) 2) (xml-attr node "aff3" :hex t)))
           ("affect"
-           (let ((idx (position 0 (affected-of obj) :key 'location-of)))
-             (setf (location-of (aref (affected-of obj) idx))
-                   (xml-attr node "location" :numeric t))
+           (let* ((loc (xml-attr node "location" :numeric t))
+                  (idx (or (position loc (affected-of obj) :key 'location-of)
+                           (position 0 (affected-of obj) :key 'location-of))))
+             (setf (location-of (aref (affected-of obj) idx)) loc)
              (setf (modifier-of (aref (affected-of obj) idx))
                    (xml-attr node "modifier" :numeric t))))
           ("object"
@@ -600,7 +603,8 @@
                ("material" ,(write-to-string (material-of obj)))
                ("timer" ,(write-to-string (timer-of obj)))))
     ("tracking" (("id" ,(write-to-string (unique-id-of obj)))
-               ("method" ,(write-to-string (creation-method-of obj)))
+               ("method" ,(write-to-string (position (creation-method-of obj)
+                                                     #(:unknown :invalid :imm :search :zone :mob :prog :player))))
                ("creator" ,(write-to-string (creator-of obj)))
                ("time" ,(write-to-string (timestamp-to-unix (creation-time-of obj))))))
     ("damage" (("current" ,(write-to-string (damage-of obj)))
