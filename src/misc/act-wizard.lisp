@@ -438,7 +438,7 @@
                       (char/= (char line (1- (length line))) #\\))
              (setf line-color nil)))))))
 
-(defun display-room-stats (ch room)
+(defmethod send-stats-to-char (ch (room room-data))
   (with-pagination ((link-of ch))
     (send-to-char ch "Room name: &c~a&n~%" (name-of room))
     (send-to-char ch "Zone: [&y~3d&n], VNum: [&g~5d&n], Type: ~a, Lighting: [~d], Max: [~d]~%"
@@ -495,13 +495,186 @@
     (when (prog-text-of room)
       (send-to-char ch "Prog:~%~a" (format-prog (prog-text-of room))))))
 
+(defun where-obj (obj)
+  (cond
+    ((in-room-of obj)
+     (in-room-of obj))
+    ((in-obj-of obj)
+     (where-obj (in-obj-of obj)))
+    ((carried-by-of obj)
+     (in-room-of (carried-by-of obj)))
+    ((worn-by-of obj)
+     (in-room-of (worn-by-of obj)))
+    (t
+     nil)))
+
+(defmethod send-stats-to-char (ch (obj obj-data))
+  (when (and (is-obj-kind obj +item-note+)
+             (is-name "letter" (aliases-of obj)))
+    (when (and (carried-by-of obj)
+               (> (level-of (carried-by-of obj)) (level-of ch)))
+      (act ch :target (carried-by-of obj)
+           :target-emit "$n just tried to stat your mail.")
+      (send-to-char ch "You're pretty brave, bucko.~%")
+      (return-from send-stats-to-char))
+    (when (< (level-of ch) +lvl-god+)
+      (send-to-char ch "You can't stat mail.~%")
+      (return-from send-stats-to-char)))
+
+  (with-pagination ((link-of ch))
+    (send-to-char ch "Name: '&g~a&n', Aliases: ~a~%"
+                  (name-of obj)
+                  (aliases-of obj))
+    (send-to-char ch "VNum: [&g~5d&n], Exist: [~3d/~3d], Type: ~a, SpecProc: ~a~%"
+                  (vnum-of obj)
+                  (number-of (shared-of obj))
+                  (house-count-of (shared-of obj))
+                  (aref +item-kinds+ (kind-of obj))
+                  (find-spec-name (func-of (shared-of obj))))
+    (send-to-char ch "L-Des: &g~a&n~%" (or (line-desc-of obj) "None"))
+    (when (string/= "" (action-desc-of obj))
+      (send-to-char ch "Action desc: ~a~%" (action-desc-of obj)))
+    (when (ex-description-of obj)
+      (send-to-char ch "Extra descs:&c~{ ~a~^;~}&n~%"
+                    (mapcar 'keyword-of (ex-description-of obj))))
+    (unless (line-desc-of obj)
+      (send-to-char ch "**This object currently has no description**~%"))
+    (when (creation-time-of obj)
+      (case (creation-method-of obj)
+        (:zone
+         (send-to-char ch "Created by zone #~d on ~a~%"
+                       (creator-of obj)
+                       (creation-time-of obj)))
+        (:mob
+         (send-to-char ch "Loaded onto mob #~d on ~a~%"
+                       (creator-of obj)
+                       (creation-time-of obj)))
+        (:search
+         (send-to-char ch "Created by search in room #~d on ~a~%"
+                       (creator-of obj)
+                       (creation-time-of obj)))
+        (:imm
+         (send-to-char ch "Loaded by ~a on ~a~%"
+                       (retrieve-player-name (creator-of obj))
+                       (creation-time-of obj)))
+        (:prog
+         (send-to-char ch "Created by prog (mob or room #~d) on ~a~%"
+                       (creator-of obj)
+                       (creation-time-of obj)))
+        (:player
+         (send-to-char ch "Created by player ~a on ~a~%"
+                       (retrieve-player-name (creator-of obj))
+                       (creation-time-of obj)))
+        (t
+         (send-to-char ch "Created on ~a~%"
+                       (creation-time-of obj)))))
+    (when (plusp (unique-id-of obj))
+      (send-to-char ch "Unique object id: ~d~%" (unique-id-of obj)))
+    (when (plusp (owner-id-of (shared-of obj)))
+      (send-to-char ch "Oedit owned by: ~a[~d]~%"
+                    (or (retrieve-player-name (owner-id-of (shared-of obj)))
+                        "NOONE")
+                    (owner-id-of (shared-of obj))))
+    (send-to-char ch "Can be worn on: ~a~%"
+                  (printbits (wear-flags-of obj) +wear-bits-desc+))
+    (unless (every #'zerop (bitvector-of obj))
+      (send-to-char ch "Set char bits : ~@{~a~^ ~}~%"
+                    (printbits (aref (bitvector-of obj) 0) +affected-bits+)
+                    (printbits (aref (bitvector-of obj) 1) +affected2-bits+)
+                    (printbits (aref (bitvector-of obj) 2) +affected3-bits+)))
+    (send-to-char ch "Extra flags : ~a~%"
+                  (printbits (extra-flags-of obj) +extra-bits+))
+    (send-to-char ch "Extra2 flags: ~a~%"
+                  (printbits (extra2-flags-of obj) +extra2-bits+))
+    (send-to-char ch "Extra3 flags: ~a~%"
+                  (printbits (extra3-flags-of obj) +extra3-bits+))
+    (send-to-char ch "Weight: ~d, Cost: ~d, Rent: ~d, Timer: ~d~%"
+                  (weight-of obj)
+                  (cost-of (shared-of obj))
+                  (cost-per-day-of (shared-of obj))
+                  (timer-of obj))
+    (let ((room (where-obj obj)))
+      (send-to-char ch "Absolute location: ~a (~d)~%"
+                    (name-of room)
+                    (number-of room)))
+    (send-to-char ch "In room: &c~d&n, In obj: &g~a&n, Carry: &g~a&n, Worn: &g~a&n, Aux: &g~a&n~%"
+                  (when (in-room-of obj) (number-of (in-room-of obj)))
+                  (when (in-obj-of obj) (name-of (in-obj-of obj)))
+                  (when (carried-by-of obj) (name-of (carried-by-of obj)))
+                  (when (worn-by-of obj) (name-of (worn-by-of obj)))
+                  (when (aux-obj-of obj) (name-of (aux-obj-of obj))))
+    (send-to-char ch "Material: [&y~a&n (~d)], Maxdamage: [~d], Damage: [~d]~%"
+                  (aref +material-names+ (material-of obj))
+                  (material-of obj)
+                  (max-dam-of obj)
+                  (damage-of obj))
+    ;; TODO: Add object kind specific value displays
+    (send-to-char ch "Value 0-3: ~a:[~d] ~a:[~d] ~a:[~d] ~a:[~d]~%"
+                  (aref +item-kind-values+ (kind-of obj) 0)
+                  (aref (value-of obj) 0)
+                  (aref +item-kind-values+ (kind-of obj) 1)
+                  (aref (value-of obj) 1)
+                  (aref +item-kind-values+ (kind-of obj) 2)
+                  (aref (value-of obj) 2)
+                  (aref +item-kind-values+ (kind-of obj) 3)
+                  (aref (value-of obj) 3))
+    (when (eql (proto-of (shared-of obj)) obj)
+      (send-to-char ch "Spec_param:~%~a~%" (func-param-of obj)))
+    (send-to-char ch "Affections: ~{~a~^, ~}~%"
+                  (or
+                   (loop
+                      for aff across (affected-of obj)
+                      unless (zerop (modifier-of aff))
+                      collect (format nil "~@d to ~a"
+                                      (modifier-of aff)
+                                      (aref +apply-types+ (location-of aff))))
+                   '("None")))
+    (unless (eql (proto-of (shared-of obj)) obj)
+      (send-to-char ch "Contents:~%~a"
+                    (if (contains-of obj)
+                        (with-output-to-string (str)
+                          (list-obj-to-char str (contains-of obj) ch :content t))
+                        "None"))
+      (unless (zerop (soilage-of obj))
+        (send-to-char ch "Soilage: ~a~%"
+                      (printbits (soilage-of obj) +soilage-bits+)))
+
+      (unless (zerop (sigil-idnum-of obj))
+        (send-to-char ch "Warding Sigil: ~a (~d), level ~d~%"
+                      (retrieve-player-name (sigil-idnum-of obj))
+                      (sigil-idnum-of obj)
+                      (sigil-level-of obj)))
+      ;; Stat tmp object affects here
+      )))
+
 (defcommand (ch "stat" "room") (:immortal)
-  (display-room-stats ch (in-room-of ch)))
+  (send-stats-to-char ch (in-room-of ch)))
 
 (defcommand (ch "stat" "room" spec) (:immortal)
   (let ((room (find-target-room ch spec)))
     (when room
-     (display-room-stats ch room))))
+     (send-stats-to-char ch room))))
+
+(defcommand (ch "stat" thing) (:immortal)
+  (let ((objs (get-matching-objects ch thing (append
+                                              (coerce (remove nil (equipment-of ch)) 'list)
+                                              (carrying-of ch)
+                                              (people-of (in-room-of ch))
+                                              (contents-of (in-room-of ch))))))
+    (cond
+      ((rest objs)
+       (send-to-char ch "You can only stat one thing at a time!~%"))
+      (objs
+       (send-stats-to-char ch (first objs)))
+      (t
+       (let ((c (get-char-vis ch thing)))
+         (if c
+             (send-stats-to-char ch c)
+             (let ((o (get-obj-vis ch thing)))
+               (if o
+                   (send-stats-to-char ch o)
+                   (send-to-char ch "Nothing around by that name.~%")))))))))
+
 
 (defcommand (ch "echo") (:immortal :dead)
   (send-to-char ch "Yes, but what?~%"))

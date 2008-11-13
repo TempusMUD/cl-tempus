@@ -1725,6 +1725,42 @@
     "cybernetic" "evil" "good" "exits" "outdoors" "nowater"
     "waterzap" "nosun" "zen" "mercenary" "song"))
 
+(defparameter +affected-bits+
+  #("BLiND" "INViS" "DT-ALN" "DT-INV" "DT-MAG" "SNSE-L" "WaTWLK"
+    "SNCT" "GRP" "CRSE" "NFRa" "PoIS" "PRT-E" "PRT-G" "SLeP"
+    "!TRK" "NFLT" "TiM_W" "SNK" "HiD" "H2O-BR" "CHRM" "CoNFu"
+    "!PaIN" "ReTNa" "ADReN" "CoNFi" "ReJV" "ReGN" "GlWL" "BlR"
+    "31"))
+
+(defparameter +affected2-bits+
+  #("FLUOR" "TRANSP" "SLOW" "HASTE" "MOUNTED" "FIRESHLD" "BERSERK"
+    "INTIMD" "true_SEE" "DIV_ILL" "PROT_UND" "INVS_UND" "ANML_KIN"
+    "END_COLD" "PARALYZ" "PROT_LGTN" "PROT_FIRE" "TELEK" "PROT_RAD"
+    "BURNING!" "!BEHEAD" "DISPLACR" "PROT_DEVILS" "MEDITATE" "EVADE"
+    "BLADE BARRIER" "OBLIVITY" "NRG_FIELD" "PETRI" "VERTIGO"
+    "PROT_DEMONS"))
+
+(defparameter +affected3-bits+
+  #("ATTR-FIELD" "ENERGY_LEAK" "POISON-2" "POISON-3" "SICK"
+    "S-DEST!" "DAMCON" "STASIS" "P-SPHERE" "RAD" "DET_POISON"
+    "MANA_TAP" "ENERGY_TAP" "SONIC_IMAGERY" "SHR_OBSC" "!BREATHE"
+    "PROT_HEAT" "PSISHIELD" "PSY CRUSH" "2xDAM" "ACID" "HAMSTRING"
+    "GRV WELL" "SMBL PAIN" "EMP_SHLD" "IAFF" "!UNUSED!" "TAINTED"
+    "INFIL" "DivPwR" "MANA_LEAK"))
+
+(defparameter +extra-bits+
+  #("GLOW" "HUM" "!RENT" "!DON" "!INVIS" "INVIS" "MAGIC" "!DROP" "BLESS" "!GOOD" "!EVIL" "!NEU" "!MAGE" "!CLE" "!THI" "!WAR" "!SELL" "!BAR" "!PSI" "!PHY" "!CYB" "!KNI" "!RAN" "!BARD" "!MONK" "BLUR" "!DISP_MAG" "unused138" "REP_FLD" "TRANSP" "DAMNED"))
+
+(defparameter +extra2-bits+
+  #("RADACT" "!MERC" "!SPR1" "!SPR2" "!SPR3" "HIDDEN" "TRAPPED" "SINGULAR" "!LOC" "!SOIL" "CAST_W" "2_HAND" "BODY PART" "ABLAZE" "PERM_CURSE" "!REMOVE" "THROWN" "GODEQ" "!MORT" "BROKEN" "IMPLANT" "REINF" "ENHAN" "MORT" "*" "*" "*" "*" "PROT_HUNT" "RENAMED" "_!APPROVE_"))
+
+(defparameter +extra3-bits+
+  #("MAGE" "CLE" "THI" "WAR" "BAR" "PSI" "PHY" "CYB" "KNI" "RAN" "BARD" "MONK" "VAMP" "MER" "SPR1" "SPR2" "SPR3" "HARD" "STAY" "HUNT" "!MAG" "!SCI"))
+
+/* APPLY_x */
+(defparameter +apply-types+
+  #("NONE" "STR" "DEX" "INT" "WIS" "CON" "CHA" "CLASS" "LEVEL" "AGE" "WEIGHT" "HEIGHT" "MAXMANA" "MAXHIT" "MAXMOVE" "GOLD" "EXP" "ARMOR" "HITROLL" "DAMROLL" "SAV_PARA" "SAV_ROD" "SAV_PETRI" "SAV_BREATH" "SAV_SPELL" "SNEAK" "HIDE" "RACE" "SEX" "BACKST" "PICK" "PUNCH" "SHOOT" "KICK" "TRACK" "IMPALE" "BEHEAD" "THROW" "RIDING" "TURN" "SAV_CHEM" "SAV_PSI" "ALIGN" "SAV_PHY" "CASTER" "WEAP_SPEED" "DISGUISE" "NOTHIRST" "NOHUNGER" "NODRUNK" "SPEED"))
+
 ;;; Take/Wear flags: used by obj_data.obj_flags.wear_flags
 (defparameter +item-wear-take+ (ash 1 0))	; Item can be takes
 (defparameter +item-wear-finger+ (ash 1 1))	; Can be worn on finger
@@ -1761,6 +1797,11 @@
                 +item-wear-belt+ +item-wear-face+ +item-wear-ear+
                 +item-wear-ear+ +item-wear-wield+ +item-wear-ass+)
           'vector))
+
+(defparameter +wear-bits-desc+
+  #("TAKE" "FINGER" "NECK" "BODY" "HEAD" "LEGS" "FEET" "HANDS"
+    "ARMS" "SHIELD" "ABOUT" "WAIST" "WRIST" "WIELD" "HOLD" "CROTCH"
+    "EYES" "BACK" "BELT" "FACE" "EAR" "ASS"))
 
 (defparameter +wear-eq-positions+
   (list (cons +item-wear-finger+ +wear-finger-r+)
@@ -1811,7 +1852,6 @@
 	"!RESERVED! (ear)"
 	"WIELD 2"
 	"ass"))
-
 
 (defparameter +eq-pos-descs+
   #("<as light>       "
@@ -1956,6 +1996,83 @@
       ("$n RAMS $p up $s ass!!!"
        "You RAM $p up your ass!!!")))
 
+(defparameter +item-kinds+
+  #("UNDEFINED" "LIGHT" "SCROLL" "WAND" "STAFF" "WEAPON" "CAMERA" "MISSILE"
+    "TREASURE" "ARMOR" "POTION" "WORN" "OTHER" "TRASH" "TRAP" "CONTAINER" "NOTE"
+    "LIQ CONT" "KEY" "FOOD" "MONEY" "PEN" "BOAT" "FOUNTAIN" "WINGS" "VR_INTERFACE"
+    "SCUBA_MASK" "DEVICE" "INTERFACE" "HOLY SYMBOL" "VEHICLE" "ENGINE" "BATTERY"
+    "ENERGY_GUN" "WINDOW" "PORTAL" "TOBACCO" "CIGARETTE" "METAL" "V-STONE" "PIPE"
+    "TRANSPORTER" "SYRINGE" "CHIT" "SCUBA_TANK" "TATTOO" "TOOL" "BOMB" "DETONATOR"
+    "FUSE" "PODIUM" "PILL" "ENERGY_CELL" "V_WINDOW" "V_DOOR" "V_CONSOLE" "GUN"
+    "BULLET" "CLIP" "MICROCHIP" "COMMUNICATOR" "SCRIPT" "INSTRUMENT" "BOOK"))
+
+(defparameter +item-kind-values+
+  #2A(("UNDEFINED" "UNDEFINED" "UNDEFINED" "UNDEFINED")
+      ("Color" "Type" "Hours" "UNDEFINED")	; Light
+      ("Level" "Spell1" "Spell2" "Spell3")	; Scroll
+      ("Level" "Max Charg" "Cur Chrg" "Spell")	; wand
+      ("Level" "Max Charg" "Cur Chrg" "Spell")	; staff
+      ("Spell" "Dam dice1" "Dam dice " "Atck type")	; weapon
+      ("Targ room" "UNDEFINED" "UNDEFINED" "UNDEFINED")	; camera
+      ("UNDEFINED" "UNDEFINED" "UNDEFINED" "UNDEFINED")	; missile
+      ("UNDEFINED" "UNDEFINED" "UNDEFINED" "UNDEFINED")	; treasure
+      ("AC-Apply" "UNDEFINED" "UNDEFINED" "UNDEFINED")	; armor
+      ("Level" "Spell1" "Spell2" "Spell3")	; Potion
+      ("UNDEFINED" "UNDEFINED" "UNDEFINED" "UNDEFINED")	; worn
+      ("UNDEFINED" "UNDEFINED" "UNDEFINED" "UNDEFINED")	; other
+      ("UNDEFINED" "UNDEFINED" "UNDEFINED" "UNDEFINED")	; trash
+      ("UNDEFINED" "UNDEFINED" "UNDEFINED" "UNDEFINED")	; trap
+      ("Max Capac" "Flags" "Keynum" "DONT SET")	; container
+      ("UNDEFINED" "UNDEFINED" "UNDEFINED" "UNDEFINED")	; note
+      ("Max units" "Cur Unit" "Liq.type" "Poison")	; liq cont
+      ("Keytype" "Rentflag" "UNDEFINED" "UNDEFINED")	; key
+      ("Hours" "Spell lev" "Spellnum" "Poison")	; food
+      ("Num Coins" "Type" "UNDEFINED" "UNDEFINED")	; money
+      ("UNDEFINED" "UNDEFINED" "UNDEFINED" "UNDEFINED")	; pen
+      ("UNDEFINED" "UNDEFINED" "UNDEFINED" "UNDEFINED")	; boat
+      ("Max units" "Cur Units" "Liq.type" "Poison")	; fountain
+      ("UNDEFINED" "UNDEFINED" "UNDEFINED" "UNDEFINED")	; wings
+      ("Startroom" "Cost" "Max Lev." "Hometown")	; vr interface
+      ("State" "UNDEFINED" "UNDEFINED" "UNDEFINED")	; scuba
+      ("Max energ" "Cur Energ" "State" "Rate     ")	; device
+      ("Type" "UNDEFINED" "Max" "UNDEFINED")	; interface
+      ("Align" "Class" "Min level" "Max level")	; holy symb
+      ("Room/KeyNum" "Doorstate" "Flags" "Special")	; vehicle
+      ("Max energ" "Cur Energ" "Enginstat" "Rate     ")	; engine
+      ("Max charg" "Cur charg" "Rate" "Cost/unit")	; battery
+      ("Drain Rate" "Dam dice1" "Dam dice2" "gun type")	; raygun
+      ("Targ room" "Doorstate" "UNDEFINED" "UNDEFINED")	; window
+      ("Targ room" "Doorstate" "Keynum?" "Charges")	; portal
+      ("Type" "Max Drags" "UNDEFINED" "UNDEFINED")	; tobacco
+      ("Drags lft" "UNDEFINED" "Tobac typ" "Lit?")	; joint
+      ("UNDEFINED" "UNDEFINED" "UNDEFINED" "UNDEFINED")	; metal
+      ("Targ room" "Idnum" "Charges" "UNDEFINED")	; vstone
+      ("Drags lft" "Max drags" "Tobac typ" "Lit?   ")	; pipe
+      ("Max Energy" "Cur Energ" "To-room" "tunable?")	; transporter
+      ("Level" "Spell1" "Spell2" "Spell3")	; Syringe
+      ("Credits  " "UNDEFINED" "UNDEFINED" "UNDEFINED")	; chit
+      ("Max Units" "Cur Unit" "UNDEFINED" "UNDEFINED")	; scuba tank
+      ("UNDEFINED" "UNDEFINED" "UNDEFINED" "UNDEFINED")   ; tattoo
+      ("skillnum" "modifier" "UNDEFINED" "UNDEFINED")	; tool *
+      ("Type" "Power" "UND" "Idnum")	; bomb *
+      ("UNDEFINED" "UNDEFINED" "UNDEFINED" "UNDEFINED")	; detonator
+      ("Type" "State" "Timer" "UNDEFINED")	; fuse
+      ("UNDEFINED" "UNDEFINED" "UNDEFINED" "UNDEFINED")	; podium
+      ("Level" "Spell1" "Spell2" "Spell3")	; Pill
+      ("Max charg" "Cur charg" "Recharge rate" "UNDEF")	; energy cell
+      ("Room" "Doorflags" "Car Vnum" "UNDEFINED")	; v window
+      ("Room" "Unused" "Car Vnum" "UNDEFINED")	; v door
+      ("Room" "Unused" "Car Vnum" "Driver Idnum")	; v console
+      ("MAX ROF" "CUR ROF" "Max Load" "Gun Type")	; gun
+      ("UNDEFINED" "UNDEFINED" "Dam Mod" "Gun Type")	; bullet
+      ("UNDEFINED" "UNDEFINED" "Max Load" "Gun Type")	; clip
+      ("Type" "Data" "Max" "UNDEFINED")	; chip
+      ("Max Charge" "Cur Charge" "State" "Channel")	; Communicator
+      ("Top Message" "Mode" "Wait Time" "Counter")	; Script
+      ("UNDEFINED" "UNDEFINED" "UNDEFINED" "UNDEFINED") ; Instrument
+      ("Level" "Spell1" "Spell2" "Spell3")	; Book
+      ("UNDEFINED" "UNDEFINED" "UNDEFINED" "UNDEFINED")))
+
 (defparameter +drinks+
   #("water"
 	"beer"
@@ -2087,3 +2204,248 @@
     "Volcanic Updraft" "Rotating Disc" "Escalator"
     "Sinking_Swamp" "Unseen_Force" "Elemental_Wind" "Quicksand"
     "Crowds"))
+
+(defparameter +material-names+
+  #("indeterminate"
+	"water"
+	"fire"
+	"shadow"
+	"gelatin"
+	"light"
+	"dreams"
+	"*"
+	"*"
+	"*"
+	"paper"				;; 10
+	"papyrus"
+	"cardboard"
+	"hemp"
+	"parchment"
+	"*"
+	"*"
+	"*"
+	"*"
+	"*"
+	"cloth"			 ;; 20
+	"silk"
+	"cotton"
+	"polyester"
+	"vinyl"
+	"wool"
+	"satin"
+	"denim"
+	"carpet"
+	"velvet"
+	"nylon"			   ;; 30
+	"canvas"
+	"sponge"
+	"*"
+	"*"
+	"*"
+	"*"
+	"*"
+	"*"
+	"*"
+	"leather"			 ;; 40
+	"suede"
+	"hard leather"
+	"skin"
+	"fur"
+	"scales"
+	"hair"
+	"ivory"
+	"*"
+	"*"
+	"flesh"			 ;; 50
+	"bone"
+	"tissue"
+	"cooked meat"
+	"raw meat"
+	"cheese"
+	"egg"
+	"*"
+	"*"
+	"*"
+	"vegetable"		 ;; 60
+	"leaf"
+	"grain"
+	"bread"
+	"fruit"
+	"nut"
+	"flower petal"
+	"fungus"
+	"slime"
+	"*"
+	"candy"			 ;; 70
+	"chocolate"
+	"pudding"
+	"*"
+	"*"
+	"*"
+	"*"
+	"*"
+	"*"
+	"*"
+	"wood"				 ;; 80
+	"oak"
+	"pine"
+	"maple"
+	"birch"
+	"mahogony"
+	"teak"
+	"rattan"
+	"ebony"
+	"bamboo"
+	"*"				;; 90
+	"*"
+	"*"
+	"*"
+	"*"
+	"*"
+	"*"
+	"*"
+	"*"
+	"*"
+	"metal"			 ;; 100
+	"iron"
+	"bronze"
+	"steel"
+	"copper"
+	"brass"
+	"silver"
+	"gold"
+	"platinum"
+	"electrum"
+	"lead"				 ;; 110
+	"tin"
+	"chrome"
+	"aluminum"
+	"silicon"
+	"titanium"
+	"adamantium"
+	"cadmium"
+	"nickel"
+	"mithril"
+	"pewter"				  ;; 120
+	"plutonium"
+	"uranium"
+	"rust"
+	"orichalcum"
+	"*"
+	"*"
+	"*"
+	"*"
+	"*"
+	"*"				 ;; 130
+	"*"
+	"*"
+	"*"
+	"*"
+	"*"
+	"*"
+	"*"
+	"*"
+	"*"
+	"plastic"			 ;; 140
+	"kevlar"
+	"rubber"
+	"fiberglass"
+	"asphalt"
+	"concrete"
+	"wax"
+	"phenolic"
+	"latex"
+	"enamel"
+	"*"				 ;; 150
+	"*"
+	"*"
+	"*"
+	"*"
+	"*"
+	"*"
+	"*"
+	"*"
+	"*"
+	"glass"			 ;; 160
+	"crystal"
+	"lucite"
+	"porcelain"
+	"ice"
+	"shell"
+	"earthenware"
+	"pottery"
+	"ceramic"
+	"*"
+	"*"				;; 170
+	"*"
+	"*"
+	"*"
+	"*"
+	"*"
+	"*"
+	"*"
+	"*"
+	"*"
+	"stone"			 ;; 180
+	"azurite"
+	"agate"
+	"moss Agate"
+	"banded Agate"
+	"eye Agate"
+	"tiger Eye Agate"
+	"quartz"
+	"rose Quartz"
+	"smoky Quartz"
+	"quartz 2"
+	"hematite"			;; 190
+	"lapis lazuli"
+	"malachite"
+	"obsidian"
+	"rhodochorsite"
+	"tiger eye"
+	"turquoise"
+	"bloodstone"
+	"carnelian"
+	"chalcedony"		;; 200
+	"chysoprase"
+	"citrine"
+	"jasper"
+	"moonstone"
+	"onyx"
+	"zircon"
+	"amber"
+	"alexandrite"
+	"amethyst"
+	"oriental amethyst";; 210
+	"aquamarine"
+	"chrysoberyl"
+	"coral"
+	"garnet"
+	"jade"
+	"jet"
+	"pearl"
+	"peridot"
+	"spinel"
+	"topaz"			;; 220
+	"oriental topaz"
+	"tourmaline"
+	"sapphire"
+	"black sapphire"
+	"star sapphire"
+	"ruby"
+	"star ruby"
+	"opal"
+	"fire opal"
+	"diamond"			;; 230
+	"sandstone"
+	"marble"
+	"emerald"
+	"mud"
+	"clay"
+	"labradorite"
+	"iolite"
+	"spectrolite"
+	"charolite"
+	"basalt"
+	"ash"
+	"ink"))
