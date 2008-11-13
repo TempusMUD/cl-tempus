@@ -851,7 +851,7 @@
     (setf place (format nil "~a, after numeric constants (expecting E/A/#xxx)" place))
 
     (loop for line = (get-line inf)
-       with j = 0 do
+       with affected-idx = 0 do
        (assert line nil "Format error in ~a" place)
        (case (char line 0)
          (#\E
@@ -860,14 +860,15 @@
                                :description (fread-string inf))
                 (ex-description-of obj)))
          (#\A
-          (when (>= j +max-obj-affect+)
+          (when (>= affected-idx +max-obj-affect+)
             (error "Too many A fields (~d max), ~a" +max-obj-affect+ place))
           (let ((result (scan #/(\d+) ([\d-]+)/ (get-line inf))))
             (assert result nil "Invalid affect field in ~a" place)
-            (setf (location-of (aref (affected-of obj) j))
+            (setf (location-of (aref (affected-of obj) affected-idx))
                   (parse-integer (regref result 1)))
-            (setf (modifier-of (aref (affected-of obj) j))
-                  (parse-integer (regref result 2)))))
+            (setf (modifier-of (aref (affected-of obj) affected-idx))
+                  (parse-integer (regref result 2)))
+            (incf affected-idx)))
          (#\O
           (let ((result (scan #/O (\d+)/ line)))
             (setf (owner-id-of (shared-of obj))
@@ -1130,6 +1131,8 @@
                (let ((obj (read-object (arg1-of zone-cmd))))
                  (cond
                    (obj
+                    (setf (creation-method-of obj) :zone)
+                    (setf (creator-of obj) (number-of zone))
                     (obj-to-room obj room)
                     (values 1 last-mob nil))
                    (t
