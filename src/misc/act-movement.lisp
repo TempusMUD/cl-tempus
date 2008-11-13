@@ -3,7 +3,7 @@
 (defun abs-exit (room dir)
   (aref (dir-option-of room) dir))
 (defun exit (ch dir)
-  (abs-exit (in-room-of ch)))
+  (abs-exit (in-room-of ch) dir))
 
 (defun first-word (str)
   (let ((space-pos (position #\space str)))
