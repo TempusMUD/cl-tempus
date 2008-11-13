@@ -190,8 +190,6 @@
      (apply-skill ch +skill-riding+ mod))
     ((= loc +apply-turn+)
      (apply-skill ch +skill-turn+ mod))
-    ((= loc +apply-align+)
-     (setf (alignment-of ch) (pin (+ (alignment-of ch) mod) -1000 1000)))
     ((= loc +apply-nothirst+)
      (when (and (not (is-npc ch))
                 (/= (aref (condition-of ch) +thirst+) -1))
@@ -211,7 +209,13 @@
      (incf (speed-of ch) mod))
     ((member loc (list +apply-caster+
                        +apply-weaponspeed+
-                       +apply-disguise+))
+                       +apply-disguise+
+                       +apply-class+
+                       +apply-align+
+                       +apply-exp+
+                       +apply-gold+
+                       +apply-level+
+                       +apply-none+))
      ;; These do nothing
      nil)
     (t
