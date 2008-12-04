@@ -680,6 +680,7 @@ choose a password to use on this system.
                              'login-time (login-time-of player)
                              :where (:= 'idnum (idnum-of player))))
            (setf (link-of (actor-of cxn)) cxn)
+           (setf (account-of (actor-of cxn)) (account-of cxn))
            (player-to-game (actor-of cxn)))
           ((link-of prev-actor)
            (send-to-char prev-actor "You have logged on from another location!~%")
