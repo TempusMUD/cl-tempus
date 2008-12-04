@@ -720,8 +720,8 @@
            (result (scan #/^(\d+)\s+([\d-]+)\s+([\d-]+)\s+(\d+)d(\d+)\+(\d+)\s+(\d+)d(\d+)\+([-0-9]+)/ line)))
       (assert result nil "Illegal numbers-1 line of mobile ~d: ~s~%" nr line)
       (setf (level-of mobile) (parse-integer (regref result 1))
-            (hitroll-of mobile) (parse-integer (regref result 2))
-            (armor-of mobile) (parse-integer (regref result 3))
+            (hitroll-of mobile) (- 20 (parse-integer (regref result 2)))
+            (armor-of mobile) (* 10 (parse-integer (regref result 3)))
             (max-hitp-of mobile) 0
             (hitp-of mobile) (parse-integer (regref result 4))
             (mana-of mobile) (parse-integer (regref result 5))
@@ -732,7 +732,7 @@
 
             (damnodice-of (shared-of mobile)) (parse-integer (regref result 7))
             (damsizedice-of (shared-of mobile)) (parse-integer (regref result 8))
-            (damroll-of mobile) (parse-integer (regref result 1))))
+            (damroll-of mobile) (parse-integer (regref result 9))))
 
     (let* ((line (get-line inf))
            (result (scan #/^(\d+)\s+(\d+)(?:\s+(\d+)\s+(\d+))?/ line)))
