@@ -630,11 +630,10 @@
                                       (aref +apply-types+ (location-of aff))))
                    '("None")))
     (unless (eql (proto-of (shared-of obj)) obj)
-      (send-to-char ch "Contents:~%~a"
-                    (if (contains-of obj)
-                        (with-output-to-string (str)
-                          (list-obj-to-char str (contains-of obj) ch :content t))
-                        "None"))
+      (when (contains-of obj)
+        (send-to-char ch "Contents:~%~a"
+                      (with-output-to-string (str)
+                        (list-obj-to-char str (contains-of obj) ch :content t))))
       (unless (zerop (soilage-of obj))
         (send-to-char ch "Soilage: ~a~%"
                       (printbits (soilage-of obj) +soilage-bits+)))
