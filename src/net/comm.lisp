@@ -106,7 +106,7 @@
 
   (slog "Closing all sockets.")
   (close-all-cxns)
-  (disconnect-toplevel)
+  (postmodern:disconnect-toplevel)
 
   (when *circle-reboot*
     (slog "Rebooting.")
