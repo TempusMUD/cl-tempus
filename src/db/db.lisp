@@ -273,8 +273,8 @@
 (defun reset-time ()
   "Reset the time in the game"
   (let* ((epoch 650336715)
-         (now (timestamp-to-unix (now)))
-         (lunar-day (mod (floor (- now epoch) +secs-per-mud-day+) 24)))
+         (now (timestamp-to-unix (now))))
+    (setf *lunar-day* (mod (floor (- now epoch) +secs-per-mud-day+) 24))
     (multiple-value-bind (hour day mon year)
         (mud-time-passed now epoch)
       (setf *time-info* (make-instance 'mud-time
@@ -285,7 +285,7 @@
       (slog "   Current Gametime (global): ~dH ~dD ~dM ~dY."
             hour day mon year))
     (slog "   Current lunar day: ~d (~a)"
-          lunar-day (lunar-phase lunar-day))))
+          *lunar-day* (lunar-phase *lunar-day*))))
 
 (defun count-hash-records (prefix fname)
   (with-open-file (inf (tempus-path (format nil "lib/~a/~a" prefix fname))

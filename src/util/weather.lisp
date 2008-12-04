@@ -10,6 +10,7 @@
 (defparameter +moon-wane-crescent+ 7)
 
 (defvar *time-info*)
+(defvar *lunar-day* 0)
 
 (defclass mud-time ()
   ((hour :accessor hour-of :initarg :hour :type fixnum)
