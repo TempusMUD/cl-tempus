@@ -90,6 +90,7 @@
    (exp :accessor exp-of :initarg :exp :initform 0)
    (hitroll :accessor hitroll-of :initarg :hitroll :initform 0)
    (damroll :accessor damroll-of :initarg :damroll :initform 0)
+   (conditions :accessor conditions-of :initarg :conditions :initform (make-array 3 :element-type '(integer -1 24) :initial-contents '(0 23 23)))
 
    ;; Originally from char_special_data_saved
    (idnum :accessor idnum-of :initarg :idnum :initform nil)
@@ -189,7 +190,6 @@
    (load-room :accessor load-room-of :initarg :load-room :initform nil)
    (home-room :accessor home-room-of :initarg :home-room :initform nil)
    (prefs :accessor prefs-of :initarg :pref :initform (make-array 64 :element-type 'bit :initial-element 0))
-   (conditions :accessor conditions-of :initarg :conditions :initform (make-array 3 :element-type '(integer -1 24) :initial-contents '(0 23 23)))
    (clan :accessor clan-of :initarg :clan :initform nil)
    (broken-component :accessor broken-component-of :initarg :broken-component :initform nil)
    (imm-qp :accessor imm-qp-of :initarg :imm-qp :initform nil)
@@ -203,7 +203,7 @@
    (akills :accessor akills-of :initarg :akills :initform 0)
    (mobkills :accessor mobkills-of :initarg :mobkills :initform 0)
    (deaths :accessor deaths-of :initarg :deaths :initform 0)
-   (old-char-class :accessor old-char-class-of :initarg :old-char-class :initform nil)
+   (old-char-class :accessor old-char-class-of :initarg :old-char-class :initform 0)
    (total-dam :accessor total-dam-of :initarg :total-dam :initform nil)
    (hold-load-room :accessor hold-load-room-of :initarg :hold-load-room :initform nil)
    (quest-id :accessor quest-id-of :initarg :quest-id :initform nil)
