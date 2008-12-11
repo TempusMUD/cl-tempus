@@ -117,7 +117,8 @@
                (dotimes (bit-index 32)
                  (setf (bit prefs (+ 31 bit-index))
                        (if (logbitp bit-index num) 1 0))))
-             (setf (prefs-of ch) prefs)))
+             (setf (prefs-of ch) prefs))
+           (setf (current-tongue-of ch) (find-tongue-idx-by-name (xml-attr node "tongue"))))
           ("affects"
            (setf (aff-flags-of ch) (xml-attr node "flag1" :hex t))
            (setf (aff2-flags-of ch) (xml-attr node "flag2" :hex t))
@@ -130,10 +131,22 @@
            (setf (poofin-of ch) (format nil "~a~%" (third node))))
           ("poofout"
            (setf (poofout-of ch) (format nil "~a~%" (third node))))
+          ("tongue"
+           (let ((tongue-id (find-tongue-idx-by-name (xml-attr node "name")))
+                 (level (xml-attr node "level" :numeric t)))
+             (assert tongue-id nil 'invalid-character-file)
+             (assert level nil 'invalid-character-file)
+             (setf (aref (tongues-of ch) tongue-id) level)))
           ("alias"
            (push (list (xml-attr node "alias")
                        (xml-attr node "replace"))
                  (command-aliases-of ch))))))
+
+    (when (immortal-level-p ch)
+      (dotimes (idx +max-skills+)
+        (setf (aref (skills-of ch) idx) 100))
+      (dotimes (idx +max-tongues+)
+        (setf (aref (tongues-of ch) idx) 100)))
     ch))
 
 (defun load-player-objects (ch)

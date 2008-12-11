@@ -141,7 +141,7 @@
 
    ;; Originally from char_language_data
    (tongues :accessor tongues-of :initarg :tongues
-            :initform (make-array +max-tongues+ :initial-element nil))
+            :initform (make-array +max-tongues+ :initial-element 0))
    (current-tongue :accessor current-tongue-of :initarg :current-tongue :initform nil)
    (last-command :accessor last-command-of :initform nil)
    (repeat-cmd-count :accessor repeat-cmd-count-of :initform 0)))
