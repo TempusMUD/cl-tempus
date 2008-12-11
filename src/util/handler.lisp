@@ -545,6 +545,13 @@
              when (logtest bits (ash 1 idx))
              collect descrip)))
 
+(defun printbitarray (bits descriptions)
+  (format nil "~{~a~^ ~}"
+          (loop for idx from 0
+             for descrip across descriptions
+             when (bitp bits idx)
+             collect descrip)))
+
 (defun is-alias-of (str alias)
   (let ((aliases (cl-ppcre:split #/\s+/ alias)))
     (member str aliases :test #'string-abbrev)))
