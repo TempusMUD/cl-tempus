@@ -1575,7 +1575,7 @@
 (defparameter +class-names+
   #("Mage" "Cleric" "Thief" "Warrior" "Barbarian" "Psionic" "Physic" "Cyborg" "Knight" "Ranger" "Bard" "Monk" "Vampire" "Mercenary" "Spare1" "Spare2" "Spare3" "ILL" "ILL" "ILL" "ILL" "ILL" "ILL" "ILL" "ILL" "ILL" "ILL" "ILL" "ILL" "ILL" "ILL" "ILL" "ILL" "ILL" "ILL" "ILL" "ILL" "ILL" "ILL" "ILL" "ILL" "ILL" "ILL" "ILL" "ILL" "ILL" "ILL" "ILL" "ILL" "ILL" "Mobile" "Bird" "Predator" "Snake" "Horse" "Small" "Medium" "Large" "Scientist" "ILL" "Skeleton" "Ghoul" "Shadow" "Wight" "Wraith" "Mummy" "Spectre" "Vampire" "Ghost" "Lich" "Zombie" "ILL" "ILL" "ILL" "ILL" "ILL" "ILL" "ILL" "ILL" "ILL" "ILL" "Earth" "Fire" "Water" "Air" "Lighting" "ILL" "ILL" "ILL" "ILL" "ILL" "Green" "White" "Black" "Blue" "Red" "Silver" "Shadow_D" "Deep" "Turtle" "ILL" "Least" "Lesser" "Greater" "Duke" "Arch" "ILL" "ILL" "ILL" "ILL" "ILL" "Hill" "Stone" "Frost" "Fire" "Cloud" "Storm" "ILL" "ILL" "ILL" "Red" "Blue" "Green" "Grey" "Death" "Lord" "ILL" "ILL" "ILL" "ILL" "Type I" "Type II" "Type III" "Type IV" "Type V" "Type VI" "Semi" "Minor" "Major" "Lord" "Prince" "ILL" "ILL" "ILL" "ILL" "ILL" "ILL" "ILL" "ILL" "ILL" "Astral" "Monadic" "Movanic" "ILL" "ILL" "ILL" "ILL" "ILL" "ILL" "ILL" "Fire" "Lava" "Smoke" "Steam" "ILL" "ILL" "ILL" "ILL" "ILL" "ILL" "Arcana" "Charona" "Dergho" "Hydro" "Pisco" "Ultro" "Yagno" "Pyro" "Godling" "Deity"))
 
-
+(defparameter +borg-subchar-class-names+ #("power" "speed" "mentat"))
 
 (defparameter +player-races+
   #("Human"
@@ -1725,6 +1725,49 @@
     "cybernetic" "evil" "good" "exits" "outdoors" "nowater"
     "waterzap" "nosun" "zen" "mercenary" "song"))
 
+(defparameter +player-bits+
+  #("KILLER" "THIEF" "FROZEN" "DONTSET" "WRITING" "MAILING"
+    "CSH" "SITEOK" "!SHOUT" "!TITLE" "*DELETED*" "LODRM" "!WIZL"
+    "!DEL" "INVST" "CRYO" "AFK" "C-LEADR" "TOUGHGUY" "OLC"
+    "HALTED" "OLCGOD" "TESTER" "Q-GOD" "MORTALIZED" "REMORT-TOUGH"
+    "!UNUSED!" "NOPOST" "KRN" "!UNUSED!" "NOPK" "SOULLESS"))
+
+(defparameter +player2-bits+
+  #("SOULLESS" "BURIED" "IN-COMBAT"))
+
+(defparameter +action-bits+
+  #("SPEC" "SENTINEL" "SCAVENGER" "ISNPC" "AWARE" "AGGR"
+    "STAY-ZONE" "WIMPY" "AGGR-EVIL" "AGGR-GOOD" "AGGR-NEUTRAL"
+    "MEMORY" "HELPER" "!CHARM" "!SUMMN" "!SLEEP" "!BASH" "!BLIND"
+    "!TURN" "!PETRI" "PET" "SOULLESS" "SPRT-HNTR" "UTILITY"))
+
+(defparameter +action-bits-desc+
+  #("Special" "Sentinel" "Scavenger" "NPC" "Aware" "Aggressive"
+    "Stay-Zone" "Wimpy" "Aggro-Evil" "Aggro-Good" "Aggro-Neutral"
+    "Memory" "Helper" "NoCharm" "NoSummon" "NoSleep" "NoBash"
+    "NoBlind" "NoTurn" "nopetri" "pet" "soulless" "Spirit-Hunter"
+    "Utility"))
+
+(defparameter +action2-bits+
+  #("SCRIPT" "MOUNT" "STAY-SECT" "ATK-MOBS" "HUNT" "LOOT" "NOSTUN"
+    "SELLR" "!WEAR" "SILENT" "FAMILIAR" "NO-FLOW" "!APPROVE"
+    "RENAMED" "!AGGR-RACE" "15" "16" "17" "18" "19"))
+
+(defparameter +action2-bits-desc+
+  #("script" "Mount" "Stay-Sector" "Attack-Mobs" "Hunt" "Loot"
+    "NoStun" "Seller" "NoWear" "Silent-Hunter" "Familiar" "NoFlow"
+    "Unnapproved" "Renamed" "Noaggro-Race" "mugger"))
+
+(defparameter +preference-bits+
+  #("BRieF" "CMPCT" "DEAF" "!TELL" "D-HP" "D-MAN" "D-MV" "AEX"
+    "!HaSS" "NASTY" "SUMN" "!REP" "HLGHT" "C1" "C2" "!WiZ" "L1"
+    "L2" "!AuC" "!GoS" "!GTZ" "RmFLG" "!SNooP" "!MuS" "!SpW"
+    "!MiS" "!PROJ" "!INTWZ" "!CLN-SAY" "!IDENT" "!DREAM"
+    "DEBUG" "Newbie-HLPR" "DIAG" "BEEP" "!AFF" "!HOLR" "!IMM"
+    "C-TIT" "C-HID" "L-READ" "AUTOPRMPT" "NOWHO" "ANON" "!TRAIL"
+    "VT100" "AUTOSPLIT" "AUTOLOOT" "PK" "NOGECHO" "NOWRAP"
+    "DSPALGN" "WLDWRIT"))
+
 (defparameter +affected-bits+
   #("BLiND" "INViS" "DT-ALN" "DT-INV" "DT-MAG" "SNSE-L" "WaTWLK"
     "SNCT" "GRP" "CRSE" "NFRa" "PoIS" "PRT-E" "PRT-G" "SLeP"
@@ -1734,7 +1777,7 @@
 
 (defparameter +affected2-bits+
   #("FLUOR" "TRANSP" "SLOW" "HASTE" "MOUNTED" "FIRESHLD" "BERSERK"
-    "INTIMD" "true_SEE" "DIV_ILL" "PROT_UND" "INVS_UND" "ANML_KIN"
+    "INTIMD" "TRUE_SEE" "DIV_ILL" "PROT_UND" "INVS_UND" "ANML_KIN"
     "END_COLD" "PARALYZ" "PROT_LGTN" "PROT_FIRE" "TELEK" "PROT_RAD"
     "BURNING!" "!BEHEAD" "DISPLACR" "PROT_DEVILS" "MEDITATE" "EVADE"
     "BLADE BARRIER" "OBLIVITY" "NRG_FIELD" "PETRI" "VERTIGO"
@@ -1757,7 +1800,6 @@
 (defparameter +extra3-bits+
   #("MAGE" "CLE" "THI" "WAR" "BAR" "PSI" "PHY" "CYB" "KNI" "RAN" "BARD" "MONK" "VAMP" "MER" "SPR1" "SPR2" "SPR3" "HARD" "STAY" "HUNT" "!MAG" "!SCI"))
 
-/* APPLY_x */
 (defparameter +apply-types+
   #("NONE" "STR" "DEX" "INT" "WIS" "CON" "CHA" "CLASS" "LEVEL" "AGE" "WEIGHT" "HEIGHT" "MAXMANA" "MAXHIT" "MAXMOVE" "GOLD" "EXP" "ARMOR" "HITROLL" "DAMROLL" "SAV_PARA" "SAV_ROD" "SAV_PETRI" "SAV_BREATH" "SAV_SPELL" "SNEAK" "HIDE" "RACE" "SEX" "BACKST" "PICK" "PUNCH" "SHOOT" "KICK" "TRACK" "IMPALE" "BEHEAD" "THROW" "RIDING" "TURN" "SAV_CHEM" "SAV_PSI" "ALIGN" "SAV_PHY" "CASTER" "WEAP_SPEED" "DISGUISE" "NOTHIRST" "NOHUNGER" "NODRUNK" "SPEED"))
 
@@ -2449,3 +2491,154 @@
 	"basalt"
 	"ash"
 	"ink"))
+
+(defparameter +exp-scale+
+  #(0
+	1
+	2500
+	6150
+	11450
+	19150		 ; 5
+	30150
+	45650
+	67600
+	98100
+	140500		  ; 10
+	199500
+	281500
+	391500
+	541000
+	746000		  ; 15
+	1025000
+	1400000
+	1900000
+	2550000
+	3400000	   ; 20
+	4500000
+	5900000
+	7700000
+	10050000
+	12950000		; 25
+	16550000
+	21050000
+	26650000
+	33650000
+	42350000		; 30
+	52800000
+	65300000
+	79800000
+	96800000
+	116500000		 ; 35
+	140000000
+	167000000
+	198000000
+	233500000
+	274500000		 ; 40
+	320500000
+	371500000
+	426500000
+	486500000
+	551000000		 ; 45
+	622000000
+	699000000
+	783000000
+	869000000
+	1000000000		  ; 50
+	1100000000
+	1200000000
+	1300000000
+	1400000000
+	1500000000		  ; 55
+	1600000000
+	1700000000
+	1800000000
+	1900000000
+	2000000000		 ; 60
+	2000000001
+	2000000002
+	2000000003
+	2000000004
+	2000000005
+	2000000006
+	2000000007
+	2000000008
+	2000000009
+	2000000010
+	2000000011		; 71
+	2000000012
+	2000000013))
+
+(defparameter +thaco-factor+
+  #(0.15                                ; mage
+	0.20                                ; cleric
+	0.25                                ; thief
+	0.30                                ; warrior
+	0.40                                ; barb
+	0.20                                ; psionic
+	0.15                                ; physic
+	0.30                                ; cyborg
+	0.35                                ; knight
+	0.35                                ; ranger
+	0.30                                ; bard
+	0.40                                ; monk
+	0.40                                ; vampire
+	0.35                                ; merc
+	0.30                                ; spare1
+	0.30                                ; spare2
+	0.30))                              ; spare3
+
+(defparameter +racial-lifespans+
+  #(80                                  ; human
+	400                                 ; elf
+	160                                 ; dwarf
+	55                                  ; half orc
+	100                                 ; klingon
+	110                                 ; halfling
+	80                                  ; tabaxi
+	200                                 ; drow
+	0                                   ;
+	0                                   ;
+	0                                   ; mobile
+	10000                               ; undead
+	100                                 ; humanoid
+	50                                  ; animal
+	10000                               ; dragon
+	500                                 ; giant
+	65                                  ; orc
+	50                                  ; goblin
+	50                                  ; halfling
+	200                                 ; minotaur
+	500))                               ; troll
+
+(defparameter +attack-hit-text+
+  #2A(("hit" "hits")                    ; 0
+      ("sting" "stings")
+      ("whip" "whips")
+      ("slash" "slashes")
+      ("bite" "bites")
+      ("bludgeon" "bludgeons")          ; 5
+      ("crush" "crushes")
+      ("pound" "pounds")
+      ("claw" "claws")
+      ("maul" "mauls")
+      ("thrash" "thrashes")             ; 10
+      ("pierce" "pierces")
+      ("blast" "blasts")
+      ("punch" "punches")
+      ("stab" "stabs")
+      ("zap" "zaps")                    ; Raygun blasting
+      ("rip" "rips")
+      ("chop" "chops")
+      ("shoot" "shoots")))
+
+(defparameter +component-names+
+  #2A(("NONE" "NONE" "NONE")
+      ("primary transformer" "analog converter" "neural net")
+      ("spinal cable" "internal gyroscope" "cerebral servo")
+      ("hydraulic line" "high speed controller" "interface chip")
+      ("receptor enhancer" "receptor enhancer" "receptor enhancer")
+      ("primary capacitor" "primary capacitor" "math coprocessor")
+      ("cooling pump" "ventilator fan" "ventilation unit")
+      ("system coordinator" "parallel processor" "parallel processor")
+      ("kinetic drive unit" "kinetic drive unit" "power converter")
+      ("hard disk" "hard disk" "hard disk")))

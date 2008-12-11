@@ -23,6 +23,9 @@
     (setf (aref *spell-info* idx) (make-instance 'spell-info)))
   (setf (name-of (aref *spell-info* 0)) "!RESERVED!"))
 
+(defun spell-to-str (idnum)
+  (name-of (aref *spell-info* idnum)))
+
 (defun apply-attribute-to-spell (spell child)
   (string-case (first child)
     ("granted"

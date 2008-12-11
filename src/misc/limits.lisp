@@ -23,3 +23,56 @@
         (#.+drunk+
          (send-to-char ch "You are now sober.~%"))))))
 
+(defun graf (age race p0 p1 p2 p3 p4 p5 p6)
+  (let* ((race (if (> race +race-troll+) +race-human+ race))
+         (lifespan (aref +racial-lifespans+ race)))
+    (cond
+      ((< age (* lifespan 0.2))
+       p0)
+      ((<= age (* lifespan 0.3))
+       (+ p1 (/ (* (- age (* lifespan 0.2)) (- p2 p1)) (* lifespan 0.2))))
+      ((<= age (* lifespan 0.55))
+       (+ p2 (/ (* (- age (* lifespan 0.35)) (- p3 p2)) (* lifespan 0.2))))
+      ((<= age (* lifespan 0.75))
+       (+ p3 (/ (* (- age (* lifespan 0.55)) (- p4 p3)) (* lifespan 0.2))))
+      ((<= age lifespan)
+       (+ p4 (/ (* (- age (* lifespan 0.75)) (- p5 p4)) (* lifespan 0.2))))
+      (t
+       p6))))
+
+(defun age (ch)
+  (let ((player-age (mud-time-passed (timestamp-to-unix (now))
+                                     (timestamp-to-unix (birth-time-of ch)))))
+    (cond
+      ((or (eql (race-of ch) +race-elf+)
+           (eql (race-of ch) +race-drow+))
+       (+ player-age 80))
+      ((eql (race-of ch) +race-dwarf+)
+       (+ player-age 40))
+      ((eql (race-of ch) +race-half-orc+)
+       (+ player-age 12))
+      ((eql (race-of ch) +race-human+)
+       (+ player-age 13))
+      ((eql (race-of ch) +race-halfling+)
+       (+ player-age 33))
+      (t
+       (+ player-age 13)))))
+
+(defun hit-gain (ch)
+  (+ (if (is-npc ch)
+         (level-of ch)
+         (+ (graf (age ch) (race-of ch) 10 14 22 34 18 12 6)
+            (floor (level-of ch) 8)))
+     (* 2 (con-of ch))
+     (floor (check-skill ch +skill-speed-healing+) 3)
+     (if (aff3-flagged ch +aff3-damage-control+)
+         (+ (level-of ch) (floor (check-skill ch +skill-damage-control+) 4))
+         0)
+     ;; TODO: finish this
+))
+
+(defun mana-gain (ch)
+  0)
+
+(defun move-gain (ch)
+  0)

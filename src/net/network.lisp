@@ -27,7 +27,7 @@
 (defmethod handle-accept ((cxn cxn)) t)
 (defmethod handle-flush ((cxn cxn)) t)
 (defmethod handle-close ((cxn cxn)) t)
-(defmethod handle-error ((cxn cxn)) 
+(defmethod handle-error ((cxn cxn))
 	(setf (cxn-connected cxn) nil))
 
 ;;;
@@ -91,7 +91,7 @@
 (defmethod handle-flush ((cxn data-cxn))
   (loop
      for str = (pop (cxn-output-buf cxn))
-     while str 
+     while str
      when (plusp (length str))
      do (let ((buf (map '(vector (unsigned-byte 8)) #'char-code str)))
           (multiple-value-bind (count err)
@@ -110,7 +110,7 @@
                (push (subseq str count) (cxn-output-buf cxn))
                (return-from handle-flush))))))
   (setf (cxn-output-tail cxn) nil))
-	
+
 (defun cxn-listen (port accept-type)
   "Sets up a listener socket on port with the accept-handler accept."
   #+sbcl (let* ((s (make-instance 'sb-bsd-sockets:inet-socket :type :stream :protocol (sb-bsd-sockets:get-protocol-by-name "tcp")))
@@ -145,7 +145,7 @@
                           (write-set (sb-alien:struct sb-unix:fd-set))
                           (except-set (sb-alien:struct sb-unix:fd-set)))
 
-	  ;; Add all the cxn fds to the proper fdsets, and 
+	  ;; Add all the cxn fds to the proper fdsets, and
 	  (macrolet ((add-cxns-to-fd-set (cxn-list set)
 				   (let ((max (gensym)) (cxn (gensym)))
 					 `(progn
@@ -164,7 +164,7 @@
 		  (add-cxns-to-fd-set write-cxns write-set))
 		(when except-cxns
 		  (add-cxns-to-fd-set except-cxns except-set)))
-			
+
 	  (multiple-value-bind (val err)
 		  (sb-unix:unix-fast-select (1+ max-fd)
 							(when read-cxns (sb-alien:addr read-set))
@@ -191,7 +191,7 @@
   (multiple-value-bind (read-cxns write-cxns except-cxns)
 	  (cxn-poll *cxns* nil *cxns*)
 	(declare (ignore write-cxns))
-		
+
 	(dolist (cxn except-cxns)
 	  (handle-error cxn))
 	(dolist (cxn read-cxns)
@@ -206,7 +206,7 @@
   (multiple-value-bind (read-cxns write-cxns except-cxns)
 	  (cxn-poll nil *cxns* *cxns*)
 	(declare (ignore read-cxns))
-		
+
 	(dolist (cxn except-cxns)
 	  (handle-error cxn))
 	(dolist (cxn write-cxns)
@@ -226,7 +226,7 @@ if cxn disconnected"
 		 (cxn-fd cxn)
 		 (sb-alien::vector-sap buf)
 		 +cxn-buffer-size+)
-			
+
 	  (unless (zerop err)
 		(error "read() returned error ~a!" err))
 
@@ -325,5 +325,6 @@ if cxn disconnected"
    (actor :accessor actor-of :initform nil)
    (page-buf :accessor page-buf-of :initform "")
    (wait :accessor wait-of :initform 0)
+   (idle :accessor idle-of :initform 0)
    (mode-data :accessor mode-data-of :initform nil)))
 

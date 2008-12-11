@@ -646,6 +646,422 @@
       ;; Stat tmp object affects here
       )))
 
+(defun mobile-experience (ch)
+  1)
+
+(defun thaco (char-class level)
+  (truncate
+   (if (minusp char-class)
+       20
+       (if (< char-class +num-classes+)
+           (- 20 (* level (aref +thaco-factor+ char-class)))
+           (- 20 (* level (aref +thaco-factor+ +class-warrior+)))))))
+
+
+
+(defun affected-by-sanctuary (ch attacker)
+  (and (aff-flagged ch +aff-sanctuary+)
+       (or (null attacker)
+           (not (or
+                 (and (is-evil ch)
+                      (affected-by-spell attacker
+                                         +spell-righteous-penetration+))
+                 (and (is-good ch)
+                      (affected-by-spell attacker
+                                         +spell-malefic-violation+)))))))
+
+(defun get-damage-reduction (ch &optional attacker)
+  (let ((result 0))
+    (when (and (is-cleric ch) (is-good ch))
+      ;; good clerics get an alignment-based protection, up to 30% in
+      ;; the full moon, up to 10% otherwise
+      (incf result (/ (alignment-of ch)
+                      (if (= (lunar-phase *lunar-day*) +moon-full+)
+                          30
+                          100))))
+    ;; sanctuary
+    (when (affected-by-sanctuary ch attacker)
+      (incf result
+            (cond
+              ((is-vampire ch)                             0)
+              ((and (not (is-neutral ch))
+                    (or (is-cleric ch) (is-knight ch)))   25)
+              ((or (is-cyborg ch) (is-physic ch))          8)
+              (t                                          15))))
+    ;; oblivity
+    (when (and (aff2-flagged ch +aff2-oblivity+) (is-neutral ch))
+      (incf result (/ (+ (level-of ch)
+                         (* (get-skill-bonus ch +zen-oblivity+) 10)
+                         (- 1000 (abs (alignment-of ch)))
+                         (* (check-skill ch +zen-oblivity+) 10))
+                      100)))
+    ;; nopain
+    (when (aff-flagged ch +aff-nopain+)
+      (incf result 25))
+    ;; berserk
+    (when (aff2-flagged ch +aff2-berserk+)
+      (incf result
+            (if (is-barb ch)
+                (floor (get-skill-bonus ch +skill-berserk+) 6)
+                7)))
+    ;; damage control
+    (when (aff3-flagged ch +aff3-damage-control+)
+      (incf result (/ (get-skill-bonus ch +skill-damage-control+) 5)))
+    ;; alcoholics!!
+    (when (> (get-condition ch +drunk+) 5)
+      (incf result (get-condition ch +drunk+)))
+    ;; shield of righteousness
+    ;; aria of asylum
+    ;; lattice hardening
+    (when (affected-by-spell ch +spell-lattice-hardening+)
+      (incf result (/ (get-skill-bonus ch +spell-lattice-hardening+) 6)))
+    ;; stoneskin barkskin dermal hardening
+    (cond
+      ((affected-by-spell ch +spell-stoneskin+)
+       (incf result (/ (level-of (affected-by-spell ch +spell-stoneskin+))
+                       4)))
+      ((affected-by-spell ch +spell-barkskin+)
+       (incf result (/ (level-of (affected-by-spell ch +spell-stoneskin+))
+                       6)))
+      ((affected-by-spell ch +spell-dermal-hardening+)
+       (incf result (/ (level-of (affected-by-spell ch +spell-stoneskin+))
+                       6))))
+    ;; petrification
+    (when (aff2-flagged ch +aff2-petrified+)
+      (incf result 75))
+    ;; various other protections
+    (when attacker
+      (when (and (is-evil attacker) (aff-flagged ch +aff-protect-evil+))
+        (incf result 8))
+      (when (and (is-good attacker) (aff-flagged ch +aff-protect-good+))
+        (incf result 8))
+      (when (and (is-undead attacker) (aff2-flagged ch +aff2-protect-undead+))
+        (incf result 8))
+      (when (and (is-demon attacker) (aff2-flagged ch +aff2-prot-demons+))
+        (incf result 8))
+      (when (and (is-devil attacker) (aff2-flagged ch +aff2-prot-devils+))
+        (incf result 8)))
+
+    ;; armor class bonus
+    (incf result (/ (abs (min 0 (+ (armor-of ch) 300))) 5))
+
+    (setf result (/ (min result 75) 100))
+
+    result))
+
+(defun max-component-dam (ch)
+  (max 1
+       (* (level-of ch)
+          80
+          (con-of ch)
+          (1+ (remort-gen-of ch)))))
+
+(defmethod send-stats-to-char (ch (k creature))
+  (when (and (is-npc k)
+             (eql (func-of (shared-of k)) 'fate)
+             (not (immortalp ch)))
+    (send-to-char ch "You can't stat this mob.~%")
+    (return-from send-stats-to-char))
+  (with-pagination ((link-of ch))
+    (send-to-char ch "~a ~a '&y~a&n'  IDNum: [~5d], AccountNum: [~5d], In room &g[&n~5d&g]&n~%"
+                  (sex-of k)
+                  (if (is-npc k) "MOB" "PC")
+                  (name-of k)
+                  (idnum-of k)
+                  (unless (is-npc k) (idnum-of (account-of k)))
+                  (when (in-room-of k) (number-of (in-room-of k))))
+    (when (and (not (is-npc k))
+               (immortal-level-p k))
+      (send-to-char ch "OlcObj: [~a], OlcMob: [~a]~%"
+                    (olc-obj-of k)
+                    (olc-mob-of k)))
+
+    (if (is-npc k)
+        (send-to-char ch "Alias: ~a, VNum: &g[&y~5d&g]&n, Exist: [~3d]~%"
+                      (aliases-of k)
+                      (vnum-of k)
+                      (number-of (shared-of k)))
+        (send-to-char ch "Title: ~a~%"
+                      (or (title-of k) "<None>")))
+
+    (send-to-char ch "Race: ~a, Class: ~a~a/~a Gen: ~d~%"
+                  (aref +player-races+ (race-of k))
+                  (aref +class-names+ (char-class-of k))
+                  (if (is-cyborg k)
+                      (format nil "(~a)"
+                              (aref +borg-subchar-class-names+
+                                    (old-char-class-of k)))
+                      "")
+                  (if (is-remort k)
+                      (aref +class-names+ (remort-char-class-of k))
+                      "None")
+                  (remort-gen-of k))
+
+    (if (is-npc k)
+        (let ((rexp (mobile-experience k)))
+          (send-to-char ch "Lev: [&y~2d&n], XP: [&y~7d&n/&c~d&n] &r(&n~3d p&r)&n, Align: [~4d]~%"
+                        (level-of k)
+                        (exp-of k)
+                        rexp
+                        (floor (* (exp-of k) 100) rexp)
+                        (alignment-of k)))
+        (send-to-char ch "Lev: [&y~2d&n], XP: [&y~7d&n/&c~d&n], Align: [~4d]~%"
+                      (level-of k)
+                      (exp-of k)
+                      (- (aref +exp-scale+ (1+ (level-of k))) (exp-of k))
+                      (alignment-of k)))
+    (send-to-char ch "Height:  ~d centimeters , Weight: ~d pounds.~%"
+                  (height-of k)
+                  (weight-of k))
+    (when (not (is-npc k))
+      (multiple-value-bind (hours hour-mod)
+          (floor (played-time-of k) 3600)
+        (send-to-char ch "Created: [~a], Last Logon: [~a], Played [~dh ~dm], Age [~d]~%"
+                      (format-timestring nil (birth-time-of k)
+                                         :format '((:year 4)
+                                                   #\-
+                                                   (:month 2)
+                                                   #\-
+                                                   (:day 2)))
+                      (format-timestring nil (login-time-of k)
+                                         :format '((:year 4)
+                                                   #\-
+                                                   (:month 2)
+                                                   #\-
+                                                   (:day 2)))
+                      hours
+                      (floor hour-mod 60)
+                      (age-of k)))
+      (send-to-char ch "Homeroom:[~d], Loadroom: [~d], Clan: &c~a&n~%"
+                    (home-room-of k)
+                    (load-room-of k)
+                    (if (real-clan (clan-of k))
+                        (name-of (real-clan (clan-of k)))
+                        "NONE"))
+      (send-to-char ch "Life: [~d], Thac0: [~d], Reputation: [~4d]~@[, Qpoints: [~d/~d]~]~%"
+                    (life-points-of k)
+                    (min (thaco (char-class-of k) (level-of k))
+                         (thaco (remort-char-class-of k) (level-of k)))
+                    (reputation-of k)
+                    (immortal-level-p k)
+                    (imm-qp-of k)
+                    (qp-allowance-of k))
+      (send-to-char ch "&yMobKills:&n [~4d], &rPkills:&n [~4d], &gDeaths:&n [~4d]~%"
+                    (mobkills-of k)
+                    (pkills-of k)
+                    (deaths-of k)))
+    (send-to-char ch "Str: [&c~d/~d&n]  Int: [&c~d&n]  Wis: [&c~d&n]  Dex: [&c~d&n]  Con: [&c~d&n]  Cha: [&c~d&n]~%"
+                  (str-of k)
+                  (str-add-of k)
+                  (int-of k)
+                  (wis-of k)
+                  (dex-of k)
+                  (con-of k)
+                  (cha-of k))
+    (send-to-char ch "Hit p.:[&g~d/~d+~d&n]  Mana p.:[&g~d/~d+~d&n]  Move p.:[&g~d/~d+~d&n]~%"
+                  (hitp-of k) (max-hitp-of k) (hit-gain k)
+                  (mana-of k) (max-mana-of k) (mana-gain k)
+                  (move-of k) (max-move-of k) (move-gain k))
+    (send-to-char ch "AC: [&y~d/10&n], Hitroll: [&y~2d&n], Damroll: [&y~2d&n], Speed: [&y~2d&n], Damage Reduction: [&y~2d&n]~%"
+                  (armor-of k)
+                  (hitroll-of k)
+                  (damroll-of k)
+                  (speed-of k)
+                  (floor (* (get-damage-reduction k) 100)))
+    (when (or (not (is-npc k)) (in-room-of k))
+      (send-to-char ch "Pr:[&y~2d&n],Rd:[&y~2d&n],Pt:[&y~2d&n],Br:[&y~2d&n],Sp:[&y~2d&n],Ch:[&y~2d&n],Ps:[&y~2d&n],Ph:[&y~2d&n]~%"
+                    (aref (saves-of k) 0)
+                    (aref (saves-of k) 1)
+                    (aref (saves-of k) 2)
+                    (aref (saves-of k) 3)
+                    (aref (saves-of k) 4)
+                    (aref (saves-of k) 5)
+                    (aref (saves-of k) 6)
+                    (aref (saves-of k) 7)))
+
+    (if (is-npc k)
+        (send-to-char ch "Gold:[~8d], Cash:[~8d], (Total: ~d)~%"
+                      (gold-of k)
+                      (cash-of k)
+                      (+ (gold-of k) (cash-of k)))
+        (send-to-char ch "Au:[~8d], Bank:[~8d], Cash:[~8d], Enet:[~8d], (Total: ~d)~%"
+                      (gold-of k)
+                      (cash-of k)
+                      (past-bank-of (account-of k))
+                      (future-bank-of (account-of k))
+                      (+ (gold-of k) (cash-of k)
+                         (past-bank-of (account-of k))
+                         (future-bank-of (account-of k)))))
+
+    (cond
+      ((is-npc k)
+       ;; mobiles
+       (send-to-char ch "Pos: ~a, Dpos: ~a, Attack: ~a"
+                     (aref +position-types+ (position-of k))
+                     (aref +position-types+ (default-pos-of (shared-of k)))
+                     (aref +attack-hit-text+ (attack-type-of (shared-of k)) 0))
+       (when (in-room-of k)
+         (send-to-char ch ", &rFT&n: ~a, &yHNT&n: ~a, Timer: ~a"
+                       (if (fighting-of k) "Y" "N")
+                       (if (hunting-of k) "Y" "N")
+                       (timer-of k)))
+       (send-to-char ch "~%"))
+      ((in-room-of k)
+       ;; players
+       (send-to-char ch "Pos: ~a, &rFT&n: ~a"
+                     (aref +position-types+ (position-of k))
+                     (if (fighting-of k) "Y" "N"))))
+
+    (when (link-of k)
+      (send-to-char ch ", Connected: ~a, Idle [~d]"
+                    (state-of (link-of k))
+                    (idle-of (link-of k))))
+    (send-to-char ch "~%")
+
+    (when (mounted-of k)
+      (send-to-char ch "Mount: ~a~%" (name-of (mounted-of k))))
+
+    (cond
+      ((is-npc k)
+       (send-to-char ch "NPC flags: &c~a&n~%" (printbits (mob-flags-of k) +action-bits+))
+       (send-to-char ch "NPC flags(2): &c~a&n~%" (printbits (mob2-flags-of k) +action2-bits+)))
+      (t
+       (send-to-char ch "PLR: &c~a&n~%" (printbits (plr-bits-of k) +player-bits+))
+       (send-to-char ch "PLR2: &c~a&n~%" (printbits (plr2-bits-of k) +player2-bits+))
+       (send-to-char ch "PRF: &c~a&n~%" (printbitarray (prefs-of k) +preference-bits+))
+       (when (plr-flagged k +plr-frozen+)
+         (send-to-char ch "&cFrozen by: ~a" (retrieve-player-name (freezer-id-of k)))
+         (when (plusp (thaw-time-of k))
+           (send-to-char ch ", will auto-thaw at ~a" (thaw-time-of k)))
+         (send-to-char ch "&n~%"))))
+
+    (when (is-npc k)
+      (send-to-char ch "Mob Spec: ~a, NPC Dam: ~dd~d, Morale: ~d, Lair: ~d, Ldr: ~d~%"
+                    (func-of (shared-of k))
+                    (damnodice-of (shared-of k))
+                    (damsizedice-of (shared-of k))
+                    (morale-of (shared-of k))
+                    (lair-of (shared-of k))
+                    (leader-of (shared-of k)))
+
+      (when (move-buf-of (shared-of k))
+        (send-to-char ch "Move buf: ~a~%" (move-buf-of (shared-of k))))
+
+      (when (eql k (proto-of (shared-of k)))
+        (let ((param (func-param-of (shared-of k))))
+          (when param
+            (send-to-char ch "Spec param:~%~a~%" param)))
+        (let ((param (load-param-of (shared-of k))))
+          (when param
+            (send-to-char ch "Load param:~%~a~%" param)))))
+
+    (when (in-room-of k)
+      (send-to-char ch "Encum : (~d inv + ~d eq) = (~d tot)/~d, Number: ~d/~d inv, ~d eq, ~d imp~%"
+                    (carry-weight-of k)
+                    (worn-weight-of k)
+                    (+ (carry-weight-of k) (worn-weight-of k))
+                    (can-carry-weight k)
+                    (carry-items-of k)
+                    (can-carry-items k)
+                    (count-if #'identity (equipment-of k))
+                    (count-if #'identity (implants-of k)))
+      (when (or (plusp (breath-count-of k)) (plusp (fall-count-of k)))
+        (send-to-char ch "Breath count: ~d, Fall count: ~d~%"
+                      (breath-count-of k)
+                      (fall-count-of k))))
+
+    (when (not (is-npc k))
+      (send-to-char ch "Hunger: ~d, Thirst: ~d, Drunk: ~d~%"
+                    (get-condition k +full+)
+                    (get-condition k +thirst+)
+                    (get-condition k +drunk+)))
+
+    (when (and (not (is-npc k)) (plusp (quest-id-of k)))
+      (send-to-char ch "Quest [~d]: '~a'~%"
+                    (quest-id-of k)
+                    (or (quest-name (quest-id-of k)) "None")))
+
+    (when (and (in-room-of k) (or (master-of k) (followers-of k)))
+      (send-to-char ch "Master is: ~a, Followers are: ~:[<none>~;~:*~{~a~^, ~}~]~%"
+                    (name-of (master-of k))
+                    (mapcar 'name-of (followers-of k))))
+
+    (when (plusp (aff-flags-of k))
+      (send-to-char ch "AFF: &y~a&n~%" (printbits (aff-flags-of k) +affected-bits+)))
+    (when (plusp (aff2-flags-of k))
+      (send-to-char ch "AFF2: &y~a&n~%" (printbits (aff2-flags-of k) +affected2-bits+)))
+    (when (plusp (aff3-flags-of k))
+      (send-to-char ch "AFF3: &y~a&n~%" (printbits (aff3-flags-of k) +affected3-bits+)))
+
+    (when (and (eql (position-of k) +pos-sitting+)
+               (aff2-flagged k +aff2-meditate+))
+      (send-to-char ch "Meditation timer: [~d]~%" (meditate-timer-of k)))
+
+    (when (is-cyborg k)
+      (send-to-char ch "Broken component: [~a (~d)], Dam Count: ~d/~d~%"
+                    (aref +component-names+ (broken-component-of k) (old-char-class-of k))
+                    (broken-component-of k)
+                    (total-dam-of k)
+                    (max-component-dam k))
+
+      (when (aff3-flagged k +aff3-self-destruct+)
+        (send-to-char ch "Self-destruct Timer: [~d]~%"
+                      (meditate-timer-of k))))
+
+    (send-to-char ch "Currently speaking: &c~a&n~%"
+                  (tongue-name (current-tongue-of k)))
+
+    (when (tongues-heard-of ch)
+      (send-to-char ch "Recently heard: ~{~a~^, ~}~%"
+                    (mapcar 'name-of (tongues-heard-of ch))))
+
+    (send-to-char ch "Known Languages:~%")
+    (loop
+       for idnum in (sort (hash-keys *tongues*) #'<)
+       as tongue = (gethash idnum *tongues*)
+       when (plusp (check-tongue k idnum))
+       do (send-to-char ch "&c~3d. ~30a &C~a   &Y[~3d]&n~%"
+                        idnum
+                        (name-of tongue)
+                        (fluency-desc k idnum)
+                        (check-tongue k idnum)))
+
+    (when (and (not (is-npc k))
+               (grievances-of k))
+      (send-to-char ch "Grievances:~%")
+      (dolist (grievance (grievances-of k))
+        (send-to-char ch "&g~3d. ~a got ~d rep for ~a at ~a&n~%"
+                      (player-idnum-of grievance)
+                      (retrieve-player-name (player-idnum-of grievance))
+                      (reputation-of grievance)
+                      (kind-of grievance)
+                      (time-of grievance))))
+
+    (when (affected-of k)
+      (dolist (aff (affected-of k))
+        (send-to-char ch "SPL: (~3d~a) [~2d] ~a(~d) &y~24a&n "
+                      (1+ (duration-of aff))
+                      (if (is-instant-of aff) "sec" "hr")
+                      (level-of aff)
+                      (owner-of aff)
+                      (spell-to-str (kind-of aff)))
+        (when (plusp (modifier-of aff))
+          (send-to-char ch "~d to ~a"
+                        (modifier-of aff)
+                        (aref +apply-types+ (location-of aff)))
+          (when (plusp (bitvector-of aff))
+            (send-to-char ch ", ")))
+
+        (when (bitvector-of aff)
+          (case (aff-index-of aff)
+            (1
+             (send-to-char ch "sets ~a" (printbits (bitvector-of aff) +affected-bits+)))
+            (2
+             (send-to-char ch "sets ~a" (printbits (bitvector-of aff) +affected2-bits+)))
+            (3
+             (send-to-char ch "sets ~a" (printbits (bitvector-of aff) +affected3-bits+)))))
+        (send-to-char ch "~%")))))
+
 (defcommand (ch "stat" "room") (:immortal)
   (send-stats-to-char ch (in-room-of ch)))
 
@@ -673,7 +1089,6 @@
                (if o
                    (send-stats-to-char ch o)
                    (send-to-char ch "Nothing around by that name.~%")))))))))
-
 
 (defcommand (ch "echo") (:immortal :dead)
   (send-to-char ch "Yes, but what?~%"))
