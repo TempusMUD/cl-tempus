@@ -734,6 +734,9 @@
             (damsizedice-of (shared-of mobile)) (parse-integer (regref result 8))
             (damroll-of mobile) (parse-integer (regref result 9))))
 
+    (when (mob-flagged mobile +mob-wimpy+)
+      (setf (morale-of (shared-of mobile)) (max 30 (level-of mobile))))
+
     (let* ((line (get-line inf))
            (result (scan #/^(\d+)\s+(\d+)(?:\s+(\d+)\s+(\d+))?/ line)))
       (assert result nil "Illegal numbers-2 line of mobile ~d: ~s~%" nr line)
