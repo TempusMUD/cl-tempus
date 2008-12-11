@@ -753,14 +753,18 @@ choose a password to use on this system.
       (handle-state-input cxn (state-of cxn) line)
    (continue () nil)))
 
+(defvar *break-on-error* t)
+
 (defun cxn-handle-commands ()
   (dolist (cxn *cxns*)
 	(when (cxn-commands cxn)
 	  (setf (need-prompt-p cxn) t)
 	  (let ((cmd (pop (cxn-commands cxn))))
-		(handler-bind ((error (lambda (str)
-                               (cxn-write cxn "You become mildly queasy as reality distorts momentarily.~%")
-                               (errlog "System error: ~a" str)
-                               (invoke-restart 'continue))))
-            (cxn-do-command cxn cmd))))))
+        (if *break-on-error*
+            (cxn-do-command cxn cmd)
+            (handler-bind ((error (lambda (str)
+                                    (cxn-write cxn "You become mildly queasy as reality distorts momentarily.~%")
+                                    (errlog "System error: ~a" str)
+                                    (invoke-restart 'continue))))
+              (cxn-do-command cxn cmd)))))))
 
