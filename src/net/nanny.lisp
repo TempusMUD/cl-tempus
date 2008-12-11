@@ -141,11 +141,12 @@
 	((null (account-of cxn))
 	 (mudlog 'info t "Closing connection without account"))
 	((and (eql (state-of cxn) 'playing) (actor-of cxn))
+	 (setf (link-of (actor-of cxn)) nil)
 	 (mudlog 'notice t "~a has lost link; ~a logged out"
 			 (name-of (actor-of cxn))
 			 (name-of (account-of cxn)))
-	 (act (actor-of cxn) :place-emit "$n has lost $s link.")
-	 (setf (link-of (actor-of cxn)) nil))
+     (when (in-room-of (actor-of cxn))
+       (act (actor-of cxn) :place-emit "$n has lost $s link.")))
 	(t
 	 (mudlog 'notice t "~a logged out" (name-of (account-of cxn))))))
 
