@@ -72,7 +72,8 @@
   (if (is-remort ch)
       (+ (max (aref +prac-params+ 0 (min (1- +num-classes+) (char-class-of ch)))
               (aref +prac-params+ 0 (min (1- +num-classes+) (remort-char-class-of ch))))
-         (* (remort-gen-of ch) 2))))
+         (* (remort-gen-of ch) 2))
+      (aref +prac-params+ 0 (min (1- +num-classes+) (char-class-of ch)))))
 
 (defun gain-skill-proficiency (ch skill)
   (let ((learned (if (or (= skill +skill-read-scrolls+)
