@@ -124,7 +124,7 @@
                   ,@body-declare
                   (check-type ,actor creature)
                   (handler-case
-                      (progn ,@body)
+                      (block nil ,@body)
                     (parser-error (,err)
                       (send-to-char ,actor "~a~%" ,err))))))
     (assert (not (symbolp (first pattern))) nil
