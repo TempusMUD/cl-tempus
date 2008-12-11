@@ -77,7 +77,17 @@
            (setf (mobkills-of ch) (xml-attr node "mkills" :numeric t :default 0))
            (setf (deaths-of ch) (xml-attr node "deaths" :numeric t :default 0))
            (setf (reputation-of ch) (xml-attr node "reputation" :numeric t :default 0)))
-          ("attr" nil)
+          ("attr"
+           (setf (real-abils-of ch)
+                 (make-instance 'char-ability-data
+                                :str (xml-attr node "str" :numeric t :default 11)
+                                :str-add (xml-attr node "stradd" :numeric t :default 11)
+                                :int (xml-attr node "int" :numeric t :default 11)
+                                :wis (xml-attr node "wis" :numeric t :default 11)
+                                :dex (xml-attr node "dex" :numeric t :default 11)
+                                :con (xml-attr node "con" :numeric t :default 11)
+                                :cha (xml-attr node "cha" :numeric t :default 11)))
+           (setf (aff-abils-of ch) (copy-abilities (real-abils-of ch))))
           ("condition"
            (setf (aref (conditions-of ch) +full+) (xml-attr node "hunger" :numeric t :default 0))
            (setf (aref (conditions-of ch) +thirst+) (xml-attr node "thirst" :numeric t :default 0))
