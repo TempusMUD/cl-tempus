@@ -753,9 +753,10 @@
                               (0 'neuter)
                               (1 'male)
                               (2 'female)))
-      (when (regref result 4)
-        (attack-type-of (shared-of mobile)) (parse-integer (regref result 4))))
-
+      (setf (attack-type-of (shared-of mobile))
+            (if (regref result 4)
+                (parse-integer (regref result 4))
+                0)))
 
     (when (eql mob-type #\E)
       (parse-enhanced-mobile inf nr mobile))
