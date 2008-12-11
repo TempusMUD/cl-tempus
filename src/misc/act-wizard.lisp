@@ -1257,3 +1257,30 @@
        (send-to-char ch "You got it.~%")
        (dolist (vict victs)
          (tempus::interpret-command vict command))))))
+
+(defcommand (ch "mload") (:wizard)
+  (send-to-char ch "Usage: mload <mobile vnum number>~%"))
+
+(defcommand (ch "mload" vnum-str) (:wizard)
+  (unless (every #'digit-char-p vnum-str)
+    (send-to-char ch "Usage: mload <mobile vnum number>~%")
+    (return))
+
+  (let ((vnum (parse-integer vnum-str)))
+    (unless (real-mobile-proto vnum)
+      (send-to-char ch "There is no mobile thang with that number.~%")
+      (return))
+
+    (let ((mob (read-mobile vnum)))
+      (char-to-room mob (in-room-of ch))
+      (act ch :place-emit "$n makes a quaint, magical gesture with one hand.")
+      (act ch :target mob
+           :subject-emit "You create $N."
+           :place-emit "$n has created $N!")
+      (slog "(GC) ~a mloaded ~a[~d] at ~d"
+            (name-of ch)
+            (name-of mob)
+            (vnum-of mob)
+            (number-of (in-room-of ch)))
+      ;; TODO: trigger prog load here
+      )))

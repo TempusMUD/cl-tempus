@@ -147,3 +147,21 @@
       (is (= (length calls) 2))
       (is (eql (first (first calls)) bob))
       (is (equal (second (first calls)) "inventory")))))
+
+(deftest do-mload-vnum/normal/loads-mob ()
+  (with-mock-players (alice)
+    (unwind-protect
+         (with-captured-log log
+             (tempus::interpret-command alice "mload 1201")
+           (is (search "(GC) Alice mloaded the Immortal Postmaster[1201] at 3002" log))
+           (is (equal "You create the Immortal Postmaster.~%" (char-output alice)))
+           (let ((mob (find 1201 (tempus::people-of (tempus::in-room-of alice)) :key 'tempus::vnum-of)))
+             (is (not (null mob)))
+             (is (= (tempus::vnum-of mob) 1201))))
+      (let ((mobs (remove 1201
+                          (remove-if-not #'tempus::is-npc (tempus::people-of (tempus::in-room-of alice)))
+                          :test-not #'=
+                          :key 'tempus::vnum-of)))
+        ;; remove created mobs, if any
+        (dolist (mob mobs)
+          (tempus::char-from-room mob))))))
