@@ -196,9 +196,7 @@
         *olc-guide* (snarf-file +olc-guide-file+)
         *quest-guide* (snarf-file +quest-guide-file+))
 
-  (slog "Loading tongues.")
   (boot-tongues)
-
   (boot-dynamic-text)
   (boot-world)
 
