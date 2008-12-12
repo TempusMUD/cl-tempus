@@ -1,6 +1,6 @@
 (in-package #:tempus)
 
-(defun show-room-obj (object ch stream)
+(defun show-room-obj (object ch stream count)
   (let ((non-blank-ldesc (string/= (line-desc-of object) "")))
     (when (or non-blank-ldesc (immortalp ch))
       (princ "&g" stream)
@@ -9,6 +9,8 @@
           (format stream "~a exists here."
                   (string-upcase (name-of object) :end 1)))
       (show-obj-bits object ch stream)
+      (when (> count 1)
+        (format stream "&g [~d]&n" count))
       (format stream "~%"))))
 
 (defun show-obj-bits (object ch stream)
@@ -99,7 +101,7 @@
 (defun show-obj-to-char (stream object ch mode count)
     (cond
       ((eql mode :room)
-       (show-room-obj object ch stream)
+       (show-room-obj object ch stream count)
        (return-from show-obj-to-char))
       ((and (or (eql mode :inv)
                 (eql mode :content))
