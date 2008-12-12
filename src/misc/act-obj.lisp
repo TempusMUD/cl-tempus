@@ -209,12 +209,8 @@
                 (setf sigil-found t)))
              (when (or (null next-obj)
                        (string/= (name-of next-obj) (name-of obj)))
-               (cond
-                 ((= counter 1)
-                  (act ch :item obj :all-emit "$n get$% $p."))
-                 ((plusp counter)
-                  (act ch :item obj
-                       :all-emit (format nil "$n get$% $p. (x~d)" counter))))
+               (act ch :item obj
+                    :all-emit (format nil "$n get$% $p.~[~;~:;~:* (x~d)~]" counter))
                (setf counter 0))))))
       ((eql mode :find-indiv)
        (multiple-value-bind (ignore name)
@@ -277,14 +273,9 @@
                 (setf sigil-found t)))
              (when (or (null next-obj)
                        (string/= (name-of next-obj) (name-of obj)))
-               (cond
-                 ((= counter 1)
-                  (act ch :item obj :target-item container
-                       :all-emit "$n get$% $p from $P."))
-                 ((plusp counter)
-                  (act ch :item obj
-                       :target-item container
-                       :all-emit (format nil "$n get$% $p from $P. (x~d)" counter))))
+               (act ch :item obj
+                    :target-item container
+                    :all-emit (format nil "$n get$% $p from $P.~[~;~:;~:* (x~d)~]" counter))
                (setf counter 0))))))
       ((eql mode :find-indiv)
        (multiple-value-bind (ignore name)
@@ -393,13 +384,9 @@
        (if (perform-single-drop ch obj mode)
            (when (or (null next-obj)
                      (string/= (name-of next-obj) (name-of obj)))
-             (cond
-               ((= counter 1)
-                (act ch :item obj :all-emit (format nil "$n ~(~a~)$% $p." mode)))
-               ((plusp counter)
-                (act ch :item obj
-                     :all-emit (format nil "$n ~(~a~)$% $p. (x~d)" mode counter))
-                (setf counter 0))))
+             (act ch :item obj
+                  :all-emit (format nil "$n ~(~a~)$% $p.~[~;~:;~:* (x~d)~]" mode counter))
+             (setf counter 0))
            (setf counter 0))))
 
 (defun find-eq-pos (obj)
@@ -1115,14 +1102,9 @@
 
              (when (or (null next-obj)
                        (string/= (name-of next-obj) (name-of obj)))
-               (cond
-                 ((= counter 1)
-                  (act ch :item obj :target-item container
-                       :all-emit "$n put$% $p into $P."))
-                 ((plusp counter)
-                  (act ch :item obj
-                       :target-item container
-                       :all-emit (format nil "$n put$% $p into $P. (x~d)" counter))))
+               (act ch :item obj
+                    :target-item container
+                    :all-emit (format nil "$n put$% $p into $P.~[~;~:;~:* (x~d)~]" counter))
                (setf counter 0)))))
        (when (is-obj-kind container +item-pipe+)
          (loop while (contains-of container) do
@@ -1285,13 +1267,8 @@
           (perform-give ch (first victs) obj)
           (when (or (null next-obj)
                     (string/= (name-of next-obj) (name-of obj)))
-            (cond
-              ((= counter 1)
-               (act ch :target vict :item obj
-                    :all-emit "$n give$% $p to $N."))
-              ((plusp counter)
-               (act ch :target vict :item obj
-                    :all-emit (format nil "$n give$% $p to $N. (x~d)" counter))))
+            (act ch :target vict :item obj
+                 :all-emit (format nil "$n give$% $p to $N.~[~;~:;~:* (x~d)~]" counter))
             (setf counter 0))))
       ((eql mode :find-indiv)
        (send-to-char ch "You aren't carrying ~a ~a.~%" (a-or-an thing) thing))
