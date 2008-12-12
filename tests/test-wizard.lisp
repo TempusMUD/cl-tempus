@@ -165,3 +165,72 @@
         ;; remove created mobs, if any
         (dolist (mob mobs)
           (tempus::char-from-room mob))))))
+
+(deftest do-oload-vnum/normal/loads-object ()
+  (with-mock-players (alice)
+    (unwind-protect
+         (with-captured-log log
+             (tempus::interpret-command alice "oload 1203")
+           (is (search "(GC) Alice oloaded his large coffee mug[1203] at 3002" log))
+           (is (equal "You create his large coffee mug.~%" (char-output alice)))
+           (let ((obj (find 1203 (tempus::contents-of (tempus::in-room-of alice)) :key 'tempus::vnum-of)))
+             (is (not (null obj)))))
+      (let ((objs (remove 1203
+                          (tempus::contents-of (tempus::in-room-of alice))
+                          :test-not #'=
+                          :key 'tempus::vnum-of)))
+        ;; remove created objects, if any
+        (dolist (obj objs)
+          (tempus::extract-obj obj))))))
+
+(deftest do-oload-vnum/no-such-object/error-message ()
+  (with-mock-players (alice)
+    (unwind-protect
+         (progn
+           (tempus::interpret-command alice "oload 20")
+           (is (equal "There is no object thang with that number.~%" (char-output alice)))
+           (is (zerop (count 20 (tempus::contents-of (tempus::in-room-of alice))
+                             :key 'tempus::vnum-of))))
+      (let ((objs (remove 20
+                          (tempus::contents-of (tempus::in-room-of alice))
+                          :test-not #'=
+                          :key 'tempus::vnum-of)))
+        ;; remove created objects, if any
+        (dolist (obj objs)
+          (tempus::extract-obj obj))))))
+
+(deftest do-oload-count-vnum/normal/loads-count-object ()
+  (with-mock-players (alice)
+    (unwind-protect
+         (let ((count (random 100)))
+           (with-captured-log log
+               (tempus::interpret-command alice (format nil "oload ~d 1203" count))
+             (is (search (format nil "(GC) Alice oloaded his large coffee mug[1203] at 3002 (x~d)" count)
+                         log))
+             (is (equal (format nil "You create his large coffee mug. (x~d)~~%" count)
+                        (char-output alice)))
+             (is (= count (count 1203 (tempus::contents-of (tempus::in-room-of alice))
+                                 :key 'tempus::vnum-of)))))
+      (let ((objs (remove 1203
+                          (tempus::contents-of (tempus::in-room-of alice))
+                          :test-not #'=
+                          :key 'tempus::vnum-of)))
+        ;; remove created objects, if any
+        (dolist (obj objs)
+          (tempus::extract-obj obj))))))
+
+(deftest do-oload-count-vnum/count-too-large/error-message ()
+  (with-mock-players (alice)
+    (unwind-protect
+         (progn
+           (tempus::interpret-command alice "oload 101 1203")
+           (is (equal "You can't possibly need THAT many!~%" (char-output alice)))
+           (is (zerop (count 1203 (tempus::contents-of (tempus::in-room-of alice))
+                             :key 'tempus::vnum-of))))
+      (let ((objs (remove 1203
+                          (tempus::contents-of (tempus::in-room-of alice))
+                          :test-not #'=
+                          :key 'tempus::vnum-of)))
+        ;; remove created objects, if any
+        (dolist (obj objs)
+          (tempus::extract-obj obj))))))

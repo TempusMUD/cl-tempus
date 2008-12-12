@@ -1062,6 +1062,38 @@
              (send-to-char ch "sets ~a" (printbits (bitvector-of aff) +affected3-bits+)))))
         (send-to-char ch "~%")))))
 
+(defun perform-oload (ch count vnum)
+  (let ((last-obj nil))
+    (unless (real-object-proto vnum)
+      (send-to-char ch "There is no object thang with that number.~%")
+      (return-from perform-oload))
+
+    (when (zerop count)
+      (send-to-char ch "POOF!  Congratulations!  You've created nothing!~%")
+      (return-from perform-oload))
+
+    (when (> count 100)
+      (send-to-char ch "You can't possibly need THAT many!~%")
+      (return-from perform-oload))
+
+    (dotimes (idx count)
+      (let ((obj (read-object vnum)))
+        (setf (creation-method-of obj) :imm)
+        (setf (creator-of obj) (idnum-of ch))
+        (obj-to-room obj (in-room-of ch))
+        (setf last-obj obj)))
+
+    (act ch :place-emit "$n makes a quaint, magical gesture with one hand.")
+    (act ch :item last-obj
+         :subject-emit (format nil "You create $p.~[~;~:;~:* (x~d)~]" count)
+         :place-emit (format nil "$n has created $p!~[~;~:;~:* (x~d)~]" count))
+    (slog "(GC) ~a oloaded ~a[~d] at ~d~[~;~:;~:* (x~d)~]"
+          (name-of ch)
+          (name-of last-obj)
+          (vnum-of last-obj)
+          (number-of (in-room-of ch))
+          count)))
+
 (defcommand (ch "stat" "room") (:immortal)
   (send-stats-to-char ch (in-room-of ch)))
 
@@ -1284,3 +1316,21 @@
             (number-of (in-room-of ch)))
       ;; TODO: trigger prog load here
       )))
+
+(defcommand (ch "oload") (:wizard)
+  (send-to-char ch "Usage: oload [count] <object vnum>~%"))
+
+(defcommand (ch "oload" vnum-str) (:wizard)
+  (unless (every #'digit-char-p vnum-str)
+    (send-to-char ch "Usage: oload <object vnum number> [count]~%")
+    (return))
+
+  (perform-oload ch 1 (parse-integer vnum-str)))
+
+(defcommand (ch "oload" count-str vnum-str) (:wizard)
+  (unless (and (every #'digit-char-p vnum-str)
+               (every #'digit-char-p count-str))
+    (send-to-char ch "Usage: oload <object vnum number> [count]~%")
+    (return))
+
+  (perform-oload ch (parse-integer count-str) (parse-integer vnum-str)))
