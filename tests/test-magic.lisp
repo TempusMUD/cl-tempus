@@ -37,7 +37,7 @@
 (deftest explode-sigil/normal/calls-damage ()
   (with-mock-players (alice)
     (with-mock-objects ((tunic "a leather tunic"))
-      (tempus::char-from-room alice)
+      (tempus::char-from-room alice t)
       (tempus::char-to-room alice (tempus::real-room 7100))
       (setf (tempus::sigil-idnum-of tunic) 1)
       (setf (tempus::sigil-level-of tunic) 10)

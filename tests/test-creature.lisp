@@ -32,3 +32,17 @@
       (is (= (tempus::max-hitp-of alice) 110))
       (is (equal (list af) (tempus::affected-of alice)))
       (is (tempus::affected-by-spell alice tempus::+spell-invisible+)))))
+
+(deftest extract-creature/with-mobile/extracted ()
+  (let ((mob (tempus::read-mobile 1201)))
+    (tempus::char-to-room mob (tempus::real-room 3002))
+    (tempus::extract-creature mob 'disconnecting)
+    (is (not (member mob tempus::*characters*)))
+    (is (null (tempus::in-room-of mob)))))
+
+(deftest extract-creature/with-player/extracted ()
+  (with-mock-players (alice)
+    (tempus::extract-creature alice 'tempus::disconnecting)
+    (is (not (member alice tempus::*characters*)))
+    (is (null (tempus::in-room-of alice)))
+    (is (eql 'tempus::disconnecting (tempus::state-of (tempus::link-of alice))))))

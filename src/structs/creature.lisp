@@ -547,4 +547,132 @@
     (incf (wait-of (link-of ch)) pulses)))
 
 (defun affect-remove (ch af)
-  (setf (affects-of ch) (delete af (affects-of ch))))
+  "Given a creature affect AF, removes the effect of AF on the creature CH."
+  (when (= (kind-of af) +spell-taint+)
+    (apply-soil-to-char ch (get-eq ch +wear-head+) +soil-blood+ +wear-head+)
+    (apply-soil-to-char ch (get-eq ch +wear-face+) +soil-blood+ +wear-face+)
+    (apply-soil-to-char ch (get-eq ch +wear-eyes+) +soil-blood+ +wear-eyes+))
+  (when (and (= (kind-of af) +spell-quad-damage+)
+             (not (aff-flagged ch +aff-glowlight+))
+             (not (aff2-flagged ch +aff2-fluorescent+))
+             (not (aff2-flagged ch +aff2-divine-illumination+))
+             (not (affected-by-spell ch +spell-quad-damage+)))
+    (decf (light-of (in-room-of ch))))
+
+  (affect-modify ch (location-of af) (modifier-of af) (bitvector-of af) (aff-index-of af) nil)
+  (setf (affected-of ch) (delete af (affected-of ch))))
+
+(defun affect-from-char (ch spell)
+  "Removes all the affects from CH that come from the SPELL."
+  (dolist (af (remove spell (affected-of ch) :test-not #'= :key 'kind-of))
+    (affect-remove ch af)))
+
+(defun perform-dismount (ch)
+  (setf (mounted-of ch) nil))
+
+(defun stop-hunting (ch)
+  (setf (hunting-of ch) nil))
+
+(defun stop-defending (ch)
+  (setf (defending-of ch) nil))
+
+(defun perform-return (ch mode)
+  (unless (and (link-of ch) (original-actor-of (link-of ch)))
+    (send-to-char ch "There is no need to return.~%")
+    (return-from perform-return))
+
+  (send-to-char ch "You return to your original body.~%")
+
+  (let ((orig (original-actor-of (link-of ch))))
+    (when (link-of (original-actor-of (link-of ch)))
+      (setf (state-of (link-of (original-actor-of (link-of ch)))) 'disconnecting))
+
+    (setf (actor-of (link-of ch)) (original-actor-of (link-of ch)))
+    (setf (original-actor-of (link-of ch)) nil)
+
+    (setf (link-of (actor-of (link-of ch))) (link-of ch))
+    (setf (link-of ch) nil)
+
+    (when (and (is-npc ch) (= (vnum-of ch) 1518))
+      (char-from-room orig nil)
+      (char-to-room orig (in-room-of ch) nil)
+      (act orig :place-emit "$n materializes from a cloud of gas.")
+      (unless (eql mode :noextract)
+        (purge-creature ch t)))))
+
+(defun extract-creature (ch link-state)
+  "Extract a creature completely from the world and destroy its stuff"
+  (when (and (not (is-npc ch)) (null (link-of ch)))
+    (let ((cxn (find ch *cxns* :key 'original-actor-of)))
+      (when cxn
+        (perform-return (actor-of cxn) :forced))))
+
+  (when (and (link-of ch) (original-actor-of (link-of ch)))
+    (perform-return (actor-of (link-of ch)) :forced))
+
+  (assert (in-room-of ch) nil "NIL room in extract-creature")
+
+  (when (master-of ch)
+    (stop-following ch))
+
+  (dolist (tch (copy-list (followers-of ch)))
+    (stop-following tch))
+
+  ;; remove fighters, defenders, hunters, and mounters
+  (dolist (tch *characters*)
+    (when (eql (defending-of tch) ch)
+      (stop-defending tch))
+    (when (eql (mounted-of tch) ch)
+      (perform-dismount tch))
+    (when (eql (hunting-of tch) ch)
+      (stop-hunting tch)))
+
+  #+nil (destroy-attached-progs ch)
+  #+nil (char-arrest-pardoned ch)
+
+  (when (mounted-of ch)
+    (perform-dismount ch))
+
+  ;; TODO: make sure they aren't editing
+
+  ;; Forget snooping, if applicable
+  (when (link-of ch)
+    (when (snooping-of (link-of ch))
+      (setf (snooping-of (link-of ch)) nil))
+    (dolist (snooper (snooped-by-of (link-of ch)))
+      (cxn-write snooper "Your victim is no longer among us.~%")
+      (setf (snooping-of snooper) nil)))
+
+  ;; destroy all that equipment
+  (loop for idx upto (1- +num-wears+) do
+       (when (get-eq ch idx)
+         (extract-obj (unequip-char ch idx :worn t)))
+       (when (get-implant ch idx)
+         (extract-obj (unequip-char ch idx :implant t)))
+       (when (get-tattoo ch idx)
+         (extract-obj (unequip-char ch idx :tattoo t))))
+
+  (dolist (obj (carrying-of ch))
+    (obj-from-char obj)
+    (extract-obj obj))
+
+  (when (and (link-of ch) (original-actor-of (link-of ch)))
+    (perform-return ch :noextract))
+
+  (remove-all-combat ch)
+
+  (char-from-room ch nil)
+
+  (setf *characters* (remove ch *characters*))
+  (if (is-npc ch)
+      (remhash (- (mob-idnum-of ch)) *character-map*)
+      (remhash (idnum-of ch) *character-map*))
+
+  #+nil (path-remove-object ch)
+
+  (when (and (is-npc ch) (shared-of ch))
+    (decf (number-of (shared-of ch))))
+
+  (when (link-of ch)
+    (setf (state-of (link-of ch)) link-state)))
+

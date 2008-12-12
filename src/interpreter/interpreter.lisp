@@ -240,3 +240,6 @@
        (send-to-char ch "Sorry, players ONLY!~%"))
       (t
        (apply (command-info-function command) ch vars)))))
+
+(defun perform-special (ch cmd subcmd arg mode)
+  nil)

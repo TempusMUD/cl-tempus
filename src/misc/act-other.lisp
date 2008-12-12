@@ -86,10 +86,12 @@
   (send-to-char ch "Saved.~%"))
 
 (defcommand (ch "quit") ()
-  (char-from-room ch)
-  (setf *characters* (delete ch *characters*))
+  (slog "~a has departed from the known multiverse" (name-of ch))
+  (act ch
+       :subject-emit "Goodbye.  We will be awaiting your return."
+       :place-emit "$n steps out of the universe.")
   (save-player-to-xml ch)
-  (setf (state-of (link-of ch)) 'main-menu))
+  (extract-creature ch 'main-menu))
 
 (defcommand (ch "title") ()
   (setf (title-of ch) nil)

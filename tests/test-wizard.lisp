@@ -20,7 +20,7 @@
 
 (deftest at/normal/performs-command-in-target-room ()
   (with-mock-players (alice bob)
-    (tempus::char-from-room alice)
+    (tempus::char-from-room alice t)
     (tempus::char-to-room alice (tempus::real-room 3001))
     (tempus::interpret-command alice "at 3002 say hi")
     (is (equal "&BYou say, &c'hi'&n~%" (char-output alice)))
@@ -28,7 +28,7 @@
 
 (deftest goto/numeric-target/changes-room ()
   (with-mock-players (alice bob)
-    (tempus::char-from-room alice)
+    (tempus::char-from-room alice t)
     (tempus::char-to-room alice (tempus::real-room 3001))
     (tempus::interpret-command alice "goto 3002")
     (is (= 3002 (tempus::number-of (tempus::in-room-of alice))))
@@ -36,7 +36,7 @@
 
 (deftest goto/char-target/changes-room ()
   (with-mock-players (alice bob)
-    (tempus::char-from-room alice)
+    (tempus::char-from-room alice t)
     (tempus::char-to-room alice (tempus::real-room 3001))
     (tempus::interpret-command alice "goto .bob")
     (is (= 3002 (tempus::number-of (tempus::in-room-of alice))))
@@ -65,7 +65,7 @@
 
 (deftest transport/normal/moves-target ()
   (with-mock-players (alice bob)
-    (tempus::char-from-room alice)
+    (tempus::char-from-room alice t)
     (tempus::char-to-room alice (tempus::real-room 3001))
     (with-captured-log log
         (tempus::do-transport-targets alice ".bob")
@@ -164,7 +164,7 @@
                           :key 'tempus::vnum-of)))
         ;; remove created mobs, if any
         (dolist (mob mobs)
-          (tempus::char-from-room mob))))))
+          (tempus::char-from-room mob t))))))
 
 (deftest do-oload-vnum/normal/loads-object ()
   (with-mock-players (alice)

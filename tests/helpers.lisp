@@ -37,6 +37,9 @@
 (defmethod tempus::save-player-to-xml ((player mock-player))
   (setf (savedp player) t))
 
+(defmethod tempus::handle-close ((cxn mock-cxn))
+  nil)
+
 (defun mock-cxn-input (cxn fmt &rest args)
   (let ((msg (format nil "~?" fmt args)))
     (setf (tempus::cxn-input-buf cxn)
@@ -77,7 +80,7 @@
 (defun destroy-mock-player (ch)
   (when ch
     (when (tempus::in-room-of ch)
-      (tempus::char-from-room ch))
+      (tempus::char-from-room ch t))
     (setf tempus::*cxns* (delete (tempus::link-of ch) tempus::*cxns*))))
 
 (defun make-mock-object (&optional (name "mock object"))
@@ -109,7 +112,7 @@
              ,@(loop for var in vars
                     collect `(destroy-mock-object ,var)))
          (t (err)
-           (stefil::record-failure 'unexpected-error :condition err))))))
+           (stefil::record-failure 'stefil::error-in-teardown :condition err))))))
 
 (defmacro with-mock-players (vars &body body)
   `(let ,vars
@@ -128,7 +131,7 @@
              ,@(loop for var in vars
                     collect `(destroy-mock-player ,var)))
          (t (err)
-           (stefil::record-failure 'unexpected-error :condition err))))))
+           (stefil::record-failure 'stefil::error-in-teardown :condition err))))))
 
 (defmacro with-captured-log (log expr &body body)
   `(let ((tempus::*log-output* (make-string-output-stream)))

@@ -93,7 +93,7 @@
         (t
          (act ch :place-emit (format nil "$n leaves ~a." (aref +to-dirs+ dir)))))
 
-      (char-from-room ch)
+      (char-from-room ch t)
 
       (char-to-room ch dest)
 

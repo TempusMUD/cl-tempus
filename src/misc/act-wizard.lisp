@@ -54,7 +54,7 @@
                               (t
                                (format nil "$n ~a" (poofout-of ch)))))
         (when (in-room-of ch)
-          (char-from-room ch))
+          (char-from-room ch t))
         (char-to-room ch room)
         (when (room-is-open-air room)
           (setf (position-of ch) +pos-flying+))
@@ -98,7 +98,7 @@
     (t
      (let ((was-in (in-room-of tch)))
        (act tch :place-emit "$n disappears in a mushroom cloud.")
-       (char-from-room tch)
+       (char-from-room tch t)
        (char-to-room tch (in-room-of ch) nil)
        (act ch :target tch
             :subject-emit "$N arrives from a puff of smoke."
@@ -1201,12 +1201,12 @@
   (let ((original-room (in-room-of ch))
         (target-room (find-target-room ch roomstr)))
     (when target-room
-      (char-from-room ch)
+      (char-from-room ch t)
       (char-to-room ch target-room)
       (interpret-command ch command)
       ;; only return the char if they're still there
       (when (eql target-room (in-room-of ch))
-        (char-from-room ch)
+        (char-from-room ch t)
         (char-to-room ch original-room)))))
 
 (defcommand (ch "goto") (:immortal)
@@ -1260,7 +1260,7 @@
       (t
        (send-to-char ch "Okay.~%")
        (act tch :place-emit "$n disappears in a puff of smoke.")
-       (char-from-room tch)
+       (char-from-room tch t)
        (char-to-room tch room nil)
        (act tch :target ch
             :subject-emit "$N has teleported you!"

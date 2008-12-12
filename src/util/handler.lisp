@@ -452,7 +452,43 @@
       (setf (timer-of obj)
             (if zone (max 2 (floor (lifespan-of zone) 2)) 15)))))
 
-(defun char-from-room (ch)
+(defun remove-all-combat (ch)
+  (setf (fighting-of ch) nil)
+  (setf (position-of ch) +pos-standing+)
+  (dolist (tch *characters*)
+    (when (eql (fighting-of tch) ch)
+      (setf (fighting-of tch) nil)
+      (setf (position-of tch) +pos-standing+))))
+
+(defun char-from-room (ch check-specials-p)
+  (assert (in-room-of ch) nil "NIL room in char-from-room")
+  (remove-all-combat ch)
+
+  (when (and (is-race ch +race-elemental+)
+             (is-class ch +class-fire+))
+    (decf (light-of (in-room-of ch))))
+  (let ((light (get-eq ch +wear-light+)))
+    (when (and light
+               (is-obj-kind light +item-light+)
+               (not (zerop (aref (value-of light) 2))))
+      (decf (light-of (in-room-of ch)))))
+  (when (or (aff-flagged ch +aff-glowlight+)
+            (aff-flagged ch +aff2-fluorescent+)
+            (aff-flagged ch +aff2-divine-illumination+)
+            (affected-by-spell ch +spell-quad-damage+))
+    (decf (light-of (in-room-of ch))))
+
+  (unless (is-npc ch)
+    (decf (num-players-of (zone-of (in-room-of ch)))))
+
+  (affect-from-char ch +spell-entangle+)
+
+  (when (typep ch 'player)
+    (setf (olc-srch-of ch) nil))
+
+  (when check-specials-p
+    (perform-special ch nil nil nil :leave))
+
   (setf (people-of (in-room-of ch)) (delete ch (people-of (in-room-of ch))))
   (setf (in-room-of ch) nil))
 

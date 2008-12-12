@@ -285,11 +285,13 @@ if cxn disconnected"
   #+cmu (unix::void-syscall ("shutdown" c-call:int c-call:int)
 							fd mode))
 
-(defun cxn-close (cxn)
-  (handle-close cxn)
+(defmethod handle-close ((cxn cxn))
   (unix-shutdown (cxn-fd cxn) 2)
   #+sbcl (sb-bsd-sockets:socket-close (cxn-socket cxn))
   #+cmu (unix:unix-close (cxn-fd cxn)))
+
+(defun cxn-close (cxn)
+  (handle-close cxn))
 
 (defun close-all-cxns ()
   (dolist (cxn *cxns*)
@@ -326,5 +328,8 @@ if cxn disconnected"
    (page-buf :accessor page-buf-of :initform "")
    (wait :accessor wait-of :initform 0)
    (idle :accessor idle-of :initform 0)
-   (mode-data :accessor mode-data-of :initform nil)))
+   (mode-data :accessor mode-data-of :initform nil)
+   (original-actor :accessor original-actor-of :initform nil)
+   (snooping :accessor snooping-of :initform nil)
+   (snooped-by :accessor snooped-by-of :initform nil)))
 
