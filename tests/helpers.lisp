@@ -136,6 +136,7 @@
           ,expr
        (close tempus::*log-output*))
      (let ((,log (get-output-stream-string tempus::*log-output*)))
+       (declare (ignorable ,log))
        ,@body)))
 
 (defvar *function-traces* (make-hash-table))
