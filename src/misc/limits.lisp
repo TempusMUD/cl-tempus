@@ -2,7 +2,8 @@
 
 (defun gain-condition (ch condition value)
   (assert (<= 0 condition 2) nil "Invalid condition passed to gain-condition")
-  (unless (zerop value)
+  (unless (or (zerop value)
+              (minusp (aref (conditions-of ch) condition)))
     (setf (aref (conditions-of ch) condition)
           (pin (+ (aref (conditions-of ch) condition) value) 0 24))
     (when (and (zerop (get-condition ch condition))
