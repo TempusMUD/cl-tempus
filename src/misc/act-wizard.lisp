@@ -1094,6 +1094,55 @@
           (number-of (in-room-of ch))
           count)))
 
+(defun perform-pload (ch vnum count target)
+  (let ((last-obj nil))
+    (unless (real-object-proto vnum)
+      (send-to-char ch "There is no object thang with that number.~%")
+      (return-from perform-pload))
+
+    (when (zerop count)
+      (send-to-char ch "POOF!  Congratulations!  You've created nothing!~%")
+      (return-from perform-pload))
+
+    (when (> count 100)
+      (send-to-char ch "You can't possibly need THAT many!~%")
+      (return-from perform-pload))
+
+    (dotimes (idx count)
+      (let ((obj (read-object vnum)))
+        (setf (creation-method-of obj) :imm)
+        (setf (creator-of obj) (idnum-of ch))
+        (obj-to-char obj target)
+        (setf last-obj obj)))
+
+    (cond
+      ((eql target ch)
+       (act ch :item last-obj
+            :subject-emit (format nil "You create $p.~[~;~:;~:* (x~d)~]" count)
+            :place-emit "$n does something suspicious and alters reality.")
+        (slog "(GC) ~a ploaded ~a[~d] onto self at ~d~[~;~:;~:* (x~d)~]"
+              (name-of ch)
+              (name-of last-obj)
+              (vnum-of last-obj)
+              (number-of (in-room-of ch))
+              count))
+      (t
+        (act ch
+             :target target
+             :item last-obj
+             :subject-emit (format nil "You load $p onto $N.~[~;~:;~:* (x~d)~]" count)
+             :target-emit (format nil "$n causes $p to appear in your hands.~[~;~:;~:* (x~d)~]" count)
+             :not-target-emit "$n does something suspicious and alters reality.")
+        (slog "(GC) ~a ploaded ~a[~d] onto ~a ~a[~d] at ~d~[~;~:;~:* (x~d)~]"
+              (name-of ch)
+              (name-of last-obj)
+              (vnum-of last-obj)
+              (if (is-npc target) "MOB" "PC")
+              (name-of target)
+              (if (is-npc target) (vnum-of target) (idnum-of target))
+              (number-of (in-room-of ch))
+              count)))))
+
 (defcommand (ch "stat" "room") (:immortal)
   (send-stats-to-char ch (in-room-of ch)))
 
@@ -1334,3 +1383,49 @@
     (return))
 
   (perform-oload ch (parse-integer count-str) (parse-integer vnum-str)))
+
+(defcommand (ch "pload") (:wizard)
+  (send-to-char ch "Usage: pload [count] <object vnum> [<target char>]~%"))
+
+(defcommand (ch "pload" vnum-str) (:wizard)
+  (unless (every #'digit-char-p vnum-str)
+    (send-to-char ch "Usage: pload [count] <object vnum> [<target char>]~%")
+    (return))
+
+  (perform-pload ch (parse-integer vnum-str) 1 ch))
+
+(defcommand (ch "pload" arg1 arg2) (:wizard)
+  (unless (every #'digit-char-p arg1)
+    (send-to-char ch "Usage: pload [count] <object vnum> [<target char>]~%")
+    (return))
+
+  (if (every #'digit-char-p arg2)
+      (perform-pload ch (parse-integer arg2) (parse-integer arg1) ch)
+      (let ((targets (get-matching-objects ch arg2 (append (people-of (in-room-of ch))
+                                                           *characters*))))
+        (cond
+          ((null targets)
+           (send-to-char ch "You can't find any '~a'.~%" arg2))
+          ((rest targets)
+           (send-to-char ch "You can only pload onto one creature!~%"))
+          (t
+           (perform-pload ch (parse-integer arg1) 1 (first targets)))))))
+
+(defcommand (ch "pload" count-str vnum-str target-str) (:wizard)
+  (unless (and (every #'digit-char-p count-str)
+               (every #'digit-char-p vnum-str))
+    (send-to-char ch "Usage: pload [count] <object vnum> [<target char>]~%")
+    (return))
+
+  (let ((targets (get-matching-objects ch target-str (append (people-of (in-room-of ch))
+                                                             *characters*))))
+    (cond
+      ((null targets)
+       (send-to-char ch "You can't find any '~a'.~%" target-str))
+      ((rest targets)
+       (send-to-char ch "You can only pload onto one creature!~%"))
+      (t
+       (perform-pload ch
+                      (parse-integer vnum-str)
+                      (parse-integer count-str)
+                      (first targets))))))

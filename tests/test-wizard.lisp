@@ -234,3 +234,74 @@
         ;; remove created objects, if any
         (dolist (obj objs)
           (tempus::extract-obj obj))))))
+
+(deftest perform-pload/single-on-self/loads-object ()
+  (with-mock-players (alice bob)
+    (with-captured-log log
+        (tempus::perform-pload alice 1203 1 alice)
+      (is (search "(GC) Alice ploaded his large coffee mug[1203] onto self at 3002" log))
+      (is (equal "You create his large coffee mug.~%" (char-output alice)))
+      (is (equal "Alice does something suspicious and alters reality.~%" (char-output bob)))
+      (is (= 1 (count 1203 (tempus::carrying-of alice) :key 'tempus::vnum-of))))))
+
+(deftest perform-pload/multiple-on-self/loads-objects ()
+  (with-mock-players (alice bob)
+    (with-captured-log log
+        (tempus::perform-pload alice 1203 10 alice)
+      (is (search "(GC) Alice ploaded his large coffee mug[1203] onto self at 3002 (x10)" log))
+      (is (equal "You create his large coffee mug. (x10)~%" (char-output alice)))
+      (is (equal "Alice does something suspicious and alters reality.~%" (char-output bob)))
+      (is (= 10 (count 1203 (tempus::carrying-of alice) :key 'tempus::vnum-of))))))
+
+(deftest perform-pload/single-on-other/loads-object ()
+  (with-mock-players (alice bob eva)
+    (with-captured-log log
+        (tempus::perform-pload alice 1203 1 bob)
+      ;; hackily skip the mock player id
+      (is (search "(GC) Alice ploaded his large coffee mug[1203] onto PC Bob[" log))
+      (is (search "] at 3002" log))
+      (is (equal "You load his large coffee mug onto Bob.~%" (char-output alice)))
+      (is (equal "Alice causes his large coffee mug to appear in your hands.~%" (char-output bob)))
+      (is (equal "Alice does something suspicious and alters reality.~%" (char-output eva)))
+      (is (= 1 (count 1203 (tempus::carrying-of bob) :key 'tempus::vnum-of))))))
+
+(deftest perform-pload/multiple-on-other/loads-objects ()
+  (with-mock-players (alice bob eva)
+    (with-captured-log log
+        (tempus::perform-pload alice 1203 10 bob)
+      ;; hackily skip the mock player id
+      (is (search "(GC) Alice ploaded his large coffee mug[1203] onto PC Bob[" log))
+      (is (search "] at 3002 (x10)" log))
+      (is (equal "You load his large coffee mug onto Bob. (x10)~%" (char-output alice)))
+      (is (equal "Alice causes his large coffee mug to appear in your hands. (x10)~%" (char-output bob)))
+      (is (equal "Alice does something suspicious and alters reality.~%" (char-output eva)))
+      (is (= 10 (count 1203 (tempus::carrying-of bob) :key 'tempus::vnum-of))))))
+
+(deftest do-pload-vnum/normal/calls-perform-pload ()
+  (with-mock-players (alice)
+    (with-captured-log log
+        (function-trace-bind ((calls tempus::perform-pload))
+            (tempus::interpret-command alice "pload 1203")
+          (is (equal `((,alice 1203 1 ,alice)) calls))))))
+
+(deftest do-pload-arg1-arg2/with-count-and-vnum/calls-perform-pload ()
+  (with-mock-players (alice)
+    (with-captured-log log
+        (function-trace-bind ((calls tempus::perform-pload))
+            (tempus::interpret-command alice "pload 10 1203")
+          (is (equal `((,alice 1203 10 ,alice)) calls))))))
+
+(deftest do-pload-arg1-arg2/with-vnum-and-target/calls-perform-pload ()
+  (with-mock-players (alice bob)
+    (with-captured-log log
+        (function-trace-bind ((calls tempus::perform-pload))
+            (tempus::interpret-command alice "pload 1203 bob")
+          (is (equal `((,alice 1203 1 ,bob)) calls))))))
+
+(deftest do-pload-count-vnum-target/normal/calls-perform-pload ()
+  (with-mock-players (alice bob)
+    (with-captured-log log
+        (function-trace-bind ((calls tempus::perform-pload))
+            (tempus::interpret-command alice "pload 10 1203 bob")
+          (is (equal `((,alice 1203 10 ,bob)) calls))))))
+
