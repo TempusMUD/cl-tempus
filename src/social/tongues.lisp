@@ -48,7 +48,10 @@
     tongue))
 
 (defun tongue-name (idnum)
-  (name-of (gethash idnum *tongues*)))
+  (let ((tongue (gethash idnum *tongues*)))
+    (if tongue
+        (name-of tongue)
+        (format nil "<ILLEGAL #~d>" idnum))))
 
 (defun find-tongue-idx-by-name (name)
   (maphash (lambda (idnum tongue)
