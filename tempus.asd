@@ -68,7 +68,7 @@
              (:file "bomb" :pathname "objects/bomb"
                            :depends-on ("defs" "utils"))
              (:file "char-class" :pathname "classes/char-class"
-                    :depends-on ("defpackage"))
+                    :depends-on ("defpackage" "constants"))
              (:file "constants" :pathname "db/constants"
                     :depends-on ("defpackage"))
              (:file "clan" :pathname "clan/clan"
