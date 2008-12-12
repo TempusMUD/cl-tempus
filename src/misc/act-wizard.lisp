@@ -1419,3 +1419,43 @@
                       (parse-integer vnum-str)
                       (parse-integer count-str)
                       (first targets))))))
+
+(defcommand (ch "vstat" "mobile" vnum) (:immortal)
+  (unless (every #'digit-char-p vnum)
+    (send-to-char ch "Usage: vstat { { obj | mob } <number> | <alias> }~%")
+    (return))
+
+  (let ((mob (real-mobile-proto (parse-integer vnum))))
+    (if mob
+        (send-stats-to-char ch mob)
+        (send-to-char ch "There is no mobile with that vnum.~%"))))
+
+(defcommand (ch "vstat" "object" vnum) (:immortal)
+  (unless (every #'digit-char-p vnum)
+    (send-to-char ch "Usage: vstat { { obj | mob } <number> | <alias> }~%")
+    (return))
+
+  (let ((obj (real-object-proto (parse-integer vnum))))
+    (if obj
+        (send-stats-to-char ch obj)
+        (send-to-char ch "There is no object with that vnum.~%"))))
+
+(defcommand (ch "vstat" thing) (:immortal)
+  (let ((objs (get-matching-objects ch thing (append
+                                              (coerce (remove nil (equipment-of ch)) 'list)
+                                              (carrying-of ch)
+                                              (people-of (in-room-of ch))
+                                              (contents-of (in-room-of ch))))))
+    (cond
+      ((rest objs)
+       (send-to-char ch "You can only vstat one thing at a time!~%"))
+      ((null objs)
+       (send-to-char ch "Nothing around by that name.~%"))
+      ((typep (first objs) 'player)
+       (send-to-char ch "You can't vstat a player!~%"))
+      ((typep (first objs) 'creature)
+       (send-stats-to-char ch (real-mobile-proto (vnum-of (first objs)))))
+      ((typep (first objs) 'obj-data)
+       (send-stats-to-char ch (real-object-proto (vnum-of (first objs)))))
+      (t
+       (error "Can't happen")))))
