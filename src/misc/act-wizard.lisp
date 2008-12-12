@@ -139,6 +139,45 @@
                                    (name-of proto))))))
     count))
 
+
+
+(defun purge-creature (ch destroy-objects-p)
+  (unless destroy-objects-p
+    (loop
+       for pos from 0 upto (1- +num-wears+) do
+         (when (get-eq ch pos)
+           (let ((obj (unequip-char ch pos :worn t)))
+             (obj-to-room obj (in-room-of ch))))
+         (when (get-implant ch pos)
+           (let ((obj (unequip-char ch pos :implant t)))
+             (obj-to-room obj (in-room-of ch)))))
+    (dolist (obj (copy-list (carrying-of ch)))
+      (obj-from-char obj)
+      (obj-to-room obj (in-room-of ch))))
+
+  (unless (is-npc ch)
+    (setf (rentcode-of ch) :quit)
+    (setf (rent-per-day-of ch) 0)
+    (setf (desc-mode-of ch) 'unknown)
+    (setf (rent-currency-of ch) 0)
+    (setf (load-room-of ch) 0)
+    (setf (login-time-of ch) (now))
+    (save-player-to-xml ch))
+
+  (extract-creature ch 'disconnecting))
+
+(defun perform-purge (ch objs)
+  (when (null objs)
+    (send-to-char ch "Nothing around by that name.~%"))
+
+  ;; Now purge the unfortunates
+  (dolist (obj objs)
+    (etypecase obj
+      (creature
+       (purge-creature obj nil))
+      (obj-data
+       (extract-obj obj)))))
+
 (defcommand (ch "stat" "zone") (:immortal)
   (let ((zone (zone-of (in-room-of ch))))
     (send-to-char ch "Zone #&y~d: &c~a&n~%"
@@ -1459,3 +1498,33 @@
        (send-stats-to-char ch (real-object-proto (vnum-of (first objs)))))
       (t
        (error "Can't happen")))))
+
+(defcommand (ch "purge") (:immortal)
+  (let ((things (append
+                 (remove-if (lambda (x) (typep x 'player)) (people-of (in-room-of ch)))
+                 (contents-of (in-room-of ch)))))
+    (cond
+      (things
+       (act ch :place-emit "$n wave$% $s hand.")
+       (act ch :all-emit "The world seems a little cleaner.")
+       (perform-purge ch things))
+      (t
+       (send-to-char ch "The room already seems pretty clean.~%")))))
+
+(defcommand (ch "purge" thing) (:immortal)
+  (let ((things (get-matching-objects ch thing (append
+                                                (people-of (in-room-of ch))
+                                                (contents-of (in-room-of ch))))))
+    (loop
+       for obj-sublist on things
+       as obj = (first obj-sublist)
+       as next-obj = (second obj-sublist)
+       as counter from 1
+       do
+         (when (or (null next-obj)
+                   (string/= (name-of next-obj) (name-of obj)))
+           (act ch :item obj
+                :all-emit (format nil "$n disintegrate$% $p.~[~;~:;~:* (x~d)~]" counter))
+           (setf counter 0)))
+
+    (perform-purge ch things)))
