@@ -749,9 +749,8 @@ choose a password to use on this system.
   (send-state-prompt cxn (state-of cxn)))
 
 (defun cxn-do-command (cxn line)
-  (restart-case
-      (handle-state-input cxn (state-of cxn) line)
-   (continue () nil)))
+  (with-simple-restart (continue "Continue from signal in command handler")
+    (handle-state-input cxn (state-of cxn) line)))
 
 (defvar *break-on-error* t)
 
