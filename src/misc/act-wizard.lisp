@@ -594,15 +594,16 @@
                   (cost-per-day-of (shared-of obj))
                   (timer-of obj))
     (let ((room (where-obj obj)))
-      (send-to-char ch "Absolute location: ~a (~d)~%"
-                    (name-of room)
-                    (number-of room)))
-    (send-to-char ch "In room: &c~d&n, In obj: &g~a&n, Carry: &g~a&n, Worn: &g~a&n, Aux: &g~a&n~%"
-                  (when (in-room-of obj) (number-of (in-room-of obj)))
-                  (when (in-obj-of obj) (name-of (in-obj-of obj)))
-                  (when (carried-by-of obj) (name-of (carried-by-of obj)))
-                  (when (worn-by-of obj) (name-of (worn-by-of obj)))
-                  (when (aux-obj-of obj) (name-of (aux-obj-of obj))))
+      (when room
+        (send-to-char ch "Absolute location: ~a (~d)~%"
+                      (name-of room)
+                      (number-of room))
+        (send-to-char ch "In room: &c~d&n, In obj: &g~a&n, Carry: &g~a&n, Worn: &g~a&n, Aux: &g~a&n~%"
+                      (when (in-room-of obj) (number-of (in-room-of obj)))
+                      (when (in-obj-of obj) (name-of (in-obj-of obj)))
+                      (when (carried-by-of obj) (name-of (carried-by-of obj)))
+                      (when (worn-by-of obj) (name-of (worn-by-of obj)))
+                      (when (aux-obj-of obj) (name-of (aux-obj-of obj))))))
     (send-to-char ch "Material: [&y~a&n (~d)], Maxdamage: [~d], Damage: [~d]~%"
                   (aref +material-names+ (material-of obj))
                   (material-of obj)
@@ -618,8 +619,9 @@
                   (aref (value-of obj) 2)
                   (aref +item-kind-values+ (kind-of obj) 3)
                   (aref (value-of obj) 3))
-    (when (eql (proto-of (shared-of obj)) obj)
-      (send-to-char ch "Spec_param:~%~a~%" (func-param-of obj)))
+    (when (and (eql (proto-of (shared-of obj)) obj)
+               (func-param-of (shared-of obj)))
+      (send-to-char ch "Spec_param:~%~a~%" (func-param-of (shared-of obj))))
     (send-to-char ch "Affections: ~{~a~^, ~}~%"
                   (or
                    (loop
@@ -955,21 +957,6 @@
           (when param
             (send-to-char ch "Load param:~%~a~%" param)))))
 
-    (when (in-room-of k)
-      (send-to-char ch "Encum : (~d inv + ~d eq) = (~d tot)/~d, Number: ~d/~d inv, ~d eq, ~d imp~%"
-                    (carry-weight-of k)
-                    (worn-weight-of k)
-                    (+ (carry-weight-of k) (worn-weight-of k))
-                    (can-carry-weight k)
-                    (carry-items-of k)
-                    (can-carry-items k)
-                    (count-if #'identity (equipment-of k))
-                    (count-if #'identity (implants-of k)))
-      (when (or (plusp (breath-count-of k)) (plusp (fall-count-of k)))
-        (send-to-char ch "Breath count: ~d, Fall count: ~d~%"
-                      (breath-count-of k)
-                      (fall-count-of k))))
-
     (when (not (is-npc k))
       (send-to-char ch "Hunger: ~d, Thirst: ~d, Drunk: ~d~%"
                     (get-condition k +full+)
@@ -982,8 +969,9 @@
                     (or (quest-name (quest-id-of k)) "None")))
 
     (when (and (in-room-of k) (or (master-of k) (followers-of k)))
-      (send-to-char ch "Master is: ~a, Followers are: ~:[<none>~;~:*~{~a~^, ~}~]~%"
-                    (name-of (master-of k))
+      (send-to-char ch "Master is: ~:[<none>~*~;~a~], Followers are: ~:[<none>~;~:*~{~a~^, ~}~]~%"
+                    (master-of k)
+                    (and (master-of k) (name-of (master-of k)))
                     (mapcar 'name-of (followers-of k))))
 
     (when (plusp (aff-flags-of k))
@@ -1011,9 +999,11 @@
     (send-to-char ch "Currently speaking: &c~a&n~%"
                   (tongue-name (current-tongue-of k)))
 
-    (when (tongues-heard-of ch)
+    (when (and (not (is-npc k))
+               (in-room-of k)
+               (tongues-heard-of k))
       (send-to-char ch "Recently heard: ~{~a~^, ~}~%"
-                    (mapcar 'name-of (tongues-heard-of ch))))
+                    (mapcar 'name-of (tongues-heard-of k))))
 
     (send-to-char ch "Known Languages:~%")
     (loop
