@@ -25,7 +25,7 @@
   (define-toggle-command "nogossip" () +pref-nogoss+
                          "You are now deaf to gossip."
                          "You can now hear gossip.")
-  (define-toggle-command "nogratz" () +pref-nogratz+
+  (define-toggle-command "nograts" () +pref-nogratz+
                          "You are now deaf to the congratulation messages."
                          "You can now hear the congratulation messages.")
   (define-toggle-command "nowiz" (:wizard) +pref-nowiz+
@@ -52,7 +52,7 @@
   (define-toggle-command "autopage" () +pref-autopage+
                          "You will now receive a bell tone if someone tells to you."
                          "You will no longer be beeped if someone tells to you.")
-  (define-toggle-command "noclan" () +pref-noclansay+
+  (define-toggle-command "noclansay" () +pref-noclansay+
                          "You have closed yourself to clan communication."
                          "You have opened yourself to clan communication.")
   (define-toggle-command "debug" (:immortal) +pref-debug+

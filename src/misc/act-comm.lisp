@@ -176,7 +176,7 @@
 (defcommand (ch #\: message) (:resting)
   (perform-emote ch message))
 
-(eval-when (:compile-toplevel :load-toplevel)
+(eval-when (:compile-toplevel :load-toplevel :execute)
   (defparameter +channels+
     '((:name "holler"
        :deaf-flag #.+pref-noholler+
@@ -208,7 +208,7 @@
        :npc-only-message "Only licensed auctioneers can use that channel!"
        :not-on-message "You aren't even on the channel!"
        :muted-message "You cannot auction!!")
-      (:name "congrat"
+      (:name "grat"
        :scope plane
        :deaf-flag #.+pref-nogratz+
        :desc-color #\g
@@ -289,14 +289,14 @@
        :text-color #\c
        :not-on-message "You aren't listening to the words of your clan."
        :muted-message "The immortals have muted you.  You may not clan emote.")
-      (:name "immchat"
+      (:name "imm"
        :scope universe
        :deaf-flag #.+pref-noimmchat+
        :desc-color #\y
        :text-color #\y
        :not-on-message "You aren't on the immchat channel."
        :group "immortal")
-      (:name "wizchat"
+      (:name "wiz"
        :scope universe
        :deaf-flag #.+pref-nowiz+
        :desc-color #\c
@@ -489,6 +489,7 @@
 (defun do-gen-comm (ch chan-name message)
   (let ((chan (find chan-name +channels+ :test (lambda (x y)
                                                  (string= x (getf y :name))))))
+    (assert chan nil "Channel ~a not found" chan-name)
     (when (can-use-channel ch chan)
       (perform-channel-emits ch chan
                              (is-evil ch)
@@ -496,6 +497,14 @@
                              (char-class-of ch)
                              (clan-of ch)
                              message))))
+
+(defcommand (ch #\; msg) (:resting)
+  (do-gen-comm ch "wiz" msg))
+
+(defcommand (ch #\;) (:resting)
+  (send-to-char ch "Yes, wiz, fine, wiz we must, but WHAT???~%"))
+
+
 
 (macrolet ((define-channels ()
              `(progn
