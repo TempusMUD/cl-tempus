@@ -786,7 +786,7 @@
     (send-to-char ch " &b(deaf)"))
   (when (pref-flagged player +pref-notell+)
     (send-to-char ch " &b(notell)"))
-  (when (quest-id-of player)
+  (when (plusp (quest-id-of player))
     (send-to-char ch " &Y(quest)"))
   (when (plr-flagged player +plr-afk+)
     (send-to-char ch " &g(afk)")))
