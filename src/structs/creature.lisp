@@ -672,3 +672,28 @@
   (when (link-of ch)
     (setf (state-of (link-of ch)) link-state)))
 
+(defun restore-creature (ch)
+  (setf (hitp-of ch) (max-hitp-of ch))
+  (setf (mana-of ch) (max-mana-of ch))
+  (setf (move-of ch) (max-move-of ch))
+
+  (unless (minusp (get-condition ch +full+))
+    (setf (aref (conditions-of ch) +full+) 24))
+  (unless (minusp (get-condition ch +thirst+))
+    (setf (aref (conditions-of ch) +thirst+) 24))
+  (setf (aref (conditions-of ch) +drunk+) 0)
+
+  (when (immortalp ch)
+    (loop for i from 1 upto +max-skills+ do
+         (set (aref (skills-of ch) i) 100))
+    (loop for i from 1 upto +max-tongues+ do
+         (set (aref (tongues-of ch) i) 100))
+    (setf (str-of ch) 25)
+    (setf (int-of ch) 25)
+    (setf (wis-of ch) 25)
+    (setf (dex-of ch) 25)
+    (setf (con-of ch) 25)
+    (setf (cha-of ch) 25)
+    (setf (real-abils-of ch) (copy-abilities (aff-abils-of ch))))
+
+  (update-pos ch))

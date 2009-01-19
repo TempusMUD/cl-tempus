@@ -1583,3 +1583,22 @@ You feel slightly different.")
        (gain-exp-regardless target
                             (- (aref +exp-scale+ level) (exp-of target)))
        (save-player-to-xml target)))))
+
+(defcommand (ch "restore") (:immortal)
+  (send-to-char ch "Whom do you wish to restore?~%"))
+
+(defcommand (ch "restore" target-str) (:immortal)
+  (let* ((targets (get-matching-objects ch target-str
+                                        (append
+                                         (people-of (in-room-of ch))
+                                         *characters*))))
+    (cond
+      ((null targets)
+       (send-to-char ch "You don't see anyone like that.~%"))
+      (t
+       (send-to-char ch "You got it.~%")
+       (dolist (target targets)
+         (act ch :target target
+              :target-emit "You have been fully healed by $n!")
+         (mudlog 'info t "~a has been restored by ~a" (name-of target) (name-of ch))
+         (restore-creature target))))))

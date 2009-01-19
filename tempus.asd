@@ -159,6 +159,8 @@
   :components ((:file "defpackage" :pathname "tests/test-defpackage")
                (:file "helpers" :pathname "tests/helpers"
                       :depends-on ("defpackage"))
+               (:file "test-combat" :pathname "tests/test-combat"
+                      :depends-on ("helpers"))
                (:file "test-comm" :pathname "tests/test-comm"
                       :depends-on ("helpers"))
                (:file "test-creature" :pathname "tests/test-creature"

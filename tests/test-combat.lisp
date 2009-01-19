@@ -1,0 +1,45 @@
+(in-package #:tempus.tests)
+
+(in-suite (defsuite (tempus.combat :in test)))
+
+(deftest update-pos/ch-at-negative-15-hitp/ch-is-dead ()
+  (with-mock-players (alice)
+    (setf (tempus::hitp-of alice) -15)
+    (tempus::update-pos alice)
+    (is (= (tempus::position-of alice) tempus::+pos-dead+))))
+
+(deftest update-pos/ch-at-negative-10-hitp/ch-is-mortallyw ()
+  (with-mock-players (alice)
+    (setf (tempus::hitp-of alice) -10)
+    (tempus::update-pos alice)
+    (is (= (tempus::position-of alice) tempus::+pos-mortallyw+))))
+
+(deftest update-pos/ch-at-negative-5-hitp/ch-is-incap ()
+  (with-mock-players (alice)
+    (setf (tempus::hitp-of alice) -5)
+    (tempus::update-pos alice)
+    (is (= (tempus::position-of alice) tempus::+pos-incap+))))
+
+(deftest update-pos/ch-at-negative-1-hitp/ch-is-stunned ()
+  (with-mock-players (alice)
+    (setf (tempus::hitp-of alice) -1)
+    (tempus::update-pos alice)
+    (is (= (tempus::position-of alice) tempus::+pos-stunned+))))
+
+(deftest update-pos/ch-is-sleeping/ch-is-resting ()
+  (with-mock-players (alice)
+    (setf (tempus::position-of alice) tempus::+pos-sleeping+)
+    (tempus::update-pos alice)
+    (is (= (tempus::position-of alice) tempus::+pos-resting+))))
+
+(deftest update-pos/ch-is-fighting/ch-pos-is-fighting ()
+  (with-mock-players (alice bob)
+    (setf (tempus::fighting-of alice) (list bob))
+    (tempus::update-pos alice)
+    (is (= (tempus::position-of alice) tempus::+pos-fighting+))))
+
+(deftest update-pos/ch-is-stunned/ch-is-resting ()
+  (with-mock-players (alice bob)
+    (setf (tempus::position-of alice) tempus::+pos-stunned+)
+    (tempus::update-pos alice)
+    (is (= (tempus::position-of alice) tempus::+pos-resting+))))

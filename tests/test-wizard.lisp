@@ -339,3 +339,14 @@
       (is (search "Alice makes some strange gestures.~%" (char-output bob)))
       (is (search "You rise 9 levels!~%" (char-output bob)))
       (is (search "(GC) Alice has advanced Bob to level 10 (from 1)" log)))))
+
+(deftest do-restore-target/normal/target-is-restored ()
+  (with-mock-players (alice bob)
+    (setf (tempus::level-of alice) 72)
+    (with-captured-log log
+        (function-trace-bind ((calls tempus::restore-creature))
+            (tempus::interpret-command alice "restore bob")
+          (is (equal `((,bob)) calls)))
+      (is (search "You got it.~%" (char-output alice)))
+      (is (equal "You have been fully healed by Alice!~%" (char-output bob)))
+      (is (search "Bob has been restored by Alice" log)))))
