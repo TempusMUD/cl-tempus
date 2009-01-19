@@ -10,9 +10,9 @@
       (is (eql (tempus::to-room-of
                 (aref (tempus::dir-option-of orig-room) tempus::+east+))
                (tempus::number-of (tempus::in-room-of alice))))
-      (is (search "The Chamber of Relics" (char-output alice)))
+      (is (search "The Chamber of Healing" (char-output alice)))
       (is (search "[ Exits: s w ]" (char-output alice)))
-      (is (search "   In this alcove, which is at the northeastern corner"
+      (is (search "   You stand in a small alcove which is nestled into"
                        (char-output alice)))
       (is (or (string= (char-output bob) "Alice walks east.~%")
               (string= (char-output bob) "Alice strolls east.~%")
@@ -33,8 +33,8 @@
   (with-mock-players (alice)
     (setf (tempus::bitp (tempus::prefs-of alice) tempus::+pref-brief+) t)
     (tempus::interpret-command alice "e")
-    (is (search "The Chamber of Relics" (char-output alice)))
-    (is (null (search "   In this alcove, which is at the northeastern corner"
+    (is (search "The Chamber of Healing" (char-output alice)))
+    (is (null (search "   You stand in a small alcove which is nestled into"
                       (char-output alice))))))
 
 (deftest standing ()
