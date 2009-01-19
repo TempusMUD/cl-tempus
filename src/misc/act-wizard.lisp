@@ -1504,8 +1504,11 @@
                  (contents-of (in-room-of ch)))))
     (cond
       (things
-       (act ch :place-emit "$n wave$% $s hand.")
+       (act ch :place-emit "$n gestures... You are surrounded by scorching flames!")
        (act ch :all-emit "The world seems a little cleaner.")
+       (slog "(GC) ~a has purged room ~a"
+             (name-of ch)
+             (name-of (in-room-of ch)))
        (perform-purge ch things))
       (t
        (send-to-char ch "The room already seems pretty clean.~%")))))
@@ -1527,3 +1530,56 @@
            (setf counter 0)))
 
     (perform-purge ch things)))
+
+(defcommand (ch "advance")
+    (send-to-char ch "Advance who?~%"))
+
+(defcommand (ch "advance" name)
+    (send-to-char ch "Advance them to what level?~%"))
+
+(defcommand (ch "advance" target-str level-str) (:immortal)
+  (let* ((targets (get-matching-objects ch target-str
+                                        (people-of (in-room-of ch))))
+         (target (first targets))
+         (level (and (every #'digit-char-p level-str)
+                     (parse-integer level-str))))
+    (cond
+      ((null level)
+       (send-to-char ch "That's not a level!~%"))
+      ((rest targets)
+       (send-to-char ch "You can only advance one person at a time.~%"))
+      ((<= (level-of ch) (level-of target))
+       (send-to-char ch "Maybe that's not such a great idea.~%"))
+      ((is-npc target)
+       (send-to-char ch "NO!  Not on NPCs!~%"))
+      ((> level +lvl-grimp+)
+       (send-to-char ch "~d is the highest possible level.~%" +lvl-grimp+))
+      ((> level (level-of ch))
+       (send-to-char ch "Yeah, right.~%"))
+      ((< level (level-of target))
+       (do-start target nil)
+       (setf (level-of target) level))
+      (t
+       (act ch :target target
+            :subject-emit "You got it.~%"
+            :target-emit "$n makes some strange gestures.
+A strange feeling comes upon you,
+Like a giant hand, light comes down
+from above, grabbing your body, that
+begins to pulse with colored lights
+from inside.
+
+Your head seems to be filled with demons
+from another plane as your body dissolves
+to the elements of time and space itself.
+Suddenly a silent explosion of light
+snaps you back to reality.
+You feel slightly different.")
+       (slog "(GC) ~a has advanced ~a to level ~d (from ~d)"
+             (name-of ch)
+             (name-of target)
+             level
+             (level-of target))
+       (gain-exp-regardless target
+                            (- (aref +exp-scale+ level) (exp-of target)))
+       (save-player-to-xml target)))))

@@ -152,7 +152,7 @@
 
 (defun syslog (fmt &rest args)
   "Logs a message to *STANDARD-OUTPUT* with a timestamp, and sends it to all immortals who aren't editing something."
-  (format t "(~s \"~?\")~%" (local-time:now) fmt args)
+  (format *log-output* "(~s \"~?\")~%" (local-time:now) fmt args)
   (force-output))
 
 #+nil (defun errlog (fmt &rest args)

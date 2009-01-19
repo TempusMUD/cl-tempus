@@ -63,6 +63,7 @@
                                :name name
                                :idnum (incf *top-mock-player*)
                                :aliases (format nil "~(~a .~:*~a~)" name)
+                               :level 1
                                :link link))
          (account (make-instance 'tempus::account
                                  :name (format nil "test-~(~a~)" name))))

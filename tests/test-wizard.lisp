@@ -305,3 +305,37 @@
             (tempus::interpret-command alice "pload 10 1203 bob")
           (is (equal `((,alice 1203 10 ,bob)) calls))))))
 
+(deftest gain-exp-regardless/normal/gains-exp ()
+  (with-mock-players (alice)
+    (setf (tempus::level-of alice) 10)
+    (setf (tempus::exp-of alice) (aref tempus::+exp-scale+ 10))
+    (with-captured-log log
+        (tempus::gain-exp-regardless alice 500)
+      (is (equal "" (char-output alice)))
+      (is (= (tempus::level-of alice) 10))
+      (is (= (tempus::exp-of alice) (+ 500 (aref tempus::+exp-scale+ 10))))
+      (is (equal "" log)))))
+
+(deftest gain-exp-regardless/enough-for-level/gains-exp-and-level ()
+  (with-mock-players (alice)
+    (setf (tempus::level-of alice) 10)
+    (setf (tempus::exp-of alice) (aref tempus::+exp-scale+ 10))
+    (with-captured-log log
+        (tempus::gain-exp-regardless alice (- (aref tempus::+exp-scale+ 11)
+                                              (aref tempus::+exp-scale+ 10)))
+      (is (equal "You rise a level!~%" (char-output alice)))
+      (is (= (tempus::level-of alice) 11))
+      (is (= (tempus::exp-of alice) (aref tempus::+exp-scale+ 11)))
+      (is (search "Alice advanced to level 11" log)))))
+
+(deftest do-advance-target/normal/target-gains-exp ()
+  (with-mock-players (alice bob)
+    (setf (tempus::level-of alice) 72)
+    (with-captured-log log
+        (function-trace-bind ((calls tempus::gain-exp-regardless))
+            (tempus::interpret-command alice "advance bob 10")
+          (is (equal `((,bob ,(aref tempus::+exp-scale+ 10))) calls)))
+      (is (search "You got it.~%" (char-output alice)))
+      (is (search "Alice makes some strange gestures.~%" (char-output bob)))
+      (is (search "You rise 9 levels!~%" (char-output bob)))
+      (is (search "(GC) Alice has advanced Bob to level 10 (from 1)" log)))))

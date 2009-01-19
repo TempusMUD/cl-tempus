@@ -199,3 +199,19 @@ file."
 	(save-account account)
 	(setf (title-of actor) "the utter newbie")
 	(save-player-to-xml actor)))
+
+(defun deposit-future-bank (account amount)
+  "Deposits AMOUNT into the future bank of ACCOUNT."
+  (check-type account account)
+  (assert (not (minusp amount)))
+  (unless (zerop amount)
+    (incf (future-bank-of account) amount)
+    (save-account account)))
+
+(defun deposit-past-bank (account amount)
+  "Deposits AMOUNT into the past bank of ACCOUNT."
+  (check-type account account)
+  (assert (not (minusp amount)))
+  (unless (zerop amount)
+    (incf (past-bank-of account) amount)
+    (save-account account)))

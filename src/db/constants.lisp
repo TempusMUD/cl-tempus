@@ -1042,6 +1042,10 @@
 
 (defparameter +top-class+ 180)
 
+(defparameter +borg-power+ 0)
+(defparameter +borg-speed+ 0)
+(defparameter +borg-mentant+ 0)
+
 (defparameter +race-human+ 0)
 (defparameter +race-elf+ 1)
 (defparameter +race-dwarf+ 2)
@@ -1715,6 +1719,37 @@
 
 (defun str-app-type-to-hit (plist)
   (getf plist :to-hit))
+
+(defun str-app-type-to-dam (plist)
+  (getf plist :to-dam))
+
+(defparameter +con-app+
+  #((:hitp -4 :shock 20)
+	(:hitp -3 :shock 25)
+	(:hitp -2 :shock 30)
+	(:hitp -2 :shock 35)
+	(:hitp -1 :shock 40)
+	(:hitp -1 :shock 45)
+	(:hitp -1 :shock 50)
+	(:hitp 0 :shock 55)
+	(:hitp 0 :shock 60)
+	(:hitp 0 :shock 65)
+	(:hitp 0 :shock 70)
+	(:hitp 0 :shock 75)
+	(:hitp 0 :shock 80)
+	(:hitp 1 :shock 85)
+	(:hitp 2 :shock 88)
+	(:hitp 3 :shock 90)
+	(:hitp 5 :shock 95)
+	(:hitp 6 :shock 97)
+	(:hitp 7 :shock 99)
+	(:hitp 8 :shock 99)
+	(:hitp 9 :shock 99)
+	(:hitp 10 :shock 99)
+	(:hitp 11 :shock 99)
+	(:hitp 12 :shock 99)
+	(:hitp 13 :shock 99)
+	(:hitp 14 :shock 100)))
 
 (defparameter +trail-flags+ #("BLOODPRINTS" "BLOOD_DROPS"))
 

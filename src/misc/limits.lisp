@@ -77,3 +77,23 @@
 
 (defun move-gain (ch)
   0)
+
+(defun gain-exp-regardless (ch gain)
+  (incf (exp-of ch) gain)
+  (when (minusp (exp-of ch))
+    (setf (exp-of ch) 0))
+
+  (unless (is-npc ch)
+    (let ((num-levels 0))
+    (loop
+       while (and (< (level-of ch) +lvl-grimp+)
+                  (>= (exp-of ch) (aref +exp-scale+ (1+ (level-of ch)))))
+       do
+         (incf num-levels)
+         (incf (level-of ch))
+         (advance-level ch t))
+    (cond
+      ((= num-levels 1)
+       (send-to-char ch "You rise a level!~%"))
+      ((plusp num-levels)
+       (send-to-char ch "You rise ~d levels!~%" num-levels))))))
