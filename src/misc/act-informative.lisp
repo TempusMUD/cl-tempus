@@ -234,7 +234,7 @@
         (format stream "...~a is completely transparent.~%"
                 (he-or-she i)))
   (when (and (affected-by-spell i +skill-kata+)
-             (>= (get-level-bonus i +skill-kata+) 50))
+             (>= (get-skill-bonus i +skill-kata+) 50))
         (format stream "...~a hands are glowing eerily.~%"
                 (his-or-her i)))
   (when (affected-by-spell i +spell-gauss-shield+)
@@ -488,10 +488,10 @@
                (not (aff3-flagged ch +aff3-sonic-imagery+))
                (not (pref-flagged ch +pref-holylight+)))
           ;; You might not see hiding creatures
-          (let ((hide-prob (random-range 0 (get-level-bonus i +skill-hide+)))
-                (hide-roll (+ (random-range 0 (get-level-bonus ch nil))
+          (let ((hide-prob (random-range 0 (get-skill-bonus i +skill-hide+)))
+                (hide-roll (+ (random-range 0 (get-level-bonus ch))
                               (if (affected-by-spell ch +zen-awareness+)
-                                  (floor (get-level-bonus ch +zen-awareness+) 4)
+                                  (floor (get-skill-bonus ch +zen-awareness+) 4)
                                   0))))
             (cond
               ((> hide-prob hide-roll)
