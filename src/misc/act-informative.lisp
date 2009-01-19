@@ -976,3 +976,11 @@
      (send-to-char ch "You have one miserable little credit.~%"))
     (t
      (send-to-char ch "You have ~a credits.~%" (cash-of ch)))))
+
+(defcommand (ch "alignment") ()
+  (send-to-char ch "&~cYour alignment is ~d.&n~%"
+                  (cond
+                    ((is-good ch) #\c)
+                    ((is-evil ch) #\r)
+                    (t            #\y))
+                  (alignment-of ch)))
