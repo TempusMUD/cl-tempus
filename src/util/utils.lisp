@@ -665,16 +665,3 @@ sequences in seq-list with the delimiter between each element"
 
 (defun rl-sec (sec)
   (* sec 10))
-
-(defun strength-apply-index (ch)
-  (cond
-    ((not (<= 0 (str-of ch) 25))
-     11)
-    ((/= (str-of ch) 18)
-     (str-of ch))
-    ((= (str-add-of ch) 99)
-     35)
-    ((= (str-add-of ch) 100)
-     36)
-    (t
-     (+ (floor (str-add-of ch) 10) 25))))

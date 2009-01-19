@@ -591,7 +591,8 @@
       ("Str"
        (setf (str-of (real-abils-of mobile)) (pin num-arg 3 25)))
       ("StrAdd"
-       (setf (str-add-of (real-abils-of mobile)) (pin num-arg 0 100)))
+       ;; ignored
+       nil)
       ("Int"
        (setf (int-of (real-abils-of mobile)) (pin num-arg 3 25)))
       ("Wis"
@@ -689,7 +690,6 @@
                                                (fread-string inf))
           (fdesc-of mobile) (fread-string inf)
           (str-of (real-abils-of mobile)) 11
-          (str-add-of (real-abils-of mobile)) 0
           (int-of (real-abils-of mobile)) 11
           (wis-of (real-abils-of mobile)) 11
           (dex-of (real-abils-of mobile)) 11

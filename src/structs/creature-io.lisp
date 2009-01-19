@@ -81,7 +81,6 @@
            (setf (real-abils-of ch)
                  (make-instance 'char-ability-data
                                 :str (xml-attr node "str" :numeric t :default 11)
-                                :str-add (xml-attr node "stradd" :numeric t :default 11)
                                 :int (xml-attr node "int" :numeric t :default 11)
                                 :wis (xml-attr node "wis" :numeric t :default 11)
                                 :dex (xml-attr node "dex" :numeric t :default 11)

@@ -44,7 +44,7 @@
       (setf (move-of ch) (max 0 (- (move-of 10))))
       (wait-state ch (rl-sec 2))
 
-      (decf (duration-of af) (* (str-app-type-to-dam (aref +str-app+ (strength-apply-index ch))) 2))
+      (decf (duration-of af) (* (str-app-type-to-dam (aref +str-app+ (str-of ch))) 2))
       (unless (plusp (duration-of af))
         (act ch :subject-emit "You break free!"
              :place-emit "$n breaks free from $s entanglement!")

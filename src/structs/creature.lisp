@@ -20,7 +20,6 @@
 
 (defclass char-ability-data ()
   ((str :accessor str-of :initarg :str :initform 11)
-   (str-add :accessor str-add-of :initarg :str-add :initform 0)
    (int :accessor int-of :initarg :int :initform 11)
    (wis :accessor wis-of :initarg :wis :initform 11)
    (dex :accessor dex-of :initarg :dex :initform 11)
@@ -204,7 +203,7 @@
    (qp-allowance :accessor qp-allowance-of :initarg :qp-allowance :initform nil)
    (badge :accessor badge-of :initarg :badge :initform nil)
    (deity :accessor deity-of :initarg :deity :initform nil)
-   (life-points :accessor life-points-of :initarg :life-points :initform nil)
+   (life-points :accessor life-points-of :initarg :life-points :initform 0)
    (pkills :accessor pkills-of :initarg :pkills :initform 0)
    (akills :accessor akills-of :initarg :akills :initform 0)
    (mobkills :accessor mobkills-of :initarg :mobkills :initform 0)
@@ -234,7 +233,6 @@
 (defun copy-abilities (abils)
   (make-instance 'char-ability-data
                  :str (str-of abils)
-                 :str-add (str-add-of abils)
                  :int (int-of abils)
                  :wis (wis-of abils)
                  :dex (dex-of abils)
@@ -243,8 +241,6 @@
 
 (defmethod str-of ((ch creature))
   (str-of (aff-abils-of ch)))
-(defmethod str-add-of ((ch creature))
-  (str-add-of (aff-abils-of ch)))
 (defmethod int-of ((ch creature))
   (int-of (aff-abils-of ch)))
 (defmethod wis-of ((ch creature))

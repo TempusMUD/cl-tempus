@@ -891,9 +891,8 @@
                     (mobkills-of k)
                     (pkills-of k)
                     (deaths-of k)))
-    (send-to-char ch "Str: [&c~d/~d&n]  Int: [&c~d&n]  Wis: [&c~d&n]  Dex: [&c~d&n]  Con: [&c~d&n]  Cha: [&c~d&n]~%"
+    (send-to-char ch "Str: [&c~d&n]  Int: [&c~d&n]  Wis: [&c~d&n]  Dex: [&c~d&n]  Con: [&c~d&n]  Cha: [&c~d&n]~%"
                   (str-of k)
-                  (str-add-of k)
                   (int-of k)
                   (wis-of k)
                   (dex-of k)

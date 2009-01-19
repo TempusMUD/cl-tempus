@@ -111,9 +111,7 @@
      (when (and (< loc +max-skills+) (not (is-npc ch)))
        (apply-skill ch loc mod)))
     ((= loc +apply-str+)
-     (incf (str-of (aff-abils-of ch)) mod)
-     (incf (str-of (aff-abils-of ch)) (floor (str-add-of (aff-abils-of ch)) 10))
-     (setf (str-add-of (aff-abils-of ch)) 0))
+     (incf (str-of (aff-abils-of ch)) mod))
     ((= loc +apply-dex+)
      (incf (dex-of (aff-abils-of ch)) mod))
     ((= loc +apply-int+)
@@ -322,35 +320,7 @@
   ;; Make sure that hit !> max-hit, etc
   (setf (hitp-of ch) (min (max-hitp-of ch) (hitp-of ch)))
   (setf (mana-of ch) (min (max-mana-of ch) (mana-of ch)))
-  (setf (move-of ch) (min (max-move-of ch) (move-of ch)))
-
-  (let ((i (+ (str-of (aff-abils-of ch)) (floor (str-add-of (aff-abils-of ch)) 10))))
-    (cond
-      ((<= i 18)
-       (setf (str-add-of (aff-abils-of ch)) 0))
-      ((<= i 28)
-       (setf (str-of (aff-abils-of ch)) 18)
-       (setf (str-add-of (aff-abils-of ch)) (* (- i 18) 10)))
-      ((or (is-remort ch)
-           (is-minotaur ch)
-           (is-npc ch)
-           (is-half-orc ch)
-           (is-dwarf ch)
-           (is-orc ch)
-           (immortal-level-p ch))
-       (setf (str-of (aff-abils-of ch)) (min 25
-                              (- (+ (str-of (aff-abils-of ch)) (floor (str-add-of (aff-abils-of ch)) 10)) 10)
-                              (+ 18
-                                 (remort-gen-of ch)
-                                 (if (or (is-npc ch) (immortal-level-p ch)) 8 0)
-                                 (if (is-minotaur ch) 2 0)
-                                 (if (is-dwarf ch) 1 0)
-                                 (if (is-half-orc ch) 2 0)
-                                 (if (is-orc ch) 1 0))))
-       (setf (str-add-of (aff-abils-of ch)) 0))
-      (t
-       (setf (str-of (aff-abils-of ch)) 18)
-       (setf (str-add-of (aff-abils-of ch)) 100)))))
+  (setf (move-of ch) (min (max-move-of ch) (move-of ch))))
 
 (defun affect-to-char (ch af)
   "Insert an affect type in a creature, setting appropriate bits and applies"

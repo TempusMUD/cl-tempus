@@ -142,7 +142,7 @@
      (if (aff2-flagged ch +aff2-telekinesis+) (floor (level-of ch) 4) 0)))
 
 (defun can-carry-weight (ch)
-  (let ((raw-weight (getf (aref +str-app+ (strength-apply-index ch)) :carry-w)))
+  (let ((raw-weight (getf (aref +str-app+ (str-of ch)) :carry-w)))
     (max 10
          (+ (if (aff2-flagged ch +aff2-telekinesis+)
                 (* raw-weight 2)
@@ -425,7 +425,7 @@
           :subject-emit "You can't be using your hands for anything else to use $p."))
     ((and (= pos +wear-shield+)
           (> (weight-of obj) (* 1.5 (getf (aref +str-app+
-                                                (strength-apply-index ch))
+                                                (str-of ch))
                                           :wield-w))))
      (send-to-char ch "It's too damn heavy.~%"))
     ((and (not (approvedp obj))
@@ -1421,7 +1421,7 @@
       ((not (can-wear obj +item-wear-wield+))
        (send-to-char ch "You can't wield that.~%"))
       ((> (weight-of obj) (getf (aref +str-app+
-                                                (strength-apply-index ch))
+                                                (str-of ch))
                                           :wield-w))
        (send-to-char ch "It's too damn heavy.~%"))
       ((and (is-cleric ch)
