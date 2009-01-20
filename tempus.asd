@@ -75,6 +75,8 @@
                            :depends-on ("defs" "utils"))
              (:file "combat-messages" :pathname "combat/combat-messages"
                                       :depends-on ("defs" "utils"))
+             (:file "combat-utils" :pathname "combat/combat-utils"
+                                      :depends-on ("defs" "utils"))
              (:file "comm" :pathname "net/comm"
                            :depends-on ("defs" "utils" "network" "nanny"))
              (:file "creature" :pathname "structs/creature"
