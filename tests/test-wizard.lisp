@@ -456,3 +456,16 @@
         (tempus::interpret-command alice "invis 60")
       (is (equal `((,alice 60)) calls)))
     (is (= 60 (tempus::invis-level-of alice)))))
+
+(deftest do-gecho/no-arg/error-message ()
+  (with-mock-players (alice)
+    (tempus::interpret-command alice "gecho")
+    (is (equal "That must be a mistake...~%" (char-output alice)))))
+
+(deftest do-gecho/with-arg/message-sent-to-all ()
+  (with-mock-players (alice bob ike)
+    (setf (tempus::level-of ike) 60)
+    (tempus::interpret-command alice "gecho Testing")
+    (is (equal "Testing~%" (char-output alice)))
+    (is (equal "Testing~%" (char-output bob)))
+    (is (equal "[Alice-g] Testing~%" (char-output ike)))))
