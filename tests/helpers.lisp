@@ -40,6 +40,13 @@
 (defmethod tempus::handle-close ((cxn mock-cxn))
   nil)
 
+(defvar *mock-fd* 0)
+
+(defun make-mock-cxn ()
+  (incf *mock-fd*)
+  (make-instance 'mock-cxn
+                 :fd *mock-fd*))
+
 (defun mock-cxn-input (cxn fmt &rest args)
   (let ((msg (format nil "~?" fmt args)))
     (setf (tempus::cxn-input-buf cxn)
@@ -56,7 +63,7 @@
   (format nil "~{~a~}" (tempus::cxn-output-buf (tempus::link-of ch))))
 
 (defun make-mock-mobile (name)
-  (let ((mock-cxn (make-instance 'mock-cxn))
+  (let ((mock-cxn (make-mock-cxn))
         (mobile (tempus::read-mobile 1)))
     (setf (tempus::name-of mobile) name)
     (setf (tempus::aliases-of mobile) name)
@@ -93,7 +100,7 @@
 (defvar *top-mock-player* 90000)
 
 (defun make-mock-player (name)
-  (let* ((link (make-instance 'mock-cxn))
+  (let* ((link (make-mock-cxn))
          (player (make-instance 'mock-player
                                :name name
                                :idnum (incf *top-mock-player*)
