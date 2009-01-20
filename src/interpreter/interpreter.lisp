@@ -82,7 +82,8 @@
      (pattern-sort< (command-info-pattern a) (command-info-pattern b)))))
 
 (defun sort-commands ()
-  (setf *commands* (sort *commands* 'command-sort-compare)))
+  (setf *commands* (sort *commands* 'command-sort-compare))
+  (values))
 
 (defun get-command (&rest pattern)
   (find pattern *commands* :test #'equal :key #'command-info-pattern))
