@@ -469,3 +469,16 @@
     (is (equal "Testing~%" (char-output alice)))
     (is (equal "Testing~%" (char-output bob)))
     (is (equal "[Alice-g] Testing~%" (char-output ike)))))
+
+(deftest do-dc-num-str/normal/target-disconnected ()
+  (with-mock-players (alice bob)
+    (setf (tempus::level-of alice) 50)
+    (with-captured-log log
+        (tempus::interpret-command alice (format nil "dc ~d"
+                                                 (tempus::cxn-fd
+                                                  (tempus::link-of bob))))
+      (is (search "(GC) Connection closed by Alice" log)))
+    (is (equal (format nil "Connection #~d closed.~~%"
+                       (tempus::cxn-fd (tempus::link-of bob)))
+               (char-output alice)))
+    (is (eql 'tempus::disconnecting (tempus::state-of (tempus::link-of bob))))))

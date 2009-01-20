@@ -1695,3 +1695,20 @@ You feel slightly different.")
   (setf (poofout-of ch) poofout)
   (send-to-char ch "You got it.~%"))
 
+(defcommand (ch "dc") (:coder)
+  (send-to-char ch "Usage: dc <connection number> (type USERS for a list)~%"))
+
+(defcommand (ch "dc" num-str) (:coder)
+  (let* ((num (when (every #'digit-char-p num-str) (parse-integer num-str)))
+         (cxn (when num (find num *cxns* :key 'cxn-fd))))
+    (cond
+      ((null num)
+       (send-to-char ch "You must specify a connection number to disconnect.~%"))
+      ((null cxn)
+       (send-to-char ch "No such connection.~%"))
+      ((and (actor-of cxn) (>= (level-of (actor-of cxn)) (level-of ch)))
+       (send-to-char ch "Umm... maybe that's not such a good idea...~%"))
+      (t
+       (setf (state-of cxn) 'disconnecting)
+       (send-to-char ch "Connection #~d closed.~%" num)
+       (slog "(GC) Connection closed by ~a" (name-of ch))))))
