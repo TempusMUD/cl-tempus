@@ -914,10 +914,10 @@
                        (lambda (cmd)
                          (member :mood (command-info-flags cmd)))))
 
-(defcommand (ch "look") (:resting)
+(defcommand (ch "look") (:resting :important)
   (look-at-room ch (in-room-of ch) t))
 
-(defcommand (ch "look" thing) (:resting)
+(defcommand (ch "look" thing) (:resting :important)
   (let ((vict (resolve-alias ch thing)))
     (cond
       (vict
@@ -929,7 +929,7 @@
       (t
        (send-to-char ch "There's no '~a' here.~%" thing)))))
 
-(defcommand (ch "look" "at" thing) (:resting)
+(defcommand (ch "look" "at" thing) (:resting :important)
   (let ((vict (resolve-alias ch thing)))
     (if vict
         (look-at-char ch vict :look)

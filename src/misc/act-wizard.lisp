@@ -1735,3 +1735,32 @@ You feel slightly different.")
 
 (defcommand (ch "uptime") (:immortal)
   (send-to-char ch "~a~%" (describe-uptime)))
+
+(defcommand (ch "last") (:immortal)
+  (send-to-char ch "For whom do you wish to search?~%"))
+
+(defcommand (ch "last" target-str) (:immortal)
+  (let ((pid (retrieve-player-idnum target-str)))
+    (unless pid
+      (send-to-char ch "There is no such player.~%")
+      (return))
+
+    (let ((vict (load-player-from-xml pid)))
+      (unless vict
+        (send-to-char ch "Unable to load player record.~%")
+        (slog "Unable to load character ~d for 'last' command" pid)
+        (return))
+
+      (when (and (> (level-of vict) (level-of ch))
+                 (< (level-of ch) +lvl-grimp+))
+        (send-to-char ch "You are not sufficiently godly for that!~%")
+        (return))
+
+      (send-to-char ch "[~5d] [~2d ~a] ~12a : ~a~%"
+                    (idnum-of vict)
+                    (level-of vict)
+                    (char-class-name (char-class-of vict))
+                    (name-of vict)
+                    (format-timestring nil (login-time-of vict)))
+      (when (has-mail (idnum-of vict))
+        (send-to-char ch "Player has unread mail.~%")))))

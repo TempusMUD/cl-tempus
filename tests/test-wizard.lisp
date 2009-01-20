@@ -482,3 +482,22 @@
                        (tempus::cxn-fd (tempus::link-of bob)))
                (char-output alice)))
     (is (eql 'tempus::disconnecting (tempus::state-of (tempus::link-of bob))))))
+
+(deftest do-last/no-args/error-message ()
+  (with-mock-players (alice)
+    (setf (tempus::level-of alice) 72)
+    (finishes (tempus::interpret-command alice "last"))
+    (is (equal "For whom do you wish to search?~%" (char-output alice)))))
+
+(deftest do-last-playername/lower-level/returns-last ()
+  (with-mock-players (alice)
+    (setf (tempus::level-of alice) 70)
+    (finishes (tempus::interpret-command alice "last azimuth"))
+    (is (equal "You are not sufficiently godly for that!~%"
+               (char-output alice)))))
+
+(deftest do-last-playername/normal/returns-last ()
+  (with-mock-players (alice)
+    (setf (tempus::level-of alice) 72)
+    (finishes (tempus::interpret-command alice "last azimuth"))
+    (is (search "Azimuth" (char-output alice)))))
