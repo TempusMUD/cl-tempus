@@ -207,9 +207,3 @@
      (send-to-char ch "You weren't in the middle of reading anything.~%"))
     (t
      (send-page (link-of ch)))))
-
-(defcommand (ch "clear") ()
-  (send-to-char ch "&@"))
-
-(defcommand (ch "cls") ()
-  (send-to-char ch "&@"))

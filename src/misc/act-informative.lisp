@@ -984,3 +984,12 @@
                     ((is-evil ch) #\r)
                     (t            #\y))
                   (alignment-of ch)))
+
+(defcommand (ch "clear") ()
+  (send-to-char ch "&@"))
+
+(defcommand (ch "cls") ()
+  (send-to-char ch "&@"))
+
+(defcommand (ch "version") ()
+  (send-to-char ch "TempusMUD, version 1.0~%"))
