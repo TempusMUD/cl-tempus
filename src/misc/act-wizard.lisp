@@ -1602,3 +1602,62 @@ You feel slightly different.")
               :target-emit "You have been fully healed by $n!")
          (mudlog 'info t "~a has been restored by ~a" (name-of target) (name-of ch))
          (restore-creature target))))))
+
+(defun perform-vis (ch)
+  (let ((old-invis-level (invis-level-of ch)))
+    (cond
+    ((and (zerop (invis-level-of ch))
+          (not (aff-flagged ch +aff-hide+))
+          (not (aff-flagged ch +aff-invisible+)))
+     (send-to-char ch "You are already fully visible.~%"))
+    (t
+     (setf (invis-level-of ch) 0)
+     (dolist (tch (people-of (in-room-of ch)))
+       (when (and (not (eql tch ch))
+                  (can-see-creature tch ch)
+                  (< (level-of tch) old-invis-level))
+         (act ch :target tch :target-emit "You suddenly realize that $n is standing beside you.")))
+     (send-to-char ch "You are now fully visible.~%")))))
+
+(defun perform-invis (ch level)
+  (unless (is-npc ch)
+    (let ((old-invis-level (invis-level-of ch)))
+      (setf (invis-level-of ch) 0)
+      (dolist (tch (people-of (in-room-of ch)))
+        (unless (eql ch tch)
+          (cond
+            ((> old-invis-level (level-of tch) level)
+             (act ch :target tch
+                  :target-emit "You suddenly realize that $n is standing beside you."))
+            ((< old-invis-level (level-of tch) level)
+             (act ch :target tch
+                  :target-emit "You blink and suddenly realize that $n is gone."))))))
+
+    (setf (invis-level-of ch) level)
+    (send-to-char ch "Your invisibility level is ~d.~%" level)))
+
+(defcommand (ch "invis") (:immortal)
+  "Switch between totally visible and maximally invisible"
+  (cond
+    ((is-npc ch)
+     (send-to-char ch "You can't do that!~%"))
+    ((zerop (invis-level-of ch))
+     (perform-invis ch (max (level-of ch) 70)))
+    (t
+     (perform-vis ch))))
+
+(defcommand (ch "invis" level-str) (:immortal)
+  "Set immortal invisibility level"
+  (let ((level (when (every #'digit-char-p level-str)
+                 (parse-integer level-str))))
+    (cond
+      ((is-npc ch)
+       (send-to-char ch "You can't do that!~%"))
+      ((null level)
+       (send-to-char ch "That's not a proper invisibility level.~%"))
+      ((> level (level-of ch))
+       (send-to-char ch "You can't go invisible above your own level.~%"))
+      ((< level 1)
+       (perform-vis ch))
+      (t
+       (perform-invis ch level)))))
