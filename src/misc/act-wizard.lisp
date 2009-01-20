@@ -1171,6 +1171,54 @@
               (number-of (in-room-of ch))
               count)))))
 
+(defun perform-vis (ch)
+  (let ((old-invis-level (invis-level-of ch)))
+    (cond
+    ((and (zerop (invis-level-of ch))
+          (not (aff-flagged ch +aff-hide+))
+          (not (aff-flagged ch +aff-invisible+)))
+     (send-to-char ch "You are already fully visible.~%"))
+    (t
+     (setf (invis-level-of ch) 0)
+     (dolist (tch (people-of (in-room-of ch)))
+       (when (and (not (eql tch ch))
+                  (can-see-creature tch ch)
+                  (< (level-of tch) old-invis-level))
+         (act ch :target tch :target-emit "You suddenly realize that $n is standing beside you.")))
+     (send-to-char ch "You are now fully visible.~%")))))
+
+(defun perform-invis (ch level)
+  (unless (is-npc ch)
+    (let ((old-invis-level (invis-level-of ch)))
+      (setf (invis-level-of ch) 0)
+      (dolist (tch (people-of (in-room-of ch)))
+        (unless (eql ch tch)
+          (cond
+            ((> old-invis-level (level-of tch) level)
+             (act ch :target tch
+                  :target-emit "You suddenly realize that $n is standing beside you."))
+            ((< old-invis-level (level-of tch) level)
+             (act ch :target tch
+                  :target-emit "You blink and suddenly realize that $n is gone."))))))
+
+    (setf (invis-level-of ch) level)
+    (send-to-char ch "Your invisibility level is ~d.~%" level)))
+
+(defun describe-uptime ()
+  (multiple-value-bind (days secs)
+      (floor (timestamp-difference (now) *boot-time*) +seconds-per-day+)
+    (multiple-value-bind (hours secs)
+        (floor secs +seconds-per-hour+)
+      (multiple-value-bind (mins secs)
+          (floor secs +seconds-per-minute+)
+        (declare (ignore secs))
+        (format nil "Up since ~a: ~d~:* day~p, ~2,'0d:~2,'0d"
+                (format-timestring nil *boot-time*
+                                   :format +asctime-format+)
+                days
+                hours
+                mins)))))
+
 (defcommand (ch "stat" "room") (:immortal)
   (send-stats-to-char ch (in-room-of ch)))
 
@@ -1603,39 +1651,6 @@ You feel slightly different.")
          (mudlog 'info t "~a has been restored by ~a" (name-of target) (name-of ch))
          (restore-creature target))))))
 
-(defun perform-vis (ch)
-  (let ((old-invis-level (invis-level-of ch)))
-    (cond
-    ((and (zerop (invis-level-of ch))
-          (not (aff-flagged ch +aff-hide+))
-          (not (aff-flagged ch +aff-invisible+)))
-     (send-to-char ch "You are already fully visible.~%"))
-    (t
-     (setf (invis-level-of ch) 0)
-     (dolist (tch (people-of (in-room-of ch)))
-       (when (and (not (eql tch ch))
-                  (can-see-creature tch ch)
-                  (< (level-of tch) old-invis-level))
-         (act ch :target tch :target-emit "You suddenly realize that $n is standing beside you.")))
-     (send-to-char ch "You are now fully visible.~%")))))
-
-(defun perform-invis (ch level)
-  (unless (is-npc ch)
-    (let ((old-invis-level (invis-level-of ch)))
-      (setf (invis-level-of ch) 0)
-      (dolist (tch (people-of (in-room-of ch)))
-        (unless (eql ch tch)
-          (cond
-            ((> old-invis-level (level-of tch) level)
-             (act ch :target tch
-                  :target-emit "You suddenly realize that $n is standing beside you."))
-            ((< old-invis-level (level-of tch) level)
-             (act ch :target tch
-                  :target-emit "You blink and suddenly realize that $n is gone."))))))
-
-    (setf (invis-level-of ch) level)
-    (send-to-char ch "Your invisibility level is ~d.~%" level)))
-
 (defcommand (ch "invis") (:immortal)
   "Switch between totally visible and maximally invisible"
   (cond
@@ -1712,3 +1727,11 @@ You feel slightly different.")
        (setf (state-of cxn) 'disconnecting)
        (send-to-char ch "Connection #~d closed.~%" num)
        (slog "(GC) Connection closed by ~a" (name-of ch))))))
+
+(defcommand (ch "date") (:immortal)
+  (send-to-char ch "~a~%"
+                (format-timestring nil (now)
+                                   :format local-time:+asctime-format+)))
+
+(defcommand (ch "uptime") (:immortal)
+  (send-to-char ch "~a~%" (describe-uptime)))
