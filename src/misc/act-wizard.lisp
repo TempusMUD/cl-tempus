@@ -1678,3 +1678,20 @@ You feel slightly different.")
           (send-to-char (actor-of cxn) "[~a-g] ~a~%" (name-of ch) msg)
           (send-to-char (actor-of cxn) "~a~%" msg))))
   (send-to-char ch "~a~%" msg))
+
+(defcommand (ch "poofin") (:immortal)
+  (setf (poofin-of ch) "")
+  (send-to-char ch "You got it.~%"))
+
+(defcommand (ch "poofin" poofin) (:immortal)
+  (setf (poofin-of ch) poofin)
+  (send-to-char ch "You got it.~%"))
+
+(defcommand (ch "poofout") (:immortal)
+  (setf (poofout-of ch) "")
+  (send-to-char ch "You got it.~%"))
+
+(defcommand (ch "poofout" poofout) (:immortal)
+  (setf (poofout-of ch) poofout)
+  (send-to-char ch "You got it.~%"))
+
