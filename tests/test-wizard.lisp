@@ -535,3 +535,21 @@
           (is (search "(GC) Alice reset zone 0" log)))
       (is (equal `((,(tempus::real-zone 0))) calls)))
     (is (equal "Reset zone 0 : Limbo~%" (char-output alice)))))
+
+(deftest do-unaffect/normal/unaffects-target ()
+  (with-mock-players (alice bob)
+    (tempus::affect-to-char bob (make-instance 'tempus::affected-type
+                                               :location tempus::+apply-str+
+                                               :modifier -2
+                                               :duration 3
+                                               :bitvector 0
+                                               :kind tempus::+spell-poison+
+                                               :level 30
+                                               :owner 0))
+
+    (with-captured-log log
+        (function-trace-bind ((calls tempus::perform-unaffect))
+            (tempus::interpret-command alice "unaffect bob")
+          (is (equal `((,alice ,bob)) calls)))
+      (is (equal "All spells removed.~%" (char-output alice)))
+      (is (equal "There is a brief flash of light!~%You feel slightly different.~%" (char-output bob))))))

@@ -1219,6 +1219,51 @@
                 hours
                 mins)))))
 
+(defun perform-unaffect (ch target)
+  (cond
+    ((affected-of target)
+     (send-to-char target "There is a brief flash of light!~%You feel slightly different.~%")
+     (send-to-char ch "All spells removed.~%")
+     (loop while (affected-of target) do
+          (affect-remove target (first (affected-of target)))))
+    ((eql ch target)
+     (send-to-char ch "You don't have any affections!~%"))
+    (t
+     (send-to-char ch "~a does not have any affections!~%" (name-of target)))))
+
+(defun perform-reroll (ch target)
+  (roll-real-abils target)
+  (send-to-char target "Your stats have been rerolled.~%")
+  (slog "(GC) ~a has rerolled ~a" (name-of ch) (name-of target))
+  (send-to-char ch "New stats: Str: ~d, Int ~d, Wis ~d, Dex ~d, Con ~d, Cha ~d~%"
+                (str-of target)
+                (int-of target)
+                (wis-of target)
+                (dex-of target)
+                (con-of target)
+                (cha-of target)))
+
+(defun perform-wizutil (ch target-str func)
+  (let ((vict (get-char-vis ch target-str)))
+    (when (null vict)
+      (let ((pid (retrieve-player-idnum target-str)))
+        (when (null pid)
+          (send-to-char ch "You don't see anyone like that.~%")
+          (return-from perform-wizutil))
+
+        (setf vict (load-player-from-xml pid))
+
+        (unless vict
+          (send-to-char ch "That player could not be loaded.~%")
+          (return-from perform-wizutil))))
+
+    (if (> (level-of vict) (level-of ch))
+        (send-to-char ch "Hmmm...you'd better not.~%")
+        (funcall func ch vict))
+
+    (unless (is-npc vict)
+      (save-player-to-xml vict))))
+
 (defcommand (ch "stat" "room") (:immortal)
   (send-stats-to-char ch (in-room-of ch)))
 
@@ -1796,3 +1841,15 @@ You feel slightly different.")
                 (name-of ch)
                 (number-of zone)
                 (name-of zone))))))
+
+(defcommand (ch "unaffect") (:wizard)
+  (send-to-char ch "Yes, but who?~%"))
+
+(defcommand (ch "unaffect" target-str) (:wizard)
+  (perform-wizutil ch target-str 'perform-unaffect))
+
+(defcommand (ch "reroll") (:wizard)
+  (send-to-char ch "Yes, but who?~%"))
+
+(defcommand (ch "reroll" target-str) (:wizard)
+  (perform-wizutil ch target-str 'perform-reroll))
