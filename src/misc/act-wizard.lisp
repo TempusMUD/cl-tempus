@@ -1970,3 +1970,35 @@ You feel slightly different.")
 
 (defcommand (ch "thaw" target-str) (:wizard)
   (perform-wizutil ch target-str 'perform-thaw))
+
+(defcommand (ch "users") (:wizard)
+  (with-pagination ((link-of ch))
+    (send-to-char ch " Num Account      Character     State          Idl Login@   Site~% --- ------------ ------------- --------------- -- -------- ---------------~%")
+    (let ((displayed-count 0))
+      (dolist (cxn *cxns*)
+        (when (typep cxn 'tempus-cxn)
+          (incf displayed-count)
+          (send-to-char ch " ~3d ~12a ~a ~(~15a~) ~2d ~8a &g~a&n~%"
+                        (cxn-fd cxn)
+                        (if (account-of cxn)
+                            (name-of (account-of cxn))
+                            "   -   ")
+                        (cond
+                          ((null (actor-of cxn))
+                           "      -      ")
+                          ((original-actor-of cxn)
+                           (format nil "&c~13a&n"
+                                   (name-of (original-actor-of cxn))))
+                          ((immortal-level-p (actor-of cxn))
+                           (format nil "&g~13a&n"
+                                   (name-of (actor-of cxn))))
+                          (t
+                           (format nil "~13a" (name-of (actor-of cxn)))))
+                        (state-of cxn)
+                        (idle-of cxn)
+                        (format-timestring nil (connect-time-of cxn)
+                                           :format '((:hour 2 #\0) #\:
+                                                     (:min 2 #\0) #\:
+                                                     (:sec 2 #\0)))
+                        (peer-addr cxn))))
+      (send-to-char ch "~d visible socket~:p connected.~%" displayed-count))))

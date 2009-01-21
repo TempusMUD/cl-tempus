@@ -45,7 +45,8 @@
 (defun make-mock-cxn ()
   (incf *mock-fd*)
   (make-instance 'mock-cxn
-                 :fd *mock-fd*))
+                 :fd *mock-fd*
+                 :peer-addr "127.0.0.1"))
 
 (defun mock-cxn-input (cxn fmt &rest args)
   (let ((msg (format nil "~?" fmt args)))

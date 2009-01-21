@@ -623,3 +623,10 @@
       (is (search "You feel thawed.~%" (char-output bob)))
       (is (search "Alice has un-frozen Bob" log))
       (is (not (tempus::plr-flagged bob tempus::+plr-frozen+))))))
+
+(deftest do-users/normal/lists-users ()
+  (with-mock-players (alice bob)
+    (tempus::interpret-command alice "users")
+    (is (search "Alice" (char-output alice)))
+    (is (search "playing" (char-output alice)))
+    (is (search "2 visible sockets connected.~%" (char-output alice)))))

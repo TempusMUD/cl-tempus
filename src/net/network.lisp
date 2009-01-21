@@ -17,7 +17,7 @@
 ;;;
 (defclass cxn ()
 	((fd :accessor cxn-fd :initarg :fd :type fixnum)
-	 (peer-addr :accessor peer-addr)
+	 (peer-addr :accessor peer-addr :initarg :peer-addr)
 #+sbcl	(socket :accessor cxn-socket :initarg :socket :type sb-bsd-sockets:socket)
 	(connected :accessor cxn-connected :type symbol :initform t)))
 
@@ -322,6 +322,7 @@ if cxn disconnected"
 
 (defclass tempus-cxn (data-cxn)
   ((state :accessor state-of :initform 'login :type symbol)
+   (connect-time :accessor connect-time-of :initform (local-time:now))
    (need-prompt :accessor need-prompt-p :initform t)
    (account :accessor account-of :initform nil)
    (actor :accessor actor-of :initform nil)
