@@ -11,8 +11,8 @@
       (is (= a (tempus::random-range a a))))))
 
 (deftest dice ()
-  (let ((num (random 100))
-        (size (random 100)))
+  (let ((num (1+ (random 100)))
+        (size (1+ (random 100))))
     (is (= (tempus::dice (- num) size) 0))
     (is (= (tempus::dice num (- size)) 0))
     (is (= (tempus::dice 0 size) 0))
