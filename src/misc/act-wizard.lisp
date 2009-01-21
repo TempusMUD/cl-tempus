@@ -2002,3 +2002,22 @@ You feel slightly different.")
                                                      (:sec 2 #\0)))
                         (peer-addr cxn))))
       (send-to-char ch "~d visible socket~:p connected.~%" displayed-count))))
+
+(defcommand (ch "badge") (:immortal)
+  (cond
+    ((is-npc ch)
+     (send-to-char ch "You've got no badge.~%"))
+    (t
+     (setf (badge-of ch) "")
+     (send-to-char ch "Okay, you've got a blank badge now.~%"))))
+
+(defcommand (ch "badge" badge) (:immortal)
+  (cond
+    ((is-npc ch)
+     (send-to-char ch "You've got no badge.~%"))
+    ((> (length badge) +max-badge-length+)
+     (send-to-char ch "Sorry, badges can't be longer than ~d characters.~%"
+                   +max-badge-length+))
+    (t
+     (setf (badge-of ch) (string-upcase badge))
+     (send-to-char ch "Okay, your badge is now ~a.~%" (badge-of ch)))))

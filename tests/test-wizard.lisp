@@ -630,3 +630,17 @@
     (is (search "Alice" (char-output alice)))
     (is (search "playing" (char-output alice)))
     (is (search "2 visible sockets connected.~%" (char-output alice)))))
+
+(deftest do-badge/blank-badge/sets-badge-blank ()
+  (with-mock-players (alice)
+    (setf (tempus::badge-of alice) "FOO")
+    (tempus::interpret-command alice "badge")
+    (is (equal "" (tempus::badge-of alice)))
+    (is (equal "Okay, you've got a blank badge now.~%" (char-output alice)))))
+
+(deftest do-badge/non-blank-badge/sets-badge ()
+  (with-mock-players (alice)
+    (setf (tempus::badge-of alice) "FOO")
+    (tempus::interpret-command alice "badge bar")
+    (is (equal "BAR" (tempus::badge-of alice)))
+    (is (equal "Okay, your badge is now BAR.~%" (char-output alice)))))

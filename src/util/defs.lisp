@@ -6,6 +6,7 @@
 (defparameter +max-skills+ 700)
 (defparameter +max-affect+ 96)
 (defparameter +max-obj-affect+ 16)
+(defparameter +max-badge-length+ 7)
 
 (defparameter +level-ambassador+ 50)
 
