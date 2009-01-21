@@ -156,6 +156,17 @@ control code."
   (dolist (ch (people-of room))
     (send-to-char ch "~?" fmt args)))
 
+(defun send-to-zone (zone fmt &rest args)
+  (dolist (cxn *cxns*)
+    (when (and (eql (state-of cxn) 'playing)
+               (actor-of cxn)
+               (eql (zone-of (in-room-of (actor-of cxn))) zone)
+               (awakep (actor-of cxn))
+               (not (plr-flagged (actor-of cxn) +plr-olc+))
+               (not (plr-flagged (actor-of cxn) +plr-writing+))
+               (not (plr-flagged (actor-of cxn) +plr-mailing+)))
+      (send-to-char (actor-of cxn) "~?" fmt args))))
+
 (defun verify-environment ()
   (let ((+player-subdirs+ '("character" "equipment" "housing" "mail" "corpses")))
     (dolist (subdir +player-subdirs+)

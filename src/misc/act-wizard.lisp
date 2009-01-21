@@ -1398,23 +1398,6 @@
     (error (err)
         (cxn-write (link-of ch) "ERROR: ~a~%" err))))
 
-(defcommand (ch "force") (:wizard)
-  (send-to-char ch "You want to force who what?~%"))
-
-(defcommand (ch "force" target) (:wizard)
-  (declare (ignore target))
-  (send-to-char ch "What do you want to force them to do?~%"))
-
-(defcommand (ch "force" target "to" command) (:wizard)
-  (let ((victs (get-matching-objects ch target (people-of (in-room-of ch)))))
-    (cond
-      ((null victs)
-       (send-to-char ch "You don't see any '~a' here.~%" target))
-      (t
-       (send-to-char ch "You got it.~%")
-       (dolist (vict victs)
-         (tempus::interpret-command vict command))))))
-
 (defcommand (ch "mload") (:wizard)
   (send-to-char ch "Usage: mload <mobile vnum number>~%"))
 
@@ -1764,3 +1747,52 @@ You feel slightly different.")
                     (format-timestring nil (login-time-of vict)))
       (when (has-mail (idnum-of vict))
         (send-to-char ch "Player has unread mail.~%")))))
+
+(defcommand (ch "force") (:wizard)
+  (send-to-char ch "You want to force who what?~%"))
+
+(defcommand (ch "force" target) (:wizard)
+  (declare (ignore target))
+  (send-to-char ch "What do you want to force them to do?~%"))
+
+(defcommand (ch "force" target "to" command) (:wizard)
+  (let ((victs (get-matching-objects ch target (people-of (in-room-of ch)))))
+    (cond
+      ((null victs)
+       (send-to-char ch "You don't see any '~a' here.~%" target))
+      (t
+       (send-to-char ch "You got it.~%")
+       (dolist (vict victs)
+         (tempus::interpret-command vict command))))))
+
+(defcommand (ch "zreset") (:immortal)
+  (send-to-char ch "You must specify a zone.~%"))
+
+(defcommand (ch "zreset" "*") (:immortal)
+  (dolist (zone *zone-table*)
+    (reset-zone zone)
+    (send-to-zone zone "You feel a strangely refreshing breeze.~%"))
+  (send-to-char ch "Reset world.~%")
+  (mudlog 'info t  "(GC) ~a reset entire world" (name-of ch)))
+
+(defcommand (ch "zreset" zone-spec) (:immortal)
+  (let ((zone (cond
+                ((string= zone-spec ".")
+                 ;; reset current zone
+                 (zone-of (in-room-of ch)))
+                ((every #'digit-char-p zone-spec)
+                 ;; reset specific zone
+                 (real-zone (parse-integer zone-spec))))))
+    (if (null zone)
+        (send-to-char ch "Invalid zone number.~%")
+        (progn
+          (reset-zone zone)
+          (send-to-zone zone "You feel a strangely refreshing breeze.~%")
+          (send-to-char ch "Reset zone ~d : ~a~%"
+                        (number-of zone)
+                        (name-of zone))
+          (act ch :place-emit "$n waves $s hand.")
+          (slog "(GC) ~a reset zone ~d (~a)"
+                (name-of ch)
+                (number-of zone)
+                (name-of zone))))))

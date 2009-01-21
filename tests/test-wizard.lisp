@@ -164,7 +164,7 @@
                           :key 'tempus::vnum-of)))
         ;; remove created mobs, if any
         (dolist (mob mobs)
-          (tempus::char-from-room mob t))))))
+          (tempus::extract-creature mob 'tempus::disconnecting))))))
 
 (deftest do-oload-vnum/normal/loads-object ()
   (with-mock-players (alice)
@@ -501,3 +501,37 @@
     (setf (tempus::level-of alice) 72)
     (finishes (tempus::interpret-command alice "last azimuth"))
     (is (search "Azimuth" (char-output alice)))))
+
+(deftest do-zreset/no-arg/error-message ()
+  (with-mock-players (alice)
+    (tempus::interpret-command alice "zreset")
+    (is (equal "You must specify a zone.~%" (char-output alice)))))
+
+(deftest do-zreset/star-arg/reset-whole-world ()
+  (with-mock-players (alice)
+    (function-trace-bind ((calls tempus::reset-zone))
+        (with-captured-log log
+            (tempus::interpret-command alice "zreset *")
+          (is (search "(GC) Alice reset entire world" log)))
+      (is (= (length calls) (length tempus::*zone-table*))))
+    (is (equal "You feel a strangely refreshing breeze.~%Reset world.~%"
+               (char-output alice)))))
+
+(deftest do-zreset/dot-arg/reset-current-zone ()
+  (with-mock-players (alice)
+    (function-trace-bind ((calls tempus::reset-zone))
+        (with-captured-log log
+            (tempus::interpret-command alice "zreset .")
+          (is (search "(GC) Alice reset zone 30" log)))
+      (is (equal `((,(tempus::zone-of (tempus::in-room-of alice)))) calls)))
+    (is (equal "You feel a strangely refreshing breeze.~%Reset zone 30 : The Holy City of Modrian~%"
+               (char-output alice)))))
+
+(deftest do-zreset/numeric-arg/reset-specific-zone ()
+  (with-mock-players (alice)
+    (function-trace-bind ((calls tempus::reset-zone))
+        (with-captured-log log
+            (tempus::interpret-command alice "zreset 0")
+          (is (search "(GC) Alice reset zone 0" log)))
+      (is (equal `((,(tempus::real-zone 0))) calls)))
+    (is (equal "Reset zone 0 : Limbo~%" (char-output alice)))))

@@ -124,6 +124,7 @@
   (when ch
     (when (tempus::in-room-of ch)
       (tempus::char-from-room ch t))
+    (setf tempus::*characters* (delete ch tempus::*characters*))
     (setf tempus::*cxns* (delete (tempus::link-of ch) tempus::*cxns*))))
 
 (defun make-mock-object (&optional (name "mock object"))

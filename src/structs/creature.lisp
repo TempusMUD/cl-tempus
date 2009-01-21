@@ -336,6 +336,9 @@
   (and (not (typep ch 'player))
        (logtest flag (mob2-flags-of ch))))
 
+(defun awakep (ch)
+  (> (position-of ch) +pos-sleeping+))
+
 (defun deadp (ch)
   (= (position-of ch) +pos-dead+))
 
