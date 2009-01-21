@@ -665,3 +665,9 @@
       (is (equal "Your body vibrates for a moment... You feel different!~%You rise 9 levels!~%"
                  (char-output alice)))
       (is (= 10 (tempus::level-of alice))))))
+
+(deftest do-tester-unaffect/normal/unaffects-tester ()
+  (with-mock-players (alice)
+    (function-trace-bind ((calls tempus::perform-unaffect))
+        (tempus::interpret-command alice "tester unaffect")
+      (is (equal `((,alice ,alice)) calls)))))

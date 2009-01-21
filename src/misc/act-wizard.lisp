@@ -2060,3 +2060,6 @@ You feel slightly different.")
        (setf (move-of ch) (max-move-of ch))
 
        (save-player-to-xml ch)))))
+
+(defcommand (ch "tester" "unaffect") (:tester)
+  (perform-unaffect ch ch))
