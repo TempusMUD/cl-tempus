@@ -553,3 +553,73 @@
           (is (equal `((,alice ,bob)) calls)))
       (is (equal "All spells removed.~%" (char-output alice)))
       (is (equal "There is a brief flash of light!~%You feel slightly different.~%" (char-output bob))))))
+
+(deftest do-reroll/normal/target-rerolled ()
+  (with-mock-players (alice bob)
+    (with-captured-log log
+        (function-trace-bind ((calls tempus::perform-reroll))
+            (tempus::interpret-command alice "reroll bob")
+          (is (equal `((,alice ,bob)) calls)))
+      (is (search "New stats:" (char-output alice)))
+      (is (equal "Your stats have been rerolled.~%" (char-output bob)))
+      (is (search "Alice has rerolled Bob" log)))))
+
+(deftest do-notitle/notitle-off/target-notitle-on ()
+  (with-mock-players (alice bob)
+    (with-captured-log log
+        (tempus::interpret-command alice "notitle bob")
+      (is (tempus::plr-flagged bob tempus::+plr-notitle+))
+      (is (equal "Notitle turned ON for Bob.~%" (char-output alice)))
+      (is (search "Alice turned notitle ON for Bob" log)))))
+
+(deftest do-notitle/notitle-on/target-notitle-off ()
+  (with-mock-players (alice bob)
+    (setf (tempus::plr-bits-of bob) (logior (tempus::plr-bits-of bob)
+                                            tempus::+plr-notitle+))
+    (with-captured-log log
+        (tempus::interpret-command alice "notitle bob")
+      (is (not (tempus::plr-flagged bob tempus::+plr-notitle+)))
+      (is (equal "Notitle turned OFF for Bob.~%" (char-output alice)))
+      (is (search "Alice turned notitle OFF for Bob" log)))))
+
+(deftest do-nopost/nopost-off/target-nopost-on ()
+  (with-mock-players (alice bob)
+    (with-captured-log log
+        (tempus::interpret-command alice "nopost bob")
+      (is (tempus::plr-flagged bob tempus::+plr-nopost+))
+      (is (equal "Nopost turned ON for Bob.~%" (char-output alice)))
+      (is (search "Alice turned nopost ON for Bob" log)))))
+
+(deftest do-squelch/squelch-off/target-squelch-on ()
+  (with-mock-players (alice bob)
+    (with-captured-log log
+        (tempus::interpret-command alice "squelch bob")
+      (is (tempus::plr-flagged bob tempus::+plr-noshout+))
+      (is (equal "Squelch turned ON for Bob.~%" (char-output alice)))
+      (is (search "Alice turned squelch ON for Bob" log)))))
+
+(deftest perform-freeze/one-day/freezes-char-one-day ()
+  (with-mock-players (alice bob)
+    (setf (tempus::level-of alice) 60)
+    (with-captured-log log
+        (tempus::perform-freeze alice bob "1d")
+      (is (search "Bob has been frozen for 1 day~%" (char-output alice)))
+      (is (equal "A bitter wind suddenly rises and drains every erg of heat from your body!~%You feel frozen!~%" (char-output bob)))
+      (is (search "Alice has frozen Bob for 1 day" log))
+      (is (tempus::plr-flagged bob tempus::+plr-frozen+))
+      (is (not (null (tempus::thaw-time-of bob))))
+      (is (= (tempus::freezer-id-of bob) (tempus::idnum-of alice)))
+      (is (= (tempus::freeze-level-of bob) (tempus::level-of alice))))))
+
+(deftest perform-thaw/normal/thaws-char ()
+  (with-mock-players (alice bob)
+    (setf (tempus::plr-bits-of bob) (logior (tempus::plr-bits-of bob)
+                                            tempus::+plr-frozen+))
+    (setf (tempus::freeze-level-of bob) 55)
+    (setf (tempus::level-of alice) 60)
+    (with-captured-log log
+        (tempus::perform-thaw alice bob)
+      (is (search "Thawed.~%" (char-output alice)))
+      (is (search "You feel thawed.~%" (char-output bob)))
+      (is (search "Alice has un-frozen Bob" log))
+      (is (not (tempus::plr-flagged bob tempus::+plr-frozen+))))))

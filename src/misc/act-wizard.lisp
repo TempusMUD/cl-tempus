@@ -1264,6 +1264,83 @@
     (unless (is-npc vict)
       (save-player-to-xml vict))))
 
+(defun make-plr-toggle-func (flag flag-name)
+  (lambda (ch vict)
+    (setf (plr-bits-of vict) (logxor (plr-bits-of vict) flag))
+    (let ((state (if (plr-flagged vict flag) "ON" "OFF")))
+      (send-to-char ch "~a turned ~a for ~a.~%"
+                    flag-name state (name-of vict))
+      (mudlog 'info t "~a turned ~a ~a for ~a"
+              (name-of ch)
+              flag-name
+              state
+              (name-of vict)))))
+
+(defun perform-freeze (ch vict length-str)
+  (when (eql ch vict)
+    (send-to-char ch "Oh, yeah, THAT'S real smart...~%")
+    (return-from perform-freeze))
+
+  (let* ((match (scan #/^(\d+)([smhd])?/ length-str))
+         (amt (when (regref match 1) (parse-integer (regref match 1))))
+         (units (or (regref match 2) "d"))
+         (time-desc "forever"))
+    (cond
+      ((string= length-str "forever")
+       (setf (thaw-time-of vict) -1))
+      ((null match)
+       (send-to-char ch "Usage: freeze <target> [ XXXs | XXXm | XXXh | XXXd | forever]~%"))
+      ((string= "d" units)
+       (setf (thaw-time-of vict) (timestamp+ (now) amt :day))
+       (setf time-desc (format nil "for ~d day~:p" amt)))
+      ((string= "m" units)
+       (setf (thaw-time-of vict) (timestamp+ (now) amt :minute))
+       (setf time-desc (format nil "for ~d minute~:p" amt)))
+      ((string= "h" units)
+       (setf (thaw-time-of vict) (timestamp+ (now) amt :hour))
+       (setf time-desc (format nil "for ~d hour~:p" amt)))
+      ((string= "s" units)
+       (setf (thaw-time-of vict) (timestamp+ (now) amt :second))
+       (setf time-desc (format nil "for ~d second~:p" amt)))
+      (t
+       (error "Can't happen")))
+
+    (setf (plr-bits-of vict) (logior (plr-bits-of vict) +plr-frozen+))
+    (setf (freeze-level-of vict) (level-of ch))
+    (setf (freezer-id-of vict) (idnum-of ch))
+
+    (send-to-char vict "A bitter wind suddenly rises and drains every erg of heat from your body!~%You feel frozen!~%")
+
+    (send-to-char ch "~a has been frozen ~a~%" (name-of vict) time-desc)
+    (mudlog 'info t "(GC) ~a has frozen ~a ~a"
+            (name-of ch)
+            (name-of vict)
+            time-desc)
+
+    (when (in-room-of vict)
+      (act vict :place-emit "A sudden cold wind conjured from nowhere freezes $n!"))))
+
+
+(defun perform-thaw (ch vict)
+  (unless (plr-flagged vict +plr-frozen+)
+    (send-to-char ch "Sorry, your victim is not morbidly encased in ice at the moment.~%")
+    (return-from perform-thaw))
+
+  (when (> (freeze-level-of vict) (level-of ch))
+    (send-to-char ch "Sorry, a level ~d imm froze ~a.~%"
+                  (freeze-level-of vict) (name-of vict))
+    (return-from perform-thaw))
+
+  (mudlog 'info t "(GC) ~a has un-frozen ~a"
+          (name-of ch)
+          (name-of vict))
+  (setf (plr-bits-of vict) (logandc2 (plr-bits-of vict)
+                                     +plr-frozen+))
+  (send-to-char vict "A fireball suddenly explodes in front of you, melting the ice!~%You feel thawed.~%")
+  (send-to-char ch "Thawed.~%")
+  (when (in-room-of vict)
+    (act vict :place-emit "A sudden fireball conjured from nowhere thaws $n!")))
+
 (defcommand (ch "stat" "room") (:immortal)
   (send-stats-to-char ch (in-room-of ch)))
 
@@ -1853,3 +1930,43 @@ You feel slightly different.")
 
 (defcommand (ch "reroll" target-str) (:wizard)
   (perform-wizutil ch target-str 'perform-reroll))
+
+(defcommand (ch "notitle") (:wizard)
+  (send-to-char ch "Yes, but who?~%"))
+
+(defcommand (ch "notitle" target-str) (:wizard)
+  (perform-wizutil ch target-str
+                   (make-plr-toggle-func +plr-notitle+ "notitle")))
+
+(defcommand (ch "nopost") (:wizard)
+  (send-to-char ch "Yes, but who?~%"))
+
+(defcommand (ch "nopost" target-str) (:wizard)
+  (perform-wizutil ch target-str
+                   (make-plr-toggle-func +plr-nopost+ "nopost")))
+
+(defcommand (ch "squelch") (:wizard)
+  (send-to-char ch "Yes, but who?~%"))
+
+(defcommand (ch "squelch" target-str) (:wizard)
+  (perform-wizutil ch target-str
+                   (make-plr-toggle-func +plr-noshout+ "squelch")))
+
+(defcommand (ch "freeze") (:wizard)
+  (send-to-char ch "Yes, but who?~%"))
+
+(defcommand (ch "freeze" target-str) (:wizard)
+  (perform-wizutil ch target-str
+                   (lambda (ch vict)
+                     (perform-freeze ch vict "1d"))))
+
+(defcommand (ch "freeze" target-str length-str) (:wizard)
+  (perform-wizutil ch target-str
+                   (lambda (ch vict)
+                     (perform-freeze ch vict length-str))))
+
+(defcommand (ch "thaw") (:wizard)
+  (send-to-char ch "Yes, but who?~%"))
+
+(defcommand (ch "thaw" target-str) (:wizard)
+  (perform-wizutil ch target-str 'perform-thaw))
