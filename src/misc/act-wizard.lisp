@@ -1699,19 +1699,30 @@
     (cond
       ((null level)
        (send-to-char ch "That's not a level!~%"))
+      ((null targets)
+       (send-to-char ch "Who do you want to advance?~%"))
       ((rest targets)
        (send-to-char ch "You can only advance one person at a time.~%"))
+      ((> level (level-of ch))
+       (send-to-char ch "Yeah, right.~%"))
       ((<= (level-of ch) (level-of target))
        (send-to-char ch "Maybe that's not such a great idea.~%"))
       ((is-npc target)
        (send-to-char ch "NO!  Not on NPCs!~%"))
       ((> level +lvl-grimp+)
        (send-to-char ch "~d is the highest possible level.~%" +lvl-grimp+))
-      ((> level (level-of ch))
-       (send-to-char ch "Yeah, right.~%"))
       ((< level (level-of target))
+       (mudlog 'info t "(GC) ~a has advanced ~a to level ~d (from ~d)"
+             (name-of ch)
+             (name-of target)
+             level
+             (level-of target))
+       (send-to-char ch "You got it.~%")
        (do-start target nil)
-       (setf (level-of target) level))
+       (setf (level-of target) level)
+       (gain-exp-regardless target
+                            (- (aref +exp-scale+ level) (exp-of target)))
+       (save-player-to-xml target))
       (t
        (act ch :target target
             :subject-emit "You got it.~%"
@@ -1728,7 +1739,7 @@ to the elements of time and space itself.
 Suddenly a silent explosion of light
 snaps you back to reality.
 You feel slightly different.")
-       (slog "(GC) ~a has advanced ~a to level ~d (from ~d)"
+       (mudlog 'info t "(GC) ~a has advanced ~a to level ~d (from ~d)"
              (name-of ch)
              (name-of target)
              level
@@ -2021,3 +2032,31 @@ You feel slightly different.")
     (t
      (setf (badge-of ch) (string-upcase badge))
      (send-to-char ch "Okay, your badge is now ~a.~%" (badge-of ch)))))
+
+(defcommand (ch "tester" "advance" level-str) (:tester)
+  (let ((level (and (every #'digit-char-p level-str)
+                    (parse-integer level-str))))
+    (cond
+      ((null level)
+       (send-to-char ch "That's not a level!~%"))
+      ((>= level +lvl-ambassador+)
+       (send-to-char ch "I don't think so!~%"))
+      (t
+       (send-to-char ch "Your body vibrates for a moment... You feel different!~%")
+       (when (< level (level-of ch))
+         (do-start ch nil)
+         (setf (level-of ch) level))
+
+       (gain-exp-regardless ch
+                            (- (aref +exp-scale+ level) (exp-of ch)))
+       (loop
+          for i from 1 upto (1- +max-skills+)
+          do (setf (aref (skills-of ch) i) (if (able-to-learn ch i)
+                                               (learned ch)
+                                               0)))
+
+       (setf (hitp-of ch) (max-hitp-of ch))
+       (setf (mana-of ch) (max-mana-of ch))
+       (setf (move-of ch) (max-move-of ch))
+
+       (save-player-to-xml ch)))))

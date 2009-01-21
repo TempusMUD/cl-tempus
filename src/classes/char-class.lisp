@@ -281,8 +281,8 @@
   (setf (aff-abils-of ch) (copy-abilities (real-abils-of ch))))
 
 (defun do-start (ch mode)
-  (let ((implant-save (make-array +num-wears+))
-        (tattoo-save (make-array +num-wears+))
+  (let ((implant-save (make-array +num-wears+ :initial-element nil))
+        (tattoo-save (make-array +num-wears+ :initial-element nil))
         (new-player (and (zerop (exp-of ch)) (not (is-remort ch)))))
     ;; remove implant affects
     (dotimes (pos +num-wears+)

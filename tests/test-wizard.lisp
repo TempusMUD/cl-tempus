@@ -328,7 +328,7 @@
       (is (= (tempus::exp-of alice) (aref tempus::+exp-scale+ 11)))
       (is (search "Alice advanced to level 11" log)))))
 
-(deftest do-advance-target/normal/target-gains-exp ()
+(deftest do-advance/target-level-larger/target-gains-exp ()
   (with-mock-players (alice bob)
     (setf (tempus::level-of alice) 72)
     (with-captured-log log
@@ -339,6 +339,19 @@
       (is (search "Alice makes some strange gestures.~%" (char-output bob)))
       (is (search "You rise 9 levels!~%" (char-output bob)))
       (is (search "(GC) Alice has advanced Bob to level 10 (from 1)" log)))))
+
+(deftest do-advance/target-level-smaller/target-loses-exp ()
+  (with-mock-players (alice bob)
+    (setf (tempus::level-of alice) 72)
+    (setf (tempus::level-of bob) 49)
+    (with-captured-log log
+        (function-trace-bind ((calls tempus::gain-exp-regardless))
+            (tempus::interpret-command alice "advance bob 10")
+          (is (equal `((,bob ,(1- (aref tempus::+exp-scale+ 10)))) calls)))
+      (is (= (tempus::level-of bob) 10))
+      (is (search "You got it.~%" (char-output alice)))
+      (is (equal "" (char-output bob)))
+      (is (search "(GC) Alice has advanced Bob to level 10 (from 49)" log)))))
 
 (deftest do-restore-target/normal/target-is-restored ()
   (with-mock-players (alice bob)
@@ -644,3 +657,11 @@
     (tempus::interpret-command alice "badge bar")
     (is (equal "BAR" (tempus::badge-of alice)))
     (is (equal "Okay, your badge is now BAR.~%" (char-output alice)))))
+
+(deftest do-tester-advance/normal/sets-up-tester-level ()
+  (with-mock-players (alice)
+    (with-captured-log log
+        (tempus::interpret-command alice "tester advance 10")
+      (is (equal "Your body vibrates for a moment... You feel different!~%You rise 9 levels!~%"
+                 (char-output alice)))
+      (is (= 10 (tempus::level-of alice))))))
