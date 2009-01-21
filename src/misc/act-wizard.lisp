@@ -1349,7 +1349,7 @@
     (when room
      (send-stats-to-char ch room))))
 
-(defcommand (ch "stat" thing) (:immortal)
+(defun perform-stat (ch thing)
   (let ((objs (get-matching-objects ch thing (append
                                               (coerce (remove nil (equipment-of ch)) 'list)
                                               (carrying-of ch)
@@ -1368,6 +1368,9 @@
                (if o
                    (send-stats-to-char ch o)
                    (send-to-char ch "Nothing around by that name.~%")))))))))
+
+(defcommand (ch "stat" thing) (:immortal)
+  (perform-stat ch thing))
 
 (defcommand (ch "echo") (:immortal :dead)
   (send-to-char ch "Yes, but what?~%"))
@@ -2033,6 +2036,31 @@ You feel slightly different.")
      (setf (badge-of ch) (string-upcase badge))
      (send-to-char ch "Okay, your badge is now ~a.~%" (badge-of ch)))))
 
+(defcommand (ch "tester") (:tester)
+  (send-to-char ch "Options are:
+    advance <level>
+    unaffect
+    reroll
+    stat
+    goto
+    restore
+    class <char_class>
+    race <race>
+    remort <char_class>
+    maxhit <value>
+    maxmana <value>
+    maxmove <value>
+    nohassle
+    roomflags
+    align
+    generation
+    debug
+    loadroom <val>
+    hunger|thirst|drunk <val>|off
+    str|con|int|wis|dex|cha <val>
+"))
+
+
 (defcommand (ch "tester" "advance" level-str) (:tester)
   (let ((level (and (every #'digit-char-p level-str)
                     (parse-integer level-str))))
@@ -2063,3 +2091,40 @@ You feel slightly different.")
 
 (defcommand (ch "tester" "unaffect") (:tester)
   (perform-unaffect ch ch))
+
+(defcommand (ch "tester" "reroll") (:tester)
+  (perform-reroll ch ch))
+
+(defcommand (ch "tester" "stat") (:tester)
+  (send-to-char ch "What do you want to stat?~%"))
+
+(defcommand (ch "tester" "stat" thing) (:tester)
+  (perform-stat ch thing))
+
+(defcommand (ch "tester" "goto") (:tester)
+  (send-to-char ch "Where do you want to go today?~%"))
+
+(defcommand (ch "tester" "goto" target) (:tester)
+  (let ((destination (find-target-room ch target)))
+    (when destination
+      (perform-goto ch destination t))))
+
+(defcommand (ch "tester" "restore") (:tester)
+  (restore-creature ch))
+
+(defcommand (ch "tester" "align") (:tester)
+  (send-to-char ch "Set align to what?~%"))
+
+(defcommand (ch "tester" "align" align) (:tester)
+  (setf (alignment-of ch) (parse-integer align :junk-allowed t))
+  (send-to-char ch "Align set to ~d.~%" (alignment-of ch)))
+
+(defcommand (ch "tester" "generation") (:tester)
+  (send-to-char ch "Set gen to what?~%"))
+
+(defcommand (ch "tester" "generation" gen) (:tester)
+  (setf (remort-gen-of ch) (pin (parse-integer gen :junk-allowed t) 0 10))
+  (send-to-char ch "Remort gen set to ~d.~%" (alignment-of ch)))
+
+(defcommand (ch "tester" bad-subcmd) (:tester)
+  (send-to-char ch "Invalid tester command: ~a~%" bad-subcmd))

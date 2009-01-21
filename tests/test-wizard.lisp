@@ -658,6 +658,11 @@
     (is (equal "BAR" (tempus::badge-of alice)))
     (is (equal "Okay, your badge is now BAR.~%" (char-output alice)))))
 
+(deftest do-tester/no-arg/lists-options ()
+  (with-mock-players (alice)
+    (tempus::interpret-command alice "tester")
+    (is (search "Options are:~%" (char-output alice)))))
+
 (deftest do-tester-advance/normal/sets-up-tester-level ()
   (with-mock-players (alice)
     (with-captured-log log
@@ -671,3 +676,43 @@
     (function-trace-bind ((calls tempus::perform-unaffect))
         (tempus::interpret-command alice "tester unaffect")
       (is (equal `((,alice ,alice)) calls)))))
+
+(deftest do-tester-reroll/normal/rerolls-tester ()
+  (with-mock-players (alice)
+    (with-captured-log log
+        (function-trace-bind ((calls tempus::perform-reroll))
+            (tempus::interpret-command alice "tester reroll")
+          (is (equal `((,alice ,alice)) calls))))))
+
+(deftest do-tester-stat/normal/runs-stat ()
+  (with-mock-players (alice)
+    (function-trace-bind ((calls tempus::perform-stat))
+        (tempus::interpret-command alice "tester stat holy")
+      (is (equal `((,alice "holy")) calls)))))
+
+(deftest do-tester-goto/normal/runs-goto ()
+  (with-mock-players (alice)
+    (function-trace-bind ((calls tempus::perform-goto))
+        (tempus::interpret-command alice "tester goto 3013")
+      (is (equal `((,alice ,(tempus::real-room 3013) t)) calls)))))
+
+(deftest do-tester-goto/normal/restores-self ()
+  (with-mock-players (alice)
+    (function-trace-bind ((calls tempus::restore-creature))
+        (tempus::interpret-command alice "tester restore")
+      (is (equal `((,alice)) calls)))))
+
+(deftest do-tester-align/normal/sets-align ()
+  (with-mock-players (alice)
+    (tempus::interpret-command alice "tester align -500")
+    (is (= (tempus::alignment-of alice) -500))))
+
+(deftest do-tester-gen/normal/sets-gen ()
+  (with-mock-players (alice)
+    (tempus::interpret-command alice "tester gen 10")
+    (is (= (tempus::remort-gen-of alice) 10))))
+
+(deftest do-tester/bad-command/error-message ()
+  (with-mock-players (alice)
+    (tempus::interpret-command alice "tester badcmd")
+    (is (equal "Invalid tester command: badcmd~%" (char-output alice)))))
