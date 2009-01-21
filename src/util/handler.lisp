@@ -222,8 +222,6 @@
 
 (defun affect-total (ch)
   "Updates a character by subtracting everything it is affected by, restoring original abilities, and then affecting it all again."
-  (when (> (str-of (aff-abils-of ch)) 18)
-    (incf (str-of (aff-abils-of ch)) 10))
 
   ;; Remove all item-based affects
   (dotimes (i +num-wears+)
@@ -242,9 +240,6 @@
 
   ;; Set stats to real stats
   (setf (aff-abils-of ch) (copy-abilities (real-abils-of ch)))
-
-  (when (> (str-of (aff-abils-of ch)) 18)
-    (incf (str-of (aff-abils-of ch)) 10))
 
   (dotimes (i 10)
     (setf (aref (saves-of ch) i) 0))

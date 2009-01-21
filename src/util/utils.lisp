@@ -37,7 +37,10 @@
     (values-list values))))
 
 (defun pin (val min max)
-  (min (max val min) max))
+  (let ((maxed-val (if max (min val max) val)))
+    (if min
+        (max maxed-val min)
+        maxed-val)))
 
 (defun get-line (inf)
   (loop for line = (read-line inf nil nil)

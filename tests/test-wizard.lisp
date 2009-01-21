@@ -202,7 +202,7 @@
 (deftest do-oload-count-vnum/normal/loads-count-object ()
   (with-mock-players (alice)
     (unwind-protect
-         (let ((count (random 100)))
+         (let ((count (+ 2 (random 100))))
            (with-captured-log log
                (tempus::interpret-command alice (format nil "oload ~d 1203" count))
              (is (search (format nil "(GC) Alice oloaded his large coffee mug[1203] at 3002 (x~d)" count)
@@ -702,10 +702,24 @@
         (tempus::interpret-command alice "tester restore")
       (is (equal `((,alice)) calls)))))
 
-(deftest do-tester-align/normal/sets-align ()
+(deftest do-tester-setters/normal/sets-right-things ()
   (with-mock-players (alice)
-    (tempus::interpret-command alice "tester align -500")
-    (is (= (tempus::alignment-of alice) -500))))
+    (let ((test-cases '(("align" tempus::alignment-of -500)
+                        ("gen" tempus::remort-gen-of 10)
+                        ("maxhit" tempus::max-hitp-of 142)
+                        ("maxmana" tempus::max-mana-of 213)
+                        ("maxmove" tempus::max-move-of 347)
+                        ("str" tempus::str-of 23)
+                        ("int" tempus::int-of 22)
+                        ("wis" tempus::wis-of 21)
+                        ("dex" tempus::dex-of 20)
+                        ("con" tempus::con-of 19)
+                        ("cha" tempus::cha-of 18))))
+      (dolist (test-case test-cases)
+        (tempus::interpret-command alice (format nil "tester ~a ~d"
+                                                 (first test-case)
+                                                 (third test-case)))
+        (is (= (funcall (second test-case) alice) (third test-case)))))))
 
 (deftest do-tester-gen/normal/sets-gen ()
   (with-mock-players (alice)
