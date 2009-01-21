@@ -9,6 +9,9 @@
 (defclass mock-player (tempus::player)
   ((savedp :accessor savedp :initarg :savedp :initform nil)))
 
+(defclass mock-account (tempus::account)
+  ())
+
 (defun escape-mock-str (str)
   (with-output-to-string (result)
     (loop for idx from 0 to (1- (length str)) do
@@ -38,6 +41,9 @@
   (setf (savedp player) t))
 
 (defmethod tempus::handle-close ((cxn mock-cxn))
+  nil)
+
+(defmethod tempus::save-account ((cxn mock-account))
   nil)
 
 (defvar *mock-fd* 0)
@@ -108,7 +114,7 @@
                                :aliases (format nil "~(~a .~:*~a~)" name)
                                :level 1
                                :link link))
-         (account (make-instance 'tempus::account
+         (account (make-instance 'mock-account
                                  :name (format nil "test-~(~a~)" name))))
     (setf (tempus::actor-of link) player)
     (setf (tempus::account-of link) account)

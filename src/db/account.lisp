@@ -110,7 +110,7 @@ be loaded from the database or it may be retrieved from a cache."
                            (query (:order-by (:select 'idnum 'name 'birth-time 'login-time :from 'players :where (:= 'account (idnum-of account))) 'idnum) :alists)))
             account)))))
 
-(defun save-account (account)
+(defmethod save-account ((account account))
   "Saves the account information into the database."
   (execute (:update 'accounts :set
             'name (name-of account)
