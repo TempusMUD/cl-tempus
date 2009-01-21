@@ -133,6 +133,7 @@
   (let ((message (format nil "~?" fmt args))
         (priority-num (position priority +mudlog-priorities+)))
     (assert priority-num)
+    (check-type write-to-file boolean)
 	(dolist (cxn *cxns*)
 	  (when (and (typep cxn 'tempus-cxn)
                  (eql (state-of cxn) 'playing)
