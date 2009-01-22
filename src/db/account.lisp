@@ -186,18 +186,20 @@ file."
 									   :idnum (idnum-of actor)
 									   :account (idnum-of account)
 									   :name (name-of actor)
-									   :birthtime now
-									   :logintime now)))
+									   :birth-time now
+									   :login-time now)))
     (execute (:insert-into 'players :set
                            'idnum (idnum-of actor)
-                           'account (account-of actor)
+                           'account (idnum-of account)
                            'name (name-of actor)
-                           'birthtime now
-                           'logintime now))
+                           'birth_time now
+                           'login_time now))
 	(setf (players-of account)
 		  (nconc (players-of account) (list player-record)))
 	(save-account account)
 	(setf (title-of actor) "the utter newbie")
+    (setf (birth-time-of actor) now)
+    (setf (login-time-of actor) now)
 	(save-player-to-xml actor)))
 
 (defun deposit-future-bank (account amount)

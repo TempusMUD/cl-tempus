@@ -90,6 +90,7 @@
   (act ch
        :subject-emit "Goodbye.  We will be awaiting your return."
        :place-emit "$n steps out of the universe.")
+  (setf (load-room-of ch) (number-of (in-room-of ch)))
   (save-player-to-xml ch)
   (extract-creature ch 'main-menu))
 

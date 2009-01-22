@@ -1,9 +1,73 @@
 (in-package #:tempus)
 
+(defun valid-race-p (class new-race)
+  (loop
+     for idx from 0 upto +num-pc-races+
+     until (= (aref +race-restrictions+ idx 0) new-race)
+     finally (return (= (aref +race-restrictions+ idx (1+ class)) 2))))
+
+(defun valid-class-p (remortp new-class race cur-class)
+  (or (not remortp)
+      (and (/= new-class cur-class)
+           (not (and (member cur-class (list +class-cleric+ +class-knight+))
+                     (= new-class +class-monk+)))
+           (not (and (= cur-class +class-monk+)
+                     (member new-class (list +class-cleric+ +class-knight+))))
+           (loop
+              for idx from 0 upto +num-pc-races+
+              until (= (aref +race-restrictions+ idx 0) race)
+              finally (return (or (= (aref +race-restrictions+ idx (1+ new-class)) 2)
+                                  (= (aref +race-restrictions+ idx (1+ new-class)) 1)))))))
+
+(defun show-char-class-menu (cxn remortp)
+  (let ((ch-race (race-of (actor-of cxn)))
+        (ch-class (char-class-of (actor-of cxn))))
+    (with-output-to-string (left-col)
+      (with-output-to-string (right-col)
+        (when (valid-class-p remortp +class-mage+ ch-race ch-class)
+          (format left-col "&gMage&n~%    Delver in Magical Arts~%"))
+        (when (valid-class-p remortp +class-barb+ ch-race ch-class)
+          (format left-col "&gBarbarian&n~%    Uncivilized Warrior~%"))
+        (when (valid-class-p remortp +class-knight+ ch-race ch-class)
+          (format left-col "&gKnight&n~%    Defender of the Faith~%"))
+        (when (valid-class-p remortp +class-ranger+ ch-race ch-class)
+          (format left-col "&gRanger&n~%    Roamer of Worlds~%"))
+        (when (valid-class-p remortp +class-cleric+ ch-race ch-class)
+          (format left-col "&gCleric&n~%    Servant of Deity~%"))
+        (when (valid-class-p remortp +class-thief+ ch-race ch-class)
+          (format left-col "&gThief&n~%    Stealthy Rogue~%"))
+        (when (valid-class-p remortp +class-bard+ ch-race ch-class)
+          (format left-col "&gBard&n~%    Roguish Performer~%"))
+        (when (valid-class-p remortp +class-cyborg+ ch-race ch-class)
+          (format right-col "&gCyborg&n~%    The Electronically Advanced~%"))
+        (when (valid-class-p remortp +class-psionic+ ch-race ch-class)
+          (format right-col "&gPsionic&n~%    Mind Traveller~%"))
+        (when (valid-class-p remortp +class-mercenary+ ch-race ch-class)
+          (format right-col "&gMercenary&n~%    Gun for Hire~%"))
+        (when (valid-class-p remortp +class-physic+ ch-race ch-class)
+          (format right-col "&gPhysic&n~%    Alterer of Universal Laws~%"))
+        (when (valid-class-p remortp +class-monk+ ch-race ch-class)
+          (format right-col "&gMonk&n~%    Philosophical Warrior~%"))
+
+        (with-input-from-string (left-stream
+                                 (get-output-stream-string left-col))
+          (with-input-from-string (right-stream
+                                   (get-output-stream-string right-col))
+            (loop
+               for left-line = (read-line left-stream nil "")
+               for right-line = (read-line right-stream nil "")
+               until (and (string= left-line "") (string= right-line ""))
+               do (cxn-write cxn " ~a~v@t~a~%"
+                             left-line
+                             (+ 39
+                                (* (count #\& left-line) 2)
+                                (- (length left-line)))
+                             right-line))))))))
+
 (defun show-pc-race-menu (link)
   (let ((cl (1+ (char-class-of (actor-of link)))))
     (dotimes (i +num-pc-races+)
-      (unless (eql (aref +race-restrictions+ i cl) 2)
+      (when (eql (aref +race-restrictions+ i cl) 2)
         (let ((lcl (aref +race-restrictions+ i 0)))
           (cond
             ((eql lcl +race-human+)

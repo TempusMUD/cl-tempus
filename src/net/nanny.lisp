@@ -42,9 +42,9 @@
     set-password-new
     set-password-verify
     new-player-name
+	new-player-sex
 	new-player-class
     new-player-race
-	new-player-sex
     new-player-align
     new-player-stats
     main-menu
@@ -219,7 +219,7 @@
 
   (act player :place-emit "$n enter$% the game.")
 
-  (setf (load-room-of player) nil)
+  (setf (load-room-of player) 0)
   (unrent player)
   (unless (plusp (hitp-of player))
 	(setf (hitp-of player) 1))
@@ -437,9 +437,16 @@ choose a password to use on this system.
 (define-connection-state new-player-name
   (menu (cxn)
     (cxn-write cxn "&@")
-	(send-section-header cxn "new character"))
+	(send-section-header cxn "new character")
+    (cxn-write cxn "
+    Now that you have created your account, you probably want to create a
+character to play on the mud.  This character will be your persona on the
+mud, allowing you to interact with other people and things.  You may press
+return at any time to cancel the creation of your character.
+
+"))
   (prompt (cxn)
-    (cxn-write cxn "Enter the true name you wish for this character: "))
+    (cxn-write cxn "Enter the name you wish for this character: "))
   (input (cxn line)
    (cond
      ((string= line "")
@@ -451,35 +458,16 @@ choose a password to use on this system.
             (make-instance 'player
                            :idnum (1+ (max-player-id))
                            :name (string-capitalize line)))
-      (setf (state-of cxn) 'new-player-race))
+      (create-new-player (actor-of cxn) (account-of cxn))
+      (setf (state-of cxn) 'new-player-sex))
      (t
       (cxn-write cxn "~%You have entered an invalid name.  Try again.~%")))))
-
-(define-connection-state new-player-race
-  (menu (cxn)
-   (cxn-write cxn "&@")
-   (send-section-header cxn "race")
-   (cxn-write cxn "
-             Human                       Elf
-             Dwarf                       Halfling
-             Pixie                       Sidhe
-
-"))
-  (prompt (cxn)
-    (cxn-write cxn "Enter the race you want for this character: "))
-  (input (cxn line)
-    (cond
-      ((or (string= line "")
-           (null (parse-pc-race line)))
-       (cxn-write cxn "~%You need to enter one of the listed races.~%~%"))
-      (t
-       (setf (race-of (actor-of cxn)) (idnum-of (parse-pc-race line)))
-       (setf (state-of cxn) 'new-player-sex)))))
 
 (define-connection-state new-player-sex
   (menu (cxn)
     (cxn-write cxn "&@")
-	(send-section-header cxn "sex"))
+	(send-section-header cxn "sex")
+    (cxn-write cxn "~%    Is your character a male or a female?~%~%"))
   (prompt (cxn)
     (cxn-write cxn "What sex is your character: "))
   (input (cxn line)
@@ -492,7 +480,143 @@ choose a password to use on this system.
       (if (eql (char-downcase (char line 0)) #\m)
           (setf (sex-of (actor-of cxn)) 'male)
           (setf (sex-of (actor-of cxn)) 'female))
-      (setf (state-of cxn) 'new-player-eyes)))))
+      (setf (state-of cxn) 'new-player-class)))))
+
+(define-connection-state new-player-class
+  (menu (cxn)
+   (cxn-write cxn "&@")
+   (send-section-header cxn "profession")
+   (cxn-write cxn "
+    Your character class is the special training your character has had
+before embarking on the life of an adventurer.  Your class determines
+most of your character's capabilities within the game.  You may type
+'help <class>' for an overview of a particular class.
+
+")
+   (show-char-class-menu cxn nil))
+  (prompt (cxn)
+   (cxn-write cxn "             Choose your profession from the above list: "))
+  (input (cxn line)
+   (cond
+     ((or (string= line "")
+          (null (parse-player-class line)))
+      (cxn-write cxn "~%You need to enter one of the listed classes.~%~%"))
+     (t
+      (setf (char-class-of (actor-of cxn)) (parse-player-class line))
+      (setf (state-of cxn) 'new-player-race)))))
+
+(define-connection-state new-player-race
+  (menu (cxn)
+   (cxn-write cxn "&@")
+   (send-section-header cxn "race")
+   (cxn-write cxn "
+    Races on Tempus have nothing to do with coloration.  Your character's
+race refers to the intelligent species that your character can be.  Each
+has its own advantages and disadvantages, and some have special abilities!
+You may type 'help <race>' for information on any of the available races.
+
+")
+   (show-pc-race-menu cxn))
+  (prompt (cxn)
+    (cxn-write cxn "Enter the race you want for this character: "))
+  (input (cxn line)
+    (cond
+      ((or (string= line "")
+           (null (parse-pc-race line)))
+       (cxn-write cxn "~%You need to enter one of the listed races.~%~%"))
+      (t
+       (let ((race (parse-pc-race line)))
+         (cond
+           ((null race)
+            (cxn-write cxn "That's not an allowable race!~%"))
+           ((not (valid-race-p (char-class-of (actor-of cxn)) race))
+            (cxn-write cxn "That race is not allowed to your profession!~%"))
+           (t
+            (setf (race-of (actor-of cxn)) race)
+            (setf (state-of cxn) 'new-player-align))))))))
+
+(define-connection-state new-player-align
+  (menu (cxn)
+    (cxn-write cxn "&@")
+    (send-section-header cxn "alignment")
+    (cxn-write cxn "~%~%    ALIGNMENT is a measure of your philosophies and morals.~%~%"))
+  (prompt (cxn)
+    (cond
+      ((is-drow (actor-of cxn))
+       (cxn-write cxn "The Drow race is inherently evil.  Thus you begin your life as evil.~%~%Press return to continue.~%"))
+      ((is-monk (actor-of cxn))
+       (cxn-write cxn "The monastic ideology requires that you remain neutral in alignment.~%Therefore you begin your life with a perfect neutrality.~%Press return to continue.~%"))
+      ((or (is-knight (actor-of cxn)) (is-cleric (actor-of cxn)))
+       (cxn-write cxn "Do you wish to be good or evil? "))
+      ((is-bard (actor-of cxn))
+       (cxn-write cxn "Do you wish to be good or neutral? "))
+      (t
+       (cxn-write cxn "Do you wish to be good, neutral or evil? "))))
+  (input (cxn line)
+    (let ((input (position line '("good" "neutral" "evil")
+                           :test 'string-abbrev)))
+      (cond
+        ((is-drow (actor-of cxn))
+         (setf (alignment-of (actor-of cxn)) -666)
+         (setf (state-of cxn) 'new-player-stats))
+        ((is-monk (actor-of cxn))
+         (setf (alignment-of (actor-of cxn)) 0)
+         (setf (state-of cxn) 'new-player-stats))
+        ((null input)
+         (cxn-write cxn "~%That's not one of the alignment selections.~%"))
+        ((and (or (is-knight (actor-of cxn)) (is-cleric (actor-of cxn)))
+              (= input 1))
+         (cxn-write cxn "~%~a must align with either good or evil.~%~%"
+                    (string-capitalize (aref +class-names+
+                                             (char-class-of (actor-of cxn))))))
+        ((and (is-bard (actor-of cxn)) (= input 2))
+         (cxn-write cxn "~%Bards must be of good or neutral alignment.~%~%"))
+        ((= input 0)
+         (setf (alignment-of (actor-of cxn)) 777)
+         (setf (state-of cxn) 'new-player-stats))
+        ((= input 1)
+         (setf (alignment-of (actor-of cxn)) 0)
+         (setf (state-of cxn) 'new-player-stats))
+        ((= input 2)
+         (setf (alignment-of (actor-of cxn)) -666)
+         (setf (state-of cxn) 'new-player-stats))
+        (t
+         (error "Can't happen here"))))))
+
+(define-connection-state new-player-stats
+  (prompt (cxn)
+    (cxn-write cxn "&@")
+    (roll-real-abils (actor-of cxn))
+    (send-section-header cxn "character attributes")
+    (cxn-write cxn "~a~%" (describe-attributes (actor-of cxn)))
+    (cxn-write cxn "&cWould you like to &gREROLL&c or &gKEEP&c these attributes?&n "))
+  (input (cxn line)
+    (cond
+      ((string-abbrev line "reroll")
+       (setf (wait-of cxn) 4))
+      ((string-abbrev line "keep")
+       (mudlog 'info t "~a[~d] has created new character ~a[~d]"
+             (name-of (account-of cxn))
+             (idnum-of (account-of cxn))
+             (name-of (actor-of cxn))
+             (idnum-of (actor-of cxn)))
+       (setf (rentcode-of (actor-of cxn)) 'new-char)
+       (calculate-height-weight (actor-of cxn))
+       (save-player-to-xml (actor-of cxn))
+       ;; TODO: go to character description editor
+       (setf (state-of cxn) 'main-menu)))))
+
+(define-connection-state describe-character
+  (menu (cxn)
+    (cxn-write cxn "&@")
+    (send-section-header cxn "description")
+    (cxn-write cxn "
+    Other players will usually be able to determine your general
+size, as well as your race and gender, by looking at you.  What
+else is noticable about your character?
+
+")))
+
 
 (define-connection-state set-password-auth
   (menu (cxn)
@@ -537,11 +661,12 @@ choose a password to use on this system.
   (loop
      for player in (players-of acct)
      for idx from 1
-     do (let ((tmp-ch (load-player-from-xml (idnum-of player)))
+     do (let ((tmp-ch (ignore-errors (load-player-from-xml (idnum-of player))))
               (real-ch (player-in-world (idnum-of player))))
           (cond
             ((null tmp-ch)
-             (cxn-write cxn "&R------ BAD PROBLEMS ------  PLEASE REPORT ------[%ld]&n~%"))
+             (cxn-write cxn "&R------ BAD PROBLEMS ------  PLEASE REPORT ------[~d]&n~%"
+                        (idnum-of player)))
             ((and (not immort)
                   (or (plr-flagged tmp-ch +plr-deleted+)
                       (plr2-flagged tmp-ch +plr2-buried+)))
@@ -617,13 +742,13 @@ choose a password to use on this system.
                   (cxn-write cxn "&b[&y~2d&b] &n%~8a     &yNever  Creating&n  -- "
                              idx name-str))
                  ((eql (rentcode-of tmp-ch) 'creating)
-                  (cxn-write cxn "&b[&y~2d&b] &n%~13a   &y-   -  -         -         -         Never  Creating&n  --\r\n"
+                  (cxn-write cxn "&b[&y~2d&b] &n%~13a   &y-   -  -         -         -         Never  Creating&n  --~%"
                              idx name-str))
                  (brief
                   (cxn-write cxn "&b[&y~2d&b] &n~8a ~10a ~a ~a&n "
                              idx name-str laston-str status-str mail-str))
                  (t
-                  (cxn-write cxn "&b[&y~2d&b] &n~13a ~3d ~3d  ~a  ~8a ~a ~13a ~a ~a&n\r\n"
+                  (cxn-write cxn "&b[&y~2d&b] &n~13a ~3d ~3d  ~a  ~8a ~a ~13a ~a ~a&n~%"
                              idx name-str
                              (level-of tmp-ch) (remort-gen-of tmp-ch)
                              sex-str

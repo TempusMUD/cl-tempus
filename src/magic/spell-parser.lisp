@@ -29,7 +29,7 @@
 (defun apply-attribute-to-spell (spell child)
   (string-case (first child)
     ("granted"
-     (let ((char-class (parse-pc-char-class (xml-attr child "class")))
+     (let ((char-class (parse-player-class (xml-attr child "class")))
            (level (xml-attr child "level" :numeric t))
            (gen (xml-attr child "gen" :numeric t :default 0)))
        (assert char-class nil
@@ -118,7 +118,8 @@
 
     (setf (name-of spell) (xml-attr node "name"))
     (dolist (child (cddr node))
-      (apply-attribute-to-spell spell child))
+      (when (listp child)
+        (apply-attribute-to-spell spell child)))
     (when (zerop (targets-of spell))
       (setf (targets-of spell) +tar-ignore+))))
 
@@ -128,8 +129,9 @@
                (xmls:parse inf))))
     (assert xml nil "Empty spells.xml file")
     (dolist (node (cddr xml))
-      (when (or (string= (first node) "spell")
-                (string= (first node) "skill"))
+      (when (and (listp node)
+                 (or (string= (first node) "spell")
+                     (string= (first node) "skill")))
         (load-spell node)))))
 
 (defun call-magic (ch vict ovict dvict spellnum level casttype)

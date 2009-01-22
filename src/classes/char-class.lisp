@@ -132,6 +132,39 @@
            (zerop (random-range 0 (level-of ch))))
       (incf (skill-of ch skill)))))
 
+
+
+(defun char-class-name (class)
+  (aref +char-class-abbrevs+ class))
+
+(defun char-class-color (ch class)
+  (case class
+    (#.+class-mage+
+     "&m")
+    (#.+class-cleric+
+     (cond
+       ((is-good ch) "&B")
+       ((is-evil ch) "&R")
+       (t            "&y")))
+    (#.+class-knight+
+     (cond
+       ((is-good ch) "&B")
+       ((is-evil ch) "&r")
+       (t            "&y")))
+    (#.+class-ranger+  "&g")
+    (#.+class-barb+  "&c")
+    (#.+class-thief+  "&N")
+    (#.+class-cyborg+  "&c")
+    (#.+class-psionic+  "&m")
+    (#.+class-physic+  "&n")
+    (#.+class-bard+  "&Y")
+    (#.+class-monk+  "&g")
+    (#.+class-mercenary+  "&y")
+    (t              "&n")))
+
+(defun parse-player-class (class-name)
+  (position class-name +class-names+ :test #'string-abbrev))
+
 (defun roll-real-abils (ch)
   "Roll the six stats for a character.  Each stat is balanced so that their total adds up to 72 before modifiers.  The stats are then sorted according to character class."
   (let ((stats (make-array 6 :initial-element 12)))
@@ -146,8 +179,7 @@
            while (= (aref stats stat-idx) 3)
            finally (decf (aref stats stat-idx))))
 
-    (setf stats (sort stats #'<))
-
+    (setf stats (sort stats #'>))
     (let ((priorities (cond
                         ((= (char-class-of ch) +class-magic-user+)
                          '(:int :wis :dex :cha :con :str))
@@ -437,3 +469,55 @@
     (when keep-internal-p
       (slog "~a" msg)
       (mudlog 'info t "~a" msg))))
+
+(defun calculate-height-weight (ch)
+  (if (eql (sex-of ch) 'male)
+      ;; Male stats
+      (cond
+        ((eql (race-of ch) +race-human+)
+         (setf (weight-of ch) (+ (random-range 130 180) (str-of ch)))
+         (setf (height-of ch) (+ (random-range 140 190) (floor (weight-of ch) 8))))
+        ((eql (race-of ch) +race-tabaxi+)
+         (setf (weight-of ch) (+ (random-range 110 160) (str-of ch)))
+         (setf (height-of ch) (+ (random-range 160 200) (floor (weight-of ch) 8))))
+        ((eql (race-of ch) +race-halfling+)
+         (setf (weight-of ch) (+ (random-range 70 80) (str-of ch)))
+         (setf (height-of ch) (+ (random-range 81 100) (floor (weight-of ch) 16))))
+        ((eql (race-of ch) +race-dwarf+)
+         (setf (weight-of ch) (+ (random-range 120 160) (str-of ch)))
+         (setf (height-of ch) (+ (random-range 100 125) (floor (weight-of ch) 16))))
+        ((or (is-elf ch) (is-drow ch))
+         (setf (weight-of ch) (+ (random-range 120 180) (str-of ch)))
+         (setf (height-of ch) (+ (random-range 140 165) (floor (weight-of ch) 8))))
+        ((eql (race-of ch) +race-half-orc+)
+         (setf (weight-of ch) (+ (random-range 120 180) (str-of ch)))
+         (setf (height-of ch) (+ (random-range 120 200) (floor (weight-of ch) 8))))
+        ((eql (race-of ch) +race-minotaur+)
+         (setf (weight-of ch) (+ (random-range 200 360) (str-of ch)))
+         (setf (height-of ch) (+ (random-range 140 190) (floor (weight-of ch) 8))))
+        (t
+         (setf (weight-of ch) (+ (random-range 130 180) (str-of ch)))
+         (setf (height-of ch) (+ (random-range 140 190) (floor (weight-of ch) 8)))))
+      ;; Female stats
+      (cond
+        ((eql (race-of ch) +race-human+)
+         (setf (weight-of ch) (+ (random-range 90 150) (str-of ch)))
+         (setf (height-of ch) (+ (random-range 140 170) (floor (weight-of ch) 8))))
+        ((eql (race-of ch) +race-tabaxi+)
+         (setf (weight-of ch) (+ (random-range 80 120) (str-of ch)))
+         (setf (height-of ch) (+ (random-range 160 190) (floor (weight-of ch) 8))))
+        ((eql (race-of ch) +race-halfling+)
+         (setf (weight-of ch) (+ (random-range 70 80) (str-of ch)))
+         (setf (height-of ch) (+ (random-range 81 100) (floor (weight-of ch) 16))))
+        ((eql (race-of ch) +race-dwarf+)
+         (setf (weight-of ch) (+ (random-range 100 140) (str-of ch)))
+         (setf (height-of ch) (+ (random-range 90 115) (floor (weight-of ch) 16))))
+        ((or (is-elf ch) (is-drow ch))
+         (setf (weight-of ch) (+ (random-range 90 130) (str-of ch)))
+         (setf (height-of ch) (+ (random-range 120 155) (floor (weight-of ch) 8))))
+        ((eql (race-of ch) +race-half-orc+)
+         (setf (weight-of ch) (+ (random-range 110 170) (str-of ch)))
+         (setf (height-of ch) (+ (random-range 110 190) (floor (weight-of ch) 8))))
+        (t
+         (setf (weight-of ch) (+ (random-range 90 150) (str-of ch)))
+         (setf (height-of ch) (+ (random-range 140 170) (floor (weight-of ch) 8)))))))
