@@ -730,3 +730,12 @@
   (with-mock-players (alice)
     (tempus::interpret-command alice "tester badcmd")
     (is (equal "Invalid tester command: badcmd~%" (char-output alice)))))
+
+(deftest do-severtell/normal/tell-is-severed ()
+  (with-mock-players (alice bob)
+    (setf (tempus::last-tell-from-of bob) (tempus::idnum-of alice))
+    (setf (tempus::last-tell-to-of bob) (tempus::idnum-of alice))
+    (tempus::interpret-command alice "severtell bob")
+    (is (equal "Reply severed.~%" (char-output alice)))
+    (is (null (tempus::last-tell-from-of bob)))
+    (is (null (tempus::last-tell-to-of bob)))))

@@ -2137,3 +2137,22 @@ You feel slightly different.")
 
 (defcommand (ch "tester" bad-subcmd) (:tester)
   (send-to-char ch "Invalid tester command: ~a~%" bad-subcmd))
+
+(defcommand (ch "severtell") (:immortal)
+  (send-to-char ch "Sever reply of what player?~%"))
+
+(defcommand (ch "severtell" target-str) (:immortal)
+  (let* ((targets (get-matching-objects ch target-str *characters*))
+         (target (first targets)))
+    (cond
+      ((null targets)
+       (send-to-char ch "Nobody of that name here.~%"))
+      ((rest targets)
+       (send-to-char ch "You can only sever the replies of one person at a time.~%"))
+      ((and (/= (idnum-of ch) (last-tell-from-of target))
+            (/= (idnum-of ch) (last-tell-to-of target)))
+       (send-to-char ch "You aren't on that person's reply buffer, pal.~%"))
+      (t
+       (setf (last-tell-from-of target) nil)
+       (setf (last-tell-to-of target) nil)
+       (send-to-char ch "Reply severed.~%")))))
