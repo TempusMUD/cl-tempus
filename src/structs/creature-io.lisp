@@ -22,6 +22,8 @@
       (t
        (second val)))))
 
+(defparameter +rent-codes+ #(undef crash rented cryo forced quit new-char creating remorting))
+
 (defun load-player-from-xml (idnum)
   (let ((ch (make-instance 'player))
         (xml (with-open-file (inf (player-pathname idnum))
@@ -34,7 +36,7 @@
       (when (consp node)
         (string-case (first node)
           ("description"
-           (setf (fdesc-of ch) (format nil "~a~%" (third node))))
+           (setf (fdesc-of ch) (third node)))
           ("title"
            (if (third node)
                (setf (title-of ch) (format nil " ~a" (third node)))
@@ -62,8 +64,9 @@
            (setf (level-of ch) (xml-attr node "level" :numeric t)))
           ("class"
            (setf (remort-gen-of ch) (xml-attr node "gen" :numeric t :default 0))
-           (setf (char-class-of ch) (parse-pc-char-class (xml-attr node "name")))
-           (setf (remort-char-class-of ch) (parse-pc-char-class (xml-attr node "remort"))))
+           (setf (char-class-of ch) (parse-player-class (xml-attr node "name")))
+           (setf (remort-char-class-of ch) (parse-player-class (xml-attr node "remort")))
+           (setf (total-dam-of ch) (xml-attr node "total_dam" :numeric t :default 0)))
           ("time"
            (setf (login-time-of ch) (unix-to-timestamp
                                      (xml-attr node "last" :numeric t)))
@@ -91,9 +94,12 @@
            (setf (aref (conditions-of ch) +full+) (xml-attr node "hunger" :numeric t :default 0))
            (setf (aref (conditions-of ch) +thirst+) (xml-attr node "thirst" :numeric t :default 0))
            (setf (aref (conditions-of ch) +drunk+) (xml-attr node "drunk" :numeric t :default 0)))
-          ("player" nil)
+          ("player"
+           (setf (wimp-level-of ch) (xml-attr node "wimpy" :numeric t :default 0))
+           (setf (life-points-of ch) (xml-attr node "lp" :numeric t :default 0))
+           (setf (clan-of ch) (xml-attr node "clan" :numeric t :default 0)))
           ("rent"
-           (setf (rentcode-of ch) (aref #(undef crash rented cryo forced quit new-char creating remorting)
+           (setf (rentcode-of ch) (aref +rent-codes+
                                         (xml-attr node "code" :numeric t)))
            (setf (rent-per-day-of ch) (xml-attr node "perdiem" :numeric t))
            (setf (rent-currency-of ch) (if (zerop (xml-attr node "currency" :numeric t))
@@ -127,9 +133,9 @@
            (setf (qlog-level-of ch) (xml-attr node "qlog" :numeric t))
            (setf (invis-level-of ch) (xml-attr node "invis" :numeric t)))
           ("poofin"
-           (setf (poofin-of ch) (format nil "~a~%" (third node))))
+           (setf (poofin-of ch) (third node)))
           ("poofout"
-           (setf (poofout-of ch) (format nil "~a~%" (third node))))
+           (setf (poofout-of ch) (third node)))
           ("tongue"
            (let ((tongue-id (find-tongue-idx-by-name (xml-attr node "name")))
                  (level (xml-attr node "level" :numeric t)))
@@ -182,5 +188,128 @@
 (defmethod save-player-to-xml ((ch mobile))
   nil)
 
+(defun serialize-creature (ch)
+  (let ((prefs1 (loop
+                   with num = 0
+                   for bit from 0 upto 30
+                   when (bitp (prefs-of ch) bit)
+                   do (setf num (logior num (ash 1 bit)))
+                   finally (return num)))
+        (prefs2 (loop
+                   with num = 0
+                   for bit from 0 upto 31
+                   when (bitp (prefs-of ch) (+ bit 31))
+                   do (setf num (logior num (ash 1 bit)))
+                   finally (return num))))
+    `("creature"
+      (("idnum" ,(idnum-of ch)) ("name" ,(name-of ch)))
+      ("points"
+       (("hit" ,(hitp-of ch))
+        ("mana" ,(mana-of ch))
+        ("move" ,(move-of ch))
+        ("maxhit" ,(max-hitp-of ch))
+        ("maxmana" ,(max-mana-of ch))
+        ("maxmove" ,(max-move-of ch))))
+      ("money"
+       (("gold" ,(gold-of ch))
+        ("cash" ,(cash-of ch))
+        ("xp" ,(exp-of ch))))
+      ("stats"
+       (("level" ,(level-of ch))
+        ("sex" ,(string-capitalize (sex-of ch)))
+        ("race" ,(aref +player-races+ (race-of ch)))
+        ("height" ,(height-of ch))
+        ("weight" ,(weight-of ch))
+        ("align" ,(alignment-of ch))))
+      ("class"
+       (("name" ,(aref +class-names+ (char-class-of ch)))
+        ,@(when (is-remort ch)
+                `(("remort" ,(aref +class-names+ (remort-char-class-of ch)))
+                  ("gen" ,(remort-gen-of ch))))
+        ,@(when (is-cyborg ch)
+                `(("total_dam" ,(total-dam-of ch))))))
+      ("time"
+       (("birth" ,(timestamp-to-unix (birth-time-of ch)))
+        ("death" ,(if (death-time-of ch)
+                      (timestamp-to-unix (death-time-of ch))
+                      0))
+        ("played" ,(played-time-of ch))
+        ("last" ,(timestamp-to-unix (login-time-of ch)))))
+      ("carnage"
+       (("pkills" ,(pkills-of ch))
+        ("akills" ,(akills-of ch))
+        ("mkills" ,(mobkills-of ch))
+        ("deaths" ,(deaths-of ch))
+        ("reputation" ,(reputation-of ch))))
+      ("attr"
+       (("str" ,(str-of ch))
+        ("int" ,(int-of ch))
+        ("wis" ,(wis-of ch))
+        ("dex" ,(dex-of ch))
+        ("con" ,(con-of ch))
+        ("cha" ,(cha-of ch))))
+      ("condition"
+       (("hunger" ,(aref (conditions-of ch) +full+))
+        ("thirst" ,(aref (conditions-of ch) +thirst+))
+        ("drunk" ,(aref (conditions-of ch) +drunk+))))
+      ("player"
+       (("wimpy" ,(wimp-level-of ch))
+        ("lp" ,(life-points-of ch))
+        ,@(when (clan-of ch)
+                `(("clan" ,(clan-of ch))))))
+      ("rent"
+       (("code" ,(position (rentcode-of ch) +rent-codes+))
+        ("perdiem" ,(rent-per-day-of ch))
+        ("currency" ,(if (eql (rent-currency-of ch) 'gold) 0 1))))
+      ("home"
+       (("town" ,(hometown-of ch))
+        ("homeroom" ,(home-room-of ch))
+        ("loadroom" ,(load-room-of ch))))
+      ("quest"
+       (,@(when (plusp (quest-id-of ch))
+                `(("current" ,(quest-id-of ch))))
+          ,@(when (immortal-level-p ch)
+                  `(("allowance" ,(qp-allowance-of ch))))
+          ,@(when (plusp (imm-qp-of ch))
+                  `(("points" ,(imm-qp-of ch))))))
+      ("bits"
+       (("flag1" ,(write-to-string (plr-bits-of ch) :base 16))
+        ("flag2" ,(write-to-string (plr2-bits-of ch) :base 16))))
+      ,@(when (plr-flagged ch +plr-frozen+)
+              `(("frozen"
+                 ("thaw_time" ,(timestamp-to-unix (thaw-time-of ch)))
+                 ("freezer_id" ,(freezer-id-of ch)))))
+      ("prefs"
+       (("flag1" ,(write-to-string prefs1 :base 16))
+        ("flag2" ,(write-to-string prefs2 :base 16))
+        ("tongue" ,(name-of (gethash (current-tongue-of ch) *tongues*)))))
+      ("affects"
+       (("flag1" ,(write-to-string (aff-flags-of ch) :base 16))
+        ("flag2" ,(write-to-string (aff2-flags-of ch) :base 16))
+        ("flag3" ,(write-to-string (aff3-flags-of ch) :base 16))))
+      ,@(when (immortal-level-p ch)
+          `(("immort"
+             (("badge" ,(badge-of ch))
+              ("qlog" ,(qlog-level-of ch))
+              ("invis" ,(invis-level-of ch))))))
+      ,@(when (poofin-of ch)
+          `(("poofin" nil ,(poofin-of ch))))
+      ,@(when (poofout-of ch)
+          `(("poofout" nil ,(poofout-of ch))))
+      ,@(when (fdesc-of ch)
+          `(("description" nil ,(fdesc-of ch))))
+      ,@(mapcar (lambda (alias)
+                  `("alias"
+                    (("type" ,(if (find #\$ (second alias)) 1 0))
+                     ("alias" ,(first alias))
+                     ("replace" ,(second alias)))))
+             (command-aliases-of ch)))))
+
 (defmethod save-player-to-xml ((ch player))
+  (with-open-file (ouf (player-pathname (idnum-of ch))
+                       :direction :output
+                       :if-exists :supersede
+                       :if-does-not-exist :create)
+    (write-string (xmls:toxml (serialize-creature ch)) ouf))
+
   (save-player-objects ch))
