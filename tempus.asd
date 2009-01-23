@@ -80,7 +80,7 @@
              (:file "comm" :pathname "net/comm"
                            :depends-on ("defs" "utils" "network" "nanny"))
              (:file "creature" :pathname "structs/creature"
-                               :depends-on ("defs" "random"))
+                               :depends-on ("defs" "random" "constants"))
              (:file "creature-io" :pathname "structs/creature-io"
                                   :depends-on ("creature"))
              (:file "dyntext" :pathname "dyntext/dyntext"
