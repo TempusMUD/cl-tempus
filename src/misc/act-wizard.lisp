@@ -1456,6 +1456,7 @@
   (send-to-char ch "Whom do you wish to teleport?~%"))
 
 (defcommand (ch "teleport" name) (:immortal)
+  (declare (ignore name))
   (send-to-char ch "Where do you wish to send this person?~%"))
 
 (defcommand (ch "teleport" name "to" target) (:immortal)
