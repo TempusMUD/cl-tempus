@@ -362,7 +362,7 @@
 (defmethod save-player-to-xml ((ch player))
   ;; Update the amount of time played
   (let ((now (now)))
-    (incf (played-time-of ch) (timestamp-difference now (login-time-of ch)))
+    (incf (played-time-of ch) (floor (timestamp-difference now (login-time-of ch))))
     (setf (login-time-of ch) now))
 
   ;; Remove all spell affects
