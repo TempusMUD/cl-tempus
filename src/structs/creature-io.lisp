@@ -105,8 +105,12 @@
           ("home"
            (setf (home-room-of ch) (xml-attr node "homeroom" :numeric t))
            (setf (load-room-of ch) (xml-attr node "loadroom" :numeric t))
-           (when (= (home-room-of ch) -1)
-             (setf (home-room-of ch) nil)))
+           (when (or (zerop (home-room-of ch))
+                     (= (home-room-of ch) -1))
+             (setf (home-room-of ch) nil))
+           (when (or (zerop (load-room-of ch))
+                     (= (load-room-of ch) -1))
+             (setf (load-room-of ch) nil)))
           ("bits"
            (setf (plr-bits-of ch) (xml-attr node "flag1" :hex t))
            (setf (plr2-bits-of ch) (xml-attr node "flag2" :hex t)))
@@ -276,8 +280,8 @@
             `(("state" ,(string-downcase (state-of (link-of ch))))))))
       ("home"
        (("town" ,(hometown-of ch))
-        ("homeroom" ,(if (home-room-of ch) (home-room-of ch) 0))
-        ("loadroom" ,(load-room-of ch))))
+        ("homeroom" ,(or (home-room-of ch) 0))
+        ("loadroom" ,(or (load-room-of ch) 0))))
       ,@(when (or (plusp (quest-id-of ch))
                   (plusp (qp-allowance-of ch))
                   (plusp (imm-qp-of ch)))
