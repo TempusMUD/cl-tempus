@@ -76,10 +76,11 @@
 	  (eql state 'new-account-password)
 	  (eql state 'verify-password)
 	  (eql state 'set-password-auth)
-	  (eql state 'set-password-new)))
+	  (eql state 'set-password-new)
+      (eql state 'delete-password)))
 
 (defmethod (setf state-of) :around (state (cxn tempus-cxn))
-  ;;; send telnet DO ECHO when the new state isn't a password state
+  ;; send telnet DO ECHO when the new state isn't a password state
   (when (password-state-p (state-of cxn))
 	(cxn-write cxn "~c~c~c"
 			   (code-char #xff)
@@ -92,7 +93,11 @@
     (t
      (mudlog 'warning t "attempt to set cxn to state ~a" state)))
 
-  ;;; send telnet DONT ECHO when the new state is a password state
+  ;; Disconnect connection when state is disconnecting
+  (when (eql (state-of cxn) 'disconnecting)
+    (setf (cxn-connected cxn) nil))
+
+  ;; send telnet DONT ECHO when the new state is a password state
   (when (password-state-p (state-of cxn))
 	(cxn-write cxn "~c~c~c"
 			   (code-char #xff)
@@ -224,6 +229,7 @@
   (unless (plusp (hitp-of player))
 	(setf (hitp-of player) 1))
   (push player *characters*)
+  (setf (gethash (idnum-of player) *character-map*) player)
   (look-at-room player (in-room-of player) nil)
   (when (has-mail (idnum-of player))
 	(send-to-char player "You have new mail.~%"))
@@ -661,7 +667,7 @@ else is noticable about your character?
   (loop
      for player in (players-of acct)
      for idx from 1
-     do (let ((tmp-ch (ignore-errors (load-player-from-xml (idnum-of player))))
+     do (let ((tmp-ch (load-player-from-xml (idnum-of player)))
               (real-ch (player-in-world (idnum-of player))))
           (cond
             ((null tmp-ch)
@@ -793,6 +799,19 @@ else is noticable about your character?
       (setf (state-of cxn) 'new-player-name))
      ((char-equal (char line 0) #\p)
       (setf (state-of cxn) 'set-password-auth))
+     ((char-equal (char line 0) #\d)
+      (cond
+        ((null (players-of (account-of cxn)))
+         (cxn-write cxn "~%That isn't a valid command.~%~%"))
+        ((null (rest (players-of (account-of cxn))))
+         ;; only one character to delete, so skip prompt
+         (setf (actor-of cxn) (load-player-from-xml
+                               (idnum-of (first
+                                          (players-of (account-of cxn))))))
+         (setf (state-of cxn) 'delete-password))
+        (t
+         ;; multiple possibilities, so go to selection prompt
+         (setf (state-of cxn) 'delete-character))))
      ((every #'digit-char-p line)
       (let* ((player (nth (1- (parse-integer line)) (players-of (account-of cxn))))
              (prev-actor (and player (player-in-world (idnum-of player)))))
@@ -830,6 +849,87 @@ else is noticable about your character?
            (mudlog 'notice t "~a has reconnected from linkless" (name-of prev-actor))))))
      (t
       (cxn-write cxn "That's not an option!~%")))))
+
+(define-connection-state delete-character
+  (menu (cxn)
+    (cxn-write cxn "&@")
+    (cxn-write cxn "&r~%                                DELETE CHARACTER~%*******************************************************************************&n~%~%")
+    (loop for player-record in (players-of (account-of cxn))
+       as player-idnum = (idnum-of player-record)
+       as player = (load-player-from-xml player-idnum)
+       as idx from 1
+       do (cxn-write cxn "    &r[&y~2d&r] &y~20a ~10a ~10a ~6a ~a~%"
+                     idx (name-of player)
+                     (aref +player-races+ (race-of player))
+                     (aref +class-names+ (char-class-of player))
+                     (case (sex-of player)
+                       (male "Male")
+                       (female "Female")
+                       (t "Neuter"))
+                     (if (plusp (level-of player))
+                         (format nil "lvl ~d" (level-of player))
+                         " new")))
+    (cxn-write cxn "&n~%"))
+  (prompt (cxn)
+    (cxn-write cxn "~%              &yWhich character would you like to delete:&n "))
+  (input (cxn line)
+    (let* ((idx (parse-integer line :junk-allowed t))
+           (player-record (and idx (nth (1- idx) (players-of (account-of cxn)))))
+           (idnum (and player-record (idnum-of player-record))))
+      (cond
+        ((zerop (length line))
+         (setf (state-of cxn) 'main-menu))
+        ((null idnum)
+         (cxn-write cxn "~%That character selection doesn't exist.~%~%")
+         (setf (state-of cxn) 'wait-for-menu))
+        (t
+         (setf (actor-of cxn) (gethash idnum *character-map*))
+         (unless (actor-of cxn)
+           (setf (actor-of cxn) (load-player-from-xml idnum)))
+         (cond
+           ((actor-of cxn)
+            (setf (account-of (actor-of cxn)) (account-of cxn))
+            (setf (state-of cxn) 'delete-password))
+           (t
+            (cxn-write cxn "~%That character cannot be loaded.~%~%")
+            (slog "Couldn't retrieve char idnum ~d" idnum)
+            (setf (state-of cxn) 'wait-for-menu))))))))
+
+(define-connection-state delete-password
+  (prompt (cxn)
+    (cxn-write cxn "~%              &yTo confirm deletion of ~a, enter your account password: &n"
+               (name-of (actor-of cxn))))
+  (input (cxn line)
+    (cond
+      ((check-password (account-of cxn) line)
+       (setf (state-of cxn) 'delete-confirm))
+      (t
+       (cxn-write cxn "~%~%              &yWrong password!  ~a will not be deleted.~%"
+                  (name-of (actor-of cxn)))
+       (setf (state-of cxn) 'wait-for-menu)))))
+
+(define-connection-state delete-confirm
+  (prompt (cxn)
+    (cxn-write cxn "~%~%              &yType 'yes' for final confirmation: &n"))
+  (input (cxn line)
+    (cond
+      ((string= line "yes")
+       (slog "~a[~d] has deleted character ~a[~d]"
+             (name-of (account-of cxn))
+             (idnum-of (account-of cxn))
+             (name-of (actor-of cxn))
+             (idnum-of (actor-of cxn)))
+       (cxn-write cxn "~%              &y~a has been deleted.&n~%~%"
+                  (name-of (actor-of cxn)))
+       (delete-player (actor-of cxn))
+       (setf (actor-of cxn) nil)
+       (setf (state-of cxn) 'wait-for-menu))
+      (t
+       (cxn-write cxn "~%              &yDelete cancelled.  ~a will not be deleted.~%~%"
+                  (name-of (actor-of cxn)))
+       (setf (actor-of cxn) nil)
+       (setf (state-of cxn) 'wait-for-menu)))))
+
 
 (define-connection-state afterlife
   (prompt (cxn)

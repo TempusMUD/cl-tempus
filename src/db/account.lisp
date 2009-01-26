@@ -202,6 +202,66 @@ file."
     (setf (login-time-of actor) now)
 	(save-player-to-xml actor)))
 
+(defun delete-player (ch)
+  ;; Clear the owner of any clans this player might own in memory
+  (dolist (clan *clans*)
+    (when (= (owner-of clan) (idnum-of ch))
+      (setf (owner-of clan) 0)))
+
+  ;; Clear the owner of any clans this player might own on the db
+  (execute (:update 'clans
+                    :set 'owner :null
+                    :where (:= 'owner (idnum-of ch))))
+
+  ;; Remove character from clan
+  (let ((clan (real-clan (clan-of ch))))
+    (when clan
+      (setf (members-of clan) (delete (idnum-of ch) (members-of clan)))))
+  (execute (:delete-from 'clan_members :where (:= 'player (idnum-of ch))))
+
+  ;; Remove character from any access groups
+  (dolist (group *access-groups*)
+    (setf (members-of group) (delete (idnum-of ch) (members-of group))))
+  (execute (:delete-from 'sgroup_members :where (:= 'player (idnum-of ch))))
+
+  ;; Remove character from any quests they might have joined
+  (unless (zerop (quest-id-of ch))
+    (let ((quest (quest-by-vnum (quest-id-of ch))))
+      (when quest
+        (remove-from-quest (idnum-of ch)))))
+
+  ;; Remove character from trusted lists - we have to take the accounts
+  ;; in memory into consideration when we do this, so we have to go
+  ;; through each account
+  (dolist (account-id (query (:select 'account
+                                      :from 'trusted
+                                      :where (:= 'player (idnum-of ch)))
+                             :list))
+    (let ((account (load-account account-id)))
+      (setf (trust-of account) (delete (idnum-of ch) (trust-of account)))))
+  (execute (:delete-from 'trusted :where (:= 'player (idnum-of ch))))
+
+  ;; TODO: Remove from the bounty list
+  ;; (remove-bounties (idnum-of ch))
+  (execute (:delete-from 'bounty_hunters :where (:or (:= 'idnum (idnum-of ch))
+                                                     (:= 'victim (idnum-of ch)))))
+
+  ;; Disassociate author from board messages
+  (execute (:update 'board_messages
+                    :set 'author :null
+                    :where (:= 'author (idnum-of ch))))
+
+  ;; Remove character from account
+  (setf (players-of (account-of ch))
+        (delete (idnum-of ch) (players-of (account-of ch))
+                :key 'idnum-of))
+  (execute (:delete-from 'players :where (:= 'idnum (idnum-of ch))))
+
+  ;; Remove character from game
+  (when (in-room-of ch)
+    (send-to-char ch "A cold wind blows through your soul, and you disappear... forever.~%")
+    (purge-creature ch nil)))
+
 (defun deposit-future-bank (account amount)
   "Deposits AMOUNT into the future bank of ACCOUNT."
   (check-type account account)
@@ -217,3 +277,4 @@ file."
   (unless (zerop amount)
     (incf (past-bank-of account) amount)
     (save-account account)))
+
