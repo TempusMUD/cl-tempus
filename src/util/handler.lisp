@@ -825,16 +825,23 @@
                                 (contents-of (in-room-of ch))))))
 
 (defun get-char-room-vis (ch name)
-  (let ((chars (resolve-alias ch name (people-of (in-room-of ch)))))
-    (first chars)))
+  (first (resolve-alias ch name (people-of (in-room-of ch)))))
 
 (defun get-char-vis (ch name)
   (or
    ;; check the room first
    (get-char-room-vis ch name)
    ;; check the whole world
-   (let ((chars (resolve-alias ch name *characters*)))
-     (first chars))))
+   (first (resolve-alias ch name *characters*))))
+
+(defun get-player-vis (ch name)
+  (or
+   ;; check the room first
+   (first (resolve-alias ch name
+                         (remove-if 'is-npc (people-of (in-room-of ch)))))
+   ;; check the whole world
+   (first (resolve-alias ch name
+                         (remove-if 'is-npc *characters*)))))
 
 (defun get-obj-vis (ch name)
   "Search the entire world for an object."

@@ -121,6 +121,7 @@
     (setf (tempus::account-of player) account)
     (setf (tempus::state-of link) 'tempus::playing)
     (push player tempus::*characters*)
+    (setf (gethash (tempus::idnum-of player) tempus::*character-map*) player)
     player))
 
 (defun setup-mock-player (ch room-num)
@@ -132,6 +133,7 @@
     (when (tempus::in-room-of ch)
       (tempus::char-from-room ch t))
     (setf tempus::*characters* (delete ch tempus::*characters*))
+    (remhash (tempus::idnum-of ch) tempus::*character-map*)
     (setf tempus::*cxns* (delete (tempus::link-of ch) tempus::*cxns*))))
 
 (defun make-mock-object (&optional (name "mock object"))

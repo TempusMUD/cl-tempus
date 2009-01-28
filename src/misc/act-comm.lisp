@@ -1,5 +1,50 @@
 (in-package #:tempus)
 
+(defun perform-tell (ch target message)
+  (cond
+    ((pref-flagged ch +pref-notell+)
+     (send-to-char ch "You can't tell other people while you have notell on.~%"))
+    ((and (room-flagged (in-room-of ch) +room-soundproof+)
+          (not (immortal-level-p ch))
+          (not (eql (in-room-of ch) (in-room-of target))))
+     (send-to-char ch "The walls seem to absorb your words.~%"))
+    ((and (not (is-npc target))
+          (null (link-of target)))
+     (act ch :target target
+          :subject-emit "$E's linkless at the moment."))
+    ((or (plr-flagged target +plr-writing+)
+         (plr-flagged target +plr-mailing+))
+     (act ch :target target
+          :subject-emit "$E's writing a message right now; try again later."))
+    ((or (pref-flagged target +pref-notell+)
+         (plr-flagged target +plr-olc+))
+     (act ch :target target :subject-emit "$E can't hear you."))
+    ((and (not (can-send-tell ch target))
+          (not (or (affected-by-spell ch +spell-telepathy+)
+                   (affected-by-spell ch +spell-telepathy+))))
+     (act ch :target target :subject-emit "Your telepathic voice cannot reach $M."))
+    (t
+     (act ch :target target
+          :subject-emit (format nil "&rYou tell$% $N,&n '~a'"
+                                (act-escape message))
+          :target-emit (format nil "&r$n tells you,&n '~a'"
+                               (act-escape message)))
+
+     (unless (is-npc target)
+       (when (and (plr-flagged target +plr-afk+)
+                  (null (find (idnum-of ch) (afk-notifies-of target))))
+         (push (idnum-of ch) (afk-notifies-of target))
+
+         (act ch :target target
+              :subject-emit (format nil "$N is away from the keyboard~:[.~;~:*: ~a~]"
+                                    (afk-reason-of target))))
+
+       (when (pref-flagged target +pref-autopage+)
+         (send-to-char target "~c~c" (code-char 7) (code-char 7)))
+
+       (setf (last-tell-from-of target) (idnum-of ch))
+       (setf (last-tell-to-of ch) (idnum-of target))))))
+
 (defun perform-say (ch say-cmd message)
   (let ((message (act-escape message)))
     (act ch
@@ -104,6 +149,62 @@
                                 "request" "retort" "smirk" "snarl" "sneer"
                                 "state" "stutter" "suggest" "threaten" "utter"
                                 "wail" "whimper" "whine" "yell"))
+
+(defcommand (ch "tell") ()
+  (send-to-char ch "Who do you wish to tell what?~%"))
+
+(defcommand (ch "tell" target-str) ()
+  (declare (ignore target-str))
+  (send-to-char ch "Who do you wish to tell what?~%"))
+
+(defun can-send-tell (ch target)
+  (or (immortal-level-p ch)
+      (eql (in-room-of ch) (in-room-of target))
+      (not (or (room-flagged (in-room-of ch) +room-soundproof+)
+               (room-flagged (in-room-of ch) +room-soundproof+)))
+      (eql (zone-of (in-room-of ch)) (zone-of (in-room-of target)))
+      (not (or (zone-flagged (zone-of (in-room-of ch)) +zone-isolated+)
+               (zone-flagged (zone-of (in-room-of ch)) +zone-soundproof+)
+               (zone-flagged (zone-of (in-room-of target)) +zone-isolated+)
+               (zone-flagged (zone-of (in-room-of target)) +zone-soundproof+)))
+      (eql (plane-of (zone-of (in-room-of ch)))
+           (plane-of (zone-of (in-room-of target))))
+      (eql (time-frame-of (zone-of (in-room-of ch)))
+           (time-frame-of (zone-of (in-room-of target))))
+      (or (eql (time-frame-of (zone-of (in-room-of ch))) +time-timeless+)
+          (eql (time-frame-of (zone-of (in-room-of target))) +time-timeless+))))
+
+(defcommand (ch "tell" target-str message) ()
+  (let ((target (get-player-vis ch target-str)))
+    (cond
+      ((null target)
+       (send-to-char ch "No-one by that name here.~%"))
+      ((eql target ch)
+       (send-to-char ch "Talking to yourself is a sign of impending mental collapse.~%"))
+      (t
+       (perform-tell ch target message)))))
+
+(defcommand (ch "reply" message) ()
+  (let ((target (and (last-tell-from-of ch)
+                     (gethash (last-tell-from-of ch) *character-map*))))
+    (cond
+      ((null (last-tell-from-of ch))
+       (send-to-char ch "You have no-one to reply to!~%"))
+      ((null target)
+       (send-to-char ch "They are no longer playing.~%"))
+      (t
+       (perform-tell ch target message)))))
+
+(defcommand (ch "retell" message) ()
+  (let ((target (and (last-tell-to-of ch)
+                     (gethash (last-tell-to-of ch) *character-map*))))
+    (cond
+      ((null (last-tell-to-of ch))
+       (send-to-char ch "You have no-one to retell!~%"))
+      ((null target)
+       (send-to-char ch "They are no longer playing.~%"))
+      (t
+       (perform-tell ch target message)))))
 
 (macrolet ((define-moods (&rest moods)
              `(progn

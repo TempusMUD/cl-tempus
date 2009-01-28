@@ -56,3 +56,25 @@
     (is (equal "Yes, gossip, fine, gossip we must, but WHAT???~%"
                (char-output alice)))
     (is (equal "" (char-output bob)))))
+
+(deftest tell ()
+  (with-mock-players (alice bob)
+    (tempus::interpret-command alice "tell bob hello")
+    (is (equal "&rYou tell Bob,&n 'hello'~%" (char-output alice)))
+    (is (equal "&rAlice tells you,&n 'hello'~%" (char-output bob)))))
+
+(deftest retell ()
+  (with-mock-players (alice bob)
+    (tempus::interpret-command alice "tell bob hello")
+    (clear-mock-buffers alice bob)
+    (tempus::interpret-command alice "retell again")
+    (is (equal "&rYou tell Bob,&n 'again'~%" (char-output alice)))
+    (is (equal "&rAlice tells you,&n 'again'~%" (char-output bob)))))
+
+(deftest reply ()
+  (with-mock-players (alice bob)
+    (tempus::interpret-command alice "tell bob hello")
+    (clear-mock-buffers alice bob)
+    (tempus::interpret-command bob "reply hi there")
+    (is (equal "&rBob tells you,&n 'hi there'~%" (char-output alice)))
+    (is (equal "&rYou tell Alice,&n 'hi there'~%" (char-output bob)))))

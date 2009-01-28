@@ -1595,7 +1595,7 @@
     (format stream "The power of dieties is rushing through your veins.~%"))
   (let ((af (affected-by-spell ch +song-mirror-image-melody+)))
     (when af
-      (format stream "You are being accompanied by ~d mirror image~@p.~%"
+      (format stream "You are being accompanied by ~d mirror image~:p.~%"
                     (modifier-of af))))
   (when (affected-by-spell ch +song-unladen-swallow-song+)
     (format stream "You are under the effect of an uplifting tune!~%"))

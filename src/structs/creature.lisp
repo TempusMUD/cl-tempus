@@ -152,6 +152,7 @@
    (command-aliases :accessor command-aliases-of :initarg :command-aliases :initform nil)
    (tongues-heard :accessor tongues-heard-of :initarg :tongues-heard :initform nil)
    (afk-reason :accessor afk-reason-of :initarg :afk-reason :initform nil)
+   (afk-notifies :accessor afk-notifies-of :initform nil)
    (last-tell-from :accessor last-tell-from-of :initarg :last-tell-from :initform nil)
    (last-tell-to :accessor last-tell-to-of :initarg :last-tell-to :initform nil)
    (imprint-rooms :accessor imprint-rooms-of :initarg :imprint-rooms :initform nil)
