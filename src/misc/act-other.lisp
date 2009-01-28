@@ -78,7 +78,10 @@
                          "You will now be shown on the who list.")
   (define-toggle-command "noholler" () +pref-noholler+
                          "You now ignore the hollering."
-                         "You now hear the hollering."))
+                         "You now hear the hollering.")
+  (define-toggle-command "noaffects" () +pref-noaffects+
+                         "You will no longer see your affections on the score page."
+                         "You will now see all affections on the score page."))
 
 
 (defcommand (ch "save") ()
