@@ -120,6 +120,8 @@
                                    :depends-on ("defs" "utils"))
              (:file "prog" :pathname "search/prog"
                            :depends-on ("defs" "utils"))
+             (:file "pvp" :pathname "combat/pvp"
+                           :depends-on ("defs" "utils"))
              (:file "quest" :pathname "quest/quest"
                             :depends-on ("defs" "utils"))
              (:file "random" :pathname "util/random"

@@ -2530,6 +2530,21 @@
 (defconstant +mat-none+ 0)
 (defconstant +top-material+ 243)
 
+(defparameter +reputation-msg+
+  #("Innocent"              ; 0 reputation
+    "Mostly Harmless"       ; 1-99
+    "Unfriendly"            ; 100-199
+    "Unkind"                ; 200-299
+    "Cold"                  ; 300-399
+    "Daunting"              ; 400-499
+    "Feared"                ; 500-599
+    "Frightening"           ; 600-699
+    "Dreaded"               ; 700-799
+    "Terrifying"            ; 800-899
+    "Monstrous"             ; 900-999
+    "True Killer"))         ; 1000 reputation
+
+
 (defparameter +exp-scale+
   #(0
 	1
