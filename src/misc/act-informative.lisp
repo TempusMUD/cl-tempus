@@ -95,8 +95,48 @@
     (format stream " &y<&n~a&y>&n"
             (vnum-of (shared-of object)))))
 
-(defun show-obj-extra (object ch stream)
-  nil)
+(defun show-obj-extra (object stream)
+  (cond
+    ((= (kind-of object) +item-note+)
+     (format stream "~a~%" (or (action-desc-of object)
+                               "It's blank.")))
+    ((= (kind-of object) +item-drinkcon+)
+     (format stream "It looks like a drink container.~%"))
+    ((= (kind-of object) +item-fountain+)
+     (format stream "It looks like a source of drink.~%"))
+    ((= (kind-of object) +item-food+)
+     (format stream "It looks edible.~%"))
+    ((= (kind-of object) +item-holy-symb+)
+     (format stream "It looks like the symbol of some deity.~%"))
+    ((or (= (kind-of object) +item-cigarette+)
+         (= (kind-of object) +item-pipe+))
+     (if (zerop (aref (value-of object) 3))
+         (format stream "It appears to be unlit.~%")
+         (format stream "It appears to be lit and smoking.~%")))
+    ((and (= (kind-of object) +item-container+)
+          (not (zerop (aref (value-of object) 3))))
+         (format stream "It looks like a corpse.~%"))
+    ((= (kind-of object) +item-container+)
+     (format stream "It looks like a container.~%")
+     (if (and (car-closed object)
+              (car-openable object))
+         (format stream "It appears to be closed.~%")
+         (progn
+           (format stream "It appears to be open.~%")
+           (if (contains-of object)
+               (format stream "There appears to be something inside.~%")
+               (format stream "It appears to be empty.~%")))))
+    ((= (kind-of object) +item-syringe+)
+     (if (zerop (aref (value-of object) 0))
+         (format stream "It is full.~%")
+         (format stream "It is empty.~%")))
+    ((and (> (material-of object) +mat-none+)
+          (< (material-of object) +top-material+))
+     (format stream "It appears to be composed of ~a.~%"
+             (aref +material-names+ (material-of object))))
+    (t
+     (format stream "You see nothing special.~%"))))
+
 
 (defun show-obj-to-char (stream object ch mode count)
     (cond
@@ -159,7 +199,8 @@
           (show-obj-to-char stream i ch mode
                             (1+ (loop while (and o (same-obj (car o) i))
                                    do (setf o (cdr o))
-                                   count (is-visible-to o ch)))))))
+                                   when o
+                                   count (is-visible-to (car o) ch)))))))
     (when (and (not found) show)
       (format stream " Nothing.~%"))))
 
@@ -1059,37 +1100,120 @@
                          (member :mood (command-info-flags cmd)))))
 
 (defcommand (ch "look") (:resting :important)
-  (look-at-room ch (in-room-of ch) t))
+  (cond
+    ((null (link-of ch))
+     (values))
+    ((< (position-of ch) +pos-sleeping+)
+     (send-to-char ch "You can't see anything but stars!~%"))
+    ((not (check-sight-self ch))
+     (send-to-char ch "You can't see a damned thing, you're blind!~%"))
+    ((and (room-is-dark (in-room-of ch)) (not (has-dark-sight ch)))
+     (send-to-char ch "It is pitch black...~%"))
+    (t
+     (look-at-room ch (in-room-of ch) t))))
+
+(defun pluralp (str)
+  (and (not (string= str "portcullis"))
+       (or (find str '("teeth" "cattle" "data") :test #'string-equal)
+           (char= (char str (1- (length str))) #\s))))
+
+(defun find-extradesc (ch str)
+  (let ((result (find str (ex-description-of (in-room-of ch))
+                      :test #'string-abbrev
+                      :key 'keyword-of)))
+    (when result
+      (return-from find-extradesc (description-of result))))
+
+  (let ((exit-pos (find str (remove nil (dir-option-of (in-room-of ch)))
+                        :test #'string-abbrev
+                        :key 'keyword-of)))
+    (when exit-pos
+      (let* ((exit (aref (exit-info-of (in-room-of ch)) exit-pos))
+             (exit-name (first-word (keyword-of exit))))
+        (return-from find-extradesc
+          (format nil "The ~a ~a ~a.~%"
+                  exit-name
+                  (if (pluralp exit-name) "are" "is")
+                  (if (logtest (exit-info-of exit) +door-closed+)
+                      "closed" "open"))))))
+
+  (loop for obj across (equipment-of ch)
+       when obj do
+       (let ((result (find str (ex-description-of obj)
+                           :test #'string-abbrev
+                           :key 'keyword-of)))
+         (when result
+           (return-from find-extradesc (description-of result))))  )
+
+  (loop for obj in (carrying-of ch)
+       when obj do
+       (let ((result (find str (ex-description-of obj)
+                           :test #'string-abbrev
+                           :key 'keyword-of)))
+         (when result
+           (return-from find-extradesc (description-of result))))  )
+
+  (loop for obj in (contents-of (in-room-of ch))
+       when obj do
+       (let ((result (find str (ex-description-of obj)
+                           :test #'string-abbrev
+                           :key 'keyword-of)))
+         (when result
+           (return-from find-extradesc (description-of result))))  )
+  nil)
+
+(defun look-at-target (ch arg cmd)
+  (cond
+    ((null (link-of ch))
+     (values))
+    ((< (position-of ch) +pos-sleeping+)
+     (send-to-char ch "You can't see anything but stars!~%"))
+    ((not (check-sight-self ch))
+     (send-to-char ch "You can't see a damned thing, you're blind!~%"))
+    ((and (room-is-dark (in-room-of ch)) (not (has-dark-sight ch)))
+     (send-to-char ch "It is pitch black...~%"))
+    (t
+     (let ((vict (first (resolve-alias ch arg
+                                       (append
+                                        (people-of (in-room-of ch))
+                                        (coerce (delete nil (equipment-of ch)) 'list)
+                                        (carrying-of ch)
+                                        (contents-of (in-room-of ch)))))))
+       (with-pagination ((link-of ch))
+         (cond
+           ((typep vict 'creature)
+            (look-at-char ch vict cmd)
+            (when (is-visible-to ch vict)
+              (act ch :target vict
+                   :target-emit "$n looks at you."
+                   :not-target-emit "$n looks at $N.")))
+           (t
+            (let ((desc (find-extradesc ch arg)))
+              (cond
+                (desc
+                 (send-to-char ch "~a" desc)
+                 (when vict
+                   (send-to-char ch "~a~%"
+                                 (with-output-to-string (str)
+                                   (show-obj-bits vict ch str)))))
+                (vict
+                 (send-to-char ch "~a"
+                               (with-output-to-string (str)
+                                 (show-obj-extra vict str))))
+                (t
+                 (send-to-char ch "There's no '~a' here.~%" arg)))))))))))
 
 (defcommand (ch "look" thing) (:resting :important)
-  (let ((vict (resolve-alias-in-room ch thing)))
-    (cond
-      (vict
-       (look-at-char ch vict :look)
-       (when (is-visible-to ch vict)
-         (act ch :target vict
-              :target-emit "$n looks at you."
-              :not-target-emit "$n looks at $N.")))
-      (t
-       (send-to-char ch "There's no '~a' here.~%" thing)))))
+  (look-at-target ch thing :look))
 
 (defcommand (ch "look" "at" thing) (:resting :important)
-  (let ((vict (resolve-alias-in-room ch thing)))
-    (if vict
-        (look-at-char ch vict :look)
-        (send-to-char ch "There's no '~a' here.~%" thing))))
+  (look-at-target ch thing :look))
 
 (defcommand (ch "examine" thing) (:resting)
-  (let ((vict (resolve-alias-in-room ch thing)))
-    (if vict
-        (look-at-char ch vict :examine)
-        (send-to-char ch "There's no '~a' here.~%" thing))))
+  (look-at-target ch thing :examine))
 
 (defcommand (ch "glance" thing) (:resting)
-  (let ((vict (resolve-alias-in-room ch thing)))
-    (if vict
-        (look-at-char ch vict :glance)
-        (send-to-char ch "There's no '~a' here.~%" thing))))
+  (look-at-target ch thing :glance))
 
 (defcommand (ch "inventory") (:important)
   (send-to-char ch "~a"

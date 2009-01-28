@@ -6,6 +6,9 @@
 (defun has-dark-sight (ch)
   nil)
 
+(defun check-sight-self (ch)
+  t)
+
 (defmethod is-visible-to ((obj obj-data) ch)
   t)
 

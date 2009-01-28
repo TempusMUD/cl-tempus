@@ -2527,6 +2527,9 @@
 	"ash"
 	"ink"))
 
+(defconstant +mat-none+ 0)
+(defconstant +top-material+ 243)
+
 (defparameter +exp-scale+
   #(0
 	1
