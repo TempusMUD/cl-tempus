@@ -133,7 +133,7 @@
        for i = (car obj-list) then (car o)
        while i do
        (cond
-         ((or (not (can-see-object ch i))
+         ((or (not (is-visible-to i ch))
               (is-soilage i)
               (and (is-obj-stat2 i +item2-hidden+)
                    (not (pref-flagged ch +pref-holylight+))
@@ -159,7 +159,7 @@
           (show-obj-to-char stream i ch mode
                             (1+ (loop while (and o (same-obj (car o) i))
                                    do (setf o (cdr o))
-                                   count (can-see-object ch o)))))))
+                                   count (is-visible-to o ch)))))))
     (when (and (not found) show)
       (format stream " Nothing.~%"))))
 
@@ -478,7 +478,7 @@
                (null (ldesc-of i)))
           ;; You don't see mobs with no ldesc
           nil)
-         ((not (can-see-creature ch i))
+         ((not (is-visible-to i ch))
           ;; You don't see creatures that you can't see (duh)
           (unless (or (immortalp i) (mob-flagged i +mob-utility+))
             ;; ... and you don't see utility mobs unless you're immortal
@@ -497,7 +497,7 @@
               ((> hide-prob hide-roll)
                (incf unseen))
               (t
-               (when (can-see-creature i ch)
+               (when (is-visible-to ch i)
                  (act i :target ch :subject-emit "$N seems to have seen you.~%"))
                (desc-one-char stream ch i (in-same-group-p ch i))))))
          (t
@@ -666,7 +666,7 @@
            ((null obj)
             (when (and show-empty-p (/= pos +wear-ass+))
               (format stream "~aNothing!~%" (aref pos-descs pos))))
-           ((can-see-object ch obj)
+           ((is-visible-to obj ch)
             (unless (or found show-empty-p)
               (format stream "You are using:~%"))
             (setf found t)
@@ -1062,11 +1062,11 @@
   (look-at-room ch (in-room-of ch) t))
 
 (defcommand (ch "look" thing) (:resting :important)
-  (let ((vict (resolve-alias ch thing)))
+  (let ((vict (resolve-alias-in-room ch thing)))
     (cond
       (vict
        (look-at-char ch vict :look)
-       (when (can-see-creature vict ch)
+       (when (is-visible-to ch vict)
          (act ch :target vict
               :target-emit "$n looks at you."
               :not-target-emit "$n looks at $N.")))
@@ -1074,19 +1074,19 @@
        (send-to-char ch "There's no '~a' here.~%" thing)))))
 
 (defcommand (ch "look" "at" thing) (:resting :important)
-  (let ((vict (resolve-alias ch thing)))
+  (let ((vict (resolve-alias-in-room ch thing)))
     (if vict
         (look-at-char ch vict :look)
         (send-to-char ch "There's no '~a' here.~%" thing))))
 
 (defcommand (ch "examine" thing) (:resting)
-  (let ((vict (resolve-alias ch thing)))
+  (let ((vict (resolve-alias-in-room ch thing)))
     (if vict
         (look-at-char ch vict :examine)
         (send-to-char ch "There's no '~a' here.~%" thing))))
 
 (defcommand (ch "glance" thing) (:resting)
-  (let ((vict (resolve-alias ch thing)))
+  (let ((vict (resolve-alias-in-room ch thing)))
     (if vict
         (look-at-char ch vict :glance)
         (send-to-char ch "There's no '~a' here.~%" thing))))

@@ -143,7 +143,7 @@
        when (and (aff-flagged follower +aff-group+)
                  (not (eql follower ch))
                  (eql (in-room-of follower) (in-room-of ch))
-                 (can-see-creature ch follower))
+                 (is-visible-to follower ch))
        collect follower)))
 
 (defun perform-split (ch amount mode)

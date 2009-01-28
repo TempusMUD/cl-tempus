@@ -1,10 +1,5 @@
 (in-package #:tempus)
 
-(defun is-name (str namelist)
-  (find str
-        (split-sequence #\space namelist :remove-empty-subseqs t)
-        :test #'string-abbrev))
-
 (defun apply-object-affects (ch obj addp)
   (when (and obj
              (or (eql (worn-by-of obj) ch)
@@ -557,13 +552,6 @@
   (let ((aliases (cl-ppcre:split #/\s+/ alias)))
     (member str aliases :test #'string-abbrev)))
 
-(defun resolve-alias (ch str)
-  (find str (remove-if-not (lambda (i)
-                             (can-see-creature ch i))
-                           (people-of (in-room-of ch)))
-        :key 'aliases-of
-        :test 'is-alias-of))
-
 (defun get-obj-in-list-num (num list)
   "Search a given list for an object number, and return a ptr to that obj."
   (find num list :key (lambda (obj)
@@ -795,63 +783,6 @@
               nil))
         (values 1 name-str))))
 
-(defun get-matching-objects (ch arg list)
-  "Returns a list of all objects in LIST visible to CH that match ARG"
-  (cond
-    ((member arg '("me" "self") :test #'string-equal)
-     (list ch))
-    (t
-     (case (find-all-dots arg)
-       (:find-all
-        (loop for obj in list when (can-see-object ch obj) collect obj))
-       (:find-alldot
-        (loop
-           with name = (subseq arg 4)
-           for obj in list
-           when (and (is-name name (aliases-of obj))
-                     (can-see-object ch obj))
-           collect obj))
-       (:find-indiv
-        (multiple-value-bind (number name)
-            (get-number arg)
-          (dolist (obj list)
-            (when (and (is-name name (aliases-of obj))
-                       (can-see-object ch obj)
-                       (zerop (decf number)))
-              (return-from get-matching-objects (list obj))))))))))
-
-(defun get-char-room-vis (ch name)
-  (let ((chars (get-matching-objects ch name (people-of (in-room-of ch)))))
-    (first chars)))
-
-(defun get-char-vis (ch name)
-  (or
-   ;; check the room first
-   (get-char-room-vis ch name)
-   ;; check the whole world
-   (let ((chars (get-matching-objects ch name *characters*)))
-     (first chars))))
-
-(defun get-obj-in-list-vis (ch arg list)
-  (multiple-value-bind (number name)
-      (get-number arg)
-    (dolist (obj list)
-      (when (and (is-name name (aliases-of obj))
-                 (can-see-object ch obj)
-                 (zerop (decf number)))
-        (return-from get-obj-in-list-vis obj)))))
-
-(defun get-obj-vis (ch name)
-  "Search the entire world for an object."
-  (or
-   ;; scan items carried
-   (get-obj-in-list-vis ch name (carrying-of ch))
-   ;; scan room
-   (get-obj-in-list-vis ch name (contents-of (in-room-of ch)))
-   ;; scan the entire object list
-   (let ((objs (get-matching-objects ch name *object-list*)))
-     (first objs))))
-
 (defun find-all-dots (arg)
   (cond
     ((string-equal arg "all")
@@ -862,3 +793,56 @@
      :find-alldot)
     (t
      :find-indiv)))
+
+(defun resolve-alias (ch arg list)
+  "Returns a list of all objects and creatures in LIST visible to CH that match ARG"
+  (cond
+    ((member arg '("me" "self") :test #'string-equal)
+     (list ch))
+    (t
+     (case (find-all-dots arg)
+       (:find-all
+        (loop for obj in list when (is-visible-to obj ch) collect obj))
+       (:find-alldot
+        (loop
+           with name = (subseq arg 4)
+           for obj in list
+           when (and (is-alias-of name (aliases-of obj))
+                     (is-visible-to obj ch))
+           collect obj))
+       (:find-indiv
+        (multiple-value-bind (number name)
+            (get-number arg)
+          (dolist (obj list)
+            (when (and (is-alias-of name (aliases-of obj))
+                       (is-visible-to obj ch)
+                       (zerop (decf number)))
+              (return-from resolve-alias (list obj))))))))))
+
+(defun resolve-alias-in-room (ch str)
+  (first (resolve-alias ch str (append
+                                (people-of (in-room-of ch))
+                                (contents-of (in-room-of ch))))))
+
+(defun get-char-room-vis (ch name)
+  (let ((chars (resolve-alias ch name (people-of (in-room-of ch)))))
+    (first chars)))
+
+(defun get-char-vis (ch name)
+  (or
+   ;; check the room first
+   (get-char-room-vis ch name)
+   ;; check the whole world
+   (let ((chars (resolve-alias ch name *characters*)))
+     (first chars))))
+
+(defun get-obj-vis (ch name)
+  "Search the entire world for an object."
+  (or
+   ;; scan items carried
+   (first (resolve-alias ch name (carrying-of ch)))
+   ;; scan room
+   (first (resolve-alias ch name (contents-of (in-room-of ch))))
+   ;; scan the entire object list
+   (let ((objs (resolve-alias ch name *object-list*)))
+     (first objs))))

@@ -390,8 +390,8 @@ sequences in seq-list with the delimiter between each element"
         result))))
 
 (defun send-act-str (viewer emit subject target item target-item pov)
-  (when (or (can-see viewer subject)
-            (and target (can-see viewer target)))
+  (when (or (is-visible-to subject viewer)
+            (and target (is-visible-to target viewer)))
     (send-to-char viewer "~a~%" (act-str viewer emit subject target item target-item pov))))
 
 (defun act (subject &key (target nil) (item nil) (target-item nil) (subject-emit nil) (target-emit nil) (not-target-emit nil) (place-emit nil) (all-emit nil))
@@ -634,7 +634,7 @@ sequences in seq-list with the delimiter between each element"
 
 (defun describe-char (viewer subject)
   (cond
-    ((can-see-creature viewer subject)
+    ((is-visible-to subject viewer)
      (get-disguised-name subject viewer))
     ((immortalp subject)
      "a divine presence")

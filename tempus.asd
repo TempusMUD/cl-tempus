@@ -129,7 +129,7 @@
              (:file "search" :pathname "structs/search"
                              :depends-on ("defs"))
              (:file "sight" :pathname "util/sight"
-                            :depends-on ("defs"))
+                            :depends-on ("defs" "obj-data" "creature"))
              (:file "smokes" :pathname "objects/smokes"
                              :depends-on ("defs"))
              (:file "spec-assign" :pathname "specials/spec-assign"
@@ -145,7 +145,7 @@
              (:file "tongues" :pathname "social/tongues"
                               :depends-on ("defs" "utils"))
              (:file "utils" :pathname "util/utils"
-                            :depends-on ("defs" "network"))
+                            :depends-on ("defs" "network" "sight"))
              (:file "weather" :pathname "util/weather"
                               :depends-on ("zone-data"))
              (:file "zone-data" :pathname "structs/zone-data"
@@ -196,7 +196,6 @@
   (operate 'load-op '#:tempus.test)
   (funcall (read-from-string "tempus::boot-db"))
   (write-line (princ-to-string (funcall (read-from-string "tempus.tests::test")))))
-
 
 (defmethod operation-done-p ((op test-op) (system (eql (find-system :tempus))))
   nil)

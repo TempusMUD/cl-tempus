@@ -72,7 +72,7 @@
             (when (and (eql was-in (in-room-of tch))
                        (immortal-level-p tch)
                        (not (plr-flagged ch (logior +plr-olc+ +plr-writing+ +plr-mailing+)))
-                       (can-see-creature tch ch))
+                       (is-visible-to ch tch))
               (perform-goto tch room t))))
 
         (when (and (room-flagged room +room-death+)
@@ -108,7 +108,7 @@
          (when (and (eql was-in (in-room-of fch))
                     (immortal-level-p fch)
                     (not (plr-flagged ch (logior +plr-olc+ +plr-writing+ +plr-mailing+)))
-                    (can-see-creature fch ch))
+                    (is-visible-to ch fch))
            (perform-goto fch (in-room-of tch) t)))
        (slog "(GC) ~a has transported ~a to ~a[~d]"
              (name-of ch)
@@ -128,7 +128,7 @@
                          for vnum in (sort (hash-keys prototype-hash) #'<)
                          as proto = (gethash vnum prototype-hash)
                          when (every (lambda (name)
-                                       (is-name name (aliases-of proto)))
+                                       (is-alias-of name (aliases-of proto)))
                                      namelist)
                          do
                            (incf count)
@@ -505,13 +505,13 @@
     (send-to-char ch "Chars present: &y~{~a~^, ~}&n~%"
                   (loop
                      :for c :in (people-of (in-room-of ch))
-                     :when (can-see-creature ch c)
+                     :when (is-visible-to c ch)
                      :collect (format nil "~a(~:[PC~;MOB~])"
                                       (name-of c) (is-npc c))))
     (send-to-char ch "Contents: &g~{~a~^, ~}&n~%"
                   (loop
                      :for o :in (contents-of (in-room-of ch))
-                     :when (can-see-object ch o)
+                     :when (is-visible-to o ch)
                      :collect (name-of o)))
     (when (searches-of room)
       (send-to-char ch "SEARCHES:~%")
@@ -549,7 +549,7 @@
 
 (defmethod send-stats-to-char (ch (obj obj-data))
   (when (and (is-obj-kind obj +item-note+)
-             (is-name "letter" (aliases-of obj)))
+             (is-alias-of "letter" (aliases-of obj)))
     (when (and (carried-by-of obj)
                (> (level-of (carried-by-of obj)) (level-of ch)))
       (act ch :target (carried-by-of obj)
@@ -1182,7 +1182,7 @@
      (setf (invis-level-of ch) 0)
      (dolist (tch (people-of (in-room-of ch)))
        (when (and (not (eql tch ch))
-                  (can-see-creature tch ch)
+                  (is-visible-to ch tch)
                   (< (level-of tch) old-invis-level))
          (act ch :target tch :target-emit "You suddenly realize that $n is standing beside you.")))
      (send-to-char ch "You are now fully visible.~%")))))
@@ -1350,7 +1350,7 @@
      (send-stats-to-char ch room))))
 
 (defun perform-stat (ch thing)
-  (let ((objs (get-matching-objects ch thing (append
+  (let ((objs (resolve-alias ch thing (append
                                               (coerce (remove nil (equipment-of ch)) 'list)
                                               (carrying-of ch)
                                               (people-of (in-room-of ch))
@@ -1392,7 +1392,7 @@
   (send-to-char ch "What do you want to send?~%"))
 
 (defcommand (ch "send" name stuff) (:immortal)
-  (let* ((tchs (get-matching-objects ch name (mapcar 'actor-of *cxns*)))
+  (let* ((tchs (resolve-alias ch name (mapcar 'actor-of *cxns*)))
          (tch (first tchs)))
     (cond
       ((null tchs)
@@ -1586,7 +1586,7 @@
 
   (if (every #'digit-char-p arg2)
       (perform-pload ch (parse-integer arg2) (parse-integer arg1) ch)
-      (let ((targets (get-matching-objects ch arg2 (append (people-of (in-room-of ch))
+      (let ((targets (resolve-alias ch arg2 (append (people-of (in-room-of ch))
                                                            *characters*))))
         (cond
           ((null targets)
@@ -1602,7 +1602,7 @@
     (send-to-char ch "Usage: pload [count] <object vnum> [<target char>]~%")
     (return))
 
-  (let ((targets (get-matching-objects ch target-str (append (people-of (in-room-of ch))
+  (let ((targets (resolve-alias ch target-str (append (people-of (in-room-of ch))
                                                              *characters*))))
     (cond
       ((null targets)
@@ -1636,7 +1636,7 @@
         (send-to-char ch "There is no object with that vnum.~%"))))
 
 (defcommand (ch "vstat" thing) (:immortal)
-  (let ((objs (get-matching-objects ch thing (append
+  (let ((objs (resolve-alias ch thing (append
                                               (coerce (remove nil (equipment-of ch)) 'list)
                                               (carrying-of ch)
                                               (people-of (in-room-of ch))
@@ -1671,7 +1671,7 @@
        (send-to-char ch "The room already seems pretty clean.~%")))))
 
 (defcommand (ch "purge" thing) (:immortal)
-  (let ((things (get-matching-objects ch thing (append
+  (let ((things (resolve-alias ch thing (append
                                                 (people-of (in-room-of ch))
                                                 (contents-of (in-room-of ch))))))
     (loop
@@ -1695,7 +1695,7 @@
     (send-to-char ch "Advance them to what level?~%"))
 
 (defcommand (ch "advance" target-str level-str) (:immortal)
-  (let* ((targets (get-matching-objects ch target-str
+  (let* ((targets (resolve-alias ch target-str
                                         (people-of (in-room-of ch))))
          (target (first targets))
          (level (and (every #'digit-char-p level-str)
@@ -1756,7 +1756,7 @@ You feel slightly different.")
   (send-to-char ch "Whom do you wish to restore?~%"))
 
 (defcommand (ch "restore" target-str) (:immortal)
-  (let* ((targets (get-matching-objects ch target-str
+  (let* ((targets (resolve-alias ch target-str
                                         (append
                                          (people-of (in-room-of ch))
                                          *characters*))))
@@ -1893,7 +1893,7 @@ You feel slightly different.")
   (send-to-char ch "What do you want to force them to do?~%"))
 
 (defcommand (ch "force" target "to" command) (:wizard)
-  (let ((victs (get-matching-objects ch target (people-of (in-room-of ch)))))
+  (let ((victs (resolve-alias ch target (people-of (in-room-of ch)))))
     (cond
       ((null victs)
        (send-to-char ch "You don't see any '~a' here.~%" target))
@@ -2143,7 +2143,7 @@ You feel slightly different.")
   (send-to-char ch "Sever reply of what player?~%"))
 
 (defcommand (ch "severtell" target-str) (:immortal)
-  (let* ((targets (get-matching-objects ch target-str *characters*))
+  (let* ((targets (resolve-alias ch target-str *characters*))
          (target (first targets)))
     (cond
       ((null targets)

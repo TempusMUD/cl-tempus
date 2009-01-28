@@ -159,7 +159,7 @@
   (send-to-char ch "Say what to who?~%"))
 
 (defcommand (ch #\> target-str message) (:resting)
-  (let ((target (resolve-alias ch target-str)))
+  (let ((target (resolve-alias-in-room ch target-str)))
     (if target
        (perform-say-to ch target message)
        (send-to-char ch "There's no '~a' here.~%" target))))

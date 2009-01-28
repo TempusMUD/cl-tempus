@@ -1,16 +1,13 @@
 (in-package #:tempus)
 
-(defun can-see (ch object)
-  t)
-
 (defun room-is-dark (room)
   nil)
 
 (defun has-dark-sight (ch)
   nil)
 
-(defun can-see-object (ch object)
+(defmethod is-visible-to ((obj obj-data) ch)
   t)
 
-(defun can-see-creature (ch target)
+(defmethod is-visible-to ((target creature) ch)
   t)

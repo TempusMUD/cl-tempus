@@ -76,7 +76,7 @@
               :others-no-arg others-no-arg)))))))
 
 (defun perform-social (ch social-str target-str)
-  (let ((target (resolve-alias ch target-str))
+  (let ((target (get-char-room-vis ch target-str))
         (social (gethash social-str *socials*)))
     (cond
       ((null target-str)

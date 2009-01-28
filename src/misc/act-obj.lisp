@@ -173,7 +173,7 @@
      t)))
 
 (defun get-from-room (ch arg)
-  (let ((objs (get-matching-objects ch arg (contents-of (in-room-of ch))))
+  (let ((objs (resolve-alias ch arg (contents-of (in-room-of ch))))
         (mode (find-all-dots arg))
         (money-found nil)
         (quad-found nil)
@@ -234,7 +234,7 @@
       (explode-all-sigils ch))))
 
 (defun get-from-container (ch thing container)
-  (let ((objs (get-matching-objects ch thing (contains-of container)))
+  (let ((objs (resolve-alias ch thing (contains-of container)))
         (mode (find-all-dots thing))
         (money-found nil)
         (quad-found nil)
@@ -1035,9 +1035,9 @@
     ((>= (carry-items-of ch) (can-carry-items ch))
      (send-to-char ch "Your arms are already full!~%"))
     (t
-     (let ((containers (append (get-matching-objects ch container
+     (let ((containers (append (resolve-alias ch container
                                                      (carrying-of ch))
-                               (get-matching-objects ch
+                               (resolve-alias ch
                                               container
                                               (contents-of (in-room-of ch))))))
        (if containers
@@ -1056,9 +1056,9 @@
   (let* ((locations (append (carrying-of ch)
                             (coerce (remove nil (equipment-of ch)) 'list)
                             (contents-of (in-room-of ch))))
-         (containers (get-matching-objects ch container-str locations))
+         (containers (resolve-alias ch container-str locations))
          (container (first containers))
-         (objs (get-matching-objects ch thing (carrying-of ch))))
+         (objs (resolve-alias ch thing (carrying-of ch))))
     (cond
       ((null containers)
        (send-to-char ch "You don't see ~a ~a here.~%"
@@ -1119,7 +1119,7 @@
   (let* ((dot-mode (find-all-dots thing))
          (objs (if (eql dot-mode :find-all)
                   (carrying-of ch)
-                  (get-matching-objects ch thing (carrying-of ch)))))
+                  (resolve-alias ch thing (carrying-of ch)))))
     (cond
       (objs
        (perform-drop ch objs :drop))
@@ -1132,7 +1132,7 @@
   (send-to-char ch "What do you want to wear?~%"))
 
 (defcommand (ch "wear" thing) (:resting)
-  (let* ((objs (get-matching-objects ch thing (carrying-of ch)))
+  (let* ((objs (resolve-alias ch thing (carrying-of ch)))
          (wear-objs (delete nil
                             (mapcar (lambda (obj)
                                       (let ((pos (find-eq-pos obj)))
@@ -1166,7 +1166,7 @@
 
 (defcommand (ch "wear" thing "on" pos-str) (:resting)
     (let ((pos (position pos-str +wear-keywords+ :test #'string-abbrev))
-          (objs (get-matching-objects ch thing (carrying-of ch))))
+          (objs (resolve-alias ch thing (carrying-of ch))))
       (cond
         ((null objs)
          (send-to-char "You don't seem to have any '~a'.~%"
@@ -1179,7 +1179,7 @@
          (perform-wear ch (car objs) pos)))))
 
 (defcommand (ch "wear" thing "about" "body") (:resting)
-    (let ((objs (get-matching-objects ch thing (carrying-of ch))))
+    (let ((objs (resolve-alias ch thing (carrying-of ch))))
       (cond
         ((null objs)
          (send-to-char "You don't seem to have any '~a'.~%"
@@ -1190,7 +1190,7 @@
          (perform-wear ch (car objs) +wear-about+)))))
 
 (defcommand (ch "wear" thing "up" "ass") (:resting)
-    (let ((objs (get-matching-objects ch thing (carrying-of ch))))
+    (let ((objs (resolve-alias ch thing (carrying-of ch))))
       (cond
         ((null objs)
          (send-to-char "You don't seem to have any '~a'.~%"
@@ -1204,7 +1204,7 @@
   (send-to-char ch "Remove what?~%"))
 
 (defcommand (ch "remove" thing) (:resting)
-  (let* ((objs (get-matching-objects ch thing
+  (let* ((objs (resolve-alias ch thing
                                      (coerce (remove nil (equipment-of ch)) 'list))))
     (cond
       ((and (aff3-flagged ch +aff3-attraction-field+)
@@ -1232,7 +1232,7 @@
        (send-to-char ch "'~a'?  What part of your body is THAT?~%" pos-str))
       ((null obj)
        (send-to-char ch "You aren't wearing anything there.~%"))
-      ((not (is-name thing (aliases-of obj)))
+      ((not (is-alias-of thing (aliases-of obj)))
        (send-to-char ch "You aren't wearing ~a ~a there.~%"
                      (a-or-an thing) thing))
       (t
@@ -1246,8 +1246,8 @@
   (send-to-char ch "Who do you want to give it to?~%"))
 
 (defcommand (ch "give" thing "to" target) (:resting)
-  (let* ((objs (get-matching-objects ch thing (carrying-of ch)))
-         (victs (get-matching-objects ch target (people-of (in-room-of ch))))
+  (let* ((objs (resolve-alias ch thing (carrying-of ch)))
+         (victs (resolve-alias ch target (people-of (in-room-of ch))))
          (vict (first victs))
          (mode (find-all-dots thing)))
     (cond
@@ -1279,7 +1279,7 @@
 
 (defcommand (ch "give" amount-str "coins" "to" target) (:resting)
   (let ((amount (parse-integer amount-str :junk-allowed t))
-        (targets (get-matching-objects ch target (people-of (in-room-of ch)))))
+        (targets (resolve-alias ch target (people-of (in-room-of ch)))))
     (cond
       ((notevery #'digit-char-p amount-str)
        (send-to-char ch "That's a bogus number of coins.~%"))
@@ -1295,7 +1295,7 @@
 
 (defcommand (ch "give" amount-str "credits" "to" target) (:resting)
   (let ((amount (parse-integer amount-str :junk-allowed t))
-        (targets (get-matching-objects ch target (people-of (in-room-of ch)))))
+        (targets (resolve-alias ch target (people-of (in-room-of ch)))))
     (cond
       ((notevery #'digit-char-p amount-str)
        (send-to-char ch "That's a bogus number of credits.~%"))
@@ -1313,8 +1313,8 @@
   (send-to-char ch "Plant what on whom?~%"))
 
 (defcommand (ch "plant" thing "on" target) (:resting)
-  (let* ((objs (get-matching-objects ch thing (carrying-of ch)))
-         (victs (get-matching-objects ch target (people-of (in-room-of ch))))
+  (let* ((objs (resolve-alias ch thing (carrying-of ch)))
+         (victs (resolve-alias ch target (people-of (in-room-of ch))))
          (vict (first victs))
          (mode (find-all-dots thing)))
     (cond
@@ -1336,7 +1336,7 @@
        (send-to-char ch "You aren't carrying any ~as.~%" (a-or-an thing) thing)))))
 
 (defcommand (ch "drink" thing) (:resting)
-  (let* ((objs (get-matching-objects ch thing (append
+  (let* ((objs (resolve-alias ch thing (append
                                                (carrying-of ch)
                                                (contents-of (in-room-of ch)))))
          (obj (first objs)))
@@ -1352,7 +1352,7 @@
   (send-to-char ch "Eat what?~%"))
 
 (defcommand (ch "eat" thing) (:resting)
-  (let* ((objs (get-matching-objects ch thing (append
+  (let* ((objs (resolve-alias ch thing (append
                                                (carrying-of ch)
                                                (contents-of (in-room-of ch)))))
          (obj (first objs)))
@@ -1372,7 +1372,7 @@
   (send-to-char ch "What do you want to pour out?~%"))
 
 (defcommand (ch "pour" "out" thing) (:resting)
-  (let* ((objs (get-matching-objects ch thing (carrying-of ch))))
+  (let* ((objs (resolve-alias ch thing (carrying-of ch))))
     (cond
       ((null objs)
        (send-to-char ch "You can't find ~a ~a.~%" (a-or-an thing) thing))
@@ -1382,9 +1382,9 @@
        (perform-pour-out ch (first objs))))))
 
 (defcommand (ch "pour" from-thing "into" to-thing) (:resting)
-  (let* ((from-objs (get-matching-objects ch from-thing (carrying-of ch)))
+  (let* ((from-objs (resolve-alias ch from-thing (carrying-of ch)))
          (from-obj (first from-objs))
-         (to-objs (get-matching-objects ch to-thing (append
+         (to-objs (resolve-alias ch to-thing (append
                                                      (carrying-of ch)
                                                      (contents-of (in-room-of ch)))))
          (to-obj (first to-objs)))
@@ -1408,7 +1408,7 @@
   (send-to-char ch "Wield what?~%"))
 
 (defcommand (ch "wield" thing) (:resting)
-  (let* ((objs (get-matching-objects ch thing (carrying-of ch)))
+  (let* ((objs (resolve-alias ch thing (carrying-of ch)))
          (obj (first objs))
          (hands-free (char-hands-free ch)))
     (cond
@@ -1465,7 +1465,7 @@
   (send-to-char ch "Hold what?"))
 
 (defcommand (ch "hold" thing) (:resting)
-  (let* ((objs (get-matching-objects ch thing (carrying-of ch)))
+  (let* ((objs (resolve-alias ch thing (carrying-of ch)))
          (obj (first objs)))
     (cond
       ((null objs)
@@ -1487,8 +1487,8 @@
   (send-to-char ch "Attach what to what?~%"))
 
 (defcommand (ch "attach" thing "to" to-thing) (:resting)
-  (let ((objs (get-matching-objects ch thing (carrying-of ch)))
-        (to-objs (get-matching-objects ch to-thing (append
+  (let ((objs (resolve-alias ch thing (carrying-of ch)))
+        (to-objs (resolve-alias ch to-thing (append
                                                           (carrying-of ch)
                                                           (contents-of (in-room-of ch))))))
     (cond
@@ -1513,8 +1513,8 @@
   (send-to-char ch "Detach what from what?~%"))
 
 (defcommand (ch "detach" thing "from" from-thing) (:resting)
-  (let ((objs (get-matching-objects ch thing (carrying-of ch)))
-        (from-objs (get-matching-objects ch from-thing (append
+  (let ((objs (resolve-alias ch thing (carrying-of ch)))
+        (from-objs (resolve-alias ch from-thing (append
                                                           (carrying-of ch)
                                                           (contents-of (in-room-of ch))))))
     (cond
@@ -1538,7 +1538,7 @@
   (let* ((locations (append (carrying-of ch)
                             (coerce (remove nil (equipment-of ch)) 'list)
                             (contents-of (in-room-of ch))))
-         (objs (get-matching-objects ch thing locations))
+         (objs (resolve-alias ch thing locations))
          (obj (first objs)))
     (cond
       ((null objs)
@@ -1554,7 +1554,7 @@
   (send-to-char ch "Sacrifice what object?~%"))
 
 (defcommand (ch "sacrifice" thing) (:resting)
-  (let* ((objs (get-matching-objects ch thing (contents-of (in-room-of ch))))
+  (let* ((objs (resolve-alias ch thing (contents-of (in-room-of ch))))
          (obj (first objs)))
     (cond
       ((null objs)
@@ -1568,7 +1568,7 @@
 
 (defcommand (ch "junk" thing) (:resting)
   (let* ((dot-mode (find-all-dots thing))
-         (objs (get-matching-objects ch thing (carrying-of ch))))
+         (objs (resolve-alias ch thing (carrying-of ch))))
     (cond
       ((and objs (eql dot-mode :find-all))
        (send-to-char ch "Go to the dump if you want to junk EVERYTHING!~%"))
@@ -1581,7 +1581,7 @@
 
 (defcommand (ch "donate" thing) (:resting)
   (let* ((dot-mode (find-all-dots thing))
-         (objs (get-matching-objects ch thing (carrying-of ch))))
+         (objs (resolve-alias ch thing (carrying-of ch))))
     (cond
       ((and objs (eql dot-mode :find-all))
        (send-to-char ch "Go to the donation room if you want to donate EVERYTHING!~%"))
@@ -1593,7 +1593,7 @@
        (send-to-char ch "You don't seem to have any ~as.~%" thing)))))
 
 (defcommand (ch "empty" thing) (:resting)
-  (let* ((objs (get-matching-objects ch thing (carrying-of ch)))
+  (let* ((objs (resolve-alias ch thing (carrying-of ch)))
          (obj (first objs)))
     (cond
       ((null objs)
@@ -1606,9 +1606,9 @@
        (perform-empty ch obj)))))
 
 (defcommand (ch "empty" from-thing "into" to-thing) (:resting)
-  (let* ((from-objs (get-matching-objects ch from-thing (carrying-of ch)))
+  (let* ((from-objs (resolve-alias ch from-thing (carrying-of ch)))
          (from-obj (first from-objs))
-         (to-objs (get-matching-objects ch to-thing (append
+         (to-objs (resolve-alias ch to-thing (append
                                                      (carrying-of ch)
                                                      (contents-of (in-room-of ch)))))
          (to-obj (first to-objs)))
