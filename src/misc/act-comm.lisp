@@ -277,6 +277,32 @@
 (defcommand (ch #\: message) (:resting)
   (perform-emote ch message))
 
+(defcommand (ch "whisper") (:resting)
+  (send-to-char ch "To whom do you want to whisper... and what?~%"))
+
+(defcommand (ch "whisper" ignore) (:resting)
+  (declare (ignore ignore))
+  (send-to-char ch "To whom do you want to whisper... and what?~%"))
+
+(defun perform-whisper (ch target message)
+  (let ((escaped-msg (act-escape message)))
+    (act ch :target target
+         :subject-emit (format nil "&yYou$a whisper to $N$l,&n '$[~a]'"
+                               escaped-msg)
+         :target-emit (format nil "&y$n$a whispers to you$l,&n '$[~a]'"
+                               escaped-msg)
+         :not-target-emit "$n$a whispers something to $N.")))
+
+(defcommand (ch "whisper" target-str message) (:resting)
+  (let ((target (resolve-alias-in-room ch target-str)))
+    (cond
+      ((null target)
+       (send-to-char ch "No-one by that name here.~%"))
+      ((eql target ch)
+       (send-to-char ch "You can't get your mouth close enough to your ear...~%"))
+      (t
+       (perform-whisper ch target message)))))
+
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (defparameter +channels+
     '((:name "holler"

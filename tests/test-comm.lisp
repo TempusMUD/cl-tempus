@@ -78,3 +78,10 @@
     (tempus::interpret-command bob "reply hi there")
     (is (equal "&rBob tells you,&n 'hi there'~%" (char-output alice)))
     (is (equal "&rYou tell Alice,&n 'hi there'~%" (char-output bob)))))
+
+(deftest whisper ()
+  (with-mock-players (alice bob eva)
+    (tempus::interpret-command alice "whisper bob hello")
+    (is (equal "&yYou whisper to Bob,&n 'hello'~%" (char-output alice)))
+    (is (equal "&yAlice whispers to you,&n 'hello'~%" (char-output bob)))
+    (is (equal "Alice whispers something to Bob.~%" (char-output eva)))))
