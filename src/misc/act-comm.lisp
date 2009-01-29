@@ -309,7 +309,7 @@
        :npc-only-message "Only licensed auctioneers can use that channel!"
        :not-on-message "You aren't even on the channel!"
        :muted-message "You cannot auction!!")
-      (:name "grat"
+      (:name "congrat"
        :scope plane
        :deaf-flag #.+pref-nogratz+
        :desc-color #\g
@@ -605,17 +605,27 @@
 (defcommand (ch #\;) (:resting)
   (send-to-char ch "Yes, wiz, fine, wiz we must, but WHAT???~%"))
 
+(eval-when (:load-toplevel :compile-toplevel :execute)
+  (defmacro define-comm-channel (command channel)
+    `(progn
+       (defcommand (ch ,command msg) (:resting)
+         (do-gen-comm ch ,channel msg))
+       (defcommand (ch ,command) (:resting)
+         (send-to-char ch "Yes, ~a, fine, ~a we must, but WHAT???~%"
+                       ,channel
+                       ,channel))))
 
+  ;; Define the commands identical to channel names
+  (macrolet ((define-channel-commands ()
+               `(progn
+                  ,@(mapcar (lambda (name)
+                              `(define-comm-channel ,name ,name))
+                            (mapcar #'second +channels+)))))
+    (define-channel-commands))
 
-(macrolet ((define-channels ()
-             `(progn
-                ,@(mapcar (lambda (command)
-                            `(progn
-                               (defcommand (ch ,command msg) (:resting)
-                                 (do-gen-comm ch ,command msg))
-                               (defcommand (ch ,command) (:resting)
-                                 (send-to-char ch "Yes, ~a, fine, ~a we must, but WHAT???~%"
-                                                 ,command
-                                                 ,command))))
-                           (mapcar #'second +channels+)))))
-           (define-channels))
+  ;; Define command aliases
+  (define-comm-channel "chat" "gossip")
+  (define-comm-channel "csay" "clansay")
+  (define-comm-channel "cemote" "clanemote")
+  (define-comm-channel "grats" "congrat")
+  (define-comm-channel "congratulate" "congrat"))
