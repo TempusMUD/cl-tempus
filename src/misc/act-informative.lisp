@@ -148,7 +148,7 @@
             (name-of object))
        (princ (name-of object) stream))
       ((eql mode :extra)
-       (show-obj-extra object ch stream)))
+       (show-obj-extra object stream)))
 
     (unless (eql mode :nobits)
       (show-obj-bits object ch stream))
