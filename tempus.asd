@@ -34,7 +34,11 @@
                                             "utils"
                                             "constants"
                                             "interpreter"
-                                            "act-social"))
+                                            "act-social"
+                                            "creature"
+                                            "db"
+                                            "room-data"
+                                            "zone-data"))
              (:file "act-informative" :pathname "misc/act-informative"
                                       :depends-on ("defs"
                                                    "utils"
