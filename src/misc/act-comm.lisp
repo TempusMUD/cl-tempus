@@ -335,6 +335,13 @@
        :npc-only-message "Only licensed auctioneers can use that channel!"
        :not-on-message "You aren't even on the channel!"
        :muted-message "You cannot auction!!")
+      (:name "haggle"
+       :scope plane
+       :deaf-flag #.+pref-noauct+
+       :desc-color #\m
+       :text-color #\n
+       :not-on-message "You aren't even on the channel!"
+       :muted-message "You cannot haggle!!")
       (:name "congrat"
        :scope plane
        :deaf-flag #.+pref-nogratz+
