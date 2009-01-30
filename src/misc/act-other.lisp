@@ -142,6 +142,46 @@
     (setf (mana-of ch) (max-mana-of ch))
     (setf (move-of ch) (max-move-of ch))))
 
+(defcommand (ch "display") ()
+  (send-to-char ch "Usage: display { H | M | V | A | T | all | normal | none~:[~; | vnums~] }~%"
+                (immortal-level-p ch)))
+
+(defcommand (ch "display" "vnums") (:immortal)
+  (setf (bitp (prefs-of ch) +pref-disp-vnums+)
+        (not (bitp (prefs-of ch) +pref-disp-vnums+)))
+  (send-to-char ch
+                (if (pref-flagged ch +pref-disp-vnums+)
+                    "You will now see vnums on mobs and object ldescs.~%"
+                    "You will no longer see vnums in ldescs.~%")))
+
+(defun set-display-prefs (ch hp mana move align time)
+  (setf (bitp (prefs-of ch) +pref-disphp+) hp)
+  (setf (bitp (prefs-of ch) +pref-dispmana+) mana)
+  (setf (bitp (prefs-of ch) +pref-dispmove+) move)
+  (setf (bitp (prefs-of ch) +pref-dispalign+) align)
+  (setf (bitp (prefs-of ch) +pref-disptime+) time))
+
+(defcommand (ch "display" "on") ()
+  (set-display-prefs ch t t t nil nil)
+  (send-to-char ch "You got it.~%"))
+
+(defcommand (ch "display" "normal") ()
+  (set-display-prefs ch t t t nil nil)
+  (send-to-char ch "You got it.~%"))
+
+(defcommand (ch "display" "all") ()
+  (set-display-prefs ch t t t t t)
+  (send-to-char ch "You got it.~%"))
+
+(defcommand (ch "display" options) ()
+  (set-display-prefs ch
+                     (find #\h options :test #'char-equal)
+                     (find #\m options :test #'char-equal)
+                     (find #\v options :test #'char-equal)
+                     (find #\a options :test #'char-equal)
+                     (find #\t options :test #'char-equal))
+  (send-to-char ch "You got it.~%"))
+
 (defcommand (ch "save") ()
   (save-player-to-xml ch)
   (send-to-char ch "Saved.~%"))
