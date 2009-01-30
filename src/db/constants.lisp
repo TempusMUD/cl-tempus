@@ -1226,7 +1226,7 @@
 (defparameter +pref-nohassle+ 8) ; Aggr mobs won't attack
 (defparameter +pref-nasty+ 9) ; Can hear nasty words on channel
 (defparameter +pref-summonable+ 10)	; Can be summoned
-(defparameter +pref-unused-2+ 11) ; No repetition of comm commands
+(defparameter +pref-noplug+ 11) ; Can't hear crier plug tempus
 (defparameter +pref-holylight+ 12)	; Can see in dark
 (defparameter +pref-color-1+ 13)	; Color (low bit)
 (defparameter +pref-color-2+ 14)	; Color (high bit)
