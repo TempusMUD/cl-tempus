@@ -13,6 +13,9 @@
 (defparameter +fire-tick+ (rl-sec 3))
 (defparameter +pulse-flows+ (rl-sec 1))
 
+(defparameter +ansi-levels+ '("none" "sparse" "normal" "complete"))
+(defparameter +compact-levels+ '("off" "minimal" "partial" "full"))
+
 (defparameter +zone-flags+
   #("AUTOSAVE"
 	"RESETSAVE"
