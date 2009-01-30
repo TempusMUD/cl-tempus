@@ -101,3 +101,22 @@
     (tempus::interpret-command alice "compact full")
     (is (equal "Your &rcompact setting&n is now &Yfull&n.~%" (char-output alice)))
     (is (= (tempus::compact-level-of (tempus::account-of alice)) 3))))
+
+(deftest do-mortalize/not-mortalized/mortalize ()
+  (with-mock-players (alice)
+    (with-captured-log log
+        (tempus::interpret-command alice "mortalize")
+      (is (search "(GC): Alice has mortalized at 3002" log))
+      (is (equal "Other gods may now kill you...  if you don't watch it.~%"
+                 (char-output alice)))
+      (is (logtest (tempus::plr-bits-of alice) tempus::+plr-mortalized+)))))
+
+(deftest do-mortalize/mortalized/immortalize ()
+  (with-mock-players (alice)
+    (setf (tempus::plr-bits-of alice) tempus::+plr-mortalized+)
+    (with-captured-log log
+        (tempus::interpret-command alice "mortalize")
+      (is (search "(GC): Alice has immortalized at 3002" log))
+      (is (equal "You resume your immortal status.~%" (char-output alice)))
+      (is (not (logtest (tempus::plr-bits-of alice)
+                        tempus::+plr-mortalized+))))))

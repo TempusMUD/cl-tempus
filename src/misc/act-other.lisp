@@ -108,6 +108,33 @@
                        "You will now see the room flags."
                        "You will no longer see the room flags.")
 
+(defcommand (ch "mortalize") (:immortal)
+  (when (fighting-of ch)
+    (send-to-char ch "You can't do this while fighting.~%")
+    (return))
+
+  (setf (plr-bits-of ch) (logxor (plr-bits-of ch) +plr-mortalized+))
+  (mlog (format nil "(GC): ~a has ~amortalized at ~d"
+                (name-of ch)
+                (if (plr-flagged ch +plr-mortalized+) "" "im")
+                (number-of (in-room-of ch)))
+        :level (invis-level-of ch)
+        :write-to-file t)
+
+  (send-to-char ch
+                (if (plr-flagged ch +plr-mortalized+)
+                    "Other gods may now kill you...  if you don't watch it.~%"
+                    "You resume your immortal status.~%"))
+  (when (plr-flagged ch +plr-mortalized+)
+    (setf (max-hitp-of ch) (+ (* (level-of ch) 100)
+                              (dice (level-of ch) (con-of ch))))
+    (setf (max-mana-of ch) (+ (* (level-of ch) 100)
+                              (dice (level-of ch) (wis-of ch))))
+    (setf (max-move-of ch) (* (level-of ch) 100))
+    (setf (hitp-of ch) (max-hitp-of ch))
+    (setf (mana-of ch) (max-mana-of ch))
+    (setf (move-of ch) (max-move-of ch))))
+
 (defcommand (ch "save") ()
   (save-player-to-xml ch)
   (send-to-char ch "Saved.~%"))
