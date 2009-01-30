@@ -108,6 +108,13 @@
                        "You will now see the room flags."
                        "You will no longer see the room flags.")
 
+(defcommand (ch "halt") (:immortal)
+  (setf (plr-bits-of ch) (logxor (plr-bits-of ch) +plr-halt+))
+  (send-to-char ch
+                (if (plr-flagged ch +plr-halt+)
+                    "You are now in halt mode.~%"
+                    "You are no longer halted.~%")))
+
 (defcommand (ch "mortalize") (:immortal)
   (when (fighting-of ch)
     (send-to-char ch "You can't do this while fighting.~%")
