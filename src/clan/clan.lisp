@@ -24,3 +24,7 @@
 
 (defun real-clan (clan-id)
   nil)
+
+(defun char-receives-clanmail (ch)
+  (declare (ignorable ch))
+  nil)

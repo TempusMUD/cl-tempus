@@ -147,3 +147,7 @@
     (is (tempus::pref-flagged alice tempus::+pref-dispmove+))
     (is (not (tempus::pref-flagged alice tempus::+pref-dispalign+)))
     (is (not (tempus::pref-flagged alice tempus::+pref-disptime+)))))
+
+(deftest do-toggles/normal/finishes ()
+  (with-mock-players (alice)
+    (finishes (tempus::interpret-command alice "toggle"))))

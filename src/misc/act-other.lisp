@@ -108,6 +108,64 @@
                        "You will now see the room flags."
                        "You will no longer see the room flags.")
 
+(defcommand (ch "toggles") ()
+  (send-to-char ch "
+-- DISPLAY -------------------------------------------------------------------
+Display Hit Pts: ~a       Display Mana: ~a       Display Move: ~a
+       Autoexit: ~a       Autodiagnose: ~a         Autoprompt: ~a
+     Brief Mode: ~a         See misses: ~a    Compact Display: ~a
+  Terminal Size: ~a     Notrailers: ~a        Color Level: ~a
+
+-- CHANNELS ------------------------------------------------------------------
+       Autopage: ~a     Newbie Helper?: ~a        Projections: ~a
+ Gossip Channel: ~a    Auction Channel: ~a      Grats Channel: ~a
+   Spew Channel: ~a      Music Channel: ~a      Dream Channel: ~a
+  Guild Channel: ~a       Clan Channel: ~a     Haggle Channel: ~a
+
+-- GAMEPLAY ------------------------------------------------------------------
+      Autosplit: ~a           Autoloot: ~a         Wimp Level: ~a
+           Deaf: ~a             NoTell: ~a           On Quest: ~a
+   Show Affects: ~a          Clan hide: ~a          Clan mail: ~a
+      Anonymous: ~a            PKILLER: ~a
+"
+                (if (pref-flagged ch +pref-disphp+) " ON" "OFF")
+                (if (pref-flagged ch +pref-dispmana+) " ON" "OFF")
+                (if (pref-flagged ch +pref-dispmove+) " ON" "OFF")
+                (if (pref-flagged ch +pref-autoexit+) " ON" "OFF")
+                (if (pref-flagged ch +pref-auto-diagnose+) " ON" "OFF")
+                (if (pref-flagged ch +pref-autoprompt+) "YES" " NO")
+                (if (pref-flagged ch +pref-brief+) " ON" "OFF")
+                (if (pref-flagged ch +pref-gagmiss+) "YES" " NO")
+                (nth (compact-level-of (account-of ch)) +compact-levels+)
+                (format nil "~dx~d~7t"
+                        (term-height-of (account-of ch))
+                        (term-width-of (account-of ch)))
+                (if (pref-flagged ch +pref-notrailers+) " ON" "OFF")
+                (nth (ansi-level-of (account-of ch)) +ansi-levels+)
+                (if (pref-flagged ch +pref-autopage+) " ON" "OFF")
+                (if (pref-flagged ch +pref-newbie-helper+) "YES" " NO")
+                (if (not (pref-flagged ch +pref-noproject+)) " ON" "OFF")
+                (if (not (pref-flagged ch +pref-nogoss+)) " ON" "OFF")
+                (if (not (pref-flagged ch +pref-noauct+)) " ON" "OFF")
+                (if (not (pref-flagged ch +pref-nogratz+)) " ON" "OFF")
+                (if (not (pref-flagged ch +pref-nospew+)) " ON" "OFF")
+                (if (not (pref-flagged ch +pref-nomusic+)) " ON" "OFF")
+                (if (not (pref-flagged ch +pref-nodream+)) " ON" "OFF")
+                (if (not (pref-flagged ch +pref-noguildsay+)) " ON" "OFF")
+                (if (not (pref-flagged ch +pref-noclansay+)) " ON" "OFF")
+                (if (not (pref-flagged ch +pref-nohaggle+)) " ON" "OFF")
+                (if (pref-flagged ch +pref-autosplit+) " ON" "OFF")
+                (if (pref-flagged ch +pref-autoloot+) " ON" "OFF")
+                (format nil "~[OFF~;~:*~3d~]" (wimp-level-of ch))
+                (if (pref-flagged ch +pref-deaf+) "YES" " NO")
+                (if (pref-flagged ch +pref-notell+) " ON" "OFF")
+                (if (zerop (quest-id-of ch)) " NO" "YES")
+                (if (not (pref-flagged ch +pref-noaffects+)) "YES" " NO")
+                (if (pref-flagged ch +pref-clan-hide+) "YES" " NO")
+                (if (char-receives-clanmail ch) "YES" " NO")
+                (if (pref-flagged ch +pref-anonymous+) "YES" " NO")
+                (if (pref-flagged ch +pref-pkiller+) "YES" " NO")))
+
 (defcommand (ch "halt") (:immortal)
   (setf (plr-bits-of ch) (logxor (plr-bits-of ch) +plr-halt+))
   (send-to-char ch
