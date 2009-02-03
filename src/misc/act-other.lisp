@@ -8,6 +8,9 @@
                    (if (bitp (prefs-of ch) ,pref)
                        ,on-message ,off-message))))
 
+(define-toggle-command "anonymous" () +pref-anonymous+
+                       "Your level will not be shown on the who list."
+                       "Your level will be shown on the who list.")
 (define-toggle-command "autodiagnose" () +pref-auto-diagnose+
                        "You will now automatically be aware of your opponent's condition."
                        "You have disabled auto-diagnose.")
