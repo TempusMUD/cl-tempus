@@ -112,3 +112,15 @@
     (tempus::apply-attribute-to-spell
      spell '("flag" (("value" "damage"))))
     (is (= (tempus::routines-of spell) tempus::+mag-damage+))))
+
+(deftest retrieve-player-account/existing-player/returns-account-id ()
+  (is (= (tempus::retrieve-player-account 259) 2)))
+
+(deftest retrieve-player-account/nonexisting-player/returns-nil ()
+  (is (null (tempus::retrieve-player-account 99999))))
+
+(deftest retrieve-account-name/existing-account/returns-account-name ()
+  (is (equal "Azimuth" (tempus::retrieve-account-name 2))))
+
+(deftest retrieve-account-name/nonexisting-account/returns-nil ()
+  (is (null (tempus::retrieve-account-name 9999))))

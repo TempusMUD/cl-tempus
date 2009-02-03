@@ -177,6 +177,19 @@ Returns NIL if the player did not exist."
                   :where (:= 'idnum idnum))
          :single))
 
+(defun retrieve-player-account (idnum)
+  "Retrieves the account id of the player with the given idnum from the database.
+Returns NIL if the player did not exist."
+  (query (:select 'account :from 'players :where (:= 'idnum idnum))
+         :single))
+
+(defun retrieve-account-name (idnum)
+  "Retrieves the name of the account with the given idnum from the database
+or the cache.  Returns NIL if the account does not exist."
+  (or (gethash idnum *account-idnum-cache*)
+      (query (:select 'name :from 'accounts :where (:= 'idnum idnum))
+             :single)))
+
 (defun create-new-player (actor account)
   "Creates a new player from the given actor.  The player is stored into
 the account database, while the actor is stored in the proper player
