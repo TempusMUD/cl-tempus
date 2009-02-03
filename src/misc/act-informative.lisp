@@ -1246,7 +1246,7 @@
      (send-to-char ch "You have ~a credits.~%" (cash-of ch)))))
 
 (defcommand (ch "alignment") ()
-  (send-to-char ch "&~cYour alignment is ~d.&n~%"
+  (send-to-char ch "Your alignment is &~c~d&n.~%"
                   (cond
                     ((is-good ch) #\c)
                     ((is-evil ch) #\r)
