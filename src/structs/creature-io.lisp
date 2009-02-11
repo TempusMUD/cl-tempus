@@ -124,7 +124,8 @@
                  (setf (bit prefs (+ 31 bit-index))
                        (if (logbitp bit-index num) 1 0))))
              (setf (prefs-of ch) prefs))
-           (setf (current-tongue-of ch) (find-tongue-idx-by-name (xml-attr node "tongue"))))
+           (setf (current-tongue-of ch) (or (find-tongue-idx-by-name (xml-attr node "tongue"))
+                                            0)))
           ("affects"
            (setf (aff-flags-of ch) (xml-attr node "flag1" :hex t))
            (setf (aff2-flags-of ch) (xml-attr node "flag2" :hex t))
@@ -162,13 +163,16 @@
     (unserialize-creature xml)))
 
 (defun load-player-objects (ch)
-  (with-open-file (inf (equipment-pathname (idnum-of ch)))
-    (let ((xml (xmls:parse inf :compress-whitespace nil)))
-      (assert (string= (first xml) "objects") nil 'invalid-equipment-file)
-      (dolist (node (cddr xml))
-        (when (and (consp node)
-                   (string-equal (first node) "object"))
-          (unserialize-object nil ch nil node))))))
+  (handler-case
+      (with-open-file (inf (equipment-pathname (idnum-of ch)))
+        (let ((xml (xmls:parse inf :compress-whitespace nil)))
+          (assert (string= (first xml) "objects") nil 'invalid-equipment-file)
+          (dolist (node (cddr xml))
+            (when (and (consp node)
+                       (string-equal (first node) "object"))
+              (unserialize-object nil ch nil node)))))
+    (file-error ()
+      nil)))
 
 (defun unrent (ch)
   (load-player-objects ch)
