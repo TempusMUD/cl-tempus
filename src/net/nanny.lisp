@@ -313,11 +313,7 @@ have received mail.  Quest points are also shared by all your characters.
   (input (cxn line)
    (case (char-downcase (char line 0))
      (#\y
-      (setf (account-of cxn)
-            (make-instance 'account :name (mode-data-of cxn)))
-      (setf (idnum-of (account-of cxn))
-            (1+ (max-account-id)))
-      (save-account (account-of cxn))
+      (setf (account-of cxn) (create-account (mode-data-of cxn)))
       (setf (state-of cxn) 'new-account-ansi))
      (#\n
       (setf (state-of cxn) 'new-account))

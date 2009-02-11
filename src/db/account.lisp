@@ -80,6 +80,15 @@ is case-insensitive."
             :single)
      1))
 
+(defun create-account (name)
+  (let ((new-account (make-instance 'account
+                                    :idnum (1+ (max-account-id))
+                                    :name name)))
+    (execute (:insert-into 'accounts :set
+                           'idnum (idnum-of new-account)))
+    (save-account new-account)
+    new-account))
+
 (defun load-account (name)
   "Returns the account associated with the given name. The account may
 be loaded from the database or it may be retrieved from a cache."
@@ -217,9 +226,10 @@ file."
 
 (defun delete-player (ch)
   ;; Clear the owner of any clans this player might own in memory
-  (dolist (clan *clans*)
-    (when (= (owner-of clan) (idnum-of ch))
-      (setf (owner-of clan) 0)))
+  (dolist (clan-id (hash-keys *clans*))
+    (let ((clan (real-clan clan-id)))
+      (when (eql (owner-of clan) (idnum-of ch))
+        (setf (owner-of clan) 0))))
 
   ;; Clear the owner of any clans this player might own on the db
   (execute (:update 'clans
