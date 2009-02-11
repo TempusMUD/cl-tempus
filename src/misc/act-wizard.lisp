@@ -330,10 +330,6 @@
       "Exists"
       "None"))
 
-(defun clan-house-can-enter (ch room)
-  (declare (ignore ch room))
-  t)
-
 (defun format-search-data (ch room search)
   (send-to-char ch "&rCommand triggers:&n ~a, &rkeywords:&n ~a~%"
                 (if (string/= "" (command-keys-of search))

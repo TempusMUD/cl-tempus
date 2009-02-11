@@ -76,7 +76,7 @@
              (:file "constants" :pathname "db/constants"
                     :depends-on ("defpackage"))
              (:file "clan" :pathname "clan/clan"
-                           :depends-on ("defs" "utils"))
+                           :depends-on ("defs" "utils" "interpreter"))
              (:file "combat-messages" :pathname "combat/combat-messages"
                                       :depends-on ("defs" "utils"))
              (:file "combat-utils" :pathname "combat/combat-utils"
@@ -167,6 +167,8 @@
   :components ((:file "defpackage" :pathname "tests/test-defpackage")
                (:file "helpers" :pathname "tests/helpers"
                       :depends-on ("defpackage"))
+               (:file "test-clan" :pathname "tests/test-clan"
+                      :depends-on ("helpers"))
                (:file "test-combat" :pathname "tests/test-combat"
                       :depends-on ("helpers"))
                (:file "test-comm" :pathname "tests/test-comm"

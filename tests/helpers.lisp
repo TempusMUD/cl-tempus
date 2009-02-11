@@ -7,7 +7,8 @@
   ())
 
 (defclass mock-player (tempus::player)
-  ((savedp :accessor savedp :initarg :savedp :initform nil)))
+  ((savedp :accessor savedp :initarg :savedp :initform nil)
+   (fullp :accessor fullp :initarg :fullp :initform nil)))
 
 (defclass mock-account (tempus::account)
   ())
@@ -45,6 +46,33 @@
 
 (defmethod tempus::save-account ((cxn mock-account))
   nil)
+
+(defmacro with-mock-clan (vars &body body)
+  `(let ,vars
+     (unwind-protect
+          (progn
+            ,@(loop
+                 for var in vars
+                 collect `(setf ,var
+                                (make-mock-clan ,(string-capitalize var))))
+            ,@body)
+       (handler-case
+           (progn
+             ,@(loop for var in vars
+                  collect `(when ,var (destroy-mock-clan (tempus::idnum-of ,var)))))
+         (t (err)
+           (stefil::record-failure 'stefil::error-in-teardown :condition err))))))
+
+(defun make-mock-clan (name)
+  (let* ((clan-id (+ 900 (random 100)))
+         (clan (tempus::create-clan clan-id)))
+    (setf (tempus::name-of clan) name)
+    (setf (tempus::badge-of clan) (format nil "-- ~a --" name))
+    (setf (tempus::top-rank-of clan) 5)
+    clan))
+
+(defun destroy-mock-clan (clan-id)
+  (tempus::delete-clan clan-id))
 
 (defvar *mock-fd* 0)
 
@@ -105,28 +133,36 @@
            (stefil::record-failure 'stefil::error-in-teardown :condition err))))))
 
 (defvar *top-mock-player* 90000)
+(defvar *top-mock-account* 90000)
 
-(defun make-mock-player (name)
+(defun make-mock-player (name fullp)
   (let* ((link (make-mock-cxn))
          (player (make-instance 'mock-player
                                :name name
                                :idnum (incf *top-mock-player*)
                                :aliases (format nil "~(~a .~:*~a~)" name)
                                :level 1
-                               :link link))
+                               :link link
+                               :fullp fullp))
          (account (make-instance 'mock-account
+                                 :idnum (incf *top-mock-account*)
                                  :name (format nil "test-~(~a~)" name))))
+    (push (tempus::link-of player) tempus::*cxns*)
     (setf (tempus::actor-of link) player)
     (setf (tempus::account-of link) account)
     (setf (tempus::account-of player) account)
-    (setf (tempus::state-of link) 'tempus::playing)
-    (push player tempus::*characters*)
-    (setf (gethash (tempus::idnum-of player) tempus::*character-map*) player)
+    (when fullp
+      (postmodern:execute (:insert-into 'accounts :set
+                                        'idnum (tempus::idnum-of account)))
+      (tempus::save-account account)
+      (tempus::create-new-player player account))
     player))
 
 (defun setup-mock-player (ch room-num)
-  (push (tempus::link-of ch) tempus::*cxns*)
-  (tempus::char-to-room ch (tempus::real-room room-num)))
+  (setf (tempus::load-room-of ch) room-num)
+  (if (fullp ch)
+      (tempus::player-to-game ch)
+      (tempus::char-to-room ch (tempus::real-room room-num))))
 
 (defun destroy-mock-player (ch)
   (when ch
@@ -134,6 +170,11 @@
       (tempus::char-from-room ch t))
     (setf tempus::*characters* (delete ch tempus::*characters*))
     (remhash (tempus::idnum-of ch) tempus::*character-map*)
+    (when (fullp ch)
+      (tempus::delete-player ch)
+      (postmodern:execute (:delete-from 'accounts :where (:= 'idnum (tempus::idnum-of (tempus::account-of ch))))))
+    (remhash (tempus::name-of (tempus::account-of ch)) tempus::*account-name-cache*)
+    (remhash (tempus::idnum-of (tempus::account-of ch)) tempus::*account-idnum-cache*)
     (setf tempus::*cxns* (delete (tempus::link-of ch) tempus::*cxns*))))
 
 (defun make-mock-object (&optional (name "mock object"))
@@ -174,7 +215,7 @@
             ,@(loop
                  for var in vars
                  collect `(setf ,var
-                                (make-mock-player ,(string-capitalize var))))
+                                (make-mock-player ,(string-capitalize var) nil)))
             ,@(loop
                  for var in vars
                  collect `(setup-mock-player ,var 3002))
@@ -185,6 +226,25 @@
                     collect `(destroy-mock-player ,var)))
          (t (err)
            (stefil::record-failure 'stefil::error-in-teardown :condition err))))))
+
+(defmacro with-full-mock-players (vars &body body)
+  `(let ,vars
+     (unwind-protect
+          (progn
+            ,@(loop
+                 for var in vars
+                 collect `(setf ,var
+                                (make-mock-player ,(string-capitalize var) t)))
+            ,@(loop
+                 for var in vars
+                 collect `(setup-mock-player ,var 3002))
+            ,@body)
+;       (handler-case
+           (progn
+             ,@(loop for var in vars
+                    collect `(destroy-mock-player ,var))))))
+;         (t (err)
+;           (stefil::record-failure 'stefil::error-in-teardown :condition err))))))
 
 (defmacro with-captured-log (log expr &body body)
   `(let ((tempus::*log-output* (make-string-output-stream)))
