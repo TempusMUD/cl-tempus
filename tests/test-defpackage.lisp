@@ -1,3 +1,3 @@
 (defpackage #:tempus.tests
   (:use :cl :tempus :stefil)
-  (:export test))
+  (:export test test-full))

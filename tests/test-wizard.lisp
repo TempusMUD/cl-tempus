@@ -8,23 +8,23 @@
     (setf (tempus::level-of bob) 49)
     (setf (tempus::level-of chuck) 52)
     (tempus::interpret-command alice "echo testing")
-    (is (equal "Testing~%" (char-output alice)))
-    (is (equal "Testing~%" (char-output bob)))
-    (is (equal "[Alice] testing~%" (char-output chuck)))))
+    (char-output-is alice "Testing~%")
+    (char-output-is bob "Testing~%")
+    (char-output-is chuck "[Alice] testing~%")))
 
 (deftest send/normal/sends-to-char ()
   (with-mock-players (alice bob)
     (tempus::interpret-command alice "send .bob testing")
-    (is (equal "You send 'testing' to Bob.~%" (char-output alice)))
-    (is (equal "Testing~%" (char-output bob)))))
+    (char-output-is alice "You send 'testing' to Bob.~%")
+    (char-output-is bob "Testing~%")))
 
 (deftest at/normal/performs-command-in-target-room ()
   (with-mock-players (alice bob)
     (tempus::char-from-room alice t)
     (tempus::char-to-room alice (tempus::real-room 3001))
     (tempus::interpret-command alice "at 3002 say hi")
-    (is (equal "&BYou say, &c'hi'&n~%" (char-output alice)))
-    (is (equal "&BAlice says, &c'hi'&n~%" (char-output bob)))))
+    (char-output-is alice "&BYou say, &c'hi'&n~%")
+    (char-output-is bob "&BAlice says, &c'hi'&n~%")))
 
 (deftest goto/numeric-target/changes-room ()
   (with-mock-players (alice bob)
@@ -32,7 +32,7 @@
     (tempus::char-to-room alice (tempus::real-room 3001))
     (tempus::interpret-command alice "goto 3002")
     (is (= 3002 (tempus::number-of (tempus::in-room-of alice))))
-    (is (equal "Alice appears with an ear-splitting bang.~%" (char-output bob)))))
+    (char-output-is bob "Alice appears with an ear-splitting bang.~%")))
 
 (deftest goto/char-target/changes-room ()
   (with-mock-players (alice bob)
@@ -40,7 +40,7 @@
     (tempus::char-to-room alice (tempus::real-room 3001))
     (tempus::interpret-command alice "goto .bob")
     (is (= 3002 (tempus::number-of (tempus::in-room-of alice))))
-    (is (equal "Alice appears with an ear-splitting bang.~%" (char-output bob)))))
+    (char-output-is bob "Alice appears with an ear-splitting bang.~%")))
 
 (deftest goto/following-imm/imm-in-same-room ()
   (with-mock-players (alice bob)
@@ -50,18 +50,18 @@
     (tempus::interpret-command alice "goto 3001")
     (is (= 3001 (tempus::number-of (tempus::in-room-of alice))))
     (is (= 3001 (tempus::number-of (tempus::in-room-of bob))))
-    (is (search "Bob appears with an ear-splitting bang.~%" (char-output alice)))
-    (is (search "Alice disappears in a puff of smoke.~%" (char-output bob)))))
+    (char-output-has alice "Bob appears with an ear-splitting bang.~%")
+    (char-output-has bob "Alice disappears in a puff of smoke.~%")))
 
 (deftest distance/valid-rooms/returns-distance ()
   (with-mock-players (alice bob)
     (tempus::interpret-command alice "distance 24800")
-    (is (equal "Room 24800 is 36 steps away.~%" (char-output alice)))))
+    (char-output-is alice "Room 24800 is 36 steps away.~%")))
 
 (deftest distance/no-connection/returns-error ()
   (with-mock-players (alice bob)
     (tempus::interpret-command alice "distance 43000")
-    (is (equal "There is no valid path to room 43000.~%" (char-output alice)))))
+    (char-output-is alice "There is no valid path to room 43000.~%")))
 
 (deftest transport/normal/moves-target ()
   (with-mock-players (alice bob)
@@ -70,33 +70,33 @@
     (with-captured-log log
         (tempus::do-transport-targets alice ".bob")
       (is (= 3001 (tempus::number-of (tempus::in-room-of bob))))
-      (is (equal "Bob arrives from a puff of smoke.~%" (char-output alice)))
-      (is (equal "Alice has transported you!~%" (char-output bob)))
+      (char-output-is alice "Bob arrives from a puff of smoke.~%")
+      (char-output-is bob "Alice has transported you!~%")
       (is (search "Alice has transported Bob" log)))))
 
 (deftest transport/no-such-target/error-message ()
   (with-mock-players (alice)
     (tempus::do-transport-targets alice ".zyzygy")
-    (is (equal "You can't detect any '.zyzygy'~%" (char-output alice)))))
+    (char-output-is alice "You can't detect any '.zyzygy'~%")))
 
 (deftest teleport/normal/moves-target ()
   (with-mock-players (alice bob)
     (with-captured-log log
         (tempus::do-teleport-name-to-target alice ".bob" "3001")
       (is (= 3001 (tempus::number-of (tempus::in-room-of bob))))
-      (is (equal "Okay.~%Bob disappears in a puff of smoke.~%" (char-output alice)))
-      (is (search "Alice has teleported you!~%" (char-output bob)))
+      (char-output-is alice "Okay.~%Bob disappears in a puff of smoke.~%")
+      (char-output-has bob "Alice has teleported you!~%")
       (is (search "Alice has teleported Bob" log)))))
 
 (deftest vnum-mob/normal/lists-mobs ()
   (with-mock-players (alice)
     (tempus::do-vnum-mobiles-name alice "puff dragon")
-    (is (equal "  1. &g[&n    1&g] &yPuff&n~%" (char-output alice)))))
+    (char-output-is alice "  1. &g[&n    1&g] &yPuff&n~%")))
 
 (deftest vnum-mob/not-found/error-message ()
   (with-mock-players (alice)
     (tempus::do-vnum-mobiles-name alice "zyzygy")
-    (is (equal "No mobiles by that name.~%" (char-output alice)))))
+    (char-output-is alice "No mobiles by that name.~%")))
 
 (deftest vnum-obj/normal/lists-objs ()
   (with-mock-players (alice)
@@ -107,17 +107,17 @@
 (deftest vnum-obj/not-found/error-message ()
   (with-mock-players (alice)
     (tempus::do-vnum-objects-name alice "zyzygy")
-    (is (equal "No objects by that name.~%" (char-output alice)))))
+    (char-output-is alice "No objects by that name.~%")))
 
 (deftest stat-zone/normal/returns-zone-info ()
   (with-mock-players (alice)
     (tempus::do-stat-zone alice)
-    (is (search "Zone #&y30: &cThe Holy City of Modrian&n~%" (char-output alice)))))
+    (char-output-has alice "Zone #&y30: &cThe Holy City of Modrian&n~%")))
 
 (deftest do-stat-trails/no-trails/returns-error ()
   (with-mock-players (alice)
     (tempus::do-stat-trails alice)
-    (is (equal "No trails exist within this room.~%" (char-output alice)))))
+    (char-output-is alice "No trails exist within this room.~%")))
 
 (deftest do-stat-trails/normal/displays-no-NIL ()
   (with-mock-players (alice)
@@ -143,7 +143,7 @@
   (with-mock-players (alice bob)
     (function-trace-bind ((calls tempus::interpret-command))
         (tempus::interpret-command alice "force bob to inventory")
-      (is (equal "You got it.~%" (char-output alice)))
+      (char-output-is alice "You got it.~%")
       (is (= (length calls) 2))
       (is (eql (first (first calls)) bob))
       (is (equal (second (first calls)) "inventory")))))
@@ -154,7 +154,7 @@
          (with-captured-log log
              (tempus::interpret-command alice "mload 1201")
            (is (search "(GC) Alice mloaded the Immortal Postmaster[1201] at 3002" log))
-           (is (equal "You create the Immortal Postmaster.~%" (char-output alice)))
+           (char-output-is alice "You create the Immortal Postmaster.~%")
            (let ((mob (find 1201 (tempus::people-of (tempus::in-room-of alice)) :key 'tempus::vnum-of)))
              (is (not (null mob)))
              (is (= (tempus::vnum-of mob) 1201))))
@@ -172,7 +172,7 @@
          (with-captured-log log
              (tempus::interpret-command alice "oload 1203")
            (is (search "(GC) Alice oloaded his large coffee mug[1203] at 3002" log))
-           (is (equal "You create his large coffee mug.~%" (char-output alice)))
+           (char-output-is alice "You create his large coffee mug.~%")
            (let ((obj (find 1203 (tempus::contents-of (tempus::in-room-of alice)) :key 'tempus::vnum-of)))
              (is (not (null obj)))))
       (let ((objs (remove 1203
@@ -188,7 +188,7 @@
     (unwind-protect
          (progn
            (tempus::interpret-command alice "oload 20")
-           (is (equal "There is no object thang with that number.~%" (char-output alice)))
+           (char-output-is alice "There is no object thang with that number.~%")
            (is (zerop (count 20 (tempus::contents-of (tempus::in-room-of alice))
                              :key 'tempus::vnum-of))))
       (let ((objs (remove 20
@@ -224,7 +224,7 @@
     (unwind-protect
          (progn
            (tempus::interpret-command alice "oload 101 1203")
-           (is (equal "You can't possibly need THAT many!~%" (char-output alice)))
+           (char-output-is alice "You can't possibly need THAT many!~%")
            (is (zerop (count 1203 (tempus::contents-of (tempus::in-room-of alice))
                              :key 'tempus::vnum-of))))
       (let ((objs (remove 1203
@@ -240,8 +240,8 @@
     (with-captured-log log
         (tempus::perform-pload alice 1203 1 alice)
       (is (search "(GC) Alice ploaded his large coffee mug[1203] onto self at 3002" log))
-      (is (equal "You create his large coffee mug.~%" (char-output alice)))
-      (is (equal "Alice does something suspicious and alters reality.~%" (char-output bob)))
+      (char-output-is alice "You create his large coffee mug.~%")
+      (char-output-is bob "Alice does something suspicious and alters reality.~%")
       (is (= 1 (count 1203 (tempus::carrying-of alice) :key 'tempus::vnum-of))))))
 
 (deftest perform-pload/multiple-on-self/loads-objects ()
@@ -249,8 +249,8 @@
     (with-captured-log log
         (tempus::perform-pload alice 1203 10 alice)
       (is (search "(GC) Alice ploaded his large coffee mug[1203] onto self at 3002 (x10)" log))
-      (is (equal "You create his large coffee mug. (x10)~%" (char-output alice)))
-      (is (equal "Alice does something suspicious and alters reality.~%" (char-output bob)))
+      (char-output-is alice "You create his large coffee mug. (x10)~%")
+      (char-output-is bob "Alice does something suspicious and alters reality.~%")
       (is (= 10 (count 1203 (tempus::carrying-of alice) :key 'tempus::vnum-of))))))
 
 (deftest perform-pload/single-on-other/loads-object ()
@@ -260,9 +260,9 @@
       ;; hackily skip the mock player id
       (is (search "(GC) Alice ploaded his large coffee mug[1203] onto PC Bob[" log))
       (is (search "] at 3002" log))
-      (is (equal "You load his large coffee mug onto Bob.~%" (char-output alice)))
-      (is (equal "Alice causes his large coffee mug to appear in your hands.~%" (char-output bob)))
-      (is (equal "Alice does something suspicious and alters reality.~%" (char-output eva)))
+      (char-output-is alice "You load his large coffee mug onto Bob.~%")
+      (char-output-is bob "Alice causes his large coffee mug to appear in your hands.~%")
+      (char-output-is eva "Alice does something suspicious and alters reality.~%")
       (is (= 1 (count 1203 (tempus::carrying-of bob) :key 'tempus::vnum-of))))))
 
 (deftest perform-pload/multiple-on-other/loads-objects ()
@@ -272,9 +272,9 @@
       ;; hackily skip the mock player id
       (is (search "(GC) Alice ploaded his large coffee mug[1203] onto PC Bob[" log))
       (is (search "] at 3002 (x10)" log))
-      (is (equal "You load his large coffee mug onto Bob. (x10)~%" (char-output alice)))
-      (is (equal "Alice causes his large coffee mug to appear in your hands. (x10)~%" (char-output bob)))
-      (is (equal "Alice does something suspicious and alters reality.~%" (char-output eva)))
+      (char-output-is alice "You load his large coffee mug onto Bob. (x10)~%")
+      (char-output-is bob "Alice causes his large coffee mug to appear in your hands. (x10)~%")
+      (char-output-is eva "Alice does something suspicious and alters reality.~%")
       (is (= 10 (count 1203 (tempus::carrying-of bob) :key 'tempus::vnum-of))))))
 
 (deftest do-pload-vnum/normal/calls-perform-pload ()
@@ -311,7 +311,7 @@
     (setf (tempus::exp-of alice) (aref tempus::+exp-scale+ 10))
     (with-captured-log log
         (tempus::gain-exp-regardless alice 500)
-      (is (equal "" (char-output alice)))
+      (char-output-is alice "")
       (is (= (tempus::level-of alice) 10))
       (is (= (tempus::exp-of alice) (+ 500 (aref tempus::+exp-scale+ 10))))
       (is (equal "" log)))))
@@ -323,7 +323,7 @@
     (with-captured-log log
         (tempus::gain-exp-regardless alice (- (aref tempus::+exp-scale+ 11)
                                               (aref tempus::+exp-scale+ 10)))
-      (is (equal "You rise a level!~%" (char-output alice)))
+      (char-output-is alice "You rise a level!~%")
       (is (= (tempus::level-of alice) 11))
       (is (= (tempus::exp-of alice) (aref tempus::+exp-scale+ 11)))
       (is (search "Alice advanced to level 11" log)))))
@@ -335,9 +335,9 @@
         (function-trace-bind ((calls tempus::gain-exp-regardless))
             (tempus::interpret-command alice "advance bob 10")
           (is (equal `((,bob ,(aref tempus::+exp-scale+ 10))) calls)))
-      (is (search "You got it.~%" (char-output alice)))
-      (is (search "Alice makes some strange gestures.~%" (char-output bob)))
-      (is (search "You rise 9 levels!~%" (char-output bob)))
+      (char-output-has alice "You got it.~%")
+      (char-output-has bob "Alice makes some strange gestures.~%")
+      (char-output-has bob "You rise 9 levels!~%")
       (is (search "(GC) Alice has advanced Bob to level 10 (from 1)" log)))))
 
 (deftest do-advance/target-level-smaller/target-loses-exp ()
@@ -349,8 +349,8 @@
             (tempus::interpret-command alice "advance bob 10")
           (is (equal `((,bob ,(1- (aref tempus::+exp-scale+ 10)))) calls)))
       (is (= (tempus::level-of bob) 10))
-      (is (search "You got it.~%" (char-output alice)))
-      (is (equal "" (char-output bob)))
+      (char-output-has alice "You got it.~%")
+      (char-output-is bob "")
       (is (search "(GC) Alice has advanced Bob to level 10 (from 49)" log)))))
 
 (deftest do-restore-target/normal/target-is-restored ()
@@ -360,23 +360,23 @@
         (function-trace-bind ((calls tempus::restore-creature))
             (tempus::interpret-command alice "restore bob")
           (is (equal `((,bob)) calls)))
-      (is (search "You got it.~%" (char-output alice)))
-      (is (equal "You have been fully healed by Alice!~%" (char-output bob)))
+      (char-output-has alice "You got it.~%")
+      (char-output-is bob "You have been fully healed by Alice!~%")
       (is (search "Bob has been restored by Alice" log)))))
 
 (deftest perform-vis/already-visible/already-vis-message ()
   (with-mock-players (alice)
     (setf (tempus::level-of alice) 72)
     (tempus::perform-vis alice)
-    (is (equal "You are already fully visible.~%" (char-output alice)))))
+    (char-output-is alice "You are already fully visible.~%")))
 
 (deftest perform-vis/other-cant-see/other-gets-message ()
   (with-mock-players (alice bob)
     (setf (tempus::level-of alice) 72)
     (setf (tempus::invis-level-of alice) 72)
     (tempus::perform-vis alice)
-    (is (equal "You are now fully visible.~%" (char-output alice)))
-    (is (equal "You suddenly realize that Alice is standing beside you.~%" (char-output bob)))))
+    (char-output-is alice "You are now fully visible.~%")
+    (char-output-is bob "You suddenly realize that Alice is standing beside you.~%")))
 
 (deftest perform-vis/other-can-see/other-gets-no-message ()
   (with-mock-players (alice bob)
@@ -384,8 +384,8 @@
     (setf (tempus::level-of bob) 50)
     (setf (tempus::invis-level-of alice) 50)
     (tempus::perform-vis alice)
-    (is (equal "You are now fully visible.~%" (char-output alice)))
-    (is (equal "" (char-output bob)))))
+    (char-output-is alice "You are now fully visible.~%")
+    (char-output-is bob "")))
 
 (deftest perform-invis/ch-is-npc/no-effect ()
   (with-mock-mobiles (mallory)
@@ -399,7 +399,7 @@
     (setf (tempus::invis-level-of alice) 0)
     (tempus::perform-invis alice (tempus::level-of alice))
     (is (= (tempus::invis-level-of alice) (tempus::level-of alice)))
-    (is (equal "Your invisibility level is 72.~%" (char-output alice)))))
+    (char-output-is alice "Your invisibility level is 72.~%")))
 
 (deftest perform-invis/other-can-see/other-gets-message ()
   (with-mock-players (alice bob)
@@ -415,7 +415,7 @@
     (setf (tempus::invis-level-of alice) 51)
     (setf (tempus::level-of bob) 50)
     (tempus::perform-invis alice (tempus::level-of alice))
-    (is (equal "" (char-output bob)))))
+    (char-output-is bob "")))
 
 (deftest perform-invis/other-can-now-see/other-gets-message ()
   (with-mock-players (alice bob)
@@ -429,7 +429,7 @@
 (deftest do-invis/ch-is-npc/error-message ()
   (with-mock-mobiles (mallory)
     (tempus::interpret-command mallory "invis")
-    (is (equal "You can't do that!~%" (char-output mallory)))))
+    (char-output-is mallory "You can't do that!~%")))
 
 (deftest do-invis/no-arg-visible/ch-is-max-invis ()
   (with-mock-players (alice)
@@ -450,7 +450,7 @@
   (with-mock-players (alice)
     (setf (tempus::level-of alice) 50)
     (tempus::interpret-command alice "invis 70")
-    (is (equal "You can't go invisible above your own level.~%" (char-output alice)))
+    (char-output-is alice "You can't go invisible above your own level.~%")
     (is (zerop (tempus::invis-level-of alice)))))
 
 (deftest do-invis/one-arg-is-zero/ch-is-vis ()
@@ -473,15 +473,15 @@
 (deftest do-gecho/no-arg/error-message ()
   (with-mock-players (alice)
     (tempus::interpret-command alice "gecho")
-    (is (equal "That must be a mistake...~%" (char-output alice)))))
+    (char-output-is alice "That must be a mistake...~%")))
 
 (deftest do-gecho/with-arg/message-sent-to-all ()
   (with-mock-players (alice bob ike)
     (setf (tempus::level-of ike) 60)
     (tempus::interpret-command alice "gecho Testing")
-    (is (equal "Testing~%" (char-output alice)))
-    (is (equal "Testing~%" (char-output bob)))
-    (is (equal "[Alice-g] Testing~%" (char-output ike)))))
+    (char-output-is alice "Testing~%")
+    (char-output-is bob "Testing~%")
+    (char-output-is ike "[Alice-g] Testing~%")))
 
 (deftest do-dc-num-str/normal/target-disconnected ()
   (with-mock-players (alice bob)
@@ -500,7 +500,7 @@
   (with-mock-players (alice)
     (setf (tempus::level-of alice) 72)
     (finishes (tempus::interpret-command alice "last"))
-    (is (equal "For whom do you wish to search?~%" (char-output alice)))))
+    (char-output-is alice "For whom do you wish to search?~%")))
 
 (deftest do-last-playername/lower-level/returns-last ()
   (with-mock-players (alice)
@@ -513,12 +513,12 @@
   (with-mock-players (alice)
     (setf (tempus::level-of alice) 72)
     (finishes (tempus::interpret-command alice "last azimuth"))
-    (is (search "Azimuth" (char-output alice)))))
+    (char-output-has alice "Azimuth")))
 
 (deftest do-zreset/no-arg/error-message ()
   (with-mock-players (alice)
     (tempus::interpret-command alice "zreset")
-    (is (equal "You must specify a zone.~%" (char-output alice)))))
+    (char-output-is alice "You must specify a zone.~%")))
 
 (deftest do-zreset/star-arg/reset-whole-world ()
   (with-mock-players (alice)
@@ -547,7 +547,7 @@
             (tempus::interpret-command alice "zreset 0")
           (is (search "(GC) Alice reset zone 0" log)))
       (is (equal `((,(tempus::real-zone 0))) calls)))
-    (is (equal "Reset zone 0 : Limbo~%" (char-output alice)))))
+    (char-output-is alice "Reset zone 0 : Limbo~%")))
 
 (deftest do-unaffect/normal/unaffects-target ()
   (with-mock-players (alice bob)
@@ -564,8 +564,8 @@
         (function-trace-bind ((calls tempus::perform-unaffect))
             (tempus::interpret-command alice "unaffect bob")
           (is (equal `((,alice ,bob)) calls)))
-      (is (equal "All spells removed.~%" (char-output alice)))
-      (is (equal "There is a brief flash of light!~%You feel slightly different.~%" (char-output bob))))))
+      (char-output-is alice "All spells removed.~%")
+      (char-output-is bob "There is a brief flash of light!~%You feel slightly different.~%"))))
 
 (deftest do-reroll/normal/target-rerolled ()
   (with-mock-players (alice bob)
@@ -573,8 +573,8 @@
         (function-trace-bind ((calls tempus::perform-reroll))
             (tempus::interpret-command alice "reroll bob")
           (is (equal `((,alice ,bob)) calls)))
-      (is (search "New stats:" (char-output alice)))
-      (is (equal "Your stats have been rerolled.~%" (char-output bob)))
+      (char-output-has alice "New stats:")
+      (char-output-is bob "Your stats have been rerolled.~%")
       (is (search "Alice has rerolled Bob" log)))))
 
 (deftest do-notitle/notitle-off/target-notitle-on ()
@@ -582,7 +582,7 @@
     (with-captured-log log
         (tempus::interpret-command alice "notitle bob")
       (is (tempus::plr-flagged bob tempus::+plr-notitle+))
-      (is (equal "Notitle turned ON for Bob.~%" (char-output alice)))
+      (char-output-is alice "Notitle turned ON for Bob.~%")
       (is (search "Alice turned notitle ON for Bob" log)))))
 
 (deftest do-notitle/notitle-on/target-notitle-off ()
@@ -592,7 +592,7 @@
     (with-captured-log log
         (tempus::interpret-command alice "notitle bob")
       (is (not (tempus::plr-flagged bob tempus::+plr-notitle+)))
-      (is (equal "Notitle turned OFF for Bob.~%" (char-output alice)))
+      (char-output-is alice "Notitle turned OFF for Bob.~%")
       (is (search "Alice turned notitle OFF for Bob" log)))))
 
 (deftest do-nopost/nopost-off/target-nopost-on ()
@@ -600,7 +600,7 @@
     (with-captured-log log
         (tempus::interpret-command alice "nopost bob")
       (is (tempus::plr-flagged bob tempus::+plr-nopost+))
-      (is (equal "Nopost turned ON for Bob.~%" (char-output alice)))
+      (char-output-is alice "Nopost turned ON for Bob.~%")
       (is (search "Alice turned nopost ON for Bob" log)))))
 
 (deftest do-squelch/squelch-off/target-squelch-on ()
@@ -608,7 +608,7 @@
     (with-captured-log log
         (tempus::interpret-command alice "squelch bob")
       (is (tempus::plr-flagged bob tempus::+plr-noshout+))
-      (is (equal "Squelch turned ON for Bob.~%" (char-output alice)))
+      (char-output-is alice "Squelch turned ON for Bob.~%")
       (is (search "Alice turned squelch ON for Bob" log)))))
 
 (deftest perform-freeze/one-day/freezes-char-one-day ()
@@ -616,8 +616,8 @@
     (setf (tempus::level-of alice) 60)
     (with-captured-log log
         (tempus::perform-freeze alice bob "1d")
-      (is (search "Bob has been frozen for 1 day~%" (char-output alice)))
-      (is (equal "A bitter wind suddenly rises and drains every erg of heat from your body!~%You feel frozen!~%" (char-output bob)))
+      (char-output-has alice "Bob has been frozen for 1 day~%")
+      (char-output-is bob "A bitter wind suddenly rises and drains every erg of heat from your body!~%You feel frozen!~%")
       (is (search "Alice has frozen Bob for 1 day" log))
       (is (tempus::plr-flagged bob tempus::+plr-frozen+))
       (is (not (null (tempus::thaw-time-of bob))))
@@ -632,43 +632,42 @@
     (setf (tempus::level-of alice) 60)
     (with-captured-log log
         (tempus::perform-thaw alice bob)
-      (is (search "Thawed.~%" (char-output alice)))
-      (is (search "You feel thawed.~%" (char-output bob)))
+      (char-output-has alice "Thawed.~%")
+      (char-output-has bob "You feel thawed.~%")
       (is (search "Alice has un-frozen Bob" log))
       (is (not (tempus::plr-flagged bob tempus::+plr-frozen+))))))
 
 (deftest do-users/normal/lists-users ()
   (with-mock-players (alice bob)
     (tempus::interpret-command alice "users")
-    (is (search "Alice" (char-output alice)))
-    (is (search "playing" (char-output alice)))
-    (is (search "2 visible sockets connected.~%" (char-output alice)))))
+    (char-output-has alice "Alice")
+    (char-output-has alice "playing")
+    (char-output-has alice "2 visible sockets connected.~%")))
 
 (deftest do-badge/blank-badge/sets-badge-blank ()
   (with-mock-players (alice)
     (setf (tempus::badge-of alice) "FOO")
     (tempus::interpret-command alice "badge")
     (is (equal "" (tempus::badge-of alice)))
-    (is (equal "Okay, you've got a blank badge now.~%" (char-output alice)))))
+    (char-output-is alice "Okay, you've got a blank badge now.~%")))
 
 (deftest do-badge/non-blank-badge/sets-badge ()
   (with-mock-players (alice)
     (setf (tempus::badge-of alice) "FOO")
     (tempus::interpret-command alice "badge bar")
     (is (equal "BAR" (tempus::badge-of alice)))
-    (is (equal "Okay, your badge is now BAR.~%" (char-output alice)))))
+    (char-output-is alice "Okay, your badge is now BAR.~%")))
 
 (deftest do-tester/no-arg/lists-options ()
   (with-mock-players (alice)
     (tempus::interpret-command alice "tester")
-    (is (search "Options are:~%" (char-output alice)))))
+    (char-output-has alice "Options are:~%")))
 
 (deftest do-tester-advance/normal/sets-up-tester-level ()
   (with-mock-players (alice)
     (with-captured-log log
         (tempus::interpret-command alice "tester advance 10")
-      (is (equal "Your body vibrates for a moment... You feel different!~%You rise 9 levels!~%"
-                 (char-output alice)))
+      (char-output-is alice "Your body vibrates for a moment... You feel different!~%You rise 9 levels!~%")
       (is (= 10 (tempus::level-of alice))))))
 
 (deftest do-tester-unaffect/normal/unaffects-tester ()
@@ -729,13 +728,13 @@
 (deftest do-tester/bad-command/error-message ()
   (with-mock-players (alice)
     (tempus::interpret-command alice "tester badcmd")
-    (is (equal "Invalid tester command: badcmd~%" (char-output alice)))))
+    (char-output-is alice "Invalid tester command: badcmd~%")))
 
 (deftest do-severtell/normal/tell-is-severed ()
   (with-mock-players (alice bob)
     (setf (tempus::last-tell-from-of bob) (tempus::idnum-of alice))
     (setf (tempus::last-tell-to-of bob) (tempus::idnum-of alice))
     (tempus::interpret-command alice "severtell bob")
-    (is (equal "Reply severed.~%" (char-output alice)))
+    (char-output-is alice "Reply severed.~%")
     (is (null (tempus::last-tell-from-of bob)))
     (is (null (tempus::last-tell-to-of bob)))))
