@@ -195,9 +195,11 @@ Returns NIL if the player did not exist."
 (defun retrieve-account-name (idnum)
   "Retrieves the name of the account with the given idnum from the database
 or the cache.  Returns NIL if the account does not exist."
-  (or (gethash idnum *account-idnum-cache*)
-      (query (:select 'name :from 'accounts :where (:= 'idnum idnum))
-             :single)))
+  (let ((account (gethash idnum *account-idnum-cache*)))
+    (if account
+        (name-of account)
+        (query (:select 'name :from 'accounts :where (:= 'idnum idnum))
+               :single))))
 
 (defun create-new-player (actor account)
   "Creates a new player from the given actor.  The player is stored into

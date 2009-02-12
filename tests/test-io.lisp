@@ -122,5 +122,9 @@
 (deftest retrieve-account-name/existing-account/returns-account-name ()
   (is (equal "Azimuth" (tempus::retrieve-account-name 2))))
 
+(deftest retrieve-account-name/account-in-cache/returns-account-name ()
+  (tempus::load-account "azimuth")
+  (is (equal "Azimuth" (tempus::retrieve-account-name 2))))
+
 (deftest retrieve-account-name/nonexisting-account/returns-nil ()
   (is (null (tempus::retrieve-account-name 9999))))
