@@ -64,7 +64,7 @@
                  (actor-of cxn)
                  (in-room-of (actor-of cxn))
                  (= (clan-of (actor-of cxn)) clan-id))
-        (cxn-write cxn "&c~a&n" msg)))))
+        (cxn-write cxn "&c~a&n~%" msg)))))
 
 (defun char-can-enroll (ch target clan)
   (cond
@@ -410,7 +410,7 @@
                  (name-of target)
                  (name-of clan)
                  (name-of ch))
-         (send-to-clan (clan-of ch) "&c~a has been inducted into the clan by ~a!&n!%"
+         (send-to-clan (clan-of ch) "~a has been inducted into the clan by ~a!"
                        (name-of target)
                        (name-of ch))
          (add-clan-member ch clan))))))
@@ -437,7 +437,7 @@
                (name-of clan)
                (name-of ch))
        (send-to-clan (idnum-of clan)
-                     "&c~a has been inducted into the clan by ~a!&n!%"
+                     "~a has been inducted into the clan by ~a!"
                      (name-of target)
                      (name-of ch))
          (add-clan-member ch clan)))))
@@ -465,7 +465,7 @@
                  (name-of target)
                  (name-of clan)
                  (name-of ch))
-         (send-to-clan (clan-of ch) "&c~a has been dismissed from the clan by ~a!&n!%"
+         (send-to-clan (clan-of ch) "~a has been dismissed from the clan by ~a!"
                        (name-of target)
                        (name-of ch))
          (remove-clan-member target clan))))))
@@ -485,7 +485,7 @@
      (let ((clan (real-clan (clan-of ch))))
        (send-to-char ch "You have resigned from clan ~a.~%" (name-of clan))
        (remove-clan-member ch clan)
-       (send-to-clan (clan-of ch) "~a has resigned from the clan.~%"
+       (send-to-clan (clan-of ch) "~a has resigned from the clan."
                      (name-of ch))
        (mudlog 'notice t "~a has resigned from clan ~a"
                (name-of ch)
@@ -515,7 +515,7 @@
       ((>= (rank-of target-member) (top-rank-of clan))
        ;; promotion to clan leader
        (setf (plr-bits-of target) (logior (plr-bits-of target) +plr-clan-leader+))
-       (send-to-clan (clan-of target) "~a has promoted ~a to clan leader status.~%"
+       (send-to-clan (clan-of target) "~a has promoted ~a to clan leader status."
                      (name-of ch)
                      (name-of target))
        (mudlog 'notice t "~a has promoted ~a to clan leader status"

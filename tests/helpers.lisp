@@ -1,7 +1,8 @@
 (in-package #:tempus.tests)
 
 (in-root-suite)
-(defsuite (test :documentation "Tempus tests"))
+(defsuite (test-full :documentation "Tempus tests, including slow tests"))
+(defsuite (test :in test-full :documentation "Tempus tests"))
 
 (defclass mock-cxn (tempus::tempus-cxn)
   ())
@@ -78,9 +79,11 @@
 
 (defun make-mock-cxn ()
   (incf *mock-fd*)
-  (make-instance 'mock-cxn
-                 :fd *mock-fd*
-                 :peer-addr "127.0.0.1"))
+  (let ((cxn (make-instance 'mock-cxn
+                            :fd *mock-fd*
+                            :peer-addr "127.0.0.1")))
+    (setf (tempus::state-of cxn) 'tempus::playing)
+    cxn))
 
 (defun mock-cxn-input (cxn fmt &rest args)
   (let ((msg (format nil "~?" fmt args)))
@@ -160,9 +163,14 @@
 
 (defun setup-mock-player (ch room-num)
   (setf (tempus::load-room-of ch) room-num)
-  (if (fullp ch)
-      (tempus::player-to-game ch)
-      (tempus::char-to-room ch (tempus::real-room room-num))))
+  (cond
+    ((fullp ch)
+     (let ((tempus::*log-output* (make-broadcast-stream)))
+       (tempus::player-to-game ch)))
+    (t
+     (push ch tempus::*characters*)
+     (setf (gethash (tempus::idnum-of ch) tempus::*character-map*) ch)
+     (tempus::char-to-room ch (tempus::real-room room-num)))))
 
 (defun destroy-mock-player (ch)
   (when ch
@@ -238,6 +246,9 @@
             ,@(loop
                  for var in vars
                  collect `(setup-mock-player ,var 3002))
+            ,@(loop
+                 for var in vars
+                 collect `(clear-mock-buffers ,var))
             ,@body)
 ;       (handler-case
            (progn
