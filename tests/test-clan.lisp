@@ -25,12 +25,22 @@
       (is (not (member (tempus::idnum-of alice) (tempus::members-of clan)
                   :key 'tempus::idnum-of))))))
 
+(deftest resolve-clan-alias/with-number/returns-clan ()
+  (with-mock-clan (clan)
+    (let ((result (tempus::resolve-clan-alias (write-to-string (tempus::idnum-of clan)))))
+      (is (eql clan result)))))
+
+(deftest resolve-clan-alias/with-name/returns-clan ()
+  (with-mock-clan (clan)
+    (let ((result (tempus::resolve-clan-alias (tempus::name-of clan))))
+      (is (eql clan result)))))
+
 (deftest send-to-clan/clan-members-receive ()
   (with-mock-clan (clan)
     (with-full-mock-players (alice)
       (tempus::add-clan-member alice clan)
       (tempus::send-to-clan (tempus::idnum-of clan) "Testing.")
-      (is (equal "&cTesting.&n~%" (char-output alice))))))
+      (char-output-is alice "&cTesting.&n~%"))))
 
 (deftest char-can-enroll/npc/returns-nil ()
   (with-mock-clan (clan)
@@ -39,7 +49,7 @@
       (setf (tempus::plr-bits-of alice) tempus::+plr-clan-leader+)
       (with-mock-mobiles (mallory)
         (is (null (tempus::char-can-enroll alice mallory clan)))
-        (is (equal "You can only enroll player characters.~%" (char-output alice)))))))
+        (char-output-is alice "You can only enroll player characters.~%")))))
 
 (deftest char-can-enroll/is-charmed/returns-nil ()
   (with-mock-clan (clan)
@@ -49,7 +59,7 @@
       (setf (tempus::aff-flags-of alice) (logior (tempus::aff-flags-of alice)
                                                 tempus::+aff-charm+))
       (is (null (tempus::char-can-enroll alice bob clan)))
-      (is (equal "You obviously aren't in your right mind.~%" (char-output alice))))))
+      (char-output-is alice "You obviously aren't in your right mind.~%"))))
 
 (deftest char-can-enroll/already-in-clan/returns-nil ()
   (with-mock-clan (clan)
@@ -58,7 +68,7 @@
       (tempus::add-clan-member bob clan)
       (setf (tempus::plr-bits-of alice) tempus::+plr-clan-leader+)
       (is (null (tempus::char-can-enroll alice bob clan)))
-      (is (equal "That person is already in the clan.~%" (char-output alice))))))
+      (char-output-is alice "That person is already in the clan.~%"))))
 
 (deftest char-can-enroll/in-other-clan/returns-nil ()
   (with-mock-clan (clan-a clan-b)
@@ -67,7 +77,7 @@
       (tempus::add-clan-member bob clan-b)
       (setf (tempus::plr-bits-of alice) tempus::+plr-clan-leader+)
       (is (null (tempus::char-can-enroll alice bob clan-a)))
-      (is (equal "You cannot while they are a member of another clan.~%" (char-output alice))))))
+      (char-output-is alice "You cannot while they are a member of another clan.~%"))))
 
 (deftest char-can-enroll/target-is-frozen/returns-nil ()
   (with-mock-clan (clan)
@@ -96,7 +106,7 @@
       (setf (tempus::level-of bob) tempus::+lvl-can-clan+)
       (setf (tempus::owner-of clan) (tempus::idnum-of alice))
       (is (tempus::char-can-enroll alice bob clan))
-      (is (equal "" (char-output alice))))))
+      (char-output-has alice ""))))
 
 (deftest char-can-enroll/char-is-not-allowed/returns-nil ()
   (with-mock-clan (clan)
@@ -104,14 +114,14 @@
       (tempus::add-clan-member alice clan)
       (setf (tempus::level-of bob) tempus::+lvl-can-clan+)
       (is (null (tempus::char-can-enroll alice bob clan)))
-      (is (equal "You are not a leader of the clan!~%" (char-output alice))))))
+      (char-output-is alice "You are not a leader of the clan!~%"))))
 
 (deftest char-can-dismiss/char-is-self/returns-nil ()
   (with-mock-clan (clan)
     (with-full-mock-players (alice)
       (tempus::add-clan-member alice clan)
       (is (null (tempus::char-can-dismiss alice alice clan)))
-      (is (equal "Try resigning if you want to leave the clan.~%" (char-output alice))))))
+      (char-output-is alice "Try resigning if you want to leave the clan.~%"))))
 
 (deftest char-can-dismiss/is-charmed/returns-nil ()
   (with-mock-clan (clan)
@@ -122,13 +132,13 @@
       (setf (tempus::aff-flags-of alice) (logior (tempus::aff-flags-of alice)
                                                 tempus::+aff-charm+))
       (is (null (tempus::char-can-dismiss alice bob clan)))
-      (is (equal "You obviously aren't quite in your right mind.~%" (char-output alice))))))
+      (char-output-is alice "You obviously aren't quite in your right mind.~%"))))
 
 (deftest char-can-dismiss/char-not-in-clan/returns-nil ()
   (with-mock-clan (clan)
     (with-mock-players (alice bob)
       (is (null (tempus::char-can-dismiss alice bob clan)))
-      (is (equal "Try joining a clan first.~%" (char-output alice))))))
+      (char-output-is alice "Try joining a clan first.~%"))))
 
 (deftest char-can-dismiss/target-not-in-clan/returns-nil ()
   (with-mock-clan (clan)
@@ -145,7 +155,7 @@
       (tempus::add-clan-member bob clan)
       (setf (tempus::owner-of clan) (tempus::idnum-of alice))
       (is (tempus::char-can-dismiss alice bob clan))
-      (is (equal "" (char-output alice))))))
+      (char-output-has alice ""))))
 
 (deftest char-can-dismiss/char-not-leader/returns-t ()
   (with-mock-clan (clan)
@@ -153,7 +163,7 @@
       (tempus::add-clan-member alice clan)
       (tempus::add-clan-member bob clan)
       (is (null (tempus::char-can-dismiss alice bob clan)))
-      (is (equal "You are not a leader of the clan!~%" (char-output alice))))))
+      (char-output-is alice "You are not a leader of the clan!~%"))))
 
 (deftest char-can-dismiss/char-doesnt-have-rank/returns-nil ()
   (with-mock-clan (clan)
@@ -162,7 +172,7 @@
       (setf (tempus::plr-bits-of alice) tempus::+plr-clan-leader+)
       (tempus::add-clan-member bob clan)
       (is (null (tempus::char-can-dismiss alice bob clan)))
-      (is (equal "You don't have the rank for that.~%" (char-output alice))))))
+      (char-output-is alice "You don't have the rank for that.~%"))))
 
 (deftest char-can-dismiss/target-is-leader/returns-nil ()
   (with-mock-clan (clan)
@@ -175,7 +185,7 @@
       (tempus::add-clan-member bob clan)
       (setf (tempus::plr-bits-of bob) tempus::+plr-clan-leader+)
       (is (null (tempus::char-can-dismiss alice bob clan)))
-      (is (equal "You cannot dismiss co-leaders.~%" (char-output alice))))))
+      (char-output-is alice "You cannot dismiss co-leaders.~%"))))
 
 (deftest char-can-dismiss/char-is-leader-with-rank/returns-t ()
   (with-mock-clan (clan)
@@ -187,3 +197,11 @@
 
       (tempus::add-clan-member bob clan)
       (is (tempus::char-can-dismiss alice bob clan)))))
+
+(deftest perform-clanlist/not-full-clanlist/shows-partial-clanlist ()
+  (with-mock-clan (clan)
+    (with-full-mock-players (alice)
+      (tempus::add-clan-member alice clan)
+      (tempus::perform-clanlist alice clan nil)
+      (char-output-has alice "Members of clan Clan :~%")
+      (char-output-has alice "&g[&n 1 &mMage&g] &n&gAlice the member"))))

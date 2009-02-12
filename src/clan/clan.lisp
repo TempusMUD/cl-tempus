@@ -32,9 +32,9 @@
 (defun resolve-clan-alias (alias)
   (if (every #'digit-char-p alias)
       (real-clan (parse-integer alias))
-      (find alias (sort (hash-values *clans*) #'<)
+      (find alias (sort (hash-values *clans*) #'< :key 'idnum-of)
             :test #'string-abbrev
-            :key 'idnum-of)))
+            :key 'name-of)))
 
 (defun add-clan-member (ch clan)
   (setf (clan-of ch) (idnum-of clan))
@@ -261,7 +261,8 @@
                      :name (second clan-record)
                      :badge (third clan-record)
                      :bank (fourth clan-record)
-                     :owner (fifth clan-record))))
+                     :owner (unless (eql :null (fifth clan-record))
+                              (fifth clan-record)))))
       (setf (gethash (idnum-of new-clan) *clans*) new-clan)))
 
   ;; Add the ranks to the clan
@@ -335,10 +336,12 @@
                   (name-of clan)
                   (badge-of clan)
                   (top-rank-of clan))
-    (send-to-char ch "Bank: ~20d Owner: ~a[~d]~%"
-                  (bank-of clan)
-                  (retrieve-player-name (owner-of clan))
-                  (owner-of clan))
+    (send-to-char ch "Bank: ~20d " (bank-of clan))
+    (when (owner-of clan)
+      (send-to-char ch "Owner: ~a[~d]"
+                    (retrieve-player-name (owner-of clan))
+                    (owner-of clan)))
+    (send-to-char ch "~%")
     (dotimes (rank (top-rank-of clan))
       (send-to-char ch "Rank ~2d: &y~a&n~%" rank (aref (rank-names-of clan) rank)))
 
@@ -362,6 +365,7 @@
                          (idnum-of member)
                          (retrieve-player-name (idnum-of member))
                          (aref (rank-names-of clan) (rank-of member))
+                         (rank-of member)
                          (retrieve-account-name account-id)
                          account-id))))
       (t
@@ -632,6 +636,9 @@
            (send-to-char ch "Clan rooms:~%")
            (dolist (room (rooms-of clan))
              (send-to-char ch "&c~a&n~%" (name-of room)))))))))
+
+(defcommand (ch "cedit") (:immortal)
+  (send-to-char ch "Usage: cedit (create|delete|set|add|remove) [args]~%"))
 
 (defcommand (ch "cedit" "create") (:immortal)
   (send-to-char ch "Create a clan with what vnum?~%"))
