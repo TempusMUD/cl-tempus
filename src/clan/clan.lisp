@@ -12,6 +12,13 @@
    (rank :accessor rank-of :initarg :rank :initform 0)
    (no-mail :accessor no-mail-of :initarg :no-mail :initform nil)))
 
+(defmethod print-object ((member clan-member) stream)
+  (print-unreadable-object (member stream :type t)
+    (format stream "~a ~a ~a"
+            (idnum-of member)
+            (rank-of member)
+            (no-mail-of member))))
+
 (defclass clan ()
   ((idnum :accessor idnum-of :initarg :idnum)
    (name :accessor name-of :initarg :name :initform "new clan")
@@ -23,6 +30,10 @@
    (members :accessor members-of :initform nil)
    (rooms :accessor rooms-of :initform nil)
    (bank :accessor bank-of :initarg :bank :initform 0)))
+
+(defmethod print-object ((clan clan) stream)
+  (print-unreadable-object (clan stream :type t)
+    (format stream "~a ~s" (idnum-of clan) (name-of clan))))
 
 (defvar *clans* (make-hash-table))
 
