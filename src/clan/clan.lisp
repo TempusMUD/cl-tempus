@@ -57,6 +57,18 @@
   (execute (:delete-from 'clan_members
                          :where (:= 'player (idnum-of ch)))))
 
+(defun add-clan-room (room clan)
+  (setf (flags-of room) (logior (flags-of room) +room-clan-house+))
+  (push room (rooms-of clan))
+  (execute (:insert-into 'clan_rooms :set
+                         'clan (idnum-of clan)
+                         'room (number-of room))))
+
+(defun remove-clan-room (room clan)
+  (setf (flags-of room) (logandc2 (flags-of room) +room-clan-house+))
+  (setf (rooms-of clan) (delete room (rooms-of clan)))
+  (execute (:delete-from 'clan_rooms :where (:= 'room (number-of room)))))
+
 (defun send-to-clan (clan-id fmt &rest args)
   (let ((msg (format nil "~?" fmt args)))
     (dolist (cxn *cxns*)
@@ -848,10 +860,7 @@
       ((null (real-room room-num))
        (send-to-char ch "There is no such room ~d.~%" room-num))
       (t
-       (push (real-room room-num) (rooms-of clan))
-       (execute (:insert-into 'clan_rooms :set
-                              'clan (idnum-of clan)
-                              'room room-num))
+       (add-clan-room room clan)
        (send-to-char ch "You got it.~%")
        (slog "(cedit) ~a added room ~a[~d] to clan ~a[~d]"
              (name-of ch)
@@ -875,9 +884,7 @@
       ((null (find room-num (rooms-of clan)))
        (send-to-char ch "Room ~d does not belong to that clan.~%" room-num))
       (t
-       (setf (rooms-of clan) (delete (real-room room-num) (rooms-of clan)))
-       (execute (:delete-from 'clan_rooms :where (:and (:= 'clan (idnum-of clan))
-                                                       (:= 'room room-num))))
+       (remove-clan-room (real-room room-num) clan)
        (send-to-char ch "You got it.~%")
        (slog "(cedit) ~a removed room ~a[~d] from clan ~a[~d]"
              (name-of ch)
