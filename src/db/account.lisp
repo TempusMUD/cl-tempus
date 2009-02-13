@@ -97,15 +97,18 @@ be loaded from the database or it may be retrieved from a cache."
 	(if cached
 		cached
 		(let ((result (query (:select '*
-                              :from 'accounts
-                              :where (:= (:lower 'name) canonical-name))
+                                      :from 'accounts
+                                      :where (:= (:lower 'name) canonical-name))
                              :alist))
               (account (make-instance 'account)))
 		  (when result
             (loop
+               with tempus-pkg = (find-package :tempus)
                for tuple in result
                unless (eql (cdr tuple) :null)
-               do (setf (slot-value account (intern (symbol-name (car tuple)))) (cdr tuple)))
+               do (setf (slot-value account (intern (symbol-name (car tuple))
+                                                    tempus-pkg))
+                        (cdr tuple)))
             (setf (gethash canonical-name *account-name-cache*) account)
             (setf (gethash (idnum-of account) *account-idnum-cache*) account)
             (setf (players-of account)
@@ -116,7 +119,7 @@ be loaded from the database or it may be retrieved from a cache."
                                            :name (cdr (assoc :name info))
                                            :birth-time (if (eql (cdr (assoc :birth-time info)) :null) (now) (cdr (assoc :birth-time info)))
                                            :login-time (if (eql (cdr (assoc :login-time info)) :null) (now) (cdr (assoc :login-time info)))))
-                           (query (:order-by (:select 'idnum 'name 'birth-time 'login-time :from 'players :where (:= 'account (idnum-of account))) 'idnum) :alists)))
+                          (query (:order-by (:select 'idnum 'name 'birth-time 'login-time :from 'players :where (:= 'account (idnum-of account))) 'idnum) :alists)))
             account)))))
 
 (defmethod save-account ((account account))
@@ -245,7 +248,7 @@ file."
   (execute (:delete-from 'clan_members :where (:= 'player (idnum-of ch))))
 
   ;; Remove character from any access groups
-  (dolist (group *access-groups*)
+  (dolist (group (hash-values *access-groups-idnum*))
     (setf (members-of group) (delete (idnum-of ch) (members-of group))))
   (execute (:delete-from 'sgroup_members :where (:= 'player (idnum-of ch))))
 

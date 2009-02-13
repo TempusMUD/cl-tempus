@@ -222,10 +222,6 @@
   (with-mock-players (alice)
     (is (tempus::clan-house-can-enter alice (tempus::real-room 3001)))))
 
-(deftest clan-house-can-enter/non-clan-room/returns-t ()
-  (with-mock-players (alice)
-    (is (tempus::clan-house-can-enter alice (tempus::real-room 3001)))))
-
 (deftest clan-house-can-enter/in-clan/returns-t ()
   (with-mock-clan (clan)
     (with-full-mock-players (alice)

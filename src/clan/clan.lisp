@@ -22,7 +22,7 @@
    (owner :accessor owner-of :initarg :owner :initform 0)
    (members :accessor members-of :initform nil)
    (rooms :accessor rooms-of :initform nil)
-   (bank :accessor bank-of :initarg :bank)))
+   (bank :accessor bank-of :initarg :bank :initform 0)))
 
 (defvar *clans* (make-hash-table))
 

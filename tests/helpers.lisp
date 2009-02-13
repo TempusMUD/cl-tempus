@@ -9,7 +9,8 @@
 
 (defclass mock-player (tempus::player)
   ((savedp :accessor savedp :initarg :savedp :initform nil)
-   (fullp :accessor fullp :initarg :fullp :initform nil)))
+   (fullp :accessor fullp :initarg :fullp :initform nil)
+   (override-security :accessor override-security-p :initform nil)))
 
 (defclass mock-account (tempus::account)
   ())
@@ -41,6 +42,12 @@
 
 (defmethod tempus::save-player-to-xml ((player mock-player))
   (setf (savedp player) t))
+
+(defmethod tempus::security-is-member ((player mock-player) group-name)
+  (declare (ignore group-name))
+  (if (override-security-p player)
+      t
+      (call-next-method)))
 
 (defmethod tempus::handle-close ((cxn mock-cxn))
   nil)
@@ -101,12 +108,16 @@
   (format nil "~{~a~}" (tempus::cxn-output-buf (tempus::link-of ch))))
 
 (defmacro char-output-is (ch fmt &rest args)
-  (let ((msg (cl-ppcre:regex-replace-all #/\n/ (format nil "~?" fmt args) "~%")))
-    `(is (equal ,msg (char-output ,ch)))))
+  (if (null args)
+    `(is (equal ,fmt (char-output ,ch)))
+    `(let ((msg (cl-ppcre:regex-replace-all #/\n/ (format nil ,fmt ,@args) "~%")))
+       (is (equal msg (char-output ,ch))))))
 
 (defmacro char-output-has (ch fmt &rest args)
-  (let ((msg (cl-ppcre:regex-replace-all #/\n/ (format nil "~?" fmt args) "~%")))
-    `(is (search ,msg (char-output ,ch)))))
+  (if (null args)
+    `(is (search ,fmt (char-output ,ch)))
+    `(let ((msg (cl-ppcre:regex-replace-all #/\n/ (format nil ,fmt ,@args) "~%")))
+       (is (search msg (char-output ,ch))))))
 
 (defun make-mock-mobile (name)
   (let ((mock-cxn (make-mock-cxn))

@@ -140,7 +140,7 @@
   (when *parser-trace*
     (slog "~?" fmt args)))
 
-(defun command-matches (cmd string)
+(defun command-pattern-matches (cmd string)
   (loop
      with vars = nil
      with tokens = (command-info-pattern cmd)
@@ -158,7 +158,7 @@
              ((string= string "")
               ;; wildcards don't match the empty string
               (trace-msg "No match - empty string")
-              (return-from command-matches nil))
+              (return-from command-pattern-matches nil))
              ((null tokens)
               (trace-msg "Last token, rest of string is var")
               (push (string-trim '(#\space) string) vars))
@@ -166,7 +166,7 @@
               (let ((space-pos (position #\space string)))
                 (unless space-pos
                   (trace-msg "No match - Next token is sym and no space found")
-                  (return-from command-matches nil))
+                  (return-from command-pattern-matches nil))
                 (trace-msg "Next tokens is sym - Pushing single word into var")
                 (push (subseq string 0 space-pos) vars)
                 (setf string (subseq string (1+ space-pos)))))
@@ -174,7 +174,7 @@
               (let ((match-pos (search (first tokens) string)))
                 (unless match-pos
                   (trace-msg "No match - Next token is string and not found")
-                  (return-from command-matches nil))
+                  (return-from command-pattern-matches nil))
                 (trace-msg "Next token is str - Pushing subseq into var")
                 (push (string-trim '(#\space)
                                    (subseq string 0 match-pos)) vars)
@@ -185,7 +185,7 @@
            (trace-msg "Matching character ~a" token)
            (unless (eql token (char string 0))
              (trace-msg "No match - single character didn't match")
-             (return-from command-matches nil))
+             (return-from command-pattern-matches nil))
            (trace-msg "Single character matched")
            (setf string (string-left-trim '(#\space) (subseq string 1)))
            (setf tokens (rest tokens)))
@@ -196,7 +196,7 @@
                   (word (if space-pos (subseq string 0 space-pos) string)))
              (unless (string-abbrev word token)
                (trace-msg "No match - didn't match string")
-               (return-from command-matches nil))
+               (return-from command-pattern-matches nil))
              (trace-msg "String matched")
              (if space-pos
                  (setf string (string-left-trim '(#\space)
@@ -207,13 +207,24 @@
            ;; end of string
            (trace-msg "Matching string ~a at end" token)
            (unless (string-abbrev string token)
-             (return-from command-matches nil))
+             (return-from command-pattern-matches nil))
            (setf tokens nil)))
      finally (return (list t (nreverse vars)))))
 
-(defun find-command (arg)
+(defun command-matches (ch command arg)
+  (let ((match (command-pattern-matches command arg)))
+    (when match
+      (let ((groups (gethash (first (command-info-pattern command))
+                             *command-access-groups*)))
+        (when (or (null groups)
+                  (some (lambda (group)
+                          (security-is-member ch (name-of group)))
+                        groups))
+          match)))))
+
+(defun find-command (ch arg)
   (loop for command in *commands*
-       as (match vars) = (command-matches command arg)
+       as (match vars) = (command-matches ch command arg)
        until match
        finally (return (when match (values command vars)))))
 
@@ -233,7 +244,7 @@
 
 (defun interpret-command (ch arg)
   (multiple-value-bind (command vars)
-      (find-command arg)
+      (find-command ch arg)
     (cond
       ((null command)
         (send-to-char ch "~a~%" (select-unknown-cmd-error)))
