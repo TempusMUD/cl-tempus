@@ -1071,11 +1071,19 @@
 
 (defun send-commands-to-ch (ch preamble pred)
   (let ((cmds (sort
-               (remove-duplicates
-                (mapcar #'first
-                        (mapcar #'command-info-pattern
-                                (remove-if-not pred *commands*)))
-                :test #'string=)
+               (delete-if-not
+                (lambda (cmd)
+                  (let ((groups (gethash cmd *command-access-groups*)))
+                    (or (null groups)
+                        (some (lambda (group)
+                                (security-is-member ch
+                                                    (name-of group)))
+                              groups))))
+                (remove-duplicates
+                 (mapcar #'first
+                         (mapcar #'command-info-pattern
+                                 (remove-if-not pred *commands*)))
+                 :test #'string=))
                #'string<)))
     (with-pagination ((link-of ch))
       (send-to-char ch "~a~%~a" preamble (print-columns-to-string 5 15 cmds)))))
