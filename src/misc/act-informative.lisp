@@ -1071,19 +1071,11 @@
 
 (defun send-commands-to-ch (ch preamble pred)
   (let ((cmds (sort
-               (delete-if-not
-                (lambda (cmd)
-                  (let ((groups (gethash cmd *command-access-groups*)))
-                    (or (null groups)
-                        (some (lambda (group)
-                                (security-is-member ch
-                                                    (name-of group)))
-                              groups))))
                 (remove-duplicates
                  (mapcar #'first
                          (mapcar #'command-info-pattern
                                  (remove-if-not pred *commands*)))
-                 :test #'string=))
+                 :test #'string=)
                #'string<)))
     (with-pagination ((link-of ch))
       (send-to-char ch "~a~%~a" preamble (print-columns-to-string 5 15 cmds)))))
@@ -1092,20 +1084,23 @@
   (send-commands-to-ch ch
                        "Commands:"
                        (lambda (cmd)
-                         (not (or (member :mood (command-info-flags cmd))
-                                  (member :social (command-info-flags cmd)))))))
+                         (and (can-do-command ch cmd)
+                              (not (or (member :mood (command-info-flags cmd))
+                                       (member :social (command-info-flags cmd))))))))
 
 (defcommand (ch "socials") ()
   (send-commands-to-ch ch
                        "Socials:"
                        (lambda (cmd)
-                         (member :social (command-info-flags cmd)))))
+                         (and (can-do-command ch cmd)
+                              (member :social (command-info-flags cmd))))))
 
 (defcommand (ch "moods") ()
   (send-commands-to-ch ch
                        "Moods:"
                        (lambda (cmd)
-                         (member :mood (command-info-flags cmd)))))
+                         (and (can-do-command ch cmd)
+                              (member :mood (command-info-flags cmd))))))
 
 (defcommand (ch "look") (:resting :important)
   (cond
