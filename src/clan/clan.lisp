@@ -871,7 +871,7 @@
       ((null (real-room room-num))
        (send-to-char ch "There is no such room ~d.~%" room-num))
       (t
-       (add-clan-room room clan)
+       (add-clan-room (real-room room-num) clan)
        (send-to-char ch "You got it.~%")
        (slog "(cedit) ~a added room ~a[~d] to clan ~a[~d]"
              (name-of ch)
