@@ -195,6 +195,8 @@
                       :depends-on ("helpers"))
                (:file "test-random" :pathname "tests/test-random"
                       :depends-on ("helpers"))
+               (:file "test-security" :pathname "tests/test-security"
+                      :depends-on ("helpers"))
                (:file "test-utils" :pathname "tests/test-utils"
                       :depends-on ("helpers"))
                (:file "test-wizard" :pathname "tests/test-wizard"

@@ -181,6 +181,7 @@
 
 (deftest goto-command ()
   (with-mock-players (alice bob)
+    (setf (tempus::level-of alice) 51)
     (tempus::interpret-command alice "goto 3001")
     (is (= 3001 (tempus::number-of (tempus::in-room-of alice))))
     (tempus::interpret-command alice "goto bob")

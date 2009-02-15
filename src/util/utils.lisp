@@ -51,7 +51,9 @@
 (defun mlog (message &key group level type write-to-file)
   (declare (ignorable group level type))
   (when write-to-file
-    (format *log-output* "(~s ~s)~%" (local-time:now) message)
+    (let ((*print-pretty* nil)
+          (*print-lines* nil))
+      (format *log-output* "(~s ~s)~%" (local-time:now) message))
     (force-output))
 
   (unless (and group level)
@@ -134,6 +136,12 @@
 (defun mudlog (priority write-to-file fmt &rest args)
   "Logs the message given to file with a timestamp"
   (let ((message (format nil "~?" fmt args))
+        (time-str (format-timestring nil (now)
+                                      :format '(:short-month #\space
+                                                (:day 2 #\space) #\space
+                                                :hour #\:
+                                                (:min 2) #\:
+                                                (:sec 2))))
         (priority-num (position priority +mudlog-priorities+)))
     (assert priority-num)
     (check-type write-to-file boolean)
@@ -141,15 +149,12 @@
 	  (when (and (typep cxn 'tempus-cxn)
                  (eql (state-of cxn) 'playing)
                  (actor-of cxn)
-                 (immortalp (actor-of cxn)))
+                 (immortalp (actor-of cxn))
+                 (or (pref-flagged (actor-of cxn) +pref-log1+)
+                     (pref-flagged (actor-of cxn) +pref-log2+)))
 		(cxn-write cxn "&g[ ~a - ~a ]&n~%"
                    (string-replace "&" message "&&")
-                   (format-timestring nil (now)
-                                      :format '(:short-month #\space
-                                                (:day 2 #\space) #\space
-                                                :hour #\:
-                                                (:min 2) #\:
-                                                (:sec 2))))))
+                   time-str)))
 	(when write-to-file
       (syslog "~a" message))))
 
@@ -545,7 +550,7 @@ sequences in seq-list with the delimiter between each element"
 	   (setf (page-buf-of cxn) (subseq buf (1+ line-end))))
 	  (t
 	   (cxn-write cxn "~a" buf)
-	   (setf (page-buf-of cxn) ""))))))
+	   (setf (page-buf-of cxn) nil))))))
 
 (defun print-columns-to-string (cols width list)
   (with-output-to-string (result)

@@ -211,16 +211,20 @@
            (setf tokens nil)))
      finally (return (list t (nreverse vars)))))
 
+(defun can-do-command (ch command)
+  (and (or (not (member :immortal (command-info-flags command)))
+           (immortal-level-p ch))
+       (let ((groups (gethash (first (command-info-pattern command))
+                              *command-access-groups*)))
+         (or (null groups)
+             (some (lambda (group)
+                     (security-is-member ch (name-of group)))
+                   groups)))))
+
 (defun command-matches (ch command arg)
   (let ((match (command-pattern-matches command arg)))
-    (when match
-      (let ((groups (gethash (first (command-info-pattern command))
-                             *command-access-groups*)))
-        (when (or (null groups)
-                  (some (lambda (group)
-                          (security-is-member ch (name-of group)))
-                        groups))
-          match)))))
+    (when (and match (can-do-command ch command))
+      match)))
 
 (defun find-command (ch arg)
   (loop for command in *commands*

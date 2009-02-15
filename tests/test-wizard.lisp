@@ -15,6 +15,7 @@
 
 (deftest send/normal/sends-to-char ()
   (with-mock-players (alice bob)
+    (setf (tempus::level-of alice) 51)
     (setf (override-security-p alice) t)
     (tempus::interpret-command alice "send .bob testing")
     (char-output-is alice "You send 'testing' to Bob.~%")
@@ -22,6 +23,7 @@
 
 (deftest at/normal/performs-command-in-target-room ()
   (with-mock-players (alice bob)
+    (setf (tempus::level-of alice) 51)
     (setf (override-security-p alice) t)
     (tempus::char-from-room alice t)
     (tempus::char-to-room alice (tempus::real-room 3001))
@@ -31,6 +33,7 @@
 
 (deftest goto/numeric-target/changes-room ()
   (with-mock-players (alice bob)
+    (setf (tempus::level-of alice) 51)
     (setf (override-security-p alice) t)
     (tempus::char-from-room alice t)
     (tempus::char-to-room alice (tempus::real-room 3001))
@@ -40,6 +43,7 @@
 
 (deftest goto/char-target/changes-room ()
   (with-mock-players (alice bob)
+    (setf (tempus::level-of alice) 51)
     (setf (override-security-p alice) t)
     (tempus::char-from-room alice t)
     (tempus::char-to-room alice (tempus::real-room 3001))
@@ -49,6 +53,7 @@
 
 (deftest goto/following-imm/imm-in-same-room ()
   (with-mock-players (alice bob)
+    (setf (tempus::level-of alice) 51)
     (setf (override-security-p alice) t)
     (setf (tempus::level-of bob) 51)
     (tempus::add-follower bob alice)
@@ -61,12 +66,14 @@
 
 (deftest distance/valid-rooms/returns-distance ()
   (with-mock-players (alice bob)
+    (setf (tempus::level-of alice) 51)
     (setf (override-security-p alice) t)
     (tempus::interpret-command alice "distance 24800")
     (char-output-is alice "Room 24800 is 36 steps away.~%")))
 
 (deftest distance/no-connection/returns-error ()
   (with-mock-players (alice bob)
+    (setf (tempus::level-of alice) 51)
     (setf (override-security-p alice) t)
     (tempus::interpret-command alice "distance 43000")
     (char-output-is alice "There is no valid path to room 43000.~%")))
@@ -152,6 +159,7 @@
 (deftest force-command ()
   (with-mock-players (alice bob)
     (setf (override-security-p alice) t)
+    (setf (tempus::level-of alice) 51)
     (function-trace-bind ((calls tempus::interpret-command))
         (tempus::interpret-command alice "force bob to inventory")
       (char-output-is alice "You got it.~%")
@@ -162,6 +170,7 @@
 (deftest do-mload-vnum/normal/loads-mob ()
   (with-mock-players (alice)
     (setf (override-security-p alice) t)
+    (setf (tempus::level-of alice) 51)
     (unwind-protect
          (with-captured-log log
              (tempus::interpret-command alice "mload 1201")
@@ -180,6 +189,7 @@
 
 (deftest do-oload-vnum/normal/loads-object ()
   (with-mock-players (alice)
+    (setf (tempus::level-of alice) 51)
     (setf (override-security-p alice) t)
     (unwind-protect
          (with-captured-log log
@@ -198,6 +208,7 @@
 
 (deftest do-oload-vnum/no-such-object/error-message ()
   (with-mock-players (alice)
+    (setf (tempus::level-of alice) 51)
     (setf (override-security-p alice) t)
     (unwind-protect
          (progn
@@ -215,6 +226,7 @@
 
 (deftest do-oload-count-vnum/normal/loads-count-object ()
   (with-mock-players (alice)
+    (setf (tempus::level-of alice) 51)
     (setf (override-security-p alice) t)
     (unwind-protect
          (let ((count (+ 2 (random 100))))
@@ -236,6 +248,7 @@
 
 (deftest do-oload-count-vnum/count-too-large/error-message ()
   (with-mock-players (alice)
+    (setf (tempus::level-of alice) 51)
     (setf (override-security-p alice) t)
     (unwind-protect
          (progn
@@ -299,6 +312,7 @@
 
 (deftest do-pload-vnum/normal/calls-perform-pload ()
   (with-mock-players (alice)
+    (setf (tempus::level-of alice) 51)
     (setf (override-security-p alice) t)
     (with-captured-log log
         (function-trace-bind ((calls tempus::perform-pload))
@@ -307,6 +321,7 @@
 
 (deftest do-pload-arg1-arg2/with-count-and-vnum/calls-perform-pload ()
   (with-mock-players (alice)
+    (setf (tempus::level-of alice) 51)
     (setf (override-security-p alice) t)
     (with-captured-log log
         (function-trace-bind ((calls tempus::perform-pload))
@@ -315,6 +330,7 @@
 
 (deftest do-pload-arg1-arg2/with-vnum-and-target/calls-perform-pload ()
   (with-mock-players (alice bob)
+    (setf (tempus::level-of alice) 51)
     (setf (override-security-p alice) t)
     (with-captured-log log
         (function-trace-bind ((calls tempus::perform-pload))
@@ -323,6 +339,7 @@
 
 (deftest do-pload-count-vnum-target/normal/calls-perform-pload ()
   (with-mock-players (alice bob)
+    (setf (tempus::level-of alice) 51)
     (setf (override-security-p alice) t)
     (with-captured-log log
         (function-trace-bind ((calls tempus::perform-pload))
@@ -460,6 +477,7 @@
 
 (deftest do-invis/ch-is-npc/error-message ()
   (with-mock-mobiles (mallory)
+    (setf (tempus::level-of mallory) 51)
     (tempus::interpret-command mallory "invis")
     (char-output-is mallory "You can't do that!~%")))
 
@@ -504,12 +522,14 @@
 
 (deftest do-gecho/no-arg/error-message ()
   (with-mock-players (alice)
+    (setf (tempus::level-of alice) 51)
     (setf (override-security-p alice) t)
     (tempus::interpret-command alice "gecho")
     (char-output-is alice "That must be a mistake...~%")))
 
 (deftest do-gecho/with-arg/message-sent-to-all ()
   (with-mock-players (alice bob ike)
+    (setf (tempus::level-of alice) 51)
     (setf (override-security-p alice) t)
     (setf (tempus::level-of ike) 60)
     (tempus::interpret-command alice "gecho Testing")
@@ -552,12 +572,14 @@
 
 (deftest do-zreset/no-arg/error-message ()
   (with-mock-players (alice)
+    (setf (tempus::level-of alice) 51)
     (setf (override-security-p alice) t)
     (tempus::interpret-command alice "zreset")
     (char-output-is alice "You must specify a zone.~%")))
 
 (deftest do-zreset/star-arg/reset-whole-world ()
   (with-mock-players (alice)
+    (setf (tempus::level-of alice) 51)
     (setf (override-security-p alice) t)
     (function-trace-bind ((calls tempus::reset-zone))
         (with-captured-log log
@@ -569,6 +591,7 @@
 
 (deftest do-zreset/dot-arg/reset-current-zone ()
   (with-mock-players (alice)
+    (setf (tempus::level-of alice) 51)
     (setf (override-security-p alice) t)
     (function-trace-bind ((calls tempus::reset-zone))
         (with-captured-log log
@@ -580,6 +603,7 @@
 
 (deftest do-zreset/numeric-arg/reset-specific-zone ()
   (with-mock-players (alice)
+    (setf (tempus::level-of alice) 51)
     (setf (override-security-p alice) t)
     (function-trace-bind ((calls tempus::reset-zone))
         (with-captured-log log
@@ -590,6 +614,7 @@
 
 (deftest do-unaffect/normal/unaffects-target ()
   (with-mock-players (alice bob)
+    (setf (tempus::level-of alice) 51)
     (setf (override-security-p alice) t)
     (tempus::affect-to-char bob (make-instance 'tempus::affected-type
                                                :location tempus::+apply-str+
@@ -609,6 +634,7 @@
 
 (deftest do-reroll/normal/target-rerolled ()
   (with-mock-players (alice bob)
+    (setf (tempus::level-of alice) 51)
     (setf (override-security-p alice) t)
     (with-captured-log log
         (function-trace-bind ((calls tempus::perform-reroll))
@@ -620,6 +646,7 @@
 
 (deftest do-notitle/notitle-off/target-notitle-on ()
   (with-mock-players (alice bob)
+    (setf (tempus::level-of alice) 51)
     (setf (override-security-p alice) t)
     (with-captured-log log
         (tempus::interpret-command alice "notitle bob")
@@ -629,6 +656,7 @@
 
 (deftest do-notitle/notitle-on/target-notitle-off ()
   (with-mock-players (alice bob)
+    (setf (tempus::level-of alice) 51)
     (setf (override-security-p alice) t)
     (setf (tempus::plr-bits-of bob) (logior (tempus::plr-bits-of bob)
                                             tempus::+plr-notitle+))
@@ -640,6 +668,7 @@
 
 (deftest do-nopost/nopost-off/target-nopost-on ()
   (with-mock-players (alice bob)
+    (setf (tempus::level-of alice) 51)
     (setf (override-security-p alice) t)
     (with-captured-log log
         (tempus::interpret-command alice "nopost bob")
@@ -649,6 +678,7 @@
 
 (deftest do-squelch/squelch-off/target-squelch-on ()
   (with-mock-players (alice bob)
+    (setf (tempus::level-of alice) 51)
     (setf (override-security-p alice) t)
     (with-captured-log log
         (tempus::interpret-command alice "squelch bob")
@@ -694,6 +724,7 @@
 
 (deftest do-badge/blank-badge/sets-badge-blank ()
   (with-mock-players (alice)
+    (setf (tempus::level-of alice) 51)
     (setf (override-security-p alice) t)
     (setf (tempus::badge-of alice) "FOO")
     (tempus::interpret-command alice "badge")
@@ -702,6 +733,7 @@
 
 (deftest do-badge/non-blank-badge/sets-badge ()
   (with-mock-players (alice)
+    (setf (tempus::level-of alice) 51)
     (setf (override-security-p alice) t)
     (setf (tempus::badge-of alice) "FOO")
     (tempus::interpret-command alice "badge bar")
@@ -792,6 +824,7 @@
 
 (deftest do-severtell/normal/tell-is-severed ()
   (with-mock-players (alice bob)
+    (setf (tempus::level-of alice) 51)
     (setf (override-security-p alice) t)
     (setf (tempus::last-tell-from-of bob) (tempus::idnum-of alice))
     (setf (tempus::last-tell-to-of bob) (tempus::idnum-of alice))

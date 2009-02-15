@@ -104,6 +104,7 @@
 
 (deftest do-mortalize/not-mortalized/mortalize ()
   (with-mock-players (alice)
+    (setf (tempus::level-of alice) 51)
     (with-captured-log log
         (tempus::interpret-command alice "mortalize")
       (is (search "(GC): Alice has mortalized at 3002" log))
@@ -113,6 +114,7 @@
 
 (deftest do-mortalize/mortalized/immortalize ()
   (with-mock-players (alice)
+    (setf (tempus::level-of alice) 51)
     (setf (tempus::plr-bits-of alice) tempus::+plr-mortalized+)
     (with-captured-log log
         (tempus::interpret-command alice "mortalize")
@@ -123,6 +125,7 @@
 
 (deftest do-display-vnums/normal/turns-on-vnum-bit ()
   (with-mock-players (alice)
+    (setf (tempus::level-of alice) 51)
     (tempus::interpret-command alice "display vnums")
     (is (equal "You will now see vnums on mobs and object ldescs.~%"
                (char-output alice)))
