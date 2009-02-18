@@ -575,7 +575,7 @@
                                          (format nil "#~d" char-class))))
                             ((getf chan :clan-channel)
                              (let ((clan (real-clan clan-id)))
-                               (format nil "[~:[#~d~;~(~a~)~]]"
+                               (format nil "[~:[#~d~;~(~a~)~]] "
                                        clan
                                        (if clan
                                            (name-of clan)
