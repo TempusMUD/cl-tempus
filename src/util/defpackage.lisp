@@ -1,11 +1,11 @@
 (defpackage #:tempus
-	(:use :common-lisp
+    (:use :common-lisp
           :split-sequence
           :local-time
           :postmodern
-		#+cmu :extensions
-		#+sbcl :sb-bsd-sockets)
-	(:export main))
+        #+cmu :extensions
+        #+sbcl :sb-bsd-sockets)
+    (:export main))
 
 (shadowing-import
  #+sbcl '(sb-int:format-universal-time

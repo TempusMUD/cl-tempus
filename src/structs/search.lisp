@@ -21,7 +21,7 @@
 (defparameter +search-ignore+ (ash 1 2))
 (defparameter +search-clanpasswd+ (ash 1 3))
 (defparameter +search-trig-enter+ (ash 1 4))
-(defparameter +search-trig-fall+ (ash 1 5))	; triggers when a player falls into the room (e.g. a spike pit)
+(defparameter +search-trig-fall+ (ash 1 5)) ; triggers when a player falls into the room (e.g. a spike pit)
 (defparameter +search-notrig-fly+ (ash 1 6))
 (defparameter +search-nomob+ (ash 1 7))
 (defparameter +search-newbie-only+ (ash 1 8))

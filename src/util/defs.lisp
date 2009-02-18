@@ -129,50 +129,50 @@
 context, all output sent to the given cxn will be queued for pagination.
 On exit, it sends the first page to the cxn."
   (let ((cxn-sym (gensym)))
-	`(let ((,cxn-sym ,cxn))
-	   (when ,cxn-sym
-		 (unwind-protect
-			 (progn
-			   (setf (page-buf-of ,cxn-sym) "")
-			   (setf *cxn-paginate* ,cxn-sym)
-			   ,@body)
-		   (progn
-			 (setf *cxn-paginate* nil)
-			 (send-page ,cxn-sym)))))))
+    `(let ((,cxn-sym ,cxn))
+       (when ,cxn-sym
+         (unwind-protect
+             (progn
+               (setf (page-buf-of ,cxn-sym) "")
+               (setf *cxn-paginate* ,cxn-sym)
+               ,@body)
+           (progn
+             (setf *cxn-paginate* nil)
+             (send-page ,cxn-sym)))))))
 
 (defmacro with-words (str var-list &body body)
   "Binds each symbol in VAR-LIST to a string containing a word from STR.
 Understands the &rest qualifier."
   (let ((my-str (gensym))
-		(my-fields (gensym))
-		(my-rest-pos (gensym))
-		(my-var-list var-list)
-		(my-rest-var nil)
-		(my-rest-var-pos (position '&rest var-list)))
+        (my-fields (gensym))
+        (my-rest-pos (gensym))
+        (my-var-list var-list)
+        (my-rest-var nil)
+        (my-rest-var-pos (position '&rest var-list)))
 
-	(when my-rest-var-pos
-	  (setf my-rest-var (nth (1+ my-rest-var-pos) var-list))
-	  (setf my-var-list
-			(loop for var in var-list
-			   unless (or (eql var '&rest) (eql var my-rest-var))
-			   collect var)))
+    (when my-rest-var-pos
+      (setf my-rest-var (nth (1+ my-rest-var-pos) var-list))
+      (setf my-var-list
+            (loop for var in var-list
+               unless (or (eql var '&rest) (eql var my-rest-var))
+               collect var)))
 
-	(if (and my-rest-var-pos (zerop my-rest-var-pos))
-		;; If we only have a rest variable, then all we wanted was a
-		;; trimmed string
-		`(let ((,my-rest-var (string-trim '(#\space) ,str)))
-		   ,@body)
-		`(let ((,my-str ,str))
-		   (multiple-value-bind (,my-fields ,my-rest-pos)
-			   (split-sequence #\space ,my-str :count ,(length my-var-list))
-			 ,@(unless my-rest-var
-				 `((declare (ignorable ,my-rest-pos))))
-			 (let (,@(loop for my-field in my-var-list
-						for my-idx = 0 then (1+ my-idx)
-						collect `(,my-field (nth ,my-idx ,my-fields)))
-					 ,@(when my-rest-var
-						 `((,my-rest-var (subseq ,my-str ,my-rest-pos)))))
-			   ,@body))))))
+    (if (and my-rest-var-pos (zerop my-rest-var-pos))
+        ;; If we only have a rest variable, then all we wanted was a
+        ;; trimmed string
+        `(let ((,my-rest-var (string-trim '(#\space) ,str)))
+           ,@body)
+        `(let ((,my-str ,str))
+           (multiple-value-bind (,my-fields ,my-rest-pos)
+               (split-sequence #\space ,my-str :count ,(length my-var-list))
+             ,@(unless my-rest-var
+                 `((declare (ignorable ,my-rest-pos))))
+             (let (,@(loop for my-field in my-var-list
+                        for my-idx = 0 then (1+ my-idx)
+                        collect `(,my-field (nth ,my-idx ,my-fields)))
+                     ,@(when my-rest-var
+                         `((,my-rest-var (subseq ,my-str ,my-rest-pos)))))
+               ,@body))))))
 
 (defun bitp (bitv idx)
   (plusp (bit bitv idx)))

@@ -83,8 +83,8 @@
 (defparameter +apply-class+ 7)          ; Reserved
 (defparameter +apply-level+ 8)          ; Reserved
 (defparameter +apply-age+ 9)            ; Apply to age
-(defparameter +apply-char-weight+ 10)	; Apply to weight
-(defparameter +apply-char-height+ 11)	; Apply to height
+(defparameter +apply-char-weight+ 10)   ; Apply to weight
+(defparameter +apply-char-height+ 11)   ; Apply to height
 (defparameter +apply-mana+ 12)          ; Apply to max mana
 (defparameter +apply-hit+ 13)           ; Apply to max hit points
 (defparameter +apply-move+ 14)          ; Apply to max move points
@@ -93,11 +93,11 @@
 (defparameter +apply-ac+ 17)            ; Apply to Armor Class
 (defparameter +apply-hitroll+ 18)       ; Apply to hitroll
 (defparameter +apply-damroll+ 19)       ; Apply to damage roll
-(defparameter +apply-saving-para+ 20)	; Apply to save throw: paralz
-(defparameter +apply-saving-rod+ 21)	; Apply to save throw: rods
-(defparameter +apply-saving-petri+ 22)	; Apply to save throw: petrif
-(defparameter +apply-saving-breath+ 23)	; Apply to save throw: breath
-(defparameter +apply-saving-spell+ 24)	; Apply to save throw: spells
+(defparameter +apply-saving-para+ 20)   ; Apply to save throw: paralz
+(defparameter +apply-saving-rod+ 21)    ; Apply to save throw: rods
+(defparameter +apply-saving-petri+ 22)  ; Apply to save throw: petrif
+(defparameter +apply-saving-breath+ 23) ; Apply to save throw: breath
+(defparameter +apply-saving-spell+ 24)  ; Apply to save throw: spells
 (defparameter +apply-sneak+ 25)
 (defparameter +apply-hide+ 26)
 (defparameter +apply-race+ 27)
@@ -127,26 +127,26 @@
 (defparameter +num-applies+ 51)
 
 ;;; Extra object flags: used by obj_data.obj_flags.extra_flags
-(defparameter +item-glow+ (ash 1 0))	; Item is glowing
-(defparameter +item-hum+ (ash 1 1))	; Item is humming
-(defparameter +item-norent+ (ash 1 2))	; Item cannot be rented
-(defparameter +item-nodonate+ (ash 1 3))	; Item cannot be donated
-(defparameter +item-noinvis+ (ash 1 4))	; Item cannot be made invis
-(defparameter +item-invisible+ (ash 1 5))	; Item is invisible
-(defparameter +item-magic+ (ash 1 6))	; Item is magical
-(defparameter +item-nodrop+ (ash 1 7))	; Item is cursed: can't drop
-(defparameter +item-bless+ (ash 1 8))	; Item is blessed
-(defparameter +item-anti-good+ (ash 1 9))	; Not usable by good people
-(defparameter +item-anti-evil+ (ash 1 10))	; Not usable by evil people
-(defparameter +item-anti-neutral+ (ash 1 11))	; Not usable by neutral people
-(defparameter +item-anti-magic-user+ (ash 1 12))	; Not usable by mages
-(defparameter +item-anti-cleric+ (ash 1 13))	; Not usable by clerics
-(defparameter +item-anti-thief+ (ash 1 14))	; Not usable by thieves
-(defparameter +item-anti-warrior+ (ash 1 15))	; Not usable by warriors
-(defparameter +item-nosell+ (ash 1 16))	; Shopkeepers won't touch it
-(defparameter +item-anti-barb+ (ash 1 17))	; no barb
-(defparameter +item-anti-psychic+ (ash 1 18))	; no psychic
-(defparameter +item-anti-physic+ (ash 1 19))	; no physic
+(defparameter +item-glow+ (ash 1 0))    ; Item is glowing
+(defparameter +item-hum+ (ash 1 1)) ; Item is humming
+(defparameter +item-norent+ (ash 1 2))  ; Item cannot be rented
+(defparameter +item-nodonate+ (ash 1 3))    ; Item cannot be donated
+(defparameter +item-noinvis+ (ash 1 4)) ; Item cannot be made invis
+(defparameter +item-invisible+ (ash 1 5))   ; Item is invisible
+(defparameter +item-magic+ (ash 1 6))   ; Item is magical
+(defparameter +item-nodrop+ (ash 1 7))  ; Item is cursed: can't drop
+(defparameter +item-bless+ (ash 1 8))   ; Item is blessed
+(defparameter +item-anti-good+ (ash 1 9))   ; Not usable by good people
+(defparameter +item-anti-evil+ (ash 1 10))  ; Not usable by evil people
+(defparameter +item-anti-neutral+ (ash 1 11))   ; Not usable by neutral people
+(defparameter +item-anti-magic-user+ (ash 1 12))    ; Not usable by mages
+(defparameter +item-anti-cleric+ (ash 1 13))    ; Not usable by clerics
+(defparameter +item-anti-thief+ (ash 1 14)) ; Not usable by thieves
+(defparameter +item-anti-warrior+ (ash 1 15))   ; Not usable by warriors
+(defparameter +item-nosell+ (ash 1 16)) ; Shopkeepers won't touch it
+(defparameter +item-anti-barb+ (ash 1 17))  ; no barb
+(defparameter +item-anti-psychic+ (ash 1 18))   ; no psychic
+(defparameter +item-anti-physic+ (ash 1 19))    ; no physic
 (defparameter +item-anti-cyborg+ (ash 1 20))
 (defparameter +item-anti-knight+ (ash 1 21))
 (defparameter +item-anti-ranger+ (ash 1 22))
@@ -157,7 +157,7 @@
 (defparameter +item-unused+ (ash 1 27))
 (defparameter +item-repulsion-field+ (ash 1 28))
 (defparameter +item-transparent+ (ash 1 29))
-(defparameter +item-damned+ (ash 1 30))	; Evil equivalent to Bless
+(defparameter +item-damned+ (ash 1 30)) ; Evil equivalent to Bless
 (defparameter +num-extra-flags+ 31)
 
 (defparameter +item2-radioactive+ (ash 1 0))

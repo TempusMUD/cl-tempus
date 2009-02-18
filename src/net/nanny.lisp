@@ -42,14 +42,14 @@
     set-password-new
     set-password-verify
     new-player-name
-	new-player-sex
-	new-player-class
+    new-player-sex
+    new-player-class
     new-player-race
     new-player-align
     new-player-stats
     new-player-desc
     main-menu
-	wait-for-menu
+    wait-for-menu
     remort-class
     delete-character
     delete-verify
@@ -57,7 +57,7 @@
     describe-character
     describe-editor
     playing
-	afterlife
+    afterlife
     editing
     disconnecting))
 
@@ -75,22 +75,22 @@
 
 (defun password-state-p (state)
   (or (eql state 'authenticate)
-	  (eql state 'new-account-password)
-	  (eql state 'verify-password)
-	  (eql state 'set-password-auth)
-	  (eql state 'set-password-new)
+      (eql state 'new-account-password)
+      (eql state 'verify-password)
+      (eql state 'set-password-auth)
+      (eql state 'set-password-new)
       (eql state 'delete-password)))
 
 (defmethod (setf state-of) :around (state (cxn tempus-cxn))
   ;; send telnet DO ECHO when the new state isn't a password state
   (when (password-state-p (state-of cxn))
-	(cxn-write cxn "~c~c~c"
-			   (code-char #xff)
-			   (code-char #xfc)
-			   (code-char #x01)))
+    (cxn-write cxn "~c~c~c"
+               (code-char #xff)
+               (code-char #xfc)
+               (code-char #x01)))
   (cond
     ((member state +valid-cxn-states+)
-	 (call-next-method)
+     (call-next-method)
      (send-menu cxn state)
      (setf (need-prompt-p cxn) t))
     (t
@@ -102,31 +102,31 @@
 
   ;; send telnet DONT ECHO when the new state is a password state
   (when (password-state-p (state-of cxn))
-	(cxn-write cxn "~c~c~c"
-			   (code-char #xff)
-			   (code-char #xfb)
-			   (code-char #x01))))
+    (cxn-write cxn "~c~c~c"
+               (code-char #xff)
+               (code-char #xfb)
+               (code-char #x01))))
 
 (defmethod cxn-write ((cxn tempus-cxn) fmt &rest args)
   (cond
-	((eql *cxn-paginate* cxn)
+    ((eql *cxn-paginate* cxn)
      ;; Queue up text to be paginated later
-	 (setf (page-buf-of cxn)
-		   (concatenate 'string (page-buf-of cxn)
-						(colorize cxn (format nil "~?" fmt args)))))
-	(t
+     (setf (page-buf-of cxn)
+           (concatenate 'string (page-buf-of cxn)
+                        (colorize cxn (format nil "~?" fmt args)))))
+    (t
      ;; Normal writing to connection
-	 (unless (or (need-prompt-p cxn)
-				 (and (actor-of cxn)
-					  (not (pref-flagged (actor-of cxn) +pref-autoprompt+))))
-	   (when (or (null (account-of cxn))
-				 (oddp (compact-level-of (account-of cxn))))
+     (unless (or (need-prompt-p cxn)
+                 (and (actor-of cxn)
+                      (not (pref-flagged (actor-of cxn) +pref-autoprompt+))))
+       (when (or (null (account-of cxn))
+                 (oddp (compact-level-of (account-of cxn))))
          (cxn-queue-output cxn (coerce '(#\return #\newline) 'string)))
-	   (when (or (null (actor-of cxn))
+       (when (or (null (actor-of cxn))
                  (pref-flagged (actor-of cxn) +pref-autoprompt+))
-		 (setf (need-prompt-p cxn) t)))
-	 (call-next-method cxn "~a"
-					   (colorize cxn (format nil "~?" fmt args))))))
+         (setf (need-prompt-p cxn) t)))
+     (call-next-method cxn "~a"
+                       (colorize cxn (format nil "~?" fmt args))))))
 
 (defmethod handle-accept ((cxn tempus-cxn))
   (mudlog 'info t "New connection received from ~a" (peer-addr cxn))
@@ -135,28 +135,28 @@
 
 (defmethod handle-flush :before ((cxn tempus-cxn))
   (when (need-prompt-p cxn)
-	(when (and (eql (state-of cxn) 'playing)
-			   (< (compact-level-of (account-of cxn)) 2))
-	  (cxn-write cxn "~%"))
+    (when (and (eql (state-of cxn) 'playing)
+               (< (compact-level-of (account-of cxn)) 2))
+      (cxn-write cxn "~%"))
     (send-state-prompt cxn (state-of cxn))
-	(when (and (eql (state-of cxn) 'playing)
-			   (evenp (compact-level-of (account-of cxn))))
-	  (cxn-write cxn "~%"))
-	(setf (need-prompt-p cxn) nil)))
+    (when (and (eql (state-of cxn) 'playing)
+               (evenp (compact-level-of (account-of cxn))))
+      (cxn-write cxn "~%"))
+    (setf (need-prompt-p cxn) nil)))
 
 (defmethod handle-close :before ((cxn tempus-cxn))
   (cond
-	((null (account-of cxn))
-	 (mudlog 'info t "Closing connection without account"))
-	((and (eql (state-of cxn) 'playing) (actor-of cxn))
-	 (setf (link-of (actor-of cxn)) nil)
-	 (mudlog 'notice t "~a has lost link; ~a logged out"
-			 (name-of (actor-of cxn))
-			 (name-of (account-of cxn)))
+    ((null (account-of cxn))
+     (mudlog 'info t "Closing connection without account"))
+    ((and (eql (state-of cxn) 'playing) (actor-of cxn))
+     (setf (link-of (actor-of cxn)) nil)
+     (mudlog 'notice t "~a has lost link; ~a logged out"
+             (name-of (actor-of cxn))
+             (name-of (account-of cxn)))
      (when (in-room-of (actor-of cxn))
        (act (actor-of cxn) :place-emit "$n has lost $s link.")))
-	(t
-	 (mudlog 'notice t "~a logged out" (name-of (account-of cxn))))))
+    (t
+     (mudlog 'notice t "~a logged out" (name-of (account-of cxn))))))
 
 (defun apply-player-alias (actor alias args)
   ;; split replacements into lines
@@ -190,21 +190,21 @@
 
 (defun player-pathname (idnum)
   (make-pathname :name (princ-to-string idnum)
-				 :type "dat"
-				 :defaults (tempus-path (format nil "lib/players/character/~d/"
-										  (mod idnum 10)))))
+                 :type "dat"
+                 :defaults (tempus-path (format nil "lib/players/character/~d/"
+                                          (mod idnum 10)))))
 
 (defun equipment-pathname (idnum)
   (make-pathname :name (princ-to-string idnum)
-				 :type "dat"
-				 :defaults (tempus-path (format nil "lib/players/equipment/~d/"
-										  (mod idnum 10)))))
+                 :type "dat"
+                 :defaults (tempus-path (format nil "lib/players/equipment/~d/"
+                                          (mod idnum 10)))))
 
 (defun corpse-pathname (idnum)
   (make-pathname :name (princ-to-string idnum)
-				 :type "dat"
-				 :defaults (tempus-path (format nil "lib/players/corpses/~d/"
-										  (mod idnum 10)))))
+                 :type "dat"
+                 :defaults (tempus-path (format nil "lib/players/corpses/~d/"
+                                          (mod idnum 10)))))
 
 (defun player-to-game (player)
   (setf (login-time-of player) (now))
@@ -221,7 +221,7 @@
   (setf (state-of (link-of player)) 'playing)
 
   (mudlog 'notice t "~a has entered the game in room #~d~@[~a~]"
-		  (name-of player)
+          (name-of player)
           (number-of (in-room-of player))
           (when (banned-of (account-of (link-of player))) " [BANNED]"))
 
@@ -230,25 +230,25 @@
   (setf (load-room-of player) 0)
   (unrent player)
   (unless (plusp (hitp-of player))
-	(setf (hitp-of player) 1))
+    (setf (hitp-of player) 1))
   (push player *characters*)
   (setf (gethash (idnum-of player) *character-map*) player)
   (look-at-room player (in-room-of player) nil)
   (when (has-mail (idnum-of player))
-	(send-to-char player "You have new mail.~%"))
+    (send-to-char player "You have new mail.~%"))
   (save-player-to-xml player))
 
 (defun send-section-header (cxn str)
   (if (string= str "")
-	  (cxn-write cxn "&@&b~v,1,,'-a&n~%~%" 72 "")
-	  (cxn-write cxn "&@&b~v,1,,'-a &y~a &b~v,1,,'-a&n~%~%"
-				 (- (/ 70 2) (/ (1+ (length str)) 2)) ""
-				 (string-capitalize str)
-				 (- (/ 70 2) (/ (length str) 2)) "")))
+      (cxn-write cxn "&@&b~v,1,,'-a&n~%~%" 72 "")
+      (cxn-write cxn "&@&b~v,1,,'-a &y~a &b~v,1,,'-a&n~%~%"
+                 (- (/ 70 2) (/ (1+ (length str)) 2)) ""
+                 (string-capitalize str)
+                 (- (/ 70 2) (/ (length str) 2)) "")))
 
 (define-connection-state login
   (menu (cxn)
-	 (cxn-write cxn "&@~a" *welcome-message*))
+     (cxn-write cxn "&@~a" *welcome-message*))
   (prompt (cxn)
     (cxn-write cxn "Please enter your account name, or 'new': "))
   (input (cxn line)
@@ -442,7 +442,7 @@ choose a password to use on this system.
 (define-connection-state new-player-name
   (menu (cxn)
     (cxn-write cxn "&@")
-	(send-section-header cxn "new character")
+    (send-section-header cxn "new character")
     (cxn-write cxn "
     Now that you have created your account, you probably want to create a
 character to play on the mud.  This character will be your persona on the
@@ -471,7 +471,7 @@ return at any time to cancel the creation of your character.
 (define-connection-state new-player-sex
   (menu (cxn)
     (cxn-write cxn "&@")
-	(send-section-header cxn "sex")
+    (send-section-header cxn "sex")
     (cxn-write cxn "~%    Is your character a male or a female?~%~%"))
   (prompt (cxn)
     (cxn-write cxn "What sex is your character: "))
@@ -613,7 +613,7 @@ You may type 'help <race>' for information on any of the available races.
 (define-connection-state set-password-auth
   (menu (cxn)
     (cxn-write cxn "&@")
-	(send-section-header cxn "changing password"))
+    (send-section-header cxn "changing password"))
   (prompt (cxn)
     (cxn-write cxn "~%     For security purposes, please enter your old password: "))
   (input (cxn line)
@@ -649,7 +649,7 @@ You may type 'help <race>' for information on any of the available races.
   (unless immort
     (if brief
         (cxn-write cxn "  # Name         Last on   Status  Mail   # Name         Last on   Status  Mail~% -- --------- ---------- --------- ----  -- --------- ---------- --------- ----~%")
-        (cxn-write cxn 	"&y  # Name           Lvl Gen Sex     Race     Class      Last on    Status  Mail~%&b -- -------------- --- --- --- -------- --------- ------------- --------- ----~%")))
+        (cxn-write cxn  "&y  # Name           Lvl Gen Sex     Race     Class      Last on    Status  Mail~%&b -- -------------- --- --- --- -------- --------- ------------- --------- ----~%")))
   (loop
      for player in (players-of acct)
      for idx from 1
@@ -835,16 +835,16 @@ You may type 'help <race>' for information on any of the available races.
            (setf (actor-of cxn) prev-actor)
            (setf (state-of cxn) 'playing)
            (act prev-actor
-			   	:subject-emit "You take over your own body, already in use!"
-				:place-emit "$n has reconnected.")
+                :subject-emit "You take over your own body, already in use!"
+                :place-emit "$n has reconnected.")
            (mudlog 'notice t "~a has reconnected" (name-of prev-actor)))
           (t
            (setf (actor-of cxn) prev-actor)
            (setf (link-of prev-actor) cxn)
            (setf (state-of cxn) 'playing)
            (act prev-actor
-			   	:subject-emit "You take over your own body!"
-				:place-emit "$n has reconnected.")
+                :subject-emit "You take over your own body!"
+                :place-emit "$n has reconnected.")
            (mudlog 'notice t "~a has reconnected from linkless" (name-of prev-actor))))))
      (t
       (cxn-write cxn "That's not an option!~%")))))
@@ -1048,21 +1048,21 @@ else is noticable about your character?
                         &nTerminate with @ on a new line. ~
                         &&H for help&C                 *&n~%     &C0")
   (dotimes (idx 7)
-	(cxn-write cxn "&B---------&C~d" (1+ idx)))
+    (cxn-write cxn "&B---------&C~d" (1+ idx)))
   (cxn-write cxn "&n~%")
 
   (loop for line in buffer
-	   as line-num from 1
-	   do
-	   (send-line-number cxn line-num)
-	   (cxn-write cxn "~a~%" line)))
+       as line-num from 1
+       do
+       (send-line-number cxn line-num)
+       (cxn-write cxn "~a~%" line)))
 
 (defun do-editor-command (cxn editor line)
   "Handles all the commands that the editor is capable of."
   (with-words (subseq line 1) (cmd-str &rest arg)
-	(case (char-downcase (char cmd-str 0))
-	  (#\h
-	   (cxn-write cxn"~
+    (case (char-downcase (char cmd-str 0))
+      (#\h
+       (cxn-write cxn"~
 &C     *&B------------------------ &YH E L P &B------------------------&C*
             &YS - &nSubstitute            &YF - &nFind
             &YE - &nSave && Exit          &YQ - &nQuit (Cancel)
@@ -1071,68 +1071,68 @@ else is noticable about your character?
             &YC - &nClear Buffer          &YU - &nUndo Changes
 &C     *&B---------------------------------------------------------&C*
 "))
-	  (#\c
-	   (setf (buffer-of editor) nil))
-	  ((#\l #\i #\d)
-	   (with-words arg (param &rest new-line)
-		 (cond
-		   ((or (null param) (notevery #'digit-char-p param))
-			(cxn-write cxn "You must specify a numeric line number.~%"))
-		   (t
-			(let ((line-num (parse-integer param)))
-			  (cond
-				((> line-num (length (buffer-of editor)))
-				 (cxn-write cxn
-								"There are only ~d lines of text!~%"
-								(length (buffer-of editor))))
-				(t
-				 (case (char-downcase (char cmd-str 0))
-				   (#\l
-					(setf (nth (1- line-num) (buffer-of editor))	new-line)
-					(cxn-write cxn
-								   "Line ~d replaced.~%"
-								   line-num))
-				   (#\i
-					(setf (buffer-of editor)
-						  (nconc (subseq (buffer-of editor) 0 (1- line-num))
-								 (list new-line)
-								 (subseq (buffer-of editor) (1- line-num))))
-					(cxn-write cxn
-								   "New line inserted before line ~d.~%"
-								   line-num))
-				   (#\d
-					(setf (buffer-of editor)
-						  (nconc (subseq (buffer-of editor) 0 (1- line-num))
-								 (subseq (buffer-of editor) line-num)))
-					(cxn-write cxn
-								   "Line ~d deleted.~%"
-								   line-num))))))))))
-	  (#\r
-	   (refresh-screen cxn (buffer-of editor)))
-	  (#\u
-	   (setf (buffer-of editor) (split-sequence #\newline (old-buffer-of editor)))
-	   (refresh-screen cxn (buffer-of editor))
-	   (cxn-write cxn "Reverted back to previous.~%"))
-	  (#\e
-	   (setf (state-of editor) 'finishing))
-	  (#\q
-	   (setf (state-of editor) 'aborting))
-	  (#\s
-	   (let* ((start1 (position #\[ arg))
-			  (end1 (and start1 (position #\] arg :start start1)))
-			  (start2 (and end1 (position #\[ arg :start end1)))
-			  (end2 (and start2 (position #\] arg :start start2))))
-		 (cond
-		   ((and start1 end1 start2 end2)
-			 (let ((search-str (subseq arg (1+ start1) end1))
-				   (replace-str (subseq arg (1+ start2) end2)))
-			   (setf (buffer-of editor)
-					 (loop for old-line in (buffer-of editor)
-						  collect (string-replace search-str old-line replace-str)))
-			   (cxn-write cxn
-							  "All instances of [~a] have been replaced with [~a].~%"
-							  search-str
-							  replace-str))))))
+      (#\c
+       (setf (buffer-of editor) nil))
+      ((#\l #\i #\d)
+       (with-words arg (param &rest new-line)
+         (cond
+           ((or (null param) (notevery #'digit-char-p param))
+            (cxn-write cxn "You must specify a numeric line number.~%"))
+           (t
+            (let ((line-num (parse-integer param)))
+              (cond
+                ((> line-num (length (buffer-of editor)))
+                 (cxn-write cxn
+                                "There are only ~d lines of text!~%"
+                                (length (buffer-of editor))))
+                (t
+                 (case (char-downcase (char cmd-str 0))
+                   (#\l
+                    (setf (nth (1- line-num) (buffer-of editor))    new-line)
+                    (cxn-write cxn
+                                   "Line ~d replaced.~%"
+                                   line-num))
+                   (#\i
+                    (setf (buffer-of editor)
+                          (nconc (subseq (buffer-of editor) 0 (1- line-num))
+                                 (list new-line)
+                                 (subseq (buffer-of editor) (1- line-num))))
+                    (cxn-write cxn
+                                   "New line inserted before line ~d.~%"
+                                   line-num))
+                   (#\d
+                    (setf (buffer-of editor)
+                          (nconc (subseq (buffer-of editor) 0 (1- line-num))
+                                 (subseq (buffer-of editor) line-num)))
+                    (cxn-write cxn
+                                   "Line ~d deleted.~%"
+                                   line-num))))))))))
+      (#\r
+       (refresh-screen cxn (buffer-of editor)))
+      (#\u
+       (setf (buffer-of editor) (split-sequence #\newline (old-buffer-of editor)))
+       (refresh-screen cxn (buffer-of editor))
+       (cxn-write cxn "Reverted back to previous.~%"))
+      (#\e
+       (setf (state-of editor) 'finishing))
+      (#\q
+       (setf (state-of editor) 'aborting))
+      (#\s
+       (let* ((start1 (position #\[ arg))
+              (end1 (and start1 (position #\] arg :start start1)))
+              (start2 (and end1 (position #\[ arg :start end1)))
+              (end2 (and start2 (position #\] arg :start start2))))
+         (cond
+           ((and start1 end1 start2 end2)
+             (let ((search-str (subseq arg (1+ start1) end1))
+                   (replace-str (subseq arg (1+ start2) end2)))
+               (setf (buffer-of editor)
+                     (loop for old-line in (buffer-of editor)
+                          collect (string-replace search-str old-line replace-str)))
+               (cxn-write cxn
+                              "All instances of [~a] have been replaced with [~a].~%"
+                              search-str
+                              replace-str))))))
       (#\f
        (loop for line in (buffer-of editor)
              as linenum from 1
@@ -1141,8 +1141,8 @@ else is noticable about your character?
              (send-line-number cxn linenum)
              (cxn-write cxn "~a~%" line))
        (cxn-write cxn "~%"))
-	  (t
-	   (cxn-write cxn "No such editor command.~%")))))
+      (t
+       (cxn-write cxn "No such editor command.~%")))))
 
 (define-connection-state editing
   (prompt (cxn)
@@ -1198,9 +1198,9 @@ else is noticable about your character?
 
 (defun cxn-handle-commands ()
   (dolist (cxn *cxns*)
-	(when (cxn-commands cxn)
-	  (setf (need-prompt-p cxn) t)
-	  (let ((cmd (pop (cxn-commands cxn))))
+    (when (cxn-commands cxn)
+      (setf (need-prompt-p cxn) t)
+      (let ((cmd (pop (cxn-commands cxn))))
         (if *break-on-error*
             (cxn-do-command cxn cmd)
             (handler-bind ((error (lambda (str)

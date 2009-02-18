@@ -1,6 +1,6 @@
 (in-package :tempus)
 
-(defparameter +index-file+ "index")         ; index of world files
+(defparameter +index-file+ "index")       ; index of world files
 (defparameter +mindex-file+ "index.mini") ; ... and for mini-mud-mode
 (defparameter +tindex-file+ "index.test") ; ... and for test-mud-mode
 (defparameter +wld-prefix+ "world/wld")   ; room definitions
@@ -10,7 +10,7 @@
 (defparameter +xml-prefix+ "world/xml")   ;
 
 (defparameter +credits-file+ "text/credits") ; for the 'credits' command
-(defparameter +motd-file+ "text/motd")	; messages of the day / mortal
+(defparameter +motd-file+ "text/motd")  ; messages of the day / mortal
 (defparameter +ansi-motd-file+ "text/ansi-motd") ; messages of the day / mortal
 (defparameter +imotd-file+ "text/imotd") ; messages of the day / immort
 (defparameter +ansi-imotd-file+ "text/ansi-imotd") ; messages of the day / imm
@@ -26,25 +26,25 @@
 (defparameter +policies-file+ "text/policies") ; player policies/rules
 (defparameter +handbook-file+ "text/handbook") ; handbook for new immorts
 (defparameter +areas-low-file+ "text/areas-low") ; list of areas
-(defparameter +areas-mid-file+ "text/areas-mid")
-(defparameter +areas-high-file+ "text/areas-high")
-(defparameter +areas-remort-file+ "text/areas-remort")
+(defparameter +areas-mid-file+ "text/areas-mid") ;
+(defparameter +areas-high-file+ "text/areas-high") ;
+(defparameter +areas-remort-file+ "text/areas-remort") ;
 (defparameter +olc-guide-file+ "text/olc-creation-guide") ; tips for creators
 (defparameter +quest-guide-file+ "text/quest-guide") ; quest guidelines
 (defparameter +quest-list-file+ "text/quest-list")   ; list of quests
 
-(defparameter +idea-file+ "misc/ideas")	; for the 'idea'-command
-(defparameter +typo-file+ "misc/typos")	;         'typo'
-(defparameter +bug-file+ "misc/bugs")	;         'bug'
-(defparameter +mess-file+ "misc/messages")	; damage messages
-(defparameter +socmess-file+ "lib/misc/socials")	; messgs for social acts
-(defparameter +xname-file+ "misc/xnames")	; invalid name substrings
-(defparameter +nasty-file+ "misc/nasty")	; nasty words for public comm
+(defparameter +idea-file+ "misc/ideas")    ; for the 'idea'-command
+(defparameter +typo-file+ "misc/typos")    ;         'typo'
+(defparameter +bug-file+ "misc/bugs")      ;         'bug'
+(defparameter +mess-file+ "misc/messages") ; damage messages
+(defparameter +socmess-file+ "lib/misc/socials") ; messgs for social acts
+(defparameter +xname-file+ "misc/xnames") ; invalid name substrings
+(defparameter +nasty-file+ "misc/nasty") ; nasty words for public comm
 
-(defparameter +player-file+ "etc/players")	; the player database
-(defparameter +mail-file+ "etc/plrmail")	; for the mudmail system
-(defparameter +ban-file+ "etc/badsites")	; for the siteban system
-(defparameter +hcontrol-file+ "etc/hcontrol")	; for the house system
+(defparameter +player-file+ "etc/players")    ; the player database
+(defparameter +mail-file+ "etc/plrmail")      ; for the mudmail system
+(defparameter +ban-file+ "etc/badsites")      ; for the siteban system
+(defparameter +hcontrol-file+ "etc/hcontrol") ; for the house system
 (defparameter +alias-dir+ "plralias/")
 
 (defparameter +cmd-log-file+ "cmd-log")

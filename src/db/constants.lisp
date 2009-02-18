@@ -18,34 +18,34 @@
 
 (defparameter +zone-flags+
   #("AUTOSAVE"
-	"RESETSAVE"
-	"NOTIFYOWNER"
-	"LOCKED"
-	"!MAGIC"
-	"!LAW"
-	"!WEATHER"
-	"!CRIME"
-	"FROZEN"
-	"ISOLATED"
-	"SNDPRF"
-	"NOIDLE"
-	"FULLCONTROL"
-	"PAUSED"
-	"EVILAMBIENCE"
-	"GOODAMBIENCE"
-	"NORECALC"
-	"17"
-	"18"
-	"SEARCH_APPR"
-	"MOBS_APPR"
-	"OBJS_APPR"
-	"ROOMS_APPR"
-	"ZCMDS_APPR"
-	"INPLAY"
-	"MOBS_MOD"
-	"OBJS_MOD"
-	"RMS_MOD"
-	"ZON_MOD"))
+    "RESETSAVE"
+    "NOTIFYOWNER"
+    "LOCKED"
+    "!MAGIC"
+    "!LAW"
+    "!WEATHER"
+    "!CRIME"
+    "FROZEN"
+    "ISOLATED"
+    "SNDPRF"
+    "NOIDLE"
+    "FULLCONTROL"
+    "PAUSED"
+    "EVILAMBIENCE"
+    "GOODAMBIENCE"
+    "NORECALC"
+    "17"
+    "18"
+    "SEARCH_APPR"
+    "MOBS_APPR"
+    "OBJS_APPR"
+    "ROOMS_APPR"
+    "ZCMDS_APPR"
+    "INPLAY"
+    "MOBS_MOD"
+    "OBJS_MOD"
+    "RMS_MOD"
+    "ZON_MOD"))
 
 (defparameter +reset-mode+
   #("NEVER" "EMPTY" "ALWAYS"))
@@ -85,83 +85,83 @@
 
 (defparameter +planes+
   #("Prime One"
-	"Prime Two"
-	"Neverwhere"
-	"Underdark"
-	"Western"
-	"Morbidian"
-	"Prime Seven"
-	"Prime Eight"
-	"Prime Nine"
-	"Prime Ten"
-	"Astral"
-	"Avernus--Hell"
-	"Dis--Hell"
-	"Minauros--Hell"
-	"Phlegethos--Hell"
-	"Stygia--Hell"
-	"Malbolge--Hell"
-	"Maladomini--Hell"
-	"Caina--Hell"
-	"Nessus--Hell"
-	"Ghenna"
-	"21"
-	"22"
-	"23"
-	"24"
-	"The Abyss"
-	"26"
-	"27"
-	"28"
-	"29"
-	"30"
-	"31"
-	"32"
-	"33"
-	"34"
-	"35"
-	"36"
-	"37"
-	"38"
-	"OLC"
-	"Olympus"
-	"Costal"
-	"42"
-	"Heaven"
-	"Elysium"
-	"45"
-	"46"
-	"47"
-	"48"
-	"49"
-	"DOOM"
-	"Shadow"
-	"52"
-	"53"
-	"54"
-	"55"
-	"56"
-	"57"
-	"58"
-	"59"
-	"60"
-	"61"
-	"62"
-	"63"
-	"64"
-	"65"
-	"Odyssey"
-	"Paraelemental Smoke"
-	"Paraelemental Ice"
-	"Paraelemental Magma"
-	"Elemental Water"
-	"Elemental Fire"
-	"Elemental Air"
-	"Elemental Earth"
-	"Elemental Positive"
-	"Elemental Negative"
-	"Paraelemental Magma"
-	"Paraelemental Ooze"))
+    "Prime Two"
+    "Neverwhere"
+    "Underdark"
+    "Western"
+    "Morbidian"
+    "Prime Seven"
+    "Prime Eight"
+    "Prime Nine"
+    "Prime Ten"
+    "Astral"
+    "Avernus--Hell"
+    "Dis--Hell"
+    "Minauros--Hell"
+    "Phlegethos--Hell"
+    "Stygia--Hell"
+    "Malbolge--Hell"
+    "Maladomini--Hell"
+    "Caina--Hell"
+    "Nessus--Hell"
+    "Ghenna"
+    "21"
+    "22"
+    "23"
+    "24"
+    "The Abyss"
+    "26"
+    "27"
+    "28"
+    "29"
+    "30"
+    "31"
+    "32"
+    "33"
+    "34"
+    "35"
+    "36"
+    "37"
+    "38"
+    "OLC"
+    "Olympus"
+    "Costal"
+    "42"
+    "Heaven"
+    "Elysium"
+    "45"
+    "46"
+    "47"
+    "48"
+    "49"
+    "DOOM"
+    "Shadow"
+    "52"
+    "53"
+    "54"
+    "55"
+    "56"
+    "57"
+    "58"
+    "59"
+    "60"
+    "61"
+    "62"
+    "63"
+    "64"
+    "65"
+    "Odyssey"
+    "Paraelemental Smoke"
+    "Paraelemental Ice"
+    "Paraelemental Magma"
+    "Elemental Water"
+    "Elemental Fire"
+    "Elemental Air"
+    "Elemental Earth"
+    "Elemental Positive"
+    "Elemental Negative"
+    "Paraelemental Magma"
+    "Paraelemental Ooze"))
 
 (defparameter +time-frames+
   #("Timeless" "Modrian Era" "Electro Era"))
@@ -233,7 +233,7 @@
 (defparameter +spell-bless+ 3)        ; Reserved Skill[] DO NOT CHANGE
 (defparameter +spell-blindness+ 4)    ; Reserved Skill[] DO NOT CHANGE
 (defparameter +spell-burning-hands+ 5) ; Reserved Skill[] DO NOT CHANGE
-(defparameter +spell-call-lightning+ 6)	; Reserved Skill[] DO NOT CHANGE
+(defparameter +spell-call-lightning+ 6) ; Reserved Skill[] DO NOT CHANGE
 (defparameter +spell-charm+ 7)        ; Reserved Skill[] DO NOT CHANGE
 (defparameter +spell-chill-touch+ 8)  ; Reserved Skill[] DO NOT CHANGE
 (defparameter +spell-clone+ 9)        ; Reserved Skill[] DO NOT CHANGE
@@ -248,7 +248,7 @@
 (defparameter +spell-detect-align+ 18) ; Reserved Skill[] DO NOT CHANGE
 (defparameter +spell-detect-invis+ 19) ; Reserved Skill[] DO NOT CHANGE
 (defparameter +spell-detect-magic+ 20) ; Reserved Skill[] DO NOT CHANGE
-(defparameter +spell-detect-poison+ 21)	; Reserved Skill[] DO NOT CHANGE
+(defparameter +spell-detect-poison+ 21) ; Reserved Skill[] DO NOT CHANGE
 (defparameter +spell-dispel-evil+ 22) ; Reserved Skill[] DO NOT CHANGE
 (defparameter +spell-earthquake+ 23)  ; Reserved Skill[] DO NOT CHANGE
 (defparameter +spell-enchant-weapon+ 24) ; Reserved Skill[] DO NOT CHANGE
@@ -258,8 +258,8 @@
 (defparameter +spell-heal+ 28)        ; Reserved Skill[] DO NOT CHANGE
 (defparameter +spell-invisible+ 29)   ; Reserved Skill[] DO NOT CHANGE
 (defparameter +spell-lightning-bolt+ 30) ; Reserved Skill[] DO NOT CHANGE
-(defparameter +spell-locate-object+ 31)	; Reserved Skill[] DO NOT CHANGE
-(defparameter +spell-magic-missile+ 32)	; Reserved Skill[] DO NOT CHANGE
+(defparameter +spell-locate-object+ 31) ; Reserved Skill[] DO NOT CHANGE
+(defparameter +spell-magic-missile+ 32) ; Reserved Skill[] DO NOT CHANGE
 (defparameter +spell-poison+ 33)      ; Reserved Skill[] DO NOT CHANGE
 (defparameter +spell-prot-from-evil+ 34) ; Reserved Skill[] DO NOT CHANGE
 (defparameter +spell-remove-curse+ 35) ; Reserved Skill[] DO NOT CHANGE
@@ -268,9 +268,9 @@
 (defparameter +spell-sleep+ 38)       ; Reserved Skill[] DO NOT CHANGE
 (defparameter +spell-strength+ 39)    ; Reserved Skill[] DO NOT CHANGE
 (defparameter +spell-summon+ 40)      ; Reserved Skill[] DO NOT CHANGE
-(defparameter +spell-ventriloquate+ 41)	; Reserved Skill[] DO NOT CHANGE
+(defparameter +spell-ventriloquate+ 41) ; Reserved Skill[] DO NOT CHANGE
 (defparameter +spell-word-of-recall+ 42) ; Reserved Skill[] DO NOT CHANGE
-(defparameter +spell-remove-poison+ 43)	; Reserved Skill[] DO NOT CHANGE
+(defparameter +spell-remove-poison+ 43) ; Reserved Skill[] DO NOT CHANGE
 (defparameter +spell-sense-life+ 44)  ; Reserved Skill[] DO NOT CHANGE
 (defparameter +spell-animate-dead+ 45) ; Reserved Skill[] DO NOT CHANGE
 (defparameter +spell-dispel-good+ 46) ; Reserved Skill[] DO NOT CHANGE
@@ -358,9 +358,9 @@
 (defparameter +spell-ice-storm+ 128)
 (defparameter +spell-shield-of-righteousness+ 129) ; group protection
 (defparameter +spell-blackmantle+ 130)      ; blocks healing spells
-(defparameter +spell-sanctification+ 131)	; 2x dam vs. evil
+(defparameter +spell-sanctification+ 131)   ; 2x dam vs. evil
 (defparameter +spell-stigmata+ 132)         ; causes a bleeding wound
-(defparameter +spell-summon-legion+ 133)	; knights summon devils
+(defparameter +spell-summon-legion+ 133)    ; knights summon devils
 (defparameter +spell-entangle+ 134)         ; rangers entangle in veg.
 (defparameter +spell-anti-magic-shell+ 135)
 (defparameter +spell-divine-intervention+ 136)
@@ -375,10 +375,10 @@
 (defparameter +spell-stoneskin+ 145)      ; remort rangers stone skin
 (defparameter +spell-sun-ray+ 146)        ; Good cleric remort,
                                         ; destroys undead.
-(defparameter +spell-taint+ 147)	; Evil knight remort spell, taint.
+(defparameter +spell-taint+ 147)    ; Evil knight remort spell, taint.
 (defparameter +spell-locust-regeneration+ 148) ; Mage remort skill, drains mana
-(defparameter +spell-divine-power+ 149)	; Good cleric remort skill.
-(defparameter +spell-death-knell+ 150)	; Evil cleric remort skill.
+(defparameter +spell-divine-power+ 149) ; Good cleric remort skill.
+(defparameter +spell-death-knell+ 150)  ; Evil cleric remort skill.
 (defparameter +spell-telepathy+ 151)
 (defparameter +spell-damn+ 152)
 (defparameter +spell-calm+ 153)
@@ -397,9 +397,9 @@
 (defparameter +spell-intellect+ 202)
 (defparameter +spell-confusion+ 203)
 (defparameter +spell-fear+ 204)
-(defparameter +spell-satiation+ 205)	; fills hunger
+(defparameter +spell-satiation+ 205)    ; fills hunger
 (defparameter +spell-quench+ 206)       ; fills thirst
-(defparameter +spell-confidence+ 207)	; sets nopain
+(defparameter +spell-confidence+ 207)   ; sets nopain
 (defparameter +spell-nopain+ 208)
 (defparameter +spell-dermal-hardening+ 209)
 (defparameter +spell-wound-closure+ 210)
@@ -454,12 +454,12 @@
 (defparameter +spell-repulsion-field+ 310)
 (defparameter +spell-transmittance+ 311)        ; transparency
 (defparameter +spell-spacetime-imprint+ 312) ; sets room as teleport spot
-(defparameter +spell-spacetime-recall+ 313)	; teleports to imprint telep spot
+(defparameter +spell-spacetime-recall+ 313) ; teleports to imprint telep spot
 (defparameter +spell-time-warp+ 314) ; random teleport into other time
-(defparameter +spell-tidal-spacewarp+ 315)	; fly
-(defparameter +spell-fission-blast+ 316)	; full-room damage
+(defparameter +spell-tidal-spacewarp+ 315)  ; fly
+(defparameter +spell-fission-blast+ 316)    ; full-room damage
 (defparameter +spell-refraction+ 317)       ; like displacement
-(defparameter +spell-electroshield+ 318)	; prot_lightning
+(defparameter +spell-electroshield+ 318)    ; prot_lightning
 (defparameter +spell-vacuum-shroud+ 319) ; eliminates breathing and fire
 (defparameter +spell-densify+ 320)     ; increase weight of obj & char
 (defparameter +spell-chemical-stability+ 321) ; prevent/stop acidity
@@ -467,26 +467,26 @@
 (defparameter +spell-gravity-well+ 323)  ; time effect crushing damage
 (defparameter +spell-capacitance-boost+ 324) ; increase maxmv
 (defparameter +spell-electric-arc+ 325)      ; lightning bolt
-(defparameter +spell-sonic-boom+ 326)	; area damage + wait state
+(defparameter +spell-sonic-boom+ 326)   ; area damage + wait state
 (defparameter +spell-lattice-hardening+ 327) ; dermal hard or increase obj maxdam
 (defparameter +spell-nullify+ 328)           ; like dispel magic
 (defparameter +spell-force-wall+ 329)        ; sets up an exit blocker
 (defparameter +spell-unused-330+ 330)
 (defparameter +spell-phasing+ 331)              ; invuln.
 (defparameter +spell-absorption-shield+ 332) ; works like mana shield
-(defparameter +spell-temporal-compression+ 333)	; works like haste
-(defparameter +spell-temporal-dilation+ 334)	; works like slow
+(defparameter +spell-temporal-compression+ 333) ; works like haste
+(defparameter +spell-temporal-dilation+ 334)    ; works like slow
 (defparameter +spell-gauss-shield+ 335)     ; half damage from metal
-(defparameter +spell-albedo-shield+ 336)	; reflects e/m attacks
+(defparameter +spell-albedo-shield+ 336)    ; reflects e/m attacks
 (defparameter +spell-thermostatic-field+ 337) ; sets prot_heat + end_cold
 (defparameter +spell-radioimmunity+ 338)      ; sets prot_rad
 (defparameter +spell-transdimensionality+ 339) ; randomly teleport to another plane
 (defparameter +spell-area-stasis+ 340)         ; sets !phy room flag
 (defparameter +spell-electrostatic-field+ 341) ; protective static field does damage to attackers
 (defparameter +spell-emp-pulse+ 342) ; Shuts off devices, communicators
-										; deactivats all cyborg programs
-										; blocked by emp shield
-(defparameter +spell-quantum-rift+ 343)	; Shuts off devices, communicators
+                                        ; deactivats all cyborg programs
+                                        ; blocked by emp shield
+(defparameter +spell-quantum-rift+ 343) ; Shuts off devices, communicators
 (defparameter +spell-item-repulsion-field+ 344)
 (defparameter +spell-item-attraction-field+ 345)
 (defparameter +spell-dimensional-shift+ 498) ;added at top of spells to avoid interference with future bard songs
@@ -642,17 +642,17 @@
 (defparameter +skill-cure-disease+ 582)
 (defparameter +skill-battle-cry+ 583)
 (defparameter +skill-autopsy+ 584)
-(defparameter +skill-transmute+ 585)	; physic transmute objs
+(defparameter +skill-transmute+ 585)    ; physic transmute objs
 (defparameter +skill-metalworking+ 586)
 (defparameter +skill-leatherworking+ 587)
 (defparameter +skill-demolitions+ 588)
 (defparameter +skill-psiblast+ 589)
 (defparameter +skill-psilocate+ 590)
 (defparameter +skill-psidrain+ 591)     ; drain mana from vict
-(defparameter +skill-gunsmithing+ 592)	; repair gunz
+(defparameter +skill-gunsmithing+ 592)  ; repair gunz
 (defparameter +skill-elusion+ 593)      ; !track
 (defparameter +skill-pistolwhip+ 594)
-(defparameter +skill-crossface+ 595)	; rifle whip
+(defparameter +skill-crossface+ 595)    ; rifle whip
 (defparameter +skill-wrench+ 596)       ; break neck
 (defparameter +skill-cry-from-beyond+ 597)
 (defparameter +skill-kia+ 598)
@@ -662,19 +662,19 @@
 (defparameter +skill-turn+ 601)         ; Cleric's turn
 (defparameter +skill-analyze+ 602)      ; Physic's analysis
 (defparameter +skill-evaluate+ 603)     ; Physic's evaluation
-(defparameter +skill-holy-touch+ 604)	; Knight's skill
+(defparameter +skill-holy-touch+ 604)   ; Knight's skill
 (defparameter +skill-night-vision+ 605)
 (defparameter +skill-empower+ 606)
 (defparameter +skill-swimming+ 607)
 (defparameter +skill-throwing+ 608)
 (defparameter +skill-riding+ 609)
-(defparameter +skill-pipemaking+ 610)	;Make a pipe!
+(defparameter +skill-pipemaking+ 610)   ;Make a pipe!
 (defparameter +skill-charge+ 611)       ; BANG!
 (defparameter +skill-counter-attack+ 612)
 
 
 ;;; ****************  CYBORG SKILLS  *******************
-(defparameter +skill-reconfigure+ 613)	; Re-allocate stats
+(defparameter +skill-reconfigure+ 613)  ; Re-allocate stats
 (defparameter +skill-reboot+ 614)       ; Start over from scratch
 (defparameter +skill-motion-sensor+ 615) ; Detect Entries into room
 (defparameter +skill-stasis+ 616)        ; State of rapid healing
@@ -699,17 +699,17 @@
 (defparameter +skill-proj-weapons+ 635)   ; projectile weapon use
 (defparameter +skill-speed-loading+ 636)  ; speed load weapons
 (defparameter +skill-hyperscan+ 637)  ; aware of hidden objs and traps
-(defparameter +skill-overdrain+ 638)	; overdrain batteries
-(defparameter +skill-de-energize+ 639)	; drain energy from chars
-(defparameter +skill-assimilate+ 640)	; assimilate objects
+(defparameter +skill-overdrain+ 638)    ; overdrain batteries
+(defparameter +skill-de-energize+ 639)  ; drain energy from chars
+(defparameter +skill-assimilate+ 640)   ; assimilate objects
 (defparameter +skill-radionegation+ 641) ; immunity to radiation
 (defparameter +skill-implant-w+ 642) ; Extra attacks with implant weapons.
-(defparameter +skill-adv-implant-w+ 643)	; ""
-(defparameter +skill-offensive-pos+ 644)	; Offensive Posturing
-(defparameter +skill-defensive-pos+ 645)	; Defensive Posturing
-(defparameter +skill-melee-combat-tac+ 646)	; Melee combat tactics
-(defparameter +skill-neural-bridging+ 647)	; Cogenic Neural Bridging
-										; (Ambidextarity)
+(defparameter +skill-adv-implant-w+ 643)    ; ""
+(defparameter +skill-offensive-pos+ 644)    ; Offensive Posturing
+(defparameter +skill-defensive-pos+ 645)    ; Defensive Posturing
+(defparameter +skill-melee-combat-tac+ 646) ; Melee combat tactics
+(defparameter +skill-neural-bridging+ 647)  ; Cogenic Neural Bridging
+                                        ; (Ambidextarity)
 ;;; Cyborg skills continue around 675
 
 (defparameter +skill-retreat+ 648)      ; controlled flee
@@ -746,7 +746,7 @@
 
 ;;; Overflow Cyborg
 (defparameter +skill-nanite-reconstruction+ 675) ; repairs implants
-;;; static const int SKILL_ARTERIAL_FLOW = 676;	; Arterial Flow Enhancements
+;;; static const int SKILL_ARTERIAL_FLOW = 676; ; Arterial Flow Enhancements
 (defparameter +skill-optimmunal-resp+ 677) ; Genetek Optimmunal Node
 (defparameter +skill-adrenal-maximizer+ 678) ; Shukutei Adrenal Maximizer
 
@@ -948,12 +948,12 @@
 (defparameter +class-thief+ 2)
 (defparameter +class-warrior+ 3)
 (defparameter +class-barb+ 4)
-(defparameter +class-psionic+ 5)	; F
-(defparameter +class-physic+ 6)	; F
-(defparameter +class-cyborg+ 7)	; F
+(defparameter +class-psionic+ 5)    ; F
+(defparameter +class-physic+ 6) ; F
+(defparameter +class-cyborg+ 7) ; F
 (defparameter +class-knight+ 8)
 (defparameter +class-ranger+ 9)
-(defparameter +class-bard+ 10)	; N
+(defparameter +class-bard+ 10)  ; N
 (defparameter +class-monk+ 11)
 (defparameter +class-vampire+ 12)
 (defparameter +class-mercenary+ 13)
@@ -961,7 +961,7 @@
 (defparameter +class-spare2+ 15)
 (defparameter +class-spare3+ 16)
 
-(defparameter +num-classes+ 17)	; This must be the number of char_classes!!
+(defparameter +num-classes+ 17) ; This must be the number of char_classes!!
 (defparameter +class-normal+ 50)
 (defparameter +class-bird+ 51)
 (defparameter +class-predator+ 52)
@@ -983,12 +983,12 @@
 (defparameter +class-lich+ 69)
 (defparameter +class-zombie+ 70)
 
-(defparameter +class-earth+ 81)	; Elementals
+(defparameter +class-earth+ 81) ; Elementals
 (defparameter +class-fire+ 82)
 (defparameter +class-water+ 83)
 (defparameter +class-air+ 84)
 (defparameter +class-lightning+ 85)
-(defparameter +class-green+ 91)	; Dragons
+(defparameter +class-green+ 91) ; Dragons
 (defparameter +class-white+ 92)
 (defparameter +class-black+ 93)
 (defparameter +class-blue+ 94)
@@ -997,7 +997,7 @@
 (defparameter +class-shadow-d+ 97)
 (defparameter +class-deep+ 98)
 (defparameter +class-turtle+ 99)
-(defparameter +class-least+ 101)	; Devils
+(defparameter +class-least+ 101)    ; Devils
 (defparameter +class-lesser+ 102)
 (defparameter +class-greater+ 103)
 (defparameter +class-duke+ 104)
@@ -1008,13 +1008,13 @@
 (defparameter +class-fire-g+ 114)
 (defparameter +class-cloud+ 115)
 (defparameter +class-storm+ 116)
-(defparameter +class-slaad-red+ 120)	; Slaad
+(defparameter +class-slaad-red+ 120)    ; Slaad
 (defparameter +class-slaad-blue+ 121)
 (defparameter +class-slaad-green+ 122)
 (defparameter +class-slaad-grey+ 123)
 (defparameter +class-slaad-death+ 124)
 (defparameter +class-slaad-lord+ 125)
-(defparameter +class-demon-i+ 130)	; Demons of the Abyss
+(defparameter +class-demon-i+ 130)  ; Demons of the Abyss
 (defparameter +class-demon-ii+ 131)
 (defparameter +class-demon-iii+ 132)
 (defparameter +class-demon-iv+ 133)
@@ -1118,16 +1118,16 @@
 
 ;;; Positions
 (defparameter +bottom-pos+ 0)
-(defparameter +pos-dead+ 0)	; dead
-(defparameter +pos-mortallyw+ 1)	; mortally wounded
-(defparameter +pos-incap+ 2)	; incapacitated
-(defparameter +pos-stunned+ 3)	; stunned
-(defparameter +pos-sleeping+ 4)	; sleeping
-(defparameter +pos-resting+ 5)	; resting
-(defparameter +pos-sitting+ 6)	; sitting
-(defparameter +pos-fighting+ 7)	; fighting
-(defparameter +pos-standing+ 8)	; standing
-(defparameter +pos-flying+ 9)	; flying around
+(defparameter +pos-dead+ 0) ; dead
+(defparameter +pos-mortallyw+ 1)    ; mortally wounded
+(defparameter +pos-incap+ 2)    ; incapacitated
+(defparameter +pos-stunned+ 3)  ; stunned
+(defparameter +pos-sleeping+ 4) ; sleeping
+(defparameter +pos-resting+ 5)  ; resting
+(defparameter +pos-sitting+ 6)  ; sitting
+(defparameter +pos-fighting+ 7) ; fighting
+(defparameter +pos-standing+ 8) ; standing
+(defparameter +pos-flying+ 9)   ; flying around
 (defparameter +pos-mounted+ 10)
 (defparameter +pos-swimming+ 11)
 (defparameter +top-pos+ 11)
@@ -1136,106 +1136,106 @@
   #("dead" "mortally wounded" "incapacitated" "stunned" "sleeping" "resting" "sitting" "fighting" "standing" "flying" "mounted" "swimming"))
 
 ;;; Player flags: used by Creature.char_specials.act
-(defparameter +plr-killer+ (ash 1 0))	; Player is a player-killer
-(defparameter +plr-thief+ (ash 1 1))	; Player is a player-thief
-(defparameter +plr-frozen+ (ash 1 2))	; Player is frozen
-(defparameter +plr-dontset+ (ash 1 3))	; Don't EVER set (ISNPC bit)
-(defparameter +plr-writing+ (ash 1 4))	; Player writing (board/mail/olc)
-(defparameter +plr-mailing+ (ash 1 5))	; Player is writing mail
-(defparameter +plr-crash+ (ash 1 6))	; Player needs to be crash-saved
-(defparameter +plr-siteok+ (ash 1 7))	; Player has been site-cleared
-(defparameter +plr-noshout+ (ash 1 8))	; Player not allowed to shout/goss
-(defparameter +plr-notitle+ (ash 1 9))	; Player not allowed to set title
-(defparameter +plr-deleted+ (ash 1 10))	; Player deleted - space reusable
-(defparameter +plr-loadroom+ (ash 1 11))	; Player uses nonstandard loadroom
-(defparameter +plr-noclanmail+ (ash 1 12))	; Player doesn't get clanmail
-(defparameter +plr-nodelete+ (ash 1 13))	; Player shouldn't be deleted
-(defparameter +plr-invstart+ (ash 1 14))	; Player should enter game wizinvis
-(defparameter +plr-cryo+ (ash 1 15))	; Player is cryo-saved (purge prog)
-(defparameter +plr-afk+ (ash 1 16))	; Player is away from keyboard
-(defparameter +plr-clan-leader+ (ash 1 17))	; The head of the respective clan
+(defparameter +plr-killer+ (ash 1 0))   ; Player is a player-killer
+(defparameter +plr-thief+ (ash 1 1))    ; Player is a player-thief
+(defparameter +plr-frozen+ (ash 1 2))   ; Player is frozen
+(defparameter +plr-dontset+ (ash 1 3))  ; Don't EVER set (ISNPC bit)
+(defparameter +plr-writing+ (ash 1 4))  ; Player writing (board/mail/olc)
+(defparameter +plr-mailing+ (ash 1 5))  ; Player is writing mail
+(defparameter +plr-crash+ (ash 1 6))    ; Player needs to be crash-saved
+(defparameter +plr-siteok+ (ash 1 7))   ; Player has been site-cleared
+(defparameter +plr-noshout+ (ash 1 8))  ; Player not allowed to shout/goss
+(defparameter +plr-notitle+ (ash 1 9))  ; Player not allowed to set title
+(defparameter +plr-deleted+ (ash 1 10)) ; Player deleted - space reusable
+(defparameter +plr-loadroom+ (ash 1 11))    ; Player uses nonstandard loadroom
+(defparameter +plr-noclanmail+ (ash 1 12))  ; Player doesn't get clanmail
+(defparameter +plr-nodelete+ (ash 1 13))    ; Player shouldn't be deleted
+(defparameter +plr-invstart+ (ash 1 14))    ; Player should enter game wizinvis
+(defparameter +plr-cryo+ (ash 1 15))    ; Player is cryo-saved (purge prog)
+(defparameter +plr-afk+ (ash 1 16)) ; Player is away from keyboard
+(defparameter +plr-clan-leader+ (ash 1 17)) ; The head of the respective clan
 (defparameter +plr-unused2+ (ash 1 18))
-(defparameter +plr-olc+ (ash 1 19))	; Player is descripting olc
-(defparameter +plr-halt+ (ash 1 20))	; Player is halted
-(defparameter +plr-olcgod+ (ash 1 21))	; Player can edit at will
-(defparameter +plr-tester+ (ash 1 22))	; Player is a tester
-(defparameter +plr-unused3+ (ash 1 23))	; Quest god
-(defparameter +plr-mortalized+ (ash 1 24))	; God can be killed
+(defparameter +plr-olc+ (ash 1 19)) ; Player is descripting olc
+(defparameter +plr-halt+ (ash 1 20))    ; Player is halted
+(defparameter +plr-olcgod+ (ash 1 21))  ; Player can edit at will
+(defparameter +plr-tester+ (ash 1 22))  ; Player is a tester
+(defparameter +plr-unused3+ (ash 1 23)) ; Quest god
+(defparameter +plr-mortalized+ (ash 1 24))  ; God can be killed
 (defparameter +plr-unused4+ (ash 1 25))
 (defparameter +plr-unused6+ (ash 1 26))
 (defparameter +plr-nopost+ (ash 1 27))
-(defparameter +plr-log+ (ash 1 28))	; log all cmds
-(defparameter +plr-unused5+ (ash 1 29))	; player approved for port olc
-(defparameter +plr-nopk+ (ash 1 30))	; player cannot pk
+(defparameter +plr-log+ (ash 1 28)) ; log all cmds
+(defparameter +plr-unused5+ (ash 1 29)) ; player approved for port olc
+(defparameter +plr-nopk+ (ash 1 30))    ; player cannot pk
 
 ;; Player Flags Mark II
-(defparameter +plr2-soulless+ (ash 1 0))	; Signing the Unholy Compact.
-(defparameter +plr2-buried+ (ash 1 1))	; Player has died way too many times.
+(defparameter +plr2-soulless+ (ash 1 0))    ; Signing the Unholy Compact.
+(defparameter +plr2-buried+ (ash 1 1))  ; Player has died way too many times.
 (defparameter +plr2-in-combat+ (ash 1 2))
 
-(defparameter +mob-spec+ (ash 1 0))	; Mob has a callable spec-proc
-(defparameter +mob-sentinel+ (ash 1 1))	; Mob should not move
-(defparameter +mob-scavenger+ (ash 1 2))	; Mob picks up stuff on the ground
-(defparameter +mob-isnpc+ (ash 1 3))	; (R) Automatically set on all Mobs
-(defparameter +mob-aware+ (ash 1 4))	; Mob can't be backstabbed
-(defparameter +mob-aggressive+ (ash 1 5))	; Mob hits players in the room
-(defparameter +mob-stay-zone+ (ash 1 6))	; Mob shouldn't wander out of zone
-(defparameter +mob-wimpy+ (ash 1 7))	; Mob flees if severely injured
-(defparameter +mob-aggr-evil+ (ash 1 8))	; auto attack evil PC's
-(defparameter +mob-aggr-good+ (ash 1 9))	; auto attack good PC's
-(defparameter +mob-aggr-neutral+ (ash 1 10))	; auto attack neutral PC's
-(defparameter +mob-memory+ (ash 1 11))	; remember attackers if attacked
-(defparameter +mob-helper+ (ash 1 12))	; attack PCs fighting other NPCs
-(defparameter +mob-nocharm+ (ash 1 13))	; Mob can't be charmed
-(defparameter +mob-nosummon+ (ash 1 14))	; Mob can't be summoned
-(defparameter +mob-nosleep+ (ash 1 15))	; Mob can't be slept
-(defparameter +mob-nobash+ (ash 1 16))	; Mob can't be bashed (e.g. trees)
-(defparameter +mob-noblind+ (ash 1 17))	; Mob can't be blinded
-(defparameter +mob-noturn+ (ash 1 18))	; Hard to turn
-(defparameter +mob-nopetri+ (ash 1 19))	; Cannot be petrified
-(defparameter +mob-pet+ (ash 1 20))	; Mob is a conjured pet and shouldn't
-										 ; get nor give any xp in any way.
-(defparameter +mob-soulless+ (ash 1 21))	; Mobile is Soulless - Unholy compact.
-(defparameter +mob-spirit-tracker+ (ash 1 22))	; Can track through !track
+(defparameter +mob-spec+ (ash 1 0)) ; Mob has a callable spec-proc
+(defparameter +mob-sentinel+ (ash 1 1)) ; Mob should not move
+(defparameter +mob-scavenger+ (ash 1 2))    ; Mob picks up stuff on the ground
+(defparameter +mob-isnpc+ (ash 1 3))    ; (R) Automatically set on all Mobs
+(defparameter +mob-aware+ (ash 1 4))    ; Mob can't be backstabbed
+(defparameter +mob-aggressive+ (ash 1 5))   ; Mob hits players in the room
+(defparameter +mob-stay-zone+ (ash 1 6))    ; Mob shouldn't wander out of zone
+(defparameter +mob-wimpy+ (ash 1 7))    ; Mob flees if severely injured
+(defparameter +mob-aggr-evil+ (ash 1 8))    ; auto attack evil PC's
+(defparameter +mob-aggr-good+ (ash 1 9))    ; auto attack good PC's
+(defparameter +mob-aggr-neutral+ (ash 1 10))    ; auto attack neutral PC's
+(defparameter +mob-memory+ (ash 1 11))  ; remember attackers if attacked
+(defparameter +mob-helper+ (ash 1 12))  ; attack PCs fighting other NPCs
+(defparameter +mob-nocharm+ (ash 1 13)) ; Mob can't be charmed
+(defparameter +mob-nosummon+ (ash 1 14))    ; Mob can't be summoned
+(defparameter +mob-nosleep+ (ash 1 15)) ; Mob can't be slept
+(defparameter +mob-nobash+ (ash 1 16))  ; Mob can't be bashed (e.g. trees)
+(defparameter +mob-noblind+ (ash 1 17)) ; Mob can't be blinded
+(defparameter +mob-noturn+ (ash 1 18))  ; Hard to turn
+(defparameter +mob-nopetri+ (ash 1 19)) ; Cannot be petrified
+(defparameter +mob-pet+ (ash 1 20)) ; Mob is a conjured pet and shouldn't
+                                         ; get nor give any xp in any way.
+(defparameter +mob-soulless+ (ash 1 21))    ; Mobile is Soulless - Unholy compact.
+(defparameter +mob-spirit-tracker+ (ash 1 22))  ; Can track through !track
 (defparameter +mob-utility+ (ash 1 23)) ; Can't be seen, hit, etc...
 
 (defparameter +mob2-script+ (ash 1 0))
 (defparameter +mob2-mount+ (ash 1 1))
-(defparameter +mob2-stay-sect+ (ash 1 2))	; Can't leave SECT-type.
-(defparameter +mob2-atk-mobs+ (ash 1 3))	; Aggro Mobs will attack other mobs
-(defparameter +mob2-hunt+ (ash 1 4))	; Mob will hunt attacker
-(defparameter +mob2-looter+ (ash 1 5))	; Loots corpses
+(defparameter +mob2-stay-sect+ (ash 1 2))   ; Can't leave SECT-type.
+(defparameter +mob2-atk-mobs+ (ash 1 3))    ; Aggro Mobs will attack other mobs
+(defparameter +mob2-hunt+ (ash 1 4))    ; Mob will hunt attacker
+(defparameter +mob2-looter+ (ash 1 5))  ; Loots corpses
 (defparameter +mob2-nostun+ (ash 1 6))
-(defparameter +mob2-seller+ (ash 1 7))	; If shopkeeper, sells anywhere.
-(defparameter +mob2-wont-wear+ (ash 1 8))	; Wont wear shit it picks up (SHPKPER)
+(defparameter +mob2-seller+ (ash 1 7))  ; If shopkeeper, sells anywhere.
+(defparameter +mob2-wont-wear+ (ash 1 8))   ; Wont wear shit it picks up (SHPKPER)
 (defparameter +mob2-silent-hunter+ (ash 1 9))
-(defparameter +mob2-familiar+ (ash 1 10))	; mages familiar
-(defparameter +mob2-no-flow+ (ash 1 11))	; Mob doesn't flow
-(defparameter +mob2-unapproved+ (ash 1 12))	; Mobile not approved for game play
-(defparameter +mob2-renamed+ (ash 1 13))	; Mobile renamed
-(defparameter +mob2-noaggro-race+ (ash 1 14))	; wont attack members of own race
+(defparameter +mob2-familiar+ (ash 1 10))   ; mages familiar
+(defparameter +mob2-no-flow+ (ash 1 11))    ; Mob doesn't flow
+(defparameter +mob2-unapproved+ (ash 1 12)) ; Mobile not approved for game play
+(defparameter +mob2-renamed+ (ash 1 13))    ; Mobile renamed
+(defparameter +mob2-noaggro-race+ (ash 1 14))   ; wont attack members of own race
 
 (defparameter +pref-brief+ 0) ; Room descs won't normally be shown
 (defparameter +pref-nohaggle+ 1) ;
 (defparameter +pref-deaf+ 2)     ; Can't hear shouts
 (defparameter +pref-notell+ 3)   ; Can't receive tells
-(defparameter +pref-disphp+ 4)	; Display hit points in prompt
+(defparameter +pref-disphp+ 4)  ; Display hit points in prompt
 (defparameter +pref-dispmana+ 5) ; Display mana points in prompt
 (defparameter +pref-dispmove+ 6) ; Display move points in prompt
 (defparameter +pref-autoexit+ 7) ; Display exits in a room
 (defparameter +pref-nohassle+ 8) ; Aggr mobs won't attack
 (defparameter +pref-nasty+ 9) ; Can hear nasty words on channel
-(defparameter +pref-summonable+ 10)	; Can be summoned
+(defparameter +pref-summonable+ 10) ; Can be summoned
 (defparameter +pref-noplug+ 11) ; Can't hear crier plug tempus
-(defparameter +pref-holylight+ 12)	; Can see in dark
-(defparameter +pref-color-1+ 13)	; Color (low bit)
-(defparameter +pref-color-2+ 14)	; Color (high bit)
+(defparameter +pref-holylight+ 12)  ; Can see in dark
+(defparameter +pref-color-1+ 13)    ; Color (low bit)
+(defparameter +pref-color-2+ 14)    ; Color (high bit)
 (defparameter +pref-nowiz+ 15)      ; Can't hear wizline
-(defparameter +pref-log1+ 16)	; On-line System Log (low bit)
+(defparameter +pref-log1+ 16)   ; On-line System Log (low bit)
 (defparameter +pref-log2+ 17)  ; On-line System Log (high bit)
-(defparameter +pref-noauct+ 18)	; Can't hear auction channel
-(defparameter +pref-nogoss+ 19)	; Can't hear gossip channel
-(defparameter +pref-nogratz+ 20)	; Can't hear grats channel
+(defparameter +pref-noauct+ 18) ; Can't hear auction channel
+(defparameter +pref-nogoss+ 19) ; Can't hear gossip channel
+(defparameter +pref-nogratz+ 20)    ; Can't hear grats channel
 (defparameter +pref-roomflags+ 21) ; Can see room flags (ROOM-x)
 (defparameter +pref-nosnoop+ 22) ; Can not be snooped by immortals
 (defparameter +pref-nomusic+ 23) ; Can't hear music channel
@@ -1244,13 +1244,13 @@
 (defparameter +pref-noproject+ 26) ; Cannot hear the remort channel
 (defparameter +pref-nopetition+ 27) ;
 (defparameter +pref-noclansay+ 28) ; Doesnt hear clan says and such
-(defparameter +pref-noidentify+ 29)	; Saving throw is made when id'd
+(defparameter +pref-noidentify+ 29) ; Saving throw is made when id'd
 (defparameter +pref-nodream+ 30)
 
 ;; PREF 2 Flags
 
 (defparameter +pref-debug+ 31)          ; Sees info on fight.
-(defparameter +pref-newbie-helper+ 32)	; sees newbie arrivals
+(defparameter +pref-newbie-helper+ 32)  ; sees newbie arrivals
 (defparameter +pref-auto-diagnose+ 33) ; automatically see condition of enemy
 (defparameter +pref-autopage+ 34) ; Beeps when ch receives a tell
 (defparameter +pref-noaffects+ 35) ; Affects are not shown in score
@@ -1259,16 +1259,16 @@
 (defparameter +pref-unused-1+ 38) ; auto-sets title to clan stuff
 (defparameter +pref-clan-hide+ 39) ; don't show badge in who list
 (defparameter +pref-unused-2+ 40) ; interrupts while d->showstr-point
-(defparameter +pref-autoprompt+ 41)	; always draw new prompt
+(defparameter +pref-autoprompt+ 41) ; always draw new prompt
 (defparameter +pref-nowho+ 42)      ; don't show in who
 (defparameter +pref-anonymous+ 43) ; don't show char-class, level
-(defparameter +pref-notrailers+ 44)	; don't show trailer affects
-(defparameter +pref-vt100+ 45)	; Players uses VT100 inferface
+(defparameter +pref-notrailers+ 44) ; don't show trailer affects
+(defparameter +pref-vt100+ 45)  ; Players uses VT100 inferface
 (defparameter +pref-autosplit+ 46) ;
 (defparameter +pref-autoloot+ 47)  ;
 (defparameter +pref-pkiller+ 48) ; player can attack other players
 (defparameter +pref-nogecho+ 49) ; Silly Gecho things
-(defparameter +pref-nowrap+ 50)	; turns off autowrap temporarily.
+(defparameter +pref-nowrap+ 50) ; turns off autowrap temporarily.
 (defparameter +pref-dispalign+ 51)  ;
 (defparameter +pref-worldwrite+ 52) ; allows worldwrite to work
 (defparameter +pref-noguildsay+ 53) ;
@@ -1278,45 +1278,45 @@
 
 ;;; Affect bits: used in Creature.char_specials.saved.affected_by
 ;;; WARNING: In the world files, NEVER set the bits marked "R" ("Reserved")
-(defparameter +aff-blind+ (ash 1 0))	; (R) Char is blind
-(defparameter +aff-invisible+ (ash 1 1))	; Char is invisible
-(defparameter +aff-detect-align+ (ash 1 2))	; Char is sensitive to align
-(defparameter +aff-detect-invis+ (ash 1 3))	; Char can see invis chars
-(defparameter +aff-detect-magic+ (ash 1 4))	; Char is sensitive to magic
-(defparameter +aff-sense-life+ (ash 1 5))	; Char can sense hidden life
-(defparameter +aff-waterwalk+ (ash 1 6))	; Char can walk on water
-(defparameter +aff-sanctuary+ (ash 1 7))	; Char protected by sanct.
-(defparameter +aff-group+ (ash 1 8))	; (R) Char is grouped
-(defparameter +aff-curse+ (ash 1 9))	; Char is cursed
-(defparameter +aff-infravision+ (ash 1 10))	; Char can see in dark
-(defparameter +aff-poison+ (ash 1 11))	; (R) Char is poisoned
-(defparameter +aff-protect-evil+ (ash 1 12))	; Char protected from evil
-(defparameter +aff-protect-good+ (ash 1 13))	; Char protected from good
-(defparameter +aff-sleep+ (ash 1 14))	; (R) Char magically asleep
-(defparameter +aff-notrack+ (ash 1 15))	; Char can't be tracked
-(defparameter +aff-inflight+ (ash 1 16))	; Room for future expansion
-(defparameter +aff-time-warp+ (ash 1 17))	; Room for future expansion
-(defparameter +aff-sneak+ (ash 1 18))	; Char can move quietly
-(defparameter +aff-hide+ (ash 1 19))	; Char is hidden
-(defparameter +aff-waterbreath+ (ash 1 20))	; Room for future expansion
-(defparameter +aff-charm+ (ash 1 21))	; Char is charmed
-(defparameter +aff-confusion+ (ash 1 22))	; Char is confused
-(defparameter +aff-nopain+ (ash 1 23))	; Char feels no pain
-(defparameter +aff-retina+ (ash 1 24))	; Char's retina is stimulated
-(defparameter +aff-adrenaline+ (ash 1 25))	; Char's adrenaline is pumping
-(defparameter +aff-confidence+ (ash 1 26))	; Char is confident
-(defparameter +aff-rejuv+ (ash 1 27))	; Char is rejuvenating
-(defparameter +aff-regen+ (ash 1 28))	; Body is regenerating
-(defparameter +aff-glowlight+ (ash 1 29))	; Light spell is operating
-(defparameter +aff-blur+ (ash 1 30))	; Blurry image
+(defparameter +aff-blind+ (ash 1 0))    ; (R) Char is blind
+(defparameter +aff-invisible+ (ash 1 1))    ; Char is invisible
+(defparameter +aff-detect-align+ (ash 1 2)) ; Char is sensitive to align
+(defparameter +aff-detect-invis+ (ash 1 3)) ; Char can see invis chars
+(defparameter +aff-detect-magic+ (ash 1 4)) ; Char is sensitive to magic
+(defparameter +aff-sense-life+ (ash 1 5))   ; Char can sense hidden life
+(defparameter +aff-waterwalk+ (ash 1 6))    ; Char can walk on water
+(defparameter +aff-sanctuary+ (ash 1 7))    ; Char protected by sanct.
+(defparameter +aff-group+ (ash 1 8))    ; (R) Char is grouped
+(defparameter +aff-curse+ (ash 1 9))    ; Char is cursed
+(defparameter +aff-infravision+ (ash 1 10)) ; Char can see in dark
+(defparameter +aff-poison+ (ash 1 11))  ; (R) Char is poisoned
+(defparameter +aff-protect-evil+ (ash 1 12))    ; Char protected from evil
+(defparameter +aff-protect-good+ (ash 1 13))    ; Char protected from good
+(defparameter +aff-sleep+ (ash 1 14))   ; (R) Char magically asleep
+(defparameter +aff-notrack+ (ash 1 15)) ; Char can't be tracked
+(defparameter +aff-inflight+ (ash 1 16))    ; Room for future expansion
+(defparameter +aff-time-warp+ (ash 1 17))   ; Room for future expansion
+(defparameter +aff-sneak+ (ash 1 18))   ; Char can move quietly
+(defparameter +aff-hide+ (ash 1 19))    ; Char is hidden
+(defparameter +aff-waterbreath+ (ash 1 20)) ; Room for future expansion
+(defparameter +aff-charm+ (ash 1 21))   ; Char is charmed
+(defparameter +aff-confusion+ (ash 1 22))   ; Char is confused
+(defparameter +aff-nopain+ (ash 1 23))  ; Char feels no pain
+(defparameter +aff-retina+ (ash 1 24))  ; Char's retina is stimulated
+(defparameter +aff-adrenaline+ (ash 1 25))  ; Char's adrenaline is pumping
+(defparameter +aff-confidence+ (ash 1 26))  ; Char is confident
+(defparameter +aff-rejuv+ (ash 1 27))   ; Char is rejuvenating
+(defparameter +aff-regen+ (ash 1 28))   ; Body is regenerating
+(defparameter +aff-glowlight+ (ash 1 29))   ; Light spell is operating
+(defparameter +aff-blur+ (ash 1 30))    ; Blurry image
 (defparameter +num-aff-flags+ 31)
 
 (defparameter +aff2-fluorescent+ (ash 1 0))
 (defparameter +aff2-transparent+ (ash 1 1))
 (defparameter +aff2-slow+ (ash 1 2))
 (defparameter +aff2-haste+ (ash 1 3))
-(defparameter +aff2-mounted+ (ash 1 4))	;DO NOT SET THIS IN MOB FILE
-(defparameter +aff2-fire-shield+ (ash 1 5))	; affected by Fire Shield
+(defparameter +aff2-mounted+ (ash 1 4)) ;DO NOT SET THIS IN MOB FILE
+(defparameter +aff2-fire-shield+ (ash 1 5)) ; affected by Fire Shield
 (defparameter +aff2-berserk+ (ash 1 6))
 (defparameter +aff2-intimidated+ (ash 1 7))
 (defparameter +aff2-true-seeing+ (ash 1 8))
@@ -1328,10 +1328,10 @@
 (defparameter +aff2-paralyzed+ (ash 1 14))
 (defparameter +aff2-prot-lightning+ (ash 1 15))
 (defparameter +aff2-prot-fire+ (ash 1 16))
-(defparameter +aff2-telekinesis+ (ash 1 17))	; Char can carry more stuff
-(defparameter +aff2-prot-rad+ (ash 1 18))	; Enables Autoexits ! :)
+(defparameter +aff2-telekinesis+ (ash 1 17))    ; Char can carry more stuff
+(defparameter +aff2-prot-rad+ (ash 1 18))   ; Enables Autoexits ! :)
 (defparameter +aff2-ablaze+ (ash 1 19))
-(defparameter +aff2-neck-protected+ (ash 1 20))	; Can't be beheaded
+(defparameter +aff2-neck-protected+ (ash 1 20)) ; Can't be beheaded
 (defparameter +aff2-displacement+ (ash 1 21))
 (defparameter +aff2-prot-devils+ (ash 1 22))
 (defparameter +aff2-meditate+ (ash 1 23))
@@ -1349,10 +1349,10 @@
 (defparameter +aff3-poison-2+ (ash 1 2))
 (defparameter +aff3-poison-3+ (ash 1 3))
 (defparameter +aff3-sickness+ (ash 1 4))
-(defparameter +aff3-self-destruct+ (ash 1 5))	; Self-destruct sequence init
-(defparameter +aff3-damage-control+ (ash 1 6))	; Damage control for cyborgs
-(defparameter +aff3-stasis+ (ash 1 7))	; Borg is in static state
-(defparameter +aff3-prismatic-sphere+ (ash 1 8))	; Defensive
+(defparameter +aff3-self-destruct+ (ash 1 5))   ; Self-destruct sequence init
+(defparameter +aff3-damage-control+ (ash 1 6))  ; Damage control for cyborgs
+(defparameter +aff3-stasis+ (ash 1 7))  ; Borg is in static state
+(defparameter +aff3-prismatic-sphere+ (ash 1 8))    ; Defensive
 (defparameter +aff3-radioactive+ (ash 1 9))
 (defparameter +aff3-detect-poison+ (ash 1 10))
 (defparameter +aff3-mana-tap+ (ash 1 11))
@@ -1365,13 +1365,13 @@
 (defparameter +aff3-psychic-crush+ (ash 1 18))
 (defparameter +aff3-double-damage+ (ash 1 19))
 (defparameter +aff3-acidity+ (ash 1 20))
-(defparameter +aff3-hamstrung+ (ash 1 21))	; Bleeding badly from the leg
-(defparameter +aff3-gravity-well+ (ash 1 22))	; Pissed off a phyz and got hit by gravity well
-(defparameter +aff3-symbol-of-pain+ (ash 1 23))	; Char's mind is burning with pain
-(defparameter +aff3-emp-shield+ (ash 1 24))	; EMP SHIELDING
-(defparameter +aff3-inst-aff+ (ash 1 25))	; Affected by an instant affect
-(defparameter +aff3-tainted+ (ash 1 27))	; Knight spell, "taint"
-(defparameter +aff3-infiltrate+ (ash 1 28))	; Merc skill infiltrate
+(defparameter +aff3-hamstrung+ (ash 1 21))  ; Bleeding badly from the leg
+(defparameter +aff3-gravity-well+ (ash 1 22))   ; Pissed off a phyz and got hit by gravity well
+(defparameter +aff3-symbol-of-pain+ (ash 1 23)) ; Char's mind is burning with pain
+(defparameter +aff3-emp-shield+ (ash 1 24)) ; EMP SHIELDING
+(defparameter +aff3-inst-aff+ (ash 1 25))   ; Affected by an instant affect
+(defparameter +aff3-tainted+ (ash 1 27))    ; Knight spell, "taint"
+(defparameter +aff3-infiltrate+ (ash 1 28)) ; Merc skill infiltrate
 (defparameter +aff3-divine-power+ (ash 1 29))
 (defparameter +aff3-mana-leak+ (ash 1 30))
 (defparameter +num-aff3-flags+ 31)
@@ -1383,31 +1383,31 @@
 
 
 ;;; Modifier constants used with obj affects ('A' fields)
-(defparameter +apply-none+ 0)	; No effect
-(defparameter +apply-str+ 1)	; Apply to strength
-(defparameter +apply-dex+ 2)	; Apply to dexterity
-(defparameter +apply-int+ 3)	; Apply to intellegence
-(defparameter +apply-wis+ 4)	; Apply to wisdom
-(defparameter +apply-con+ 5)	; Apply to constitution
-(defparameter +apply-cha+ 6)	; Apply to charisma
-(defparameter +apply-class+ 7)	; Reserved
-(defparameter +apply-level+ 8)	; Reserved
-(defparameter +apply-age+ 9)	; Apply to age
-(defparameter +apply-char-weight+ 10)	; Apply to weight
-(defparameter +apply-char-height+ 11)	; Apply to height
-(defparameter +apply-mana+ 12)	; Apply to max mana
-(defparameter +apply-hit+ 13)	; Apply to max hit points
-(defparameter +apply-move+ 14)	; Apply to max move points
-(defparameter +apply-gold+ 15)	; Reserved
-(defparameter +apply-exp+ 16)	; Reserved
-(defparameter +apply-ac+ 17)	; Apply to Armor Class
-(defparameter +apply-hitroll+ 18)	; Apply to hitroll
-(defparameter +apply-damroll+ 19)	; Apply to damage roll
-(defparameter +apply-saving-para+ 20)	; Apply to save throw: paralz
-(defparameter +apply-saving-rod+ 21)	; Apply to save throw: rods
-(defparameter +apply-saving-petri+ 22)	; Apply to save throw: petrif
-(defparameter +apply-saving-breath+ 23)	; Apply to save throw: breath
-(defparameter +apply-saving-spell+ 24)	; Apply to save throw: spells
+(defparameter +apply-none+ 0)   ; No effect
+(defparameter +apply-str+ 1)    ; Apply to strength
+(defparameter +apply-dex+ 2)    ; Apply to dexterity
+(defparameter +apply-int+ 3)    ; Apply to intellegence
+(defparameter +apply-wis+ 4)    ; Apply to wisdom
+(defparameter +apply-con+ 5)    ; Apply to constitution
+(defparameter +apply-cha+ 6)    ; Apply to charisma
+(defparameter +apply-class+ 7)  ; Reserved
+(defparameter +apply-level+ 8)  ; Reserved
+(defparameter +apply-age+ 9)    ; Apply to age
+(defparameter +apply-char-weight+ 10)   ; Apply to weight
+(defparameter +apply-char-height+ 11)   ; Apply to height
+(defparameter +apply-mana+ 12)  ; Apply to max mana
+(defparameter +apply-hit+ 13)   ; Apply to max hit points
+(defparameter +apply-move+ 14)  ; Apply to max move points
+(defparameter +apply-gold+ 15)  ; Reserved
+(defparameter +apply-exp+ 16)   ; Reserved
+(defparameter +apply-ac+ 17)    ; Apply to Armor Class
+(defparameter +apply-hitroll+ 18)   ; Apply to hitroll
+(defparameter +apply-damroll+ 19)   ; Apply to damage roll
+(defparameter +apply-saving-para+ 20)   ; Apply to save throw: paralz
+(defparameter +apply-saving-rod+ 21)    ; Apply to save throw: rods
+(defparameter +apply-saving-petri+ 22)  ; Apply to save throw: petrif
+(defparameter +apply-saving-breath+ 23) ; Apply to save throw: breath
+(defparameter +apply-saving-spell+ 24)  ; Apply to save throw: spells
 (defparameter +apply-sneak+ 25)
 (defparameter +apply-hide+ 26)
 (defparameter +apply-race+ 27)
@@ -1427,7 +1427,7 @@
 (defparameter +apply-saving-psi+ 41)
 (defparameter +apply-align+ 42)
 (defparameter +apply-saving-phy+ 43)
-(defparameter +apply-caster+ 44)	; special usage
+(defparameter +apply-caster+ 44)    ; special usage
 (defparameter +apply-weaponspeed+ 45)
 (defparameter +apply-disguise+ 46)
 (defparameter +apply-nothirst+ 47)
@@ -1458,7 +1458,7 @@
 (defparameter +lvl-grgod+ 66)
 (defparameter +lvl-timegod+ 65)
 (defparameter +lvl-deity+ 64)
-(defparameter +lvl-god+ 63)	; Lesser God
+(defparameter +lvl-god+ 63) ; Lesser God
 (defparameter +lvl-energy+ 62)
 (defparameter +lvl-force+ 61)
 (defparameter +lvl-power+ 60)
@@ -1510,7 +1510,7 @@
 (defparameter +wear-ear-r+ 24)
 (defparameter +wear-wield-2+ 25)
 (defparameter +wear-ass+ 26)
-(defparameter +num-wears+ 27)	; This must be the # of eq positions!!
+(defparameter +num-wears+ 27)   ; This must be the # of eq positions!!
 (defparameter +wear-random+ 28)
 (defparameter +wear-mshield+ 29) ; This is for mana shield messages just increase it if new wear positions are added
 
@@ -1522,11 +1522,11 @@
   #("new"
     "waxing crescent"
     "first quarter"
-	"waxing gibbous"
-	"full"
-	"waning gibbous"
-	"last quarter"
-	"waning crescent"))
+    "waxing gibbous"
+    "full"
+    "waning gibbous"
+    "last quarter"
+    "waning crescent"))
 (defparameter +moon-sky-types+
   #("not visible"
     "rising"
@@ -1586,57 +1586,57 @@
 
 (defparameter +player-races+
   #("Human"
-	"Elf"
-	"Dwarf"
-	"Half Orc"
-	"Klingon"
-	"Halfling"                          ; 5
-	"Tabaxi"
-	"Drow"
-	"ILL" "ILL"
-	"Mobile"                            ; 10
-	"Undead"
-	"Humanoid"
-	"Animal"
-	"Dragon"
-	"Giant"                             ; 15
-	"Orc"
-	"Goblin"
-	"Hafling"
-	"Minotaur"
-	"Troll"                             ; 20
-	"Golem"
-	"Elemental"
-	"Ogre"
-	"Devil"
-	"Trog"
-	"Manticore"
-	"Bugbear"
-	"Draconian"
-	"Duergar"
-	"Slaad"
-	"Robot"
-	"Demon"
-	"Deva"
-	"Plant"
-	"Archon"
-	"Pudding"
-	"Alien 1"
-	"Predator Alien"
-	"Slime"
-	"Illithid"                          ; 40
-	"Fish"
-	"Beholder"
-	"Gaseous"
-	"Githyanki"
-	"Insect"
-	"Daemon"
-	"Mephit"
-	"Kobold"
-	"Umber Hulk"
-	"Wemic"
-	"Rakshasa"
-	"Spider"                            ; 52
+    "Elf"
+    "Dwarf"
+    "Half Orc"
+    "Klingon"
+    "Halfling"                          ; 5
+    "Tabaxi"
+    "Drow"
+    "ILL" "ILL"
+    "Mobile"                            ; 10
+    "Undead"
+    "Humanoid"
+    "Animal"
+    "Dragon"
+    "Giant"                             ; 15
+    "Orc"
+    "Goblin"
+    "Hafling"
+    "Minotaur"
+    "Troll"                             ; 20
+    "Golem"
+    "Elemental"
+    "Ogre"
+    "Devil"
+    "Trog"
+    "Manticore"
+    "Bugbear"
+    "Draconian"
+    "Duergar"
+    "Slaad"
+    "Robot"
+    "Demon"
+    "Deva"
+    "Plant"
+    "Archon"
+    "Pudding"
+    "Alien 1"
+    "Predator Alien"
+    "Slime"
+    "Illithid"                          ; 40
+    "Fish"
+    "Beholder"
+    "Gaseous"
+    "Githyanki"
+    "Insect"
+    "Daemon"
+    "Mephit"
+    "Kobold"
+    "Umber Hulk"
+    "Wemic"
+    "Rakshasa"
+    "Spider"                            ; 52
     "Griffin"
     "Rotarian"
     "Half Elf"
@@ -1645,23 +1645,23 @@
     "Olympian"
     "Yugoloth"
     "Rowlahr"
-	"Githzerai"
+    "Githzerai"
     "Faerie"
-	"\n"))
+    "\n"))
 
 (defparameter +reputation-msg+
   #("Innocent"                          ; 0 reputation
-	"Mostly Harmless"                   ; 1-99
-	"Unfriendly"                        ; 100-199
-	"Unkind"                            ; 200-299
-	"Cold"                              ; 300-399
-	"Daunting"                          ; 400-499
-	"Feared"                            ; 500-599
-	"Frightening"                       ; 600-699
-	"Dreaded"                           ; 700-799
-	"Terrifying"                        ; 800-899
-	"Monstrous"                         ; 900-999
-	"True Killer"))                     ; 1000 reputation
+    "Mostly Harmless"                   ; 1-99
+    "Unfriendly"                        ; 100-199
+    "Unkind"                            ; 200-299
+    "Cold"                              ; 300-399
+    "Daunting"                          ; 400-499
+    "Feared"                            ; 500-599
+    "Frightening"                       ; 600-699
+    "Dreaded"                           ; 700-799
+    "Terrifying"                        ; 800-899
+    "Monstrous"                         ; 900-999
+    "True Killer"))                     ; 1000 reputation
 
 (defparameter +month-name+
   #("Month of Winter"
@@ -1678,47 +1678,47 @@
     "Month of the Battle"
     "Month of the Dark Shades"
     "Month of Long Shadows"
-	"Month of the Ancient Darkness"
-	"Month of the Great Evil"))
+    "Month of the Ancient Darkness"
+    "Month of the Great Evil"))
 
 (defparameter +str-app+
   #((:to-hit -5 :to-dam -4 :carry-w 0 :wield-w 0)
-	(:to-hit -5 :to-dam -4 :carry-w 3 :wield-w 1)
-	(:to-hit -3 :to-dam -2 :carry-w 3 :wield-w 2)
-	(:to-hit -3 :to-dam -1 :carry-w 10 :wield-w 3)
-	(:to-hit -2 :to-dam -1 :carry-w 25 :wield-w 4)
-	(:to-hit -2 :to-dam -1 :carry-w 55 :wield-w 5) ; 5
-	(:to-hit -1 :to-dam 0 :carry-w 80 :wield-w 6)
-	(:to-hit -1 :to-dam 0 :carry-w 90 :wield-w 7)
-	(:to-hit 0 :to-dam 0 :carry-w 100 :wield-w 8)
-	(:to-hit 0 :to-dam 0 :carry-w 110 :wield-w 9)
-	(:to-hit 0 :to-dam 0 :carry-w 120 :wield-w 10) ; 10
-	(:to-hit 0 :to-dam 0 :carry-w 130 :wield-w 11)
-	(:to-hit 0 :to-dam 0 :carry-w 140 :wield-w 12)
-	(:to-hit 1 :to-dam 0 :carry-w 150 :wield-w 13)
-	(:to-hit 1 :to-dam 1 :carry-w 160 :wield-w 14)
-	(:to-hit 1 :to-dam 1 :carry-w 180 :wield-w 15) ; 15
-	(:to-hit 1 :to-dam 2 :carry-w 200 :wield-w 16)
-	(:to-hit 1 :to-dam 2 :carry-w 220 :wield-w 18)
-	(:to-hit 1 :to-dam 3 :carry-w 245 :wield-w 20) ; 18
-	(:to-hit 3 :to-dam 13 :carry-w 650 :wield-w 33)
-	(:to-hit 3 :to-dam 14 :carry-w 700 :wield-w 35) ; 20
-	(:to-hit 4 :to-dam 15 :carry-w 750 :wield-w 36)
-	(:to-hit 4 :to-dam 16 :carry-w 800 :wield-w 37)
-	(:to-hit 5 :to-dam 17 :carry-w 850 :wield-w 38)
-	(:to-hit 6 :to-dam 18 :carry-w 955 :wield-w 39)
-	(:to-hit 7 :to-dam 20 :carry-w 1000 :wield-w 40) ; 25
-	(:to-hit 1 :to-dam 4 :carry-w 270 :wield-w 21)   ; 18/10
-	(:to-hit 1 :to-dam 4 :carry-w 295 :wield-w 22)   ; 18/20
-	(:to-hit 1 :to-dam 5 :carry-w 320 :wield-w 23)   ; 18/30
-	(:to-hit 1 :to-dam 5 :carry-w 350 :wield-w 24)   ; 18/40
-	(:to-hit 2 :to-dam 6 :carry-w 380 :wield-w 25)   ; 18/50
-	(:to-hit 2 :to-dam 7 :carry-w 410 :wield-w 26)   ; 18/60
-	(:to-hit 2 :to-dam 8 :carry-w 440 :wield-w 27)   ; 18/70
-	(:to-hit 2 :to-dam 9 :carry-w 480 :wield-w 28)   ; 18/80
-	(:to-hit 2 :to-dam 10 :carry-w 520 :wield-w 29)  ; 18/90
-	(:to-hit 3 :to-dam 11 :carry-w 560 :wield-w 30)  ; 18/99
-	(:to-hit 3 :to-dam 12 :carry-w 600 :wield-w 31))) ; 18/00
+    (:to-hit -5 :to-dam -4 :carry-w 3 :wield-w 1)
+    (:to-hit -3 :to-dam -2 :carry-w 3 :wield-w 2)
+    (:to-hit -3 :to-dam -1 :carry-w 10 :wield-w 3)
+    (:to-hit -2 :to-dam -1 :carry-w 25 :wield-w 4)
+    (:to-hit -2 :to-dam -1 :carry-w 55 :wield-w 5) ; 5
+    (:to-hit -1 :to-dam 0 :carry-w 80 :wield-w 6)
+    (:to-hit -1 :to-dam 0 :carry-w 90 :wield-w 7)
+    (:to-hit 0 :to-dam 0 :carry-w 100 :wield-w 8)
+    (:to-hit 0 :to-dam 0 :carry-w 110 :wield-w 9)
+    (:to-hit 0 :to-dam 0 :carry-w 120 :wield-w 10) ; 10
+    (:to-hit 0 :to-dam 0 :carry-w 130 :wield-w 11)
+    (:to-hit 0 :to-dam 0 :carry-w 140 :wield-w 12)
+    (:to-hit 1 :to-dam 0 :carry-w 150 :wield-w 13)
+    (:to-hit 1 :to-dam 1 :carry-w 160 :wield-w 14)
+    (:to-hit 1 :to-dam 1 :carry-w 180 :wield-w 15) ; 15
+    (:to-hit 1 :to-dam 2 :carry-w 200 :wield-w 16)
+    (:to-hit 1 :to-dam 2 :carry-w 220 :wield-w 18)
+    (:to-hit 1 :to-dam 3 :carry-w 245 :wield-w 20) ; 18
+    (:to-hit 3 :to-dam 13 :carry-w 650 :wield-w 33)
+    (:to-hit 3 :to-dam 14 :carry-w 700 :wield-w 35) ; 20
+    (:to-hit 4 :to-dam 15 :carry-w 750 :wield-w 36)
+    (:to-hit 4 :to-dam 16 :carry-w 800 :wield-w 37)
+    (:to-hit 5 :to-dam 17 :carry-w 850 :wield-w 38)
+    (:to-hit 6 :to-dam 18 :carry-w 955 :wield-w 39)
+    (:to-hit 7 :to-dam 20 :carry-w 1000 :wield-w 40) ; 25
+    (:to-hit 1 :to-dam 4 :carry-w 270 :wield-w 21)   ; 18/10
+    (:to-hit 1 :to-dam 4 :carry-w 295 :wield-w 22)   ; 18/20
+    (:to-hit 1 :to-dam 5 :carry-w 320 :wield-w 23)   ; 18/30
+    (:to-hit 1 :to-dam 5 :carry-w 350 :wield-w 24)   ; 18/40
+    (:to-hit 2 :to-dam 6 :carry-w 380 :wield-w 25)   ; 18/50
+    (:to-hit 2 :to-dam 7 :carry-w 410 :wield-w 26)   ; 18/60
+    (:to-hit 2 :to-dam 8 :carry-w 440 :wield-w 27)   ; 18/70
+    (:to-hit 2 :to-dam 9 :carry-w 480 :wield-w 28)   ; 18/80
+    (:to-hit 2 :to-dam 10 :carry-w 520 :wield-w 29)  ; 18/90
+    (:to-hit 3 :to-dam 11 :carry-w 560 :wield-w 30)  ; 18/99
+    (:to-hit 3 :to-dam 12 :carry-w 600 :wield-w 31))) ; 18/00
 
 (defun str-app-type-to-hit (plist)
   (getf plist :to-hit))
@@ -1728,31 +1728,31 @@
 
 (defparameter +con-app+
   #((:hitp -4 :shock 20)
-	(:hitp -3 :shock 25)
-	(:hitp -2 :shock 30)
-	(:hitp -2 :shock 35)
-	(:hitp -1 :shock 40)
-	(:hitp -1 :shock 45)
-	(:hitp -1 :shock 50)
-	(:hitp 0 :shock 55)
-	(:hitp 0 :shock 60)
-	(:hitp 0 :shock 65)
-	(:hitp 0 :shock 70)
-	(:hitp 0 :shock 75)
-	(:hitp 0 :shock 80)
-	(:hitp 1 :shock 85)
-	(:hitp 2 :shock 88)
-	(:hitp 3 :shock 90)
-	(:hitp 5 :shock 95)
-	(:hitp 6 :shock 97)
-	(:hitp 7 :shock 99)
-	(:hitp 8 :shock 99)
-	(:hitp 9 :shock 99)
-	(:hitp 10 :shock 99)
-	(:hitp 11 :shock 99)
-	(:hitp 12 :shock 99)
-	(:hitp 13 :shock 99)
-	(:hitp 14 :shock 100)))
+    (:hitp -3 :shock 25)
+    (:hitp -2 :shock 30)
+    (:hitp -2 :shock 35)
+    (:hitp -1 :shock 40)
+    (:hitp -1 :shock 45)
+    (:hitp -1 :shock 50)
+    (:hitp 0 :shock 55)
+    (:hitp 0 :shock 60)
+    (:hitp 0 :shock 65)
+    (:hitp 0 :shock 70)
+    (:hitp 0 :shock 75)
+    (:hitp 0 :shock 80)
+    (:hitp 1 :shock 85)
+    (:hitp 2 :shock 88)
+    (:hitp 3 :shock 90)
+    (:hitp 5 :shock 95)
+    (:hitp 6 :shock 97)
+    (:hitp 7 :shock 99)
+    (:hitp 8 :shock 99)
+    (:hitp 9 :shock 99)
+    (:hitp 10 :shock 99)
+    (:hitp 11 :shock 99)
+    (:hitp 12 :shock 99)
+    (:hitp 13 :shock 99)
+    (:hitp 14 :shock 100)))
 
 (defparameter +trail-flags+ #("BLOODPRINTS" "BLOOD_DROPS"))
 
@@ -1842,21 +1842,21 @@
   #("NONE" "STR" "DEX" "INT" "WIS" "CON" "CHA" "CLASS" "LEVEL" "AGE" "WEIGHT" "HEIGHT" "MAXMANA" "MAXHIT" "MAXMOVE" "GOLD" "EXP" "ARMOR" "HITROLL" "DAMROLL" "SAV_PARA" "SAV_ROD" "SAV_PETRI" "SAV_BREATH" "SAV_SPELL" "SNEAK" "HIDE" "RACE" "SEX" "BACKST" "PICK" "PUNCH" "SHOOT" "KICK" "TRACK" "IMPALE" "BEHEAD" "THROW" "RIDING" "TURN" "SAV_CHEM" "SAV_PSI" "ALIGN" "SAV_PHY" "CASTER" "WEAP_SPEED" "DISGUISE" "NOTHIRST" "NOHUNGER" "NODRUNK" "SPEED"))
 
 ;;; Take/Wear flags: used by obj_data.obj_flags.wear_flags
-(defparameter +item-wear-take+ (ash 1 0))	; Item can be takes
-(defparameter +item-wear-finger+ (ash 1 1))	; Can be worn on finger
-(defparameter +item-wear-neck+ (ash 1 2))	; Can be worn around neck
-(defparameter +item-wear-body+ (ash 1 3))	; Can be worn on body
-(defparameter +item-wear-head+ (ash 1 4))	; Can be worn on head
-(defparameter +item-wear-legs+ (ash 1 5))	; Can be worn on legs
-(defparameter +item-wear-feet+ (ash 1 6))	; Can be worn on feet
-(defparameter +item-wear-hands+ (ash 1 7))	; Can be worn on hands
-(defparameter +item-wear-arms+ (ash 1 8))	; Can be worn on arms
-(defparameter +item-wear-shield+ (ash 1 9))	; Can be used as a shield
-(defparameter +item-wear-about+ (ash 1 10))	; Can be worn about body
-(defparameter +item-wear-waist+ (ash 1 11))	; Can be worn around waist
-(defparameter +item-wear-wrist+ (ash 1 12))	; Can be worn on wrist
-(defparameter +item-wear-wield+ (ash 1 13))	; Can be wielded
-(defparameter +item-wear-hold+ (ash 1 14))	; Can be held
+(defparameter +item-wear-take+ (ash 1 0))   ; Item can be takes
+(defparameter +item-wear-finger+ (ash 1 1)) ; Can be worn on finger
+(defparameter +item-wear-neck+ (ash 1 2))   ; Can be worn around neck
+(defparameter +item-wear-body+ (ash 1 3))   ; Can be worn on body
+(defparameter +item-wear-head+ (ash 1 4))   ; Can be worn on head
+(defparameter +item-wear-legs+ (ash 1 5))   ; Can be worn on legs
+(defparameter +item-wear-feet+ (ash 1 6))   ; Can be worn on feet
+(defparameter +item-wear-hands+ (ash 1 7))  ; Can be worn on hands
+(defparameter +item-wear-arms+ (ash 1 8))   ; Can be worn on arms
+(defparameter +item-wear-shield+ (ash 1 9)) ; Can be used as a shield
+(defparameter +item-wear-about+ (ash 1 10)) ; Can be worn about body
+(defparameter +item-wear-waist+ (ash 1 11)) ; Can be worn around waist
+(defparameter +item-wear-wrist+ (ash 1 12)) ; Can be worn on wrist
+(defparameter +item-wear-wield+ (ash 1 13)) ; Can be wielded
+(defparameter +item-wear-hold+ (ash 1 14))  ; Can be held
 (defparameter +item-wear-crotch+ (ash 1 15)) ; guess where
 (defparameter +item-wear-eyes+ (ash 1 16))   ; eyes
 (defparameter +item-wear-back+ (ash 1 17))   ;Worn on back
@@ -1906,32 +1906,32 @@
 
 (defparameter +wear-keywords+
   #("!RESERVED! (light)"
-	"finger"
-	"!RESERVED! (finger)"
-	"neck"
-	"!RESERVED! (neck)"
-	"body"
-	"head"
-	"legs"
-	"feet"
-	"hands"
-	"arms"
-	"shield"
-	"about"
-	"waist"
-	"wrist"
-	"!RESERVED! (wrist)"
-	"!RESERVED! (wield)"
-	"!RESERVED! (hold)"
-	"crotch"
-	"eyes"
-	"back"
-	"belt"
-	"face"
-	"ear"
-	"!RESERVED! (ear)"
-	"WIELD 2"
-	"ass"))
+    "finger"
+    "!RESERVED! (finger)"
+    "neck"
+    "!RESERVED! (neck)"
+    "body"
+    "head"
+    "legs"
+    "feet"
+    "hands"
+    "arms"
+    "shield"
+    "about"
+    "waist"
+    "wrist"
+    "!RESERVED! (wrist)"
+    "!RESERVED! (wield)"
+    "!RESERVED! (hold)"
+    "crotch"
+    "eyes"
+    "back"
+    "belt"
+    "face"
+    "ear"
+    "!RESERVED! (ear)"
+    "WIELD 2"
+    "ass"))
 
 (defparameter +eq-pos-descs+
   #("<as light>       "
@@ -2088,152 +2088,152 @@
 
 (defparameter +item-kind-values+
   #2A(("UNDEFINED" "UNDEFINED" "UNDEFINED" "UNDEFINED")
-      ("Color" "Type" "Hours" "UNDEFINED")	; Light
-      ("Level" "Spell1" "Spell2" "Spell3")	; Scroll
-      ("Level" "Max Charg" "Cur Chrg" "Spell")	; wand
-      ("Level" "Max Charg" "Cur Chrg" "Spell")	; staff
-      ("Spell" "Dam dice1" "Dam dice " "Atck type")	; weapon
-      ("Targ room" "UNDEFINED" "UNDEFINED" "UNDEFINED")	; camera
-      ("UNDEFINED" "UNDEFINED" "UNDEFINED" "UNDEFINED")	; missile
-      ("UNDEFINED" "UNDEFINED" "UNDEFINED" "UNDEFINED")	; treasure
-      ("AC-Apply" "UNDEFINED" "UNDEFINED" "UNDEFINED")	; armor
-      ("Level" "Spell1" "Spell2" "Spell3")	; Potion
-      ("UNDEFINED" "UNDEFINED" "UNDEFINED" "UNDEFINED")	; worn
-      ("UNDEFINED" "UNDEFINED" "UNDEFINED" "UNDEFINED")	; other
-      ("UNDEFINED" "UNDEFINED" "UNDEFINED" "UNDEFINED")	; trash
-      ("UNDEFINED" "UNDEFINED" "UNDEFINED" "UNDEFINED")	; trap
-      ("Max Capac" "Flags" "Keynum" "DONT SET")	; container
-      ("UNDEFINED" "UNDEFINED" "UNDEFINED" "UNDEFINED")	; note
-      ("Max units" "Cur Unit" "Liq.type" "Poison")	; liq cont
-      ("Keytype" "Rentflag" "UNDEFINED" "UNDEFINED")	; key
-      ("Hours" "Spell lev" "Spellnum" "Poison")	; food
-      ("Num Coins" "Type" "UNDEFINED" "UNDEFINED")	; money
-      ("UNDEFINED" "UNDEFINED" "UNDEFINED" "UNDEFINED")	; pen
-      ("UNDEFINED" "UNDEFINED" "UNDEFINED" "UNDEFINED")	; boat
-      ("Max units" "Cur Units" "Liq.type" "Poison")	; fountain
-      ("UNDEFINED" "UNDEFINED" "UNDEFINED" "UNDEFINED")	; wings
-      ("Startroom" "Cost" "Max Lev." "Hometown")	; vr interface
-      ("State" "UNDEFINED" "UNDEFINED" "UNDEFINED")	; scuba
-      ("Max energ" "Cur Energ" "State" "Rate     ")	; device
-      ("Type" "UNDEFINED" "Max" "UNDEFINED")	; interface
-      ("Align" "Class" "Min level" "Max level")	; holy symb
-      ("Room/KeyNum" "Doorstate" "Flags" "Special")	; vehicle
-      ("Max energ" "Cur Energ" "Enginstat" "Rate     ")	; engine
-      ("Max charg" "Cur charg" "Rate" "Cost/unit")	; battery
-      ("Drain Rate" "Dam dice1" "Dam dice2" "gun type")	; raygun
-      ("Targ room" "Doorstate" "UNDEFINED" "UNDEFINED")	; window
-      ("Targ room" "Doorstate" "Keynum?" "Charges")	; portal
-      ("Type" "Max Drags" "UNDEFINED" "UNDEFINED")	; tobacco
-      ("Drags lft" "UNDEFINED" "Tobac typ" "Lit?")	; joint
-      ("UNDEFINED" "UNDEFINED" "UNDEFINED" "UNDEFINED")	; metal
-      ("Targ room" "Idnum" "Charges" "UNDEFINED")	; vstone
-      ("Drags lft" "Max drags" "Tobac typ" "Lit?   ")	; pipe
-      ("Max Energy" "Cur Energ" "To-room" "tunable?")	; transporter
-      ("Level" "Spell1" "Spell2" "Spell3")	; Syringe
-      ("Credits  " "UNDEFINED" "UNDEFINED" "UNDEFINED")	; chit
-      ("Max Units" "Cur Unit" "UNDEFINED" "UNDEFINED")	; scuba tank
+      ("Color" "Type" "Hours" "UNDEFINED")  ; Light
+      ("Level" "Spell1" "Spell2" "Spell3")  ; Scroll
+      ("Level" "Max Charg" "Cur Chrg" "Spell")  ; wand
+      ("Level" "Max Charg" "Cur Chrg" "Spell")  ; staff
+      ("Spell" "Dam dice1" "Dam dice " "Atck type") ; weapon
+      ("Targ room" "UNDEFINED" "UNDEFINED" "UNDEFINED") ; camera
+      ("UNDEFINED" "UNDEFINED" "UNDEFINED" "UNDEFINED") ; missile
+      ("UNDEFINED" "UNDEFINED" "UNDEFINED" "UNDEFINED") ; treasure
+      ("AC-Apply" "UNDEFINED" "UNDEFINED" "UNDEFINED")  ; armor
+      ("Level" "Spell1" "Spell2" "Spell3")  ; Potion
+      ("UNDEFINED" "UNDEFINED" "UNDEFINED" "UNDEFINED") ; worn
+      ("UNDEFINED" "UNDEFINED" "UNDEFINED" "UNDEFINED") ; other
+      ("UNDEFINED" "UNDEFINED" "UNDEFINED" "UNDEFINED") ; trash
+      ("UNDEFINED" "UNDEFINED" "UNDEFINED" "UNDEFINED") ; trap
+      ("Max Capac" "Flags" "Keynum" "DONT SET") ; container
+      ("UNDEFINED" "UNDEFINED" "UNDEFINED" "UNDEFINED") ; note
+      ("Max units" "Cur Unit" "Liq.type" "Poison")  ; liq cont
+      ("Keytype" "Rentflag" "UNDEFINED" "UNDEFINED")    ; key
+      ("Hours" "Spell lev" "Spellnum" "Poison") ; food
+      ("Num Coins" "Type" "UNDEFINED" "UNDEFINED")  ; money
+      ("UNDEFINED" "UNDEFINED" "UNDEFINED" "UNDEFINED") ; pen
+      ("UNDEFINED" "UNDEFINED" "UNDEFINED" "UNDEFINED") ; boat
+      ("Max units" "Cur Units" "Liq.type" "Poison") ; fountain
+      ("UNDEFINED" "UNDEFINED" "UNDEFINED" "UNDEFINED") ; wings
+      ("Startroom" "Cost" "Max Lev." "Hometown")    ; vr interface
+      ("State" "UNDEFINED" "UNDEFINED" "UNDEFINED") ; scuba
+      ("Max energ" "Cur Energ" "State" "Rate     ") ; device
+      ("Type" "UNDEFINED" "Max" "UNDEFINED")    ; interface
+      ("Align" "Class" "Min level" "Max level") ; holy symb
+      ("Room/KeyNum" "Doorstate" "Flags" "Special") ; vehicle
+      ("Max energ" "Cur Energ" "Enginstat" "Rate     ") ; engine
+      ("Max charg" "Cur charg" "Rate" "Cost/unit")  ; battery
+      ("Drain Rate" "Dam dice1" "Dam dice2" "gun type") ; raygun
+      ("Targ room" "Doorstate" "UNDEFINED" "UNDEFINED") ; window
+      ("Targ room" "Doorstate" "Keynum?" "Charges") ; portal
+      ("Type" "Max Drags" "UNDEFINED" "UNDEFINED")  ; tobacco
+      ("Drags lft" "UNDEFINED" "Tobac typ" "Lit?")  ; joint
+      ("UNDEFINED" "UNDEFINED" "UNDEFINED" "UNDEFINED") ; metal
+      ("Targ room" "Idnum" "Charges" "UNDEFINED")   ; vstone
+      ("Drags lft" "Max drags" "Tobac typ" "Lit?   ")   ; pipe
+      ("Max Energy" "Cur Energ" "To-room" "tunable?")   ; transporter
+      ("Level" "Spell1" "Spell2" "Spell3")  ; Syringe
+      ("Credits  " "UNDEFINED" "UNDEFINED" "UNDEFINED") ; chit
+      ("Max Units" "Cur Unit" "UNDEFINED" "UNDEFINED")  ; scuba tank
       ("UNDEFINED" "UNDEFINED" "UNDEFINED" "UNDEFINED")   ; tattoo
-      ("skillnum" "modifier" "UNDEFINED" "UNDEFINED")	; tool *
-      ("Type" "Power" "UND" "Idnum")	; bomb *
-      ("UNDEFINED" "UNDEFINED" "UNDEFINED" "UNDEFINED")	; detonator
-      ("Type" "State" "Timer" "UNDEFINED")	; fuse
-      ("UNDEFINED" "UNDEFINED" "UNDEFINED" "UNDEFINED")	; podium
-      ("Level" "Spell1" "Spell2" "Spell3")	; Pill
-      ("Max charg" "Cur charg" "Recharge rate" "UNDEF")	; energy cell
-      ("Room" "Doorflags" "Car Vnum" "UNDEFINED")	; v window
-      ("Room" "Unused" "Car Vnum" "UNDEFINED")	; v door
-      ("Room" "Unused" "Car Vnum" "Driver Idnum")	; v console
-      ("MAX ROF" "CUR ROF" "Max Load" "Gun Type")	; gun
-      ("UNDEFINED" "UNDEFINED" "Dam Mod" "Gun Type")	; bullet
-      ("UNDEFINED" "UNDEFINED" "Max Load" "Gun Type")	; clip
-      ("Type" "Data" "Max" "UNDEFINED")	; chip
-      ("Max Charge" "Cur Charge" "State" "Channel")	; Communicator
-      ("Top Message" "Mode" "Wait Time" "Counter")	; Script
+      ("skillnum" "modifier" "UNDEFINED" "UNDEFINED")   ; tool *
+      ("Type" "Power" "UND" "Idnum")    ; bomb *
+      ("UNDEFINED" "UNDEFINED" "UNDEFINED" "UNDEFINED") ; detonator
+      ("Type" "State" "Timer" "UNDEFINED")  ; fuse
+      ("UNDEFINED" "UNDEFINED" "UNDEFINED" "UNDEFINED") ; podium
+      ("Level" "Spell1" "Spell2" "Spell3")  ; Pill
+      ("Max charg" "Cur charg" "Recharge rate" "UNDEF") ; energy cell
+      ("Room" "Doorflags" "Car Vnum" "UNDEFINED")   ; v window
+      ("Room" "Unused" "Car Vnum" "UNDEFINED")  ; v door
+      ("Room" "Unused" "Car Vnum" "Driver Idnum")   ; v console
+      ("MAX ROF" "CUR ROF" "Max Load" "Gun Type")   ; gun
+      ("UNDEFINED" "UNDEFINED" "Dam Mod" "Gun Type")    ; bullet
+      ("UNDEFINED" "UNDEFINED" "Max Load" "Gun Type")   ; clip
+      ("Type" "Data" "Max" "UNDEFINED") ; chip
+      ("Max Charge" "Cur Charge" "State" "Channel") ; Communicator
+      ("Top Message" "Mode" "Wait Time" "Counter")  ; Script
       ("UNDEFINED" "UNDEFINED" "UNDEFINED" "UNDEFINED") ; Instrument
-      ("Level" "Spell1" "Spell2" "Spell3")	; Book
+      ("Level" "Spell1" "Spell2" "Spell3")  ; Book
       ("UNDEFINED" "UNDEFINED" "UNDEFINED" "UNDEFINED")))
 
 (defparameter +drinks+
   #("water"
-	"beer"
-	"wine"
-	"ale"
-	"dark ale"
-	"whiskey"
-	"lemonade"
-	"firebreather"
-	"local specialty"
-	"slime"
-	"milk"
-	"tea"
-	"coffee"
-	"blood"
-	"salt water"
-	"clear water"
-	"coke"
-	"firetalon"
-	"soup"
-	"mud"
-	"holy water"
-	"orange juice"
-	"goatsmilk"
-	"mucus"
-	"pus"
-	"sprite"
-	"diet coke"
-	"root beer"
-	"vodka"
-	"beer"
-	"urine"
-	"stout"
-	"souls"
-	"champagne"
-	"cappucino"
-	"rum"
-	"sake"
-	"chocolate milk"
-	"juice"
+    "beer"
+    "wine"
+    "ale"
+    "dark ale"
+    "whiskey"
+    "lemonade"
+    "firebreather"
+    "local specialty"
+    "slime"
+    "milk"
+    "tea"
+    "coffee"
+    "blood"
+    "salt water"
+    "clear water"
+    "coke"
+    "firetalon"
+    "soup"
+    "mud"
+    "holy water"
+    "orange juice"
+    "goatsmilk"
+    "mucus"
+    "pus"
+    "sprite"
+    "diet coke"
+    "root beer"
+    "vodka"
+    "beer"
+    "urine"
+    "stout"
+    "souls"
+    "champagne"
+    "cappucino"
+    "rum"
+    "sake"
+    "chocolate milk"
+    "juice"
     "mead"))
 
 (defparameter +drink-names+
   #("water"
-	"beer"
-	"wine"
-	"ale"
-	"ale"
-	"whiskey"
-	"lemonade"
-	"firebreather"
-	"local"
-	"slime mold juice"
-	"milk"
-	"tea"
-	"coffee"
-	"blood"
-	"salt water"
-	"water clear"
-	"coke"
-	"firetalon"
-	"soup"
-	"mud"
-	"holy water"
-	"orange juice"
-	"goatsmilk"
-	"mucus"
-	"pus"
-	"sprite"
-	"diet"
-	"root"
-	"vodka"
-	"beer"
-	"urine"
-	"stout"
-	"souls"
-	"champagne bubbly"
-	"cappucino coffee"
-	"rum"
-	"sake"
-	"chocolate milk"
+    "beer"
+    "wine"
+    "ale"
+    "ale"
+    "whiskey"
+    "lemonade"
+    "firebreather"
+    "local"
+    "slime mold juice"
+    "milk"
+    "tea"
+    "coffee"
+    "blood"
+    "salt water"
+    "water clear"
+    "coke"
+    "firetalon"
+    "soup"
+    "mud"
+    "holy water"
+    "orange juice"
+    "goatsmilk"
+    "mucus"
+    "pus"
+    "sprite"
+    "diet"
+    "root"
+    "vodka"
+    "beer"
+    "urine"
+    "stout"
+    "souls"
+    "champagne bubbly"
+    "cappucino coffee"
+    "rum"
+    "sake"
+    "chocolate milk"
     "juice"
     "mead"))
 
@@ -2287,248 +2287,248 @@
 
 (defparameter +material-names+
   #("indeterminate"
-	"water"
-	"fire"
-	"shadow"
-	"gelatin"
-	"light"
-	"dreams"
-	"*"
-	"*"
-	"*"
-	"paper"				;; 10
-	"papyrus"
-	"cardboard"
-	"hemp"
-	"parchment"
-	"*"
-	"*"
-	"*"
-	"*"
-	"*"
-	"cloth"			 ;; 20
-	"silk"
-	"cotton"
-	"polyester"
-	"vinyl"
-	"wool"
-	"satin"
-	"denim"
-	"carpet"
-	"velvet"
-	"nylon"			   ;; 30
-	"canvas"
-	"sponge"
-	"*"
-	"*"
-	"*"
-	"*"
-	"*"
-	"*"
-	"*"
-	"leather"			 ;; 40
-	"suede"
-	"hard leather"
-	"skin"
-	"fur"
-	"scales"
-	"hair"
-	"ivory"
-	"*"
-	"*"
-	"flesh"			 ;; 50
-	"bone"
-	"tissue"
-	"cooked meat"
-	"raw meat"
-	"cheese"
-	"egg"
-	"*"
-	"*"
-	"*"
-	"vegetable"		 ;; 60
-	"leaf"
-	"grain"
-	"bread"
-	"fruit"
-	"nut"
-	"flower petal"
-	"fungus"
-	"slime"
-	"*"
-	"candy"			 ;; 70
-	"chocolate"
-	"pudding"
-	"*"
-	"*"
-	"*"
-	"*"
-	"*"
-	"*"
-	"*"
-	"wood"				 ;; 80
-	"oak"
-	"pine"
-	"maple"
-	"birch"
-	"mahogony"
-	"teak"
-	"rattan"
-	"ebony"
-	"bamboo"
-	"*"				;; 90
-	"*"
-	"*"
-	"*"
-	"*"
-	"*"
-	"*"
-	"*"
-	"*"
-	"*"
-	"metal"			 ;; 100
-	"iron"
-	"bronze"
-	"steel"
-	"copper"
-	"brass"
-	"silver"
-	"gold"
-	"platinum"
-	"electrum"
-	"lead"				 ;; 110
-	"tin"
-	"chrome"
-	"aluminum"
-	"silicon"
-	"titanium"
-	"adamantium"
-	"cadmium"
-	"nickel"
-	"mithril"
-	"pewter"				  ;; 120
-	"plutonium"
-	"uranium"
-	"rust"
-	"orichalcum"
-	"*"
-	"*"
-	"*"
-	"*"
-	"*"
-	"*"				 ;; 130
-	"*"
-	"*"
-	"*"
-	"*"
-	"*"
-	"*"
-	"*"
-	"*"
-	"*"
-	"plastic"			 ;; 140
-	"kevlar"
-	"rubber"
-	"fiberglass"
-	"asphalt"
-	"concrete"
-	"wax"
-	"phenolic"
-	"latex"
-	"enamel"
-	"*"				 ;; 150
-	"*"
-	"*"
-	"*"
-	"*"
-	"*"
-	"*"
-	"*"
-	"*"
-	"*"
-	"glass"			 ;; 160
-	"crystal"
-	"lucite"
-	"porcelain"
-	"ice"
-	"shell"
-	"earthenware"
-	"pottery"
-	"ceramic"
-	"*"
-	"*"				;; 170
-	"*"
-	"*"
-	"*"
-	"*"
-	"*"
-	"*"
-	"*"
-	"*"
-	"*"
-	"stone"			 ;; 180
-	"azurite"
-	"agate"
-	"moss Agate"
-	"banded Agate"
-	"eye Agate"
-	"tiger Eye Agate"
-	"quartz"
-	"rose Quartz"
-	"smoky Quartz"
-	"quartz 2"
-	"hematite"			;; 190
-	"lapis lazuli"
-	"malachite"
-	"obsidian"
-	"rhodochorsite"
-	"tiger eye"
-	"turquoise"
-	"bloodstone"
-	"carnelian"
-	"chalcedony"		;; 200
-	"chysoprase"
-	"citrine"
-	"jasper"
-	"moonstone"
-	"onyx"
-	"zircon"
-	"amber"
-	"alexandrite"
-	"amethyst"
-	"oriental amethyst";; 210
-	"aquamarine"
-	"chrysoberyl"
-	"coral"
-	"garnet"
-	"jade"
-	"jet"
-	"pearl"
-	"peridot"
-	"spinel"
-	"topaz"			;; 220
-	"oriental topaz"
-	"tourmaline"
-	"sapphire"
-	"black sapphire"
-	"star sapphire"
-	"ruby"
-	"star ruby"
-	"opal"
-	"fire opal"
-	"diamond"			;; 230
-	"sandstone"
-	"marble"
-	"emerald"
-	"mud"
-	"clay"
-	"labradorite"
-	"iolite"
-	"spectrolite"
-	"charolite"
-	"basalt"
-	"ash"
-	"ink"))
+    "water"
+    "fire"
+    "shadow"
+    "gelatin"
+    "light"
+    "dreams"
+    "*"
+    "*"
+    "*"
+    "paper"             ;; 10
+    "papyrus"
+    "cardboard"
+    "hemp"
+    "parchment"
+    "*"
+    "*"
+    "*"
+    "*"
+    "*"
+    "cloth"          ;; 20
+    "silk"
+    "cotton"
+    "polyester"
+    "vinyl"
+    "wool"
+    "satin"
+    "denim"
+    "carpet"
+    "velvet"
+    "nylon"            ;; 30
+    "canvas"
+    "sponge"
+    "*"
+    "*"
+    "*"
+    "*"
+    "*"
+    "*"
+    "*"
+    "leather"            ;; 40
+    "suede"
+    "hard leather"
+    "skin"
+    "fur"
+    "scales"
+    "hair"
+    "ivory"
+    "*"
+    "*"
+    "flesh"          ;; 50
+    "bone"
+    "tissue"
+    "cooked meat"
+    "raw meat"
+    "cheese"
+    "egg"
+    "*"
+    "*"
+    "*"
+    "vegetable"      ;; 60
+    "leaf"
+    "grain"
+    "bread"
+    "fruit"
+    "nut"
+    "flower petal"
+    "fungus"
+    "slime"
+    "*"
+    "candy"          ;; 70
+    "chocolate"
+    "pudding"
+    "*"
+    "*"
+    "*"
+    "*"
+    "*"
+    "*"
+    "*"
+    "wood"               ;; 80
+    "oak"
+    "pine"
+    "maple"
+    "birch"
+    "mahogony"
+    "teak"
+    "rattan"
+    "ebony"
+    "bamboo"
+    "*"             ;; 90
+    "*"
+    "*"
+    "*"
+    "*"
+    "*"
+    "*"
+    "*"
+    "*"
+    "*"
+    "metal"          ;; 100
+    "iron"
+    "bronze"
+    "steel"
+    "copper"
+    "brass"
+    "silver"
+    "gold"
+    "platinum"
+    "electrum"
+    "lead"               ;; 110
+    "tin"
+    "chrome"
+    "aluminum"
+    "silicon"
+    "titanium"
+    "adamantium"
+    "cadmium"
+    "nickel"
+    "mithril"
+    "pewter"                  ;; 120
+    "plutonium"
+    "uranium"
+    "rust"
+    "orichalcum"
+    "*"
+    "*"
+    "*"
+    "*"
+    "*"
+    "*"              ;; 130
+    "*"
+    "*"
+    "*"
+    "*"
+    "*"
+    "*"
+    "*"
+    "*"
+    "*"
+    "plastic"            ;; 140
+    "kevlar"
+    "rubber"
+    "fiberglass"
+    "asphalt"
+    "concrete"
+    "wax"
+    "phenolic"
+    "latex"
+    "enamel"
+    "*"              ;; 150
+    "*"
+    "*"
+    "*"
+    "*"
+    "*"
+    "*"
+    "*"
+    "*"
+    "*"
+    "glass"          ;; 160
+    "crystal"
+    "lucite"
+    "porcelain"
+    "ice"
+    "shell"
+    "earthenware"
+    "pottery"
+    "ceramic"
+    "*"
+    "*"             ;; 170
+    "*"
+    "*"
+    "*"
+    "*"
+    "*"
+    "*"
+    "*"
+    "*"
+    "*"
+    "stone"          ;; 180
+    "azurite"
+    "agate"
+    "moss Agate"
+    "banded Agate"
+    "eye Agate"
+    "tiger Eye Agate"
+    "quartz"
+    "rose Quartz"
+    "smoky Quartz"
+    "quartz 2"
+    "hematite"          ;; 190
+    "lapis lazuli"
+    "malachite"
+    "obsidian"
+    "rhodochorsite"
+    "tiger eye"
+    "turquoise"
+    "bloodstone"
+    "carnelian"
+    "chalcedony"        ;; 200
+    "chysoprase"
+    "citrine"
+    "jasper"
+    "moonstone"
+    "onyx"
+    "zircon"
+    "amber"
+    "alexandrite"
+    "amethyst"
+    "oriental amethyst";; 210
+    "aquamarine"
+    "chrysoberyl"
+    "coral"
+    "garnet"
+    "jade"
+    "jet"
+    "pearl"
+    "peridot"
+    "spinel"
+    "topaz"         ;; 220
+    "oriental topaz"
+    "tourmaline"
+    "sapphire"
+    "black sapphire"
+    "star sapphire"
+    "ruby"
+    "star ruby"
+    "opal"
+    "fire opal"
+    "diamond"           ;; 230
+    "sandstone"
+    "marble"
+    "emerald"
+    "mud"
+    "clay"
+    "labradorite"
+    "iolite"
+    "spectrolite"
+    "charolite"
+    "basalt"
+    "ash"
+    "ink"))
 
 (defconstant +mat-none+ 0)
 (defconstant +top-material+ 243)
@@ -2550,121 +2550,121 @@
 
 (defparameter +exp-scale+
   #(0
-	1
-	2500
-	6150
-	11450
-	19150		 ; 5
-	30150
-	45650
-	67600
-	98100
-	140500		  ; 10
-	199500
-	281500
-	391500
-	541000
-	746000		  ; 15
-	1025000
-	1400000
-	1900000
-	2550000
-	3400000	   ; 20
-	4500000
-	5900000
-	7700000
-	10050000
-	12950000		; 25
-	16550000
-	21050000
-	26650000
-	33650000
-	42350000		; 30
-	52800000
-	65300000
-	79800000
-	96800000
-	116500000		 ; 35
-	140000000
-	167000000
-	198000000
-	233500000
-	274500000		 ; 40
-	320500000
-	371500000
-	426500000
-	486500000
-	551000000		 ; 45
-	622000000
-	699000000
-	783000000
-	869000000
-	1000000000		  ; 50
-	1100000000
-	1200000000
-	1300000000
-	1400000000
-	1500000000		  ; 55
-	1600000000
-	1700000000
-	1800000000
-	1900000000
-	2000000000		 ; 60
-	2000000001
-	2000000002
-	2000000003
-	2000000004
-	2000000005
-	2000000006
-	2000000007
-	2000000008
-	2000000009
-	2000000010
-	2000000011		; 71
-	2000000012
-	2000000013))
+    1
+    2500
+    6150
+    11450
+    19150        ; 5
+    30150
+    45650
+    67600
+    98100
+    140500        ; 10
+    199500
+    281500
+    391500
+    541000
+    746000        ; 15
+    1025000
+    1400000
+    1900000
+    2550000
+    3400000    ; 20
+    4500000
+    5900000
+    7700000
+    10050000
+    12950000        ; 25
+    16550000
+    21050000
+    26650000
+    33650000
+    42350000        ; 30
+    52800000
+    65300000
+    79800000
+    96800000
+    116500000        ; 35
+    140000000
+    167000000
+    198000000
+    233500000
+    274500000        ; 40
+    320500000
+    371500000
+    426500000
+    486500000
+    551000000        ; 45
+    622000000
+    699000000
+    783000000
+    869000000
+    1000000000        ; 50
+    1100000000
+    1200000000
+    1300000000
+    1400000000
+    1500000000        ; 55
+    1600000000
+    1700000000
+    1800000000
+    1900000000
+    2000000000       ; 60
+    2000000001
+    2000000002
+    2000000003
+    2000000004
+    2000000005
+    2000000006
+    2000000007
+    2000000008
+    2000000009
+    2000000010
+    2000000011      ; 71
+    2000000012
+    2000000013))
 
 (defparameter +thaco-factor+
   #(0.15                                ; mage
-	0.20                                ; cleric
-	0.25                                ; thief
-	0.30                                ; warrior
-	0.40                                ; barb
-	0.20                                ; psionic
-	0.15                                ; physic
-	0.30                                ; cyborg
-	0.35                                ; knight
-	0.35                                ; ranger
-	0.30                                ; bard
-	0.40                                ; monk
-	0.40                                ; vampire
-	0.35                                ; merc
-	0.30                                ; spare1
-	0.30                                ; spare2
-	0.30))                              ; spare3
+    0.20                                ; cleric
+    0.25                                ; thief
+    0.30                                ; warrior
+    0.40                                ; barb
+    0.20                                ; psionic
+    0.15                                ; physic
+    0.30                                ; cyborg
+    0.35                                ; knight
+    0.35                                ; ranger
+    0.30                                ; bard
+    0.40                                ; monk
+    0.40                                ; vampire
+    0.35                                ; merc
+    0.30                                ; spare1
+    0.30                                ; spare2
+    0.30))                              ; spare3
 
 (defparameter +racial-lifespans+
   #(80                                  ; human
-	400                                 ; elf
-	160                                 ; dwarf
-	55                                  ; half orc
-	100                                 ; klingon
-	110                                 ; halfling
-	80                                  ; tabaxi
-	200                                 ; drow
-	0                                   ;
-	0                                   ;
-	0                                   ; mobile
-	10000                               ; undead
-	100                                 ; humanoid
-	50                                  ; animal
-	10000                               ; dragon
-	500                                 ; giant
-	65                                  ; orc
-	50                                  ; goblin
-	50                                  ; halfling
-	200                                 ; minotaur
-	500))                               ; troll
+    400                                 ; elf
+    160                                 ; dwarf
+    55                                  ; half orc
+    100                                 ; klingon
+    110                                 ; halfling
+    80                                  ; tabaxi
+    200                                 ; drow
+    0                                   ;
+    0                                   ;
+    0                                   ; mobile
+    10000                               ; undead
+    100                                 ; humanoid
+    50                                  ; animal
+    10000                               ; dragon
+    500                                 ; giant
+    65                                  ; orc
+    50                                  ; goblin
+    50                                  ; halfling
+    200                                 ; minotaur
+    500))                               ; troll
 
 (defparameter +attack-hit-text+
   #2A(("hit" "hits")                    ; 0

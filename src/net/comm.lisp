@@ -137,9 +137,9 @@
   "Returns the position of the first character that isn't a terminal
 control code."
   (loop for idx = 0 then (+ 2 idx)
-		while (and (< idx (length str))
-				   (eql (char str idx) #\&))
-		finally (when (< idx (length str)) (return idx))))
+        while (and (< idx (length str))
+                   (eql (char str idx) #\&))
+        finally (when (< idx (length str)) (return idx))))
 
 (defun send-to-char (ch fmt &rest args)
   (when (link-of ch)

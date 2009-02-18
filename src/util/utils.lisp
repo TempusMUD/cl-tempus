@@ -145,17 +145,17 @@
         (priority-num (position priority +mudlog-priorities+)))
     (assert priority-num)
     (check-type write-to-file boolean)
-	(dolist (cxn *cxns*)
-	  (when (and (typep cxn 'tempus-cxn)
+    (dolist (cxn *cxns*)
+      (when (and (typep cxn 'tempus-cxn)
                  (eql (state-of cxn) 'playing)
                  (actor-of cxn)
                  (immortalp (actor-of cxn))
                  (or (pref-flagged (actor-of cxn) +pref-log1+)
                      (pref-flagged (actor-of cxn) +pref-log2+)))
-		(cxn-write cxn "&g[ ~a - ~a ]&n~%"
+        (cxn-write cxn "&g[ ~a - ~a ]&n~%"
                    (string-replace "&" message "&&")
                    time-str)))
-	(when write-to-file
+    (when write-to-file
       (syslog "~a" message))))
 
 
@@ -182,19 +182,19 @@
     (apply function (append args more-args))))
 
 (defun join-sequence (result-type delimiter seq-list)
-	"Conceptually the opposite of split-sequence, joins together the
+    "Conceptually the opposite of split-sequence, joins together the
 sequences in seq-list with the delimiter between each element"
-	(apply #'concatenate
-		result-type
-		(first seq-list)
-		(loop for elt in (rest seq-list) append (list delimiter elt))))
+    (apply #'concatenate
+        result-type
+        (first seq-list)
+        (loop for elt in (rest seq-list) append (list delimiter elt))))
 
 (defun hash-to-assoc (hash)
   (let ((result nil))
-	(maphash (lambda (key val)
-			   (push (list key val) result))
-			 hash)
-	(nreverse result)))
+    (maphash (lambda (key val)
+               (push (list key val) result))
+             hash)
+    (nreverse result)))
 
 (defun assoc-to-hash (assoc &rest options)
   (let ((result (apply #'make-hash-table options)))
@@ -202,12 +202,12 @@ sequences in seq-list with the delimiter between each element"
       (setf (gethash (first tuple) result) (second tuple)))))
 
 (defun char-vowel-p (c)
-	(or (char= c #\a)
-		(char= c #\e)
-		(char= c #\i)
-		(char= c #\o)
-		(char= c #\u)
-		(char= c #\y)))
+    (or (char= c #\a)
+        (char= c #\e)
+        (char= c #\i)
+        (char= c #\o)
+        (char= c #\u)
+        (char= c #\y)))
 
 (defun desc (viewer subject)
   (declare (ignore viewer))
@@ -215,110 +215,110 @@ sequences in seq-list with the delimiter between each element"
 
 (defun expand-dollar (c viewer subject target item target-item pov)
   (case c
-	(#\n
-	 (if (eql pov :self)
-		 "you"
-		 (desc viewer subject)))
-	(#\e
-	 (cond
-	   ((eql pov :self)
-		"you")
-	   ((eql (sex-of subject) 'male)
-		"he")
-	   ((eql (sex-of subject) 'female)
-		"she")
-	   (t
-		"it")))
-	(#\m
-	 (cond
-	   ((and (eql pov :self) (eql subject target))
-		"yourself")
-	   ((eql pov :self)
-		"you")
-	   ((eql (sex-of subject) 'male)
-		"him")
-	   ((eql (sex-of subject) 'female)
-		"her")
-	   (t
-		"it")))
-	(#\s
-	 (cond
-	   ((eql pov :self)
-		"your")
-	   ((eql (sex-of subject) 'male)
-		"his")
-	   ((eql (sex-of subject) 'female)
-		"her")
-	   (t
-		"its")))
-	(#\N
-	 (cond
-	   ((eql subject target)
-		(cond
-		  ((eql pov :self)
-		   "yourself")
-		  ((eql (sex-of target) 'male)
-		   "himself")
-		  ((eql (sex-of target) 'female)
-		   "herself")
-		  (t
-		   "itself")))
-	   ((eql pov :target)
-		"you")
-	   (t
-		(desc viewer target))))
-	(#\E
-	 (cond
-	   ((eql pov :target)
-		"you")
-	   ((eql (sex-of target) 'male)
-		"he")
-	   ((eql (sex-of target) 'female)
-		"she")
-	   (t
-		"it")))
-	(#\M
-	 (cond
-	   ((and (eql pov :target) (eql target target))
-		"yourself")
-	   ((eql pov :target)
-		"you")
-	   ((eql (sex-of target) 'male)
-		"him")
-	   ((eql (sex-of target) 'female)
-		"her")
-	   (t
-		"it")))
-	(#\S
-	 (cond
-	   ((eql pov :target)
-		"your")
-	   ((eql (sex-of target) 'male)
-		"his")
-	   ((eql (sex-of target) 'female)
-		"her")
-	   (t
-		"its")))
-	(#\p
-	 (name-of item))
-	(#\P
-	 (name-of target-item))
-	(#\%
-	 (if (eql pov :self)
-		 ""
-		 "s"))
-	(#\^
-	 (if (eql pov :self)
-		 ""
-		 "es"))
-	(#\a
+    (#\n
+     (if (eql pov :self)
+         "you"
+         (desc viewer subject)))
+    (#\e
+     (cond
+       ((eql pov :self)
+        "you")
+       ((eql (sex-of subject) 'male)
+        "he")
+       ((eql (sex-of subject) 'female)
+        "she")
+       (t
+        "it")))
+    (#\m
+     (cond
+       ((and (eql pov :self) (eql subject target))
+        "yourself")
+       ((eql pov :self)
+        "you")
+       ((eql (sex-of subject) 'male)
+        "him")
+       ((eql (sex-of subject) 'female)
+        "her")
+       (t
+        "it")))
+    (#\s
+     (cond
+       ((eql pov :self)
+        "your")
+       ((eql (sex-of subject) 'male)
+        "his")
+       ((eql (sex-of subject) 'female)
+        "her")
+       (t
+        "its")))
+    (#\N
+     (cond
+       ((eql subject target)
+        (cond
+          ((eql pov :self)
+           "yourself")
+          ((eql (sex-of target) 'male)
+           "himself")
+          ((eql (sex-of target) 'female)
+           "herself")
+          (t
+           "itself")))
+       ((eql pov :target)
+        "you")
+       (t
+        (desc viewer target))))
+    (#\E
+     (cond
+       ((eql pov :target)
+        "you")
+       ((eql (sex-of target) 'male)
+        "he")
+       ((eql (sex-of target) 'female)
+        "she")
+       (t
+        "it")))
+    (#\M
+     (cond
+       ((and (eql pov :target) (eql target target))
+        "yourself")
+       ((eql pov :target)
+        "you")
+       ((eql (sex-of target) 'male)
+        "him")
+       ((eql (sex-of target) 'female)
+        "her")
+       (t
+        "it")))
+    (#\S
+     (cond
+       ((eql pov :target)
+        "your")
+       ((eql (sex-of target) 'male)
+        "his")
+       ((eql (sex-of target) 'female)
+        "her")
+       (t
+        "its")))
+    (#\p
+     (name-of item))
+    (#\P
+     (name-of target-item))
+    (#\%
+     (if (eql pov :self)
+         ""
+         "s"))
+    (#\^
+     (if (eql pov :self)
+         ""
+         "es"))
+    (#\a
      (if (mood-of subject)
          (concatenate 'string " " (mood-of subject))
-	 	 ""))
+         ""))
     (#\l
      "")
-	(#\$
-	 "$")))
+    (#\$
+     "$")))
 
 
 
@@ -360,7 +360,7 @@ sequences in seq-list with the delimiter between each element"
 
 (defun act-str (viewer fmt subject target item target-item pov)
   (with-output-to-string (result)
-	(loop
+    (loop
        for idx from 0 to (1- (length fmt)) do
        (princ
         (case (char fmt idx)
@@ -403,32 +403,32 @@ sequences in seq-list with the delimiter between each element"
   ;; Handle "all" emit
   (when all-emit
     (send-act-str subject all-emit subject target item target-item :self)
-	(when (and target (not (eql subject target)))
-	  (send-act-str target all-emit subject target item target-item :target))
-	   (dolist (other (people-of (in-room-of subject)))
-		 (unless (or (eql other subject) (eql other target))
-		   (send-act-str other all-emit subject target item target-item :other))))
+    (when (and target (not (eql subject target)))
+      (send-act-str target all-emit subject target item target-item :target))
+       (dolist (other (people-of (in-room-of subject)))
+         (unless (or (eql other subject) (eql other target))
+           (send-act-str other all-emit subject target item target-item :other))))
   (when subject-emit
-	(send-act-str subject subject-emit subject target item target-item :self))
+    (send-act-str subject subject-emit subject target item target-item :self))
   (when (and target-emit target)
-	(send-act-str target target-emit subject target item target-item :target))
+    (send-act-str target target-emit subject target item target-item :target))
   (when not-target-emit
     (dolist (other (people-of (in-room-of subject)))
       (unless (or (eql other subject) (eql other target))
-		(send-act-str other not-target-emit subject target item target-item :other))))
+        (send-act-str other not-target-emit subject target item target-item :other))))
   (when place-emit
     (dolist (other (people-of (in-room-of subject)))
       (unless (eql other subject)
-		(send-act-str other place-emit subject target item target-item
-					  (if (eql other target) :target :other))))))
+        (send-act-str other place-emit subject target item target-item
+                      (if (eql other target) :target :other))))))
 
 (defun colorize (cxn str)
   (let ((ansi-level (if (account-of cxn)
-						(ansi-level-of (account-of cxn))
-						0)))
-	(with-output-to-string (result)
-	  (loop for idx from 0 to (1- (length str)) do
-		   (princ
+                        (ansi-level-of (account-of cxn))
+                        0)))
+    (with-output-to-string (result)
+      (loop for idx from 0 to (1- (length str)) do
+           (princ
             (cond
               ((eql (char str idx) #\&)
                (case ansi-level
@@ -519,9 +519,9 @@ sequences in seq-list with the delimiter between each element"
 (defun hash-table-keys (hash)
   "Returns all the keys of the hash table HASH"
   (with-hash-table-iterator (next-entry hash)
-	(loop for (more key value) = (multiple-value-list (next-entry))
-		 while more
-		 collect key)))
+    (loop for (more key value) = (multiple-value-list (next-entry))
+         while more
+         collect key)))
 
 (eval-when (:load-toplevel :execute)
   (defparameter *tempus-root-pathname*
@@ -534,23 +534,23 @@ sequences in seq-list with the delimiter between each element"
 (defun send-page (cxn)
   "Sends a single buffered page to CXN.  If any of the page is left, displays the more prompt."
   (let* ((buf (page-buf-of cxn))
-		 (buf-len (length buf)))
-	(loop
-	 for count = 1 then (1+ count)
-	 for line-begin = 0 then (1+ line-end)
-	 for line-end = (and (< line-begin buf-len)
-						 (position #\newline buf :start line-begin))
-	 while (and line-end (< count 22))
-	 finally
-	 (cond
-	  (line-end
-	   (cxn-write cxn "~a~a~%" (subseq buf 0 (1+ line-end))
-				  (colorize cxn
-				   "&r**** &nUse the 'more' command to continue. &r****&n"))
-	   (setf (page-buf-of cxn) (subseq buf (1+ line-end))))
-	  (t
-	   (cxn-write cxn "~a" buf)
-	   (setf (page-buf-of cxn) nil))))))
+         (buf-len (length buf)))
+    (loop
+     for count = 1 then (1+ count)
+     for line-begin = 0 then (1+ line-end)
+     for line-end = (and (< line-begin buf-len)
+                         (position #\newline buf :start line-begin))
+     while (and line-end (< count 22))
+     finally
+     (cond
+      (line-end
+       (cxn-write cxn "~a~a~%" (subseq buf 0 (1+ line-end))
+                  (colorize cxn
+                   "&r**** &nUse the 'more' command to continue. &r****&n"))
+       (setf (page-buf-of cxn) (subseq buf (1+ line-end))))
+      (t
+       (cxn-write cxn "~a" buf)
+       (setf (page-buf-of cxn) nil))))))
 
 (defun print-columns-to-string (cols width list)
   (with-output-to-string (result)
@@ -571,27 +571,27 @@ sequences in seq-list with the delimiter between each element"
 
 (defun parse-integer-range (str &key (minimum nil) (maximum nil))
   (let* ((divider-pos (position #\- str))
-		 (min-str (and divider-pos (subseq str 0 divider-pos)))
-		 (max-str (and divider-pos (subseq str (1+ divider-pos)))))
-	(cond
-	  ((null divider-pos)
-	   ;; no divider - just a single number
-	   (let ((num (safe-parse-integer str)))
-		 (values
-		  (if minimum (max minimum num) num)
-		  (if maximum (min maximum num) num))))
-	  ((= (length str) 1)
-	   ;; only a divider - no range
-		(values nil nil))
-	  (t
-	   ;; either min-max -max or min-
-		(values
-		 (if (= divider-pos 0)
-			 minimum
-			 (max minimum (safe-parse-integer min-str)))
-		 (if (= divider-pos (length str))
-			 maximum
-			 (min maximum (safe-parse-integer max-str))))))))
+         (min-str (and divider-pos (subseq str 0 divider-pos)))
+         (max-str (and divider-pos (subseq str (1+ divider-pos)))))
+    (cond
+      ((null divider-pos)
+       ;; no divider - just a single number
+       (let ((num (safe-parse-integer str)))
+         (values
+          (if minimum (max minimum num) num)
+          (if maximum (min maximum num) num))))
+      ((= (length str) 1)
+       ;; only a divider - no range
+        (values nil nil))
+      (t
+       ;; either min-max -max or min-
+        (values
+         (if (= divider-pos 0)
+             minimum
+             (max minimum (safe-parse-integer min-str)))
+         (if (= divider-pos (length str))
+             maximum
+             (min maximum (safe-parse-integer max-str))))))))
 
 (defun circle-follow (ch victim)
   "Returns T if CH following VICTIM would make a follow loop."

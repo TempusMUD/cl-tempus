@@ -80,30 +80,30 @@
 (defparameter +prac-params+
   #2A(
   ;; MG  CL  TH  WR  BR  PS  PH  CY  KN  RN  BD  MN  VP  MR  S1  S2  S3
-	(75  75  70  70  65  75  75  80  75  75  80  75  75  70  70  70  70)
-	(25  20  20  20  20  25  20  30  20  25  30  20  15  25  25  25  25)
-	(15  15  10  15  10  15  15  15  15  15  15  10  10  10  10  10  10)
-	(spl spl skl skl skl trg alt prg spl spl sng zen spl skl skl skl skl)))
+    (75  75  70  70  65  75  75  80  75  75  80  75  75  70  70  70  70)
+    (25  20  20  20  20  25  20  30  20  25  30  20  15  25  25  25  25)
+    (15  15  10  15  10  15  15  15  15  15  15  10  10  10  10  10  10)
+    (spl spl skl skl skl trg alt prg spl spl sng zen spl skl skl skl skl)))
 
 (defparameter +hitp-gain-table+
   #2A(
   ;; MG  CL  TH  WR  BR  PS  PH  CY  KN  RN  BD  MN  VP  MR  S1  S2  S3
-	( 5   2   3   1   1   3   4   2   1   1   3   3   2   1   2   2   2)
-	( 3   5   4  10  13   3   4   6   7   4   5   6   5   6   5   5   5)
-	(10  11  10  15  18   8   9  14  13  11  10  12  16  14  16  16  16)))
+    ( 5   2   3   1   1   3   4   2   1   1   3   3   2   1   2   2   2)
+    ( 3   5   4  10  13   3   4   6   7   4   5   6   5   6   5   5   5)
+    (10  11  10  15  18   8   9  14  13  11  10  12  16  14  16  16  16)))
 
 (defparameter +mana-gain-table+
   #2A(
   ;; MG  CL  TH  WR  BR  PS  PH  CY  KN  RN  BD  MN  VP  MR  S1  S2  S3
-	( 3   5   1   1   1   5   3  15  15   8   3  22   4   1   4   4   4)
-	( 1   1   1   1   1   1   1   1   1   1   5   1   1   1   1   1   1)
-	(11  10   1   5   1   7   6   2   4   6  10   2  13   1  13  13  13)))
+    ( 3   5   1   1   1   5   3  15  15   8   3  22   4   1   4   4   4)
+    ( 1   1   1   1   1   1   1   1   1   1   5   1   1   1   1   1   1)
+    (11  10   1   5   1   7   6   2   4   6  10   2  13   1  13  13  13)))
 
 (defparameter +move-gain-table+
   #2A(
   ;; MG  CL  TH  WR  BR  PS  PH  CY  KN  RN  BD  MN  VP  MR  S1  S2  S3
-	( 1   1   2   5   5   2   2   5   3   6   3   6   7   3   7   7   7)
-	( 3   4   6  10  10   6  10   8   8  14   5   9  15   9  15  15  15)))
+    ( 1   1   2   5   5   2   2   5   3   6   3   6   7   3   7   7   7)
+    ( 3   4   6  10  10   6  10   8   8  14   5   9  15   9  15  15  15)))
 
 (defun learned (ch)
   (if (is-remort ch)
