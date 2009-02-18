@@ -47,6 +47,7 @@
     new-player-race
     new-player-align
     new-player-stats
+    new-player-desc
     main-menu
 	wait-for-menu
     remort-class
@@ -54,9 +55,10 @@
     delete-verify
     delete-password
     describe-character
-    describe-editing
+    describe-editor
     playing
 	afterlife
+    editing
     disconnecting))
 
 (defvar *cxn-paginate* nil)
@@ -88,8 +90,9 @@
 			   (code-char #x01)))
   (cond
     ((member state +valid-cxn-states+)
+	 (call-next-method)
      (send-menu cxn state)
-	 (call-next-method))
+     (setf (need-prompt-p cxn) t))
     (t
      (mudlog 'warning t "attempt to set cxn to state ~a" state)))
 
@@ -237,8 +240,8 @@
 
 (defun send-section-header (cxn str)
   (if (string= str "")
-	  (cxn-write cxn "&b~v,1,,'-a&n~%" 72 "")
-	  (cxn-write cxn "&b~v,1,,'-a &y~a &b~v,1,,'-a&n~%"
+	  (cxn-write cxn "&@&b~v,1,,'-a&n~%~%" 72 "")
+	  (cxn-write cxn "&@&b~v,1,,'-a &y~a &b~v,1,,'-a&n~%~%"
 				 (- (/ 70 2) (/ (1+ (length str)) 2)) ""
 				 (string-capitalize str)
 				 (- (/ 70 2) (/ (length str) 2)) "")))
@@ -605,20 +608,7 @@ You may type 'help <race>' for information on any of the available races.
        (setf (rentcode-of (actor-of cxn)) 'new-char)
        (calculate-height-weight (actor-of cxn))
        (save-player-to-xml (actor-of cxn))
-       ;; TODO: go to character description editor
-       (setf (state-of cxn) 'main-menu)))))
-
-(define-connection-state describe-character
-  (menu (cxn)
-    (cxn-write cxn "&@")
-    (send-section-header cxn "description")
-    (cxn-write cxn "
-    Other players will usually be able to determine your general
-size, as well as your race and gender, by looking at you.  What
-else is noticable about your character?
-
-")))
-
+       (setf (state-of cxn) 'describe-editor)))))
 
 (define-connection-state set-password-auth
   (menu (cxn)
@@ -795,6 +785,19 @@ else is noticable about your character?
       (setf (state-of cxn) 'new-player-name))
      ((char-equal (char line 0) #\p)
       (setf (state-of cxn) 'set-password-auth))
+     ((char-equal (char line 0) #\e)
+      (cond
+        ((null (players-of (account-of cxn)))
+         (cxn-write cxn "~%That isn't a valid command.~%~%"))
+        ((null (rest (players-of (account-of cxn))))
+         ;; only one character to delete, so skip prompt
+         (setf (actor-of cxn) (load-player-from-xml
+                               (idnum-of (first
+                                          (players-of (account-of cxn))))))
+         (setf (state-of cxn) 'describe-editor))
+        (t
+         ;; multiple possibilities, so go to selection prompt
+         (setf (state-of cxn) 'describe-character))))
      ((char-equal (char line 0) #\d)
       (cond
         ((null (players-of (account-of cxn)))
@@ -926,6 +929,68 @@ else is noticable about your character?
        (setf (actor-of cxn) nil)
        (setf (state-of cxn) 'wait-for-menu)))))
 
+(define-connection-state describe-character
+  (menu (cxn)
+    (send-section-header cxn "edit character description")
+    (loop for player-record in (players-of (account-of cxn))
+       as player-idnum = (idnum-of player-record)
+       as player = (load-player-from-xml player-idnum)
+       as idx from 1
+       do (cxn-write cxn "    &c[&y~2d&c] &c~20a &n~10a ~10a ~6a ~a~%"
+                     idx (name-of player)
+                     (aref +player-races+ (race-of player))
+                     (aref +class-names+ (char-class-of player))
+                     (case (sex-of player)
+                       (male "Male")
+                       (female "Female")
+                       (t "Neuter"))
+                     (if (plusp (level-of player))
+                         (format nil "lvl ~d" (level-of player))
+                         " new")))
+    (cxn-write cxn "&n~%"))
+  (prompt (cxn)
+    (cxn-write cxn "~%           &yWhich character's description do you want to edit:&n "))
+  (input (cxn line)
+    (let* ((idx (parse-integer line :junk-allowed t))
+           (player-record (and idx (nth (1- idx) (players-of (account-of cxn)))))
+           (idnum (and player-record (idnum-of player-record))))
+      (cond
+        ((zerop (length line))
+         (setf (state-of cxn) 'main-menu))
+        ((null idnum)
+         (cxn-write cxn "~%That character selection doesn't exist.~%~%")
+         (setf (state-of cxn) 'wait-for-menu))
+        (t
+         (setf (actor-of cxn) (gethash idnum *character-map*))
+         (unless (actor-of cxn)
+           (setf (actor-of cxn) (load-player-from-xml idnum)))
+         (cond
+           ((actor-of cxn)
+            (setf (account-of (actor-of cxn)) (account-of cxn))
+            (setf (state-of cxn) 'describe-editor))
+           (t
+            (cxn-write cxn "~%That character cannot be loaded.~%~%")
+            (slog "Couldn't retrieve char idnum ~d" idnum)
+            (setf (state-of cxn) 'wait-for-menu))))))))
+
+(define-connection-state describe-editor
+  (menu (cxn)
+    (send-section-header cxn "description")
+    (cxn-write cxn "    Other players will usually be able to determine your general
+size, as well as your race and gender, by looking at you.  What
+else is noticable about your character?
+")
+    (start-text-editor cxn (actor-of cxn)
+                       (format nil "the description of ~a"
+                               (name-of (actor-of cxn)))
+                       (fdesc-of (actor-of cxn))
+                       (lambda (cxn ch buffer)
+                         (setf (fdesc-of ch) buffer)
+                         (save-player-to-xml ch)
+                         (setf (state-of cxn) 'main-menu))
+                       (lambda (cxn ch)
+                         (declare (ignore ch))
+                         (setf (state-of cxn) 'main-menu)))))
 
 (define-connection-state afterlife
   (prompt (cxn)
@@ -962,6 +1027,162 @@ else is noticable about your character?
          (interpret-command (actor-of cxn)
                             (expand-aliases (actor-of cxn)
                                             trimmed-line))))))
+
+(defclass editor-data ()
+  ((target :accessor target-of :initarg :target)
+   (target-desc :accessor target-desc-of :initarg :target-desc)
+   (old-buffer :accessor old-buffer-of :initarg :old-buffer)
+   (buffer :accessor buffer-of :initarg :buffer)
+   (finalizer :accessor finalizer-of :initarg :finalizer)
+   (cancel-func :accessor cancel-func-of :initarg :cancel-func)
+   (state :accessor state-of :initform 'active)))
+
+(defun send-line-number (cxn num)
+  "Send the given line number to the actor."
+    (cxn-write cxn "&n~3d&b] &n" num))
+
+(defun refresh-screen (cxn buffer)
+  "Sends the contents of the buffer to the screen"
+  ;;; Send the edit header first
+  (cxn-write cxn "&C     *&Y TUNED &B] ~
+                        &nTerminate with @ on a new line. ~
+                        &&H for help&C                 *&n~%     &C0")
+  (dotimes (idx 7)
+	(cxn-write cxn "&B---------&C~d" (1+ idx)))
+  (cxn-write cxn "&n~%")
+
+  (loop for line in buffer
+	   as line-num from 1
+	   do
+	   (send-line-number cxn line-num)
+	   (cxn-write cxn "~a~%" line)))
+
+(defun do-editor-command (cxn editor line)
+  "Handles all the commands that the editor is capable of."
+  (with-words (subseq line 1) (cmd-str &rest arg)
+	(case (char-downcase (char cmd-str 0))
+	  (#\h
+	   (cxn-write cxn"~
+&C     *&B------------------------ &YH E L P &B------------------------&C*
+            &YS - &nSubstitute            &YF - &nFind
+            &YE - &nSave && Exit          &YQ - &nQuit (Cancel)
+            &YL - &nReplace Line          &YD - &nDelete Line
+            &YI - &nInsert Line           &YR - &nRefresh Screen
+            &YC - &nClear Buffer          &YU - &nUndo Changes
+&C     *&B---------------------------------------------------------&C*
+"))
+	  (#\c
+	   (setf (buffer-of editor) nil))
+	  ((#\l #\i #\d)
+	   (with-words arg (param &rest new-line)
+		 (cond
+		   ((or (null param) (notevery #'digit-char-p param))
+			(cxn-write cxn "You must specify a numeric line number.~%"))
+		   (t
+			(let ((line-num (parse-integer param)))
+			  (cond
+				((> line-num (length (buffer-of editor)))
+				 (cxn-write cxn
+								"There are only ~d lines of text!~%"
+								(length (buffer-of editor))))
+				(t
+				 (case (char-downcase (char cmd-str 0))
+				   (#\l
+					(setf (nth (1- line-num) (buffer-of editor))	new-line)
+					(cxn-write cxn
+								   "Line ~d replaced.~%"
+								   line-num))
+				   (#\i
+					(setf (buffer-of editor)
+						  (nconc (subseq (buffer-of editor) 0 (1- line-num))
+								 (list new-line)
+								 (subseq (buffer-of editor) (1- line-num))))
+					(cxn-write cxn
+								   "New line inserted before line ~d.~%"
+								   line-num))
+				   (#\d
+					(setf (buffer-of editor)
+						  (nconc (subseq (buffer-of editor) 0 (1- line-num))
+								 (subseq (buffer-of editor) line-num)))
+					(cxn-write cxn
+								   "Line ~d deleted.~%"
+								   line-num))))))))))
+	  (#\r
+	   (refresh-screen cxn (buffer-of editor)))
+	  (#\u
+	   (setf (buffer-of editor) (split-sequence #\newline (old-buffer-of editor)))
+	   (refresh-screen cxn (buffer-of editor))
+	   (cxn-write cxn "Reverted back to previous.~%"))
+	  (#\e
+	   (setf (state-of editor) 'finishing))
+	  (#\q
+	   (setf (state-of editor) 'aborting))
+	  (#\s
+	   (let* ((start1 (position #\[ arg))
+			  (end1 (and start1 (position #\] arg :start start1)))
+			  (start2 (and end1 (position #\[ arg :start end1)))
+			  (end2 (and start2 (position #\] arg :start start2))))
+		 (cond
+		   ((and start1 end1 start2 end2)
+			 (let ((search-str (subseq arg (1+ start1) end1))
+				   (replace-str (subseq arg (1+ start2) end2)))
+			   (setf (buffer-of editor)
+					 (loop for old-line in (buffer-of editor)
+						  collect (string-replace search-str old-line replace-str)))
+			   (cxn-write cxn
+							  "All instances of [~a] have been replaced with [~a].~%"
+							  search-str
+							  replace-str))))))
+      (#\f
+       (loop for line in (buffer-of editor)
+             as linenum from 1
+             when (search arg line)
+             do
+             (send-line-number cxn linenum)
+             (cxn-write cxn "~a~%" line))
+       (cxn-write cxn "~%"))
+	  (t
+	   (cxn-write cxn "No such editor command.~%")))))
+
+(define-connection-state editing
+  (prompt (cxn)
+    (cxn-write cxn "&n~3d&B] &n"
+               (1+ (length (buffer-of (mode-data-of cxn))))))
+  (menu (cxn)
+    (refresh-screen cxn (buffer-of (mode-data-of cxn))))
+  (input (cxn line)
+    (let ((editor (mode-data-of cxn)))
+      (cond
+        ((zerop (length line))
+         (setf (buffer-of editor) (nconc (buffer-of editor) (list line))))
+        ((eql (char line 0) #\&)
+         (do-editor-command cxn editor line))
+        ((eql (char line 0) #\@)
+         (setf (state-of editor) 'finished))
+        ((eql (char line 0) #\.)
+         (refresh-screen cxn (buffer-of editor)))
+        (t
+         (setf (buffer-of editor) (nconc (buffer-of editor) (list line)))))
+
+      (case (state-of editor)
+        (finished
+         (funcall (finalizer-of editor)
+                  cxn
+                  (target-of editor)
+                  (format nil "~{~a~%~}" (buffer-of editor))))
+        (aborting
+         (funcall (cancel-func-of editor) cxn (target-of editor)))))))
+
+(defun start-text-editor (cxn target target-desc old-buffer finalizer cancel-func)
+  (let ((split-buffer (butlast (split-sequence #\newline old-buffer))))
+    (setf (mode-data-of cxn) (make-instance 'editor-data
+                                            :target target
+                                            :target-desc target-desc
+                                            :old-buffer old-buffer
+                                            :buffer split-buffer
+                                            :finalizer finalizer
+                                            :cancel-func cancel-func))
+    (setf (state-of cxn) 'editing)))
 
 (defun send-menu (cxn state)
   (send-state-menu cxn state))
