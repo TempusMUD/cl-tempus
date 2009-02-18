@@ -1185,11 +1185,10 @@
        (with-pagination ((link-of ch))
          (cond
            ((typep vict 'creature)
-            (look-at-char ch vict cmd)
             (when (is-visible-to ch vict)
               (act ch :target vict
-                   :target-emit "$n looks at you."
-                   :not-target-emit "$n looks at $N.")))
+                   :all-emit "$n look$% at $N."))
+            (look-at-char ch vict cmd))
            (t
             (let ((desc (find-extradesc ch arg)))
               (cond
