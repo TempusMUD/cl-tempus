@@ -14,7 +14,7 @@
   (with-mock-players (alice bob)
     (setf (tempus::fdesc-of bob) (format nil "This is bob.~%"))
     (tempus::interpret-command alice "l bob")
-    (char-output-is alice "This is bob.~%Bob appears to be a 198 cm tall, 200 pound male human.~%&yBob is in excellent condition.&n~%&n")
+    (char-output-is alice "You look at Bob.~%This is bob.~%Bob appears to be a 198 cm tall, 200 pound male human.~%&yBob is in excellent condition.&n~%&n")
     (char-output-is bob "Alice looks at you.~%")))
 
 (deftest equipment ()
