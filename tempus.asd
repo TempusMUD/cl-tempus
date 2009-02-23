@@ -89,6 +89,8 @@
                                   :depends-on ("creature"))
              (:file "dyntext" :pathname "dyntext/dyntext"
                               :depends-on ("defs" "utils"))
+             (:file "editor" :pathname "editor/editor"
+                             :depends-on ("network" "creature"))
              (:file "fight" :pathname "combat/fight"
                              :depends-on ("defs" "utils"))
              (:file "groups" :pathname "interpreter/groups"
@@ -112,8 +114,8 @@
              (:file "mail" :pathname "mobiles/mail"
                            :depends-on ("defs" "creature"))
              (:file "nanny" :pathname "net/nanny"
-                            :depends-on ("defs" "utils" "config" "network"
-                                                "login" "mail"))
+                            :depends-on ("defs" "utils" "config" "editor"
+                                                "network" "login" "mail"))
              (:file "network" :pathname "net/network"
                               :depends-on ("defs"))
              (:file "obj-data" :pathname "structs/obj-data"

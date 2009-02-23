@@ -91,7 +91,7 @@
   (cond
     ((member state +valid-cxn-states+)
      (call-next-method)
-     (send-menu cxn state)
+     (send-state-menu cxn state)
      (setf (need-prompt-p cxn) t))
     (t
      (mudlog 'warning t "attempt to set cxn to state ~a" state)))
@@ -776,7 +776,7 @@ You may type 'help <race>' for information on any of the available races.
   (input (cxn line)
    (cond
      ((string= line "")
-      (send-menu cxn 'main-menu))
+      (send-state-menu cxn 'main-menu))
      ((or (char-equal (char line 0) #\l) (eql (char line 0) #\0))
       (cxn-write cxn "Goodbye!~%")
       (setf (cxn-connected cxn) nil)
@@ -979,6 +979,7 @@ You may type 'help <race>' for information on any of the available races.
     (cxn-write cxn "    Other players will usually be able to determine your general
 size, as well as your race and gender, by looking at you.  What
 else is noticable about your character?
+
 ")
     (start-text-editor cxn (actor-of cxn)
                        (format nil "the description of ~a"
@@ -1028,164 +1029,15 @@ else is noticable about your character?
                             (expand-aliases (actor-of cxn)
                                             trimmed-line))))))
 
-(defclass editor-data ()
-  ((target :accessor target-of :initarg :target)
-   (target-desc :accessor target-desc-of :initarg :target-desc)
-   (old-buffer :accessor old-buffer-of :initarg :old-buffer)
-   (buffer :accessor buffer-of :initarg :buffer)
-   (finalizer :accessor finalizer-of :initarg :finalizer)
-   (cancel-func :accessor cancel-func-of :initarg :cancel-func)
-   (state :accessor state-of :initform 'active)))
-
-(defun send-line-number (cxn num)
-  "Send the given line number to the actor."
-    (cxn-write cxn "&n~3d&b] &n" num))
-
-(defun refresh-screen (cxn buffer)
-  "Sends the contents of the buffer to the screen"
-  ;;; Send the edit header first
-  (cxn-write cxn "&C     *&Y TUNED &B] ~
-                        &nTerminate with @ on a new line. ~
-                        &&H for help&C                 *&n~%     &C0")
-  (dotimes (idx 7)
-    (cxn-write cxn "&B---------&C~d" (1+ idx)))
-  (cxn-write cxn "&n~%")
-
-  (loop for line in buffer
-       as line-num from 1
-       do
-       (send-line-number cxn line-num)
-       (cxn-write cxn "~a~%" line)))
-
-(defun do-editor-command (cxn editor line)
-  "Handles all the commands that the editor is capable of."
-  (with-words (subseq line 1) (cmd-str &rest arg)
-    (case (char-downcase (char cmd-str 0))
-      (#\h
-       (cxn-write cxn"~
-&C     *&B------------------------ &YH E L P &B------------------------&C*
-            &YS - &nSubstitute            &YF - &nFind
-            &YE - &nSave && Exit          &YQ - &nQuit (Cancel)
-            &YL - &nReplace Line          &YD - &nDelete Line
-            &YI - &nInsert Line           &YR - &nRefresh Screen
-            &YC - &nClear Buffer          &YU - &nUndo Changes
-&C     *&B---------------------------------------------------------&C*
-"))
-      (#\c
-       (setf (buffer-of editor) nil))
-      ((#\l #\i #\d)
-       (with-words arg (param &rest new-line)
-         (cond
-           ((or (null param) (notevery #'digit-char-p param))
-            (cxn-write cxn "You must specify a numeric line number.~%"))
-           (t
-            (let ((line-num (parse-integer param)))
-              (cond
-                ((> line-num (length (buffer-of editor)))
-                 (cxn-write cxn
-                                "There are only ~d lines of text!~%"
-                                (length (buffer-of editor))))
-                (t
-                 (case (char-downcase (char cmd-str 0))
-                   (#\l
-                    (setf (nth (1- line-num) (buffer-of editor))    new-line)
-                    (cxn-write cxn
-                                   "Line ~d replaced.~%"
-                                   line-num))
-                   (#\i
-                    (setf (buffer-of editor)
-                          (nconc (subseq (buffer-of editor) 0 (1- line-num))
-                                 (list new-line)
-                                 (subseq (buffer-of editor) (1- line-num))))
-                    (cxn-write cxn
-                                   "New line inserted before line ~d.~%"
-                                   line-num))
-                   (#\d
-                    (setf (buffer-of editor)
-                          (nconc (subseq (buffer-of editor) 0 (1- line-num))
-                                 (subseq (buffer-of editor) line-num)))
-                    (cxn-write cxn
-                                   "Line ~d deleted.~%"
-                                   line-num))))))))))
-      (#\r
-       (refresh-screen cxn (buffer-of editor)))
-      (#\u
-       (setf (buffer-of editor) (split-sequence #\newline (old-buffer-of editor)))
-       (refresh-screen cxn (buffer-of editor))
-       (cxn-write cxn "Reverted back to previous.~%"))
-      (#\e
-       (setf (state-of editor) 'finishing))
-      (#\q
-       (setf (state-of editor) 'aborting))
-      (#\s
-       (let* ((start1 (position #\[ arg))
-              (end1 (and start1 (position #\] arg :start start1)))
-              (start2 (and end1 (position #\[ arg :start end1)))
-              (end2 (and start2 (position #\] arg :start start2))))
-         (cond
-           ((and start1 end1 start2 end2)
-             (let ((search-str (subseq arg (1+ start1) end1))
-                   (replace-str (subseq arg (1+ start2) end2)))
-               (setf (buffer-of editor)
-                     (loop for old-line in (buffer-of editor)
-                          collect (string-replace search-str old-line replace-str)))
-               (cxn-write cxn
-                              "All instances of [~a] have been replaced with [~a].~%"
-                              search-str
-                              replace-str))))))
-      (#\f
-       (loop for line in (buffer-of editor)
-             as linenum from 1
-             when (search arg line)
-             do
-             (send-line-number cxn linenum)
-             (cxn-write cxn "~a~%" line))
-       (cxn-write cxn "~%"))
-      (t
-       (cxn-write cxn "No such editor command.~%")))))
-
 (define-connection-state editing
   (prompt (cxn)
     (cxn-write cxn "&n~3d&B] &n"
                (1+ (length (buffer-of (mode-data-of cxn))))))
   (menu (cxn)
-    (refresh-screen cxn (buffer-of (mode-data-of cxn))))
+    (send-editor-header cxn)
+    (refresh-screen (mode-data-of cxn) cxn))
   (input (cxn line)
-    (let ((editor (mode-data-of cxn)))
-      (cond
-        ((zerop (length line))
-         (setf (buffer-of editor) (nconc (buffer-of editor) (list line))))
-        ((eql (char line 0) #\&)
-         (do-editor-command cxn editor line))
-        ((eql (char line 0) #\@)
-         (setf (state-of editor) 'finished))
-        ((eql (char line 0) #\.)
-         (refresh-screen cxn (buffer-of editor)))
-        (t
-         (setf (buffer-of editor) (nconc (buffer-of editor) (list line)))))
-
-      (case (state-of editor)
-        (finished
-         (funcall (finalizer-of editor)
-                  cxn
-                  (target-of editor)
-                  (format nil "~{~a~%~}" (buffer-of editor))))
-        (aborting
-         (funcall (cancel-func-of editor) cxn (target-of editor)))))))
-
-(defun start-text-editor (cxn target target-desc old-buffer finalizer cancel-func)
-  (let ((split-buffer (butlast (split-sequence #\newline old-buffer))))
-    (setf (mode-data-of cxn) (make-instance 'editor-data
-                                            :target target
-                                            :target-desc target-desc
-                                            :old-buffer old-buffer
-                                            :buffer split-buffer
-                                            :finalizer finalizer
-                                            :cancel-func cancel-func))
-    (setf (state-of cxn) 'editing)))
-
-(defun send-menu (cxn state)
-  (send-state-menu cxn state))
+    (editor-input (mode-data-of cxn) cxn line)))
 
 (defun send-prompt (cxn)
   (send-state-prompt cxn (state-of cxn)))
