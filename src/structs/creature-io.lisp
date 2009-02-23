@@ -182,7 +182,7 @@
 (defun save-player-objects (ch)
   (with-open-file (ouf (equipment-pathname (idnum-of ch))
                        :direction :output
-                       :if-exists :supersede)
+                       :if-exists :rename-and-delete)
     (write-string
      (xmls:toxml
       `("objects" NIL
@@ -380,7 +380,7 @@
 
   (with-open-file (ouf (player-pathname (idnum-of ch))
                        :direction :output
-                       :if-exists :supersede
+                       :if-exists :rename-and-delete
                        :if-does-not-exist :create)
     (write-string (xmls:toxml (serialize-creature ch) :indent t) ouf))
 
