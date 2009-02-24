@@ -254,8 +254,40 @@
         (send-to-char ch "~a~%" (select-unknown-cmd-error)))
       ((and (is-npc ch) (member :player (command-info-flags command)))
        (send-to-char ch "Sorry, players ONLY!~%"))
-      (t
+      ((not (check-specials 'command ch command vars))
        (apply (command-info-function command) ch vars)))))
 
-(defun perform-special (ch cmd subcmd arg mode)
-  nil)
+(defun check-specials (trigger ch command vars)
+  (or
+    ;; special in room?
+    (and (func-of (in-room-of ch))
+         (funcall (func-of (in-room-of ch)) trigger (in-room-of ch) ch command vars))
+    ;; special in self?  (for activiting special abilities in switched mobs)
+    (and (is-npc ch)
+         (mob-flagged ch +mob-spec+)
+         (func-of (shared-of ch))
+         (funcall (func-of (shared-of ch)) trigger ch ch command vars))
+    ;; special in equipment list?
+    (some (lambda (obj)
+            (and obj
+                 (func-of (shared-of obj))
+                 (funcall (func-of (shared-of obj)) trigger obj ch command vars)))
+          (equipment-of ch))
+    ;; special in inventory?
+    (some (lambda (obj)
+            (and obj
+                 (func-of (shared-of obj))
+                 (funcall (func-of (shared-of obj)) trigger obj ch command vars)))
+          (carrying-of ch))
+    ;; special in mobile?
+    (some (lambda (tch)
+            (and (is-npc tch)
+                 (func-of (shared-of tch))
+                 (funcall (func-of (shared-of tch)) trigger tch ch command vars)))
+          (people-of (in-room-of ch)))
+    ;; special in object?
+    (some (lambda (obj)
+            (and (func-of (shared-of obj))
+                 (funcall (func-of (shared-of obj)) trigger obj ch command vars)))
+          (contents-of (in-room-of ch)))))
+
