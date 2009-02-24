@@ -318,7 +318,8 @@
   (incf (worn-weight-of ch) mod-weight))
 
 (defun pref-flagged (ch pref)
-  (bitp (prefs-of ch) pref))
+  (and (typep ch 'player)
+       (bitp (prefs-of ch) pref)))
 
 (defun mob-flagged (ch flag)
   (and (not (typep ch 'player))

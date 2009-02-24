@@ -42,8 +42,9 @@
        (when (pref-flagged target +pref-autopage+)
          (send-to-char target "~c~c" (code-char 7) (code-char 7)))
 
-       (setf (last-tell-from-of target) (idnum-of ch))
-       (setf (last-tell-to-of ch) (idnum-of target))))))
+       (unless (is-npc ch)
+         (setf (last-tell-from-of target) (idnum-of ch))
+         (setf (last-tell-to-of ch) (idnum-of target)))))))
 
 (defun perform-say (ch say-cmd message)
   (let ((message (act-escape message)))
