@@ -603,8 +603,10 @@
                ("material" ,(write-to-string (material-of obj)))
                ("timer" ,(write-to-string (timer-of obj)))))
     ("tracking" (("id" ,(write-to-string (unique-id-of obj)))
-               ("method" ,(write-to-string (position (creation-method-of obj)
-                                                     #(:unknown :invalid :imm :search :zone :mob :prog :player))))
+               ("method" ,(write-to-string (or (position (creation-method-of obj)
+                                                         #(:unknown :invalid :imm :search :zone :mob :prog :player))
+                                               0)))
+
                ("creator" ,(write-to-string (creator-of obj)))
                ("time" ,(write-to-string (timestamp-to-unix (creation-time-of obj))))))
     ("damage" (("current" ,(write-to-string (damage-of obj)))
