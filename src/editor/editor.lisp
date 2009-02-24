@@ -4,7 +4,7 @@
   ((target :accessor target-of :initarg :target)
    (target-desc :accessor target-desc-of :initarg :target-desc)
    (old-buffer :accessor old-buffer-of :initarg :old-buffer)
-   (buffer :accessor buffer-of :initarg :buffer)
+   (buffer :accessor buffer-of :initarg :buffer :initform '())
    (state :accessor state-of :initform 'active)))
 
 (defclass text-editor (editor)
@@ -181,26 +181,45 @@
      (cxn-write cxn "Why would you send a blank message?~%"))
     (t
      (let ((mail (read-object +mail-obj-vnum+)))
+       (setf (creation-method-of mail) :unknown)
        (setf (action-desc-of mail)
-             (format nil " * * * *  Tempus Mail System  * * * *~%Date: ~a~%  To: ~a~%From: ~a~%~%~a"
-                     (format-timestring nil (now))
-                     (name-of (actor-of cxn))
+             (format nil " * * * *  Tempus Mail System  * * * *~%Date: ~a~%  To: ~{~a~^, ~}~%From: ~a~%~%~a"
+                     (format-timestring nil (now)
+                                        :format '(:short-month #\space
+                                                  (:day 2 #\space) #\space
+                                                  :hour #\:
+                                                  (:min 2) #\:
+                                                  (:sec 2) #\space
+                                                  :year))
+                     (mapcar 'retrieve-player-name (recipients-of editor))
                      (name-of (actor-of cxn))
                      buf))
+
+       (when (and (actor-of cxn)
+                  (immortal-level-p (actor-of cxn)))
+         (act (actor-of cxn)
+              :place-emit "$n postmarks and dispatches $s mail."))
+
+       (cxn-write cxn "Message sent!~%")
+
        (dolist (recipient (recipients-of editor))
          (let* ((mail-path (mail-pathname recipient))
-                (old-mail (when (probe-file mail-path)
-                           (with-open-file (inf mail-path)
-                             (xmls:parse inf)))))
+                (old-mail (ignore-errors
+                            (when (probe-file mail-path)
+                              (with-open-file (inf mail-path)
+                                (cddr (xmls:parse inf)))))))
            (with-open-file (ouf mail-path :direction :output
                                 :if-exists :rename-and-delete
                                 :if-does-not-exist :create)
              (write-string
-              (xmls:toxml (append old-mail (list (serialize-object mail)))))))
+              (xmls:toxml `("objects" nil ,@old-mail ,(serialize-object mail)))
+              ouf)))
 
          (let ((target (gethash recipient *character-map*)))
            (when target
-             (send-to-char target "A strange voice in your head says, 'You have new mail.'~%"))))))))
+             (send-to-char target "A strange voice in your head says, 'You have new mail.'~%")))))))
+
+  (setf (state-of cxn) 'playing))
 
 (defun start-text-editor (cxn target target-desc old-buffer finalizer cancel-func)
   (let ((split-buffer (butlast (split-sequence #\newline old-buffer))))
