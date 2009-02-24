@@ -1034,8 +1034,7 @@ else is noticable about your character?
     (cxn-write cxn "&n~3d&B] &n"
                (1+ (length (buffer-of (mode-data-of cxn))))))
   (menu (cxn)
-    (send-editor-header cxn)
-    (refresh-screen (mode-data-of cxn) cxn))
+    (editor-start (mode-data-of cxn) cxn))
   (input (cxn line)
     (editor-input (mode-data-of cxn) cxn line)))
 
