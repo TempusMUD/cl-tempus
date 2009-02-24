@@ -1361,7 +1361,7 @@
             (logand (flags-of search) (lognot +search-tripped+))))))
 
 (defun fread-string (inf)
-  (with-output-to-string (s)
+  (with-output-to-string (s nil :element-type 'base-char)
     (loop
        for line = (read-line inf)
        as tilde-pos = (position #\~ line)
