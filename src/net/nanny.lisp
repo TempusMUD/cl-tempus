@@ -149,6 +149,7 @@
     ((null (account-of cxn))
      (mudlog 'info t "Closing connection without account"))
     ((and (eql (state-of cxn) 'playing) (actor-of cxn))
+     (account-logout (account-of cxn) cxn)
      (setf (link-of (actor-of cxn)) nil)
      (mudlog 'notice t "~a has lost link; ~a logged out"
              (name-of (actor-of cxn))
@@ -156,6 +157,7 @@
      (when (in-room-of (actor-of cxn))
        (act (actor-of cxn) :place-emit "$n has lost $s link.")))
     (t
+     (account-logout (account-of cxn) cxn)
      (mudlog 'notice t "~a logged out" (name-of (account-of cxn))))))
 
 (defun apply-player-alias (actor alias args)
@@ -207,7 +209,6 @@
                                           (mod idnum 10)))))
 
 (defun player-to-game (player)
-  (setf (login-time-of player) (now))
   (send-to-char player "&R~a&n" +welcome-message+)
   (char-to-room player
                 (or (real-room (or (load-room-of player)
@@ -233,9 +234,26 @@
     (setf (hitp-of player) 1))
   (push player *characters*)
   (setf (gethash (idnum-of player) *character-map*) player)
+
   (look-at-room player (in-room-of player) nil)
+
   (when (has-mail (idnum-of player))
     (send-to-char player "You have new mail.~%"))
+  (when (and (plusp (clan-of player))
+             (null (real-clan (clan-of player))))
+    (setf (clan-of player) 0)
+    (send-to-char player "Your clan has been disbanded.~%"))
+
+  ;; Remove bits
+  (setf (plr-bits-of player) (logandc2 (plr-bits-of player)
+                                       (logior +plr-cryo+ +plr-writing+
+                                                +plr-olc+ +plr-mailing+
+                                                +plr-afk+)))
+  (setf (bitp (prefs-of player) +pref-worldwrite+) nil)
+
+  (check-dyntext-updates player nil)
+
+  (setf (login-time-of player) (now))
   (save-player-to-xml player))
 
 (defun send-section-header (cxn str)
@@ -279,10 +297,10 @@
       (cxn-write cxn "~%Invalid password.~%~%")
       (setf (state-of cxn) 'login))
      ((players-of (account-of cxn))
-      (account-login (account-of cxn))
+      (account-login (account-of cxn) cxn)
       (setf (state-of cxn) 'main-menu))
      (t
-      (account-login (account-of cxn))
+      (account-login (account-of cxn) cxn)
       (setf (state-of cxn) 'new-player-name)))))
 
 (define-connection-state new-account
@@ -433,7 +451,7 @@ choose a password to use on this system.
   (input (cxn line)
    (cond
      ((check-password (account-of cxn) line)
-      (setf (state-of cxn) 'main-menu))
+      (setf (state-of cxn) 'new-player-name))
      (t
       (cxn-write cxn "~%The passwords did not match!  Try again!~%")
       (setf (password-of (account-of cxn)) nil)

@@ -139,9 +139,18 @@ be loaded from the database or it may be retrieved from a cache."
             'bank-future (future-bank-of account)
             :where (:= 'idnum (idnum-of account)))))
 
-(defun account-login (account)
+(defun account-login (account cxn)
   "Performs necessary tasks for an account upon a successful login."
+  (setf (login-time-of account) (now))
+  (setf (login-addr-of account) (peer-addr cxn))
+  (save-account account)
   (syslog "~a logged in" (name-of account)))
+
+(defun account-logout (account cxn)
+  (setf (login-time-of account) (now))
+  (setf (login-addr-of account) (peer-addr cxn))
+  (save-account account)
+  (syslog "~a logged out" (name-of account)))
 
 ;;; Support for encrypted password transmission
 (cffi:define-foreign-library libcrypt

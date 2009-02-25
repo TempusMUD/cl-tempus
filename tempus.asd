@@ -88,7 +88,7 @@
              (:file "creature-io" :pathname "structs/creature-io"
                                   :depends-on ("creature"))
              (:file "dyntext" :pathname "dyntext/dyntext"
-                              :depends-on ("defs" "utils"))
+                              :depends-on ("defs" "creature" "editor"))
              (:file "editor" :pathname "editor/editor"
                              :depends-on ("network" "creature"))
              (:file "fight" :pathname "combat/fight"
