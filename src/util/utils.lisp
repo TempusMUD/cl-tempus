@@ -109,15 +109,19 @@
                      :reg-starts reg-starts
                      :reg-ends reg-ends))))
 
-(defun snarf-file (path)
+(defun snarf-file (path &key ignore-errors)
   "Returns a string with the contents of the file at PATH."
-  (handler-case
+  (if ignore-errors
+      (or (ignore-errors
+            (with-open-file (inf path :direction :input)
+              (let ((buf (make-string (file-length inf))))
+                (read-sequence buf inf)
+                buf)))
+          "")
       (with-open-file (inf path :direction :input)
         (let ((buf (make-string (file-length inf))))
           (read-sequence buf inf)
-          buf))
-    (error ()
-      "")))
+          buf))))
 
 (defun mud-time-passed (t2 t1)
   "Calculate the MUD time passed over the last t2-t1 centuries (secs)"
@@ -527,9 +531,12 @@ sequences in seq-list with the delimiter between each element"
   (defparameter *tempus-root-pathname*
     (asdf:component-pathname (asdf:find-system "tempus"))))
 
-(defun tempus-path (path)
+(defun tempus-path (fmt &rest args)
   "Returns the local pathname merged with the root tempus path."
-  (merge-pathnames path *tempus-root-pathname*))
+  (let ((path (if args
+                  (format nil "~?" fmt args)
+                  fmt)))
+    (merge-pathnames path *tempus-root-pathname*)))
 
 (defun send-page (cxn)
   "Sends a single buffered page to CXN.  If any of the page is left, displays the more prompt."
