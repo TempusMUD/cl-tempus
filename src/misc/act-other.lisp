@@ -23,6 +23,9 @@
 (define-toggle-command "autoprompt" () +pref-autoprompt+
                        "Your prompt will now be redrawn after every message you receive."
                        "Your prompt will now be displayed only after carriage returns.")
+(define-toggle-command "autowrap" () +pref-nowrap+
+                       "TUNES will not wrap your text at 76 colums next time."
+                       "TUNES will now wrap your text at 76 columns.")
 (define-toggle-command "brief" () +pref-brief+
                        "Brief mode on."
                        "Brief mode off.")

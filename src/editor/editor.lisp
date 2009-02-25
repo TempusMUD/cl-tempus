@@ -29,7 +29,7 @@
 
 (defun send-line-number (cxn num)
   "Send the given line number to the actor."
-    (cxn-write cxn "&n~3d&b] &n" num))
+  (cxn-write cxn "&n~3d&b] &n" num))
 
 (defun send-editor-header (cxn)
   (cxn-write cxn "&C     *&Y TUNED &B] ~
@@ -154,6 +154,18 @@
 (defmethod editor-abort ((editor text-editor) cxn)
   (funcall (cancel-func-of editor) cxn (target-of editor)))
 
+(defun editor-word-wrap (string width)
+  "Given an initial string, returns the string broken up into lines breaking on word boundaries."
+  (loop
+     for raw-wrap-pos = width then (+ wrap-pos width)
+     until (> raw-wrap-pos (length string))
+     for start-pos = 0 then (1+ wrap-pos)
+     for wrap-pos = (or (position-if-not #'alpha-char-p string :end raw-wrap-pos :from-end t)
+                        raw-wrap-pos)
+     collect (string-trim " " (subseq string start-pos wrap-pos)) into result
+     finally (return (nconc result (list (string-trim " " (subseq string wrap-pos)))))))
+
+
 (defmethod editor-input ((editor editor) cxn line)
   (let ((editor (mode-data-of cxn)))
     (cond
@@ -168,7 +180,11 @@
       ((eql (char line 0) #\.)
        (refresh-screen editor cxn))
       (t
-       (setf (buffer-of editor) (nconc (buffer-of editor) (list line)))))
+       (setf (buffer-of editor)
+             (if (and (actor-of cxn)
+                      (not (pref-flagged (actor-of cxn) +pref-nowrap+)))
+                 (nconc (buffer-of editor) (editor-word-wrap line 72))
+                 (nconc (buffer-of editor) (list line))))))
 
     (case (state-of editor)
       (finished
@@ -281,6 +297,11 @@
            (when target
              (send-to-char target "A strange voice in your head says, 'You have new mail.'~%")))))))
 
+  (setf (mode-data-of cxn) nil)
+  (setf (state-of cxn) 'playing))
+
+(defmethod editor-abort ((editor mail-editor) cxn)
+  (setf (mode-data-of cxn) nil)
   (setf (state-of cxn) 'playing))
 
 (defun start-text-editor (cxn target target-desc old-buffer finalizer cancel-func)
