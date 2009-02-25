@@ -140,10 +140,10 @@
   (when *parser-trace*
     (slog "~?" fmt args)))
 
-(defun command-pattern-matches (cmd string)
+(defun command-pattern-matches (pattern string)
   (loop
      with vars = nil
-     with tokens = (command-info-pattern cmd)
+     with tokens = pattern
      while tokens
      for token = (car tokens)
      do
@@ -171,16 +171,20 @@
                 (push (subseq string 0 space-pos) vars)
                 (setf string (subseq string (1+ space-pos)))))
              ((stringp (first tokens))
-              (let ((match-pos (search (first tokens) string)))
-                (unless match-pos
-                  (trace-msg "No match - Next token is string and not found")
+              (let ((space-pos (position #\space string)))
+                (unless space-pos
+                  (trace-msg "No match - Next token is string and no space found")
                   (return-from command-pattern-matches nil))
-                (trace-msg "Next token is str - Pushing subseq into var")
-                (push (string-trim '(#\space)
-                                   (subseq string 0 match-pos)) vars)
-                ;; We skip the next token, since we've already matched it
-                (setf string (string-trim '(#\space) (subseq string (+ match-pos (length (first tokens))))))
-                (setf tokens (rest tokens))))))
+                (let ((match-pos (search (first tokens) string :start2 space-pos)))
+                  (unless match-pos
+                    (trace-msg "No match - Next token is string and not found")
+                    (return-from command-pattern-matches nil))
+                  (trace-msg "Next token is str - Pushing subseq into var")
+                  (push (string-trim '(#\space)
+                                     (subseq string 0 match-pos)) vars)
+                  ;; We skip the next token, since we've already matched it
+                  (setf string (string-trim '(#\space) (subseq string (+ match-pos (length (first tokens))))))
+                  (setf tokens (rest tokens)))))))
           ((characterp token)
            (trace-msg "Matching character ~a" token)
            (unless (eql token (char string 0))
@@ -222,7 +226,7 @@
                    groups)))))
 
 (defun command-matches (ch command arg)
-  (let ((match (command-pattern-matches command arg)))
+  (let ((match (command-pattern-matches (command-info-pattern command) arg)))
     (when (and match (can-do-command ch command))
       match)))
 
