@@ -15,6 +15,16 @@
        (setf (gethash ,name-str *special-funcs*) ',func-sym)
        (setf (gethash ,name-str *special-flags*) (logior ,@flags)))))
 
+(defcommand (ch "mail") (:standing)
+  (send-to-char ch "Sorry, but you cannot do that here!~%"))
+
+(defcommand (ch "mail" recipients) (:standing)
+  (declare (ignore recipients))
+  (send-to-char ch "Sorry, but you cannot do that here!~%"))
+
+(defcommand (ch "receive") (:standing)
+  (send-to-char ch "Sorry, but you cannot do that here!~%"))
+
 (define-special postmaster (trigger self ch command vars) (+spec-mob+)
   (when (and (eql trigger 'command)
              (not (is-npc ch)))
@@ -51,7 +61,7 @@
             (save-player-objects ch)
             (delete-file mail-path)
             (act self :target ch
-                 :target-emit (format nil "$n gives you ~d piece~:p of mail"
+                 :target-emit (format nil "$n gives you ~d piece~:p of mail."
                                       (length letters))
                  :not-target-emit "$n gives some mail to $N."))))
        t))))
