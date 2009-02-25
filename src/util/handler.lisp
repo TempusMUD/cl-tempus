@@ -447,7 +447,7 @@
     (setf (olc-srch-of ch) nil))
 
   (when check-specials-p
-    (perform-special ch nil nil nil :leave))
+    (check-specials 'leave ch nil nil))
 
   (setf (people-of (in-room-of ch)) (delete ch (people-of (in-room-of ch))))
   (setf (in-room-of ch) nil))
