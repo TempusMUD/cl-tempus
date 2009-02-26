@@ -476,11 +476,14 @@ sequences in seq-list with the delimiter between each element"
                (char str idx)))
               result)))))
 
-(defun string-abbrev (abbrev str)
+(defun string-abbrev (abbrev str &key (start2 0) end2)
   "Returns T if ABBREV is at least one character, and is an abbreviation of STR."
   (let ((abbrev-len (length abbrev)))
     (unless (or (zerop abbrev-len) (> abbrev-len (length str)))
-      (string-equal abbrev str :end2 abbrev-len))))
+      (string-equal abbrev str :start2 start2 :end2 (if end2
+                                                        (min (+ start2 abbrev-len)
+                                                             end2)
+                                                        (+ start2 abbrev-len))))))
 
 (defun string-replace (needle haystack replacement)
   "Returns a copy of HAYSTACK with all instances of NEEDLE replaced by REPLACMENT.  NEEDLE must be a string of at least one character."
