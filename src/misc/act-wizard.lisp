@@ -210,7 +210,7 @@
                     (pressure-of weather)
                     (change-of weather)))
     (send-to-char ch "Flags: &g~a ~a&n~%"
-                  (printbits (flags-of zone) +zone-flags+)
+                  (printbits (flags-of zone) +zone-flags+ "NONE")
                   (aref +zone-pk-flags+ (pk-style-of zone)))
     (when (min-lvl-of zone)
       (send-to-char ch "Target lvl/gen: [~2d/~2d - ~2d/~2d]~%"
@@ -321,7 +321,7 @@
                                (if (plusp (to-dir-of trail))
                                    (aref +dirs+ (to-dir-of trail)) "NONE")
                                (track-of trail)
-                               (printbits (flags-of trail) +trail-flags+)))))
+                               (printbits (flags-of trail) +trail-flags+ "NONE")))))
       (send-to-char ch "No trails exist within this room.~%")))
 
 (defun find-spec-name (spec)
@@ -484,7 +484,7 @@
                   (max-occupancy-of room))
     (send-to-char ch "SpecProc: ~a, Flags: ~a~%"
                   (find-spec-name (func-of room))
-                  (printbits (flags-of room) +room-bits+))
+                  (printbits (flags-of room) +room-bits+ "NONE"))
     (when (plusp (flow-speed-of room))
       (send-to-char ch "Flow (Direction: ~a, Speed: ~d, Type: ~a (~d)).~%"
                     (aref +dirs+ (flow-dir-of room))
@@ -523,7 +523,7 @@
                       (if (string/= "" (keyword-of (abs-exit room dir)))
                           (keyword-of (abs-exit room dir))
                           "None")
-                      (printbits (exit-info-of (abs-exit room dir)) +exit-bits+))
+                      (printbits (exit-info-of (abs-exit room dir)) +exit-bits+ "NONE"))
         (if (string/= "" (description-of (abs-exit room dir)))
             (send-to-char ch "~a" (description-of (abs-exit room dir)))
             (send-to-char ch "  No exit description.~%"))))
@@ -611,18 +611,18 @@
                         "NOONE")
                     (owner-id-of (shared-of obj))))
     (send-to-char ch "Can be worn on: ~a~%"
-                  (printbits (wear-flags-of obj) +wear-bits-desc+))
+                  (printbits (wear-flags-of obj) +wear-bits-desc+ "NONE"))
     (unless (every #'zerop (bitvector-of obj))
       (send-to-char ch "Set char bits : ~@{~a~^ ~}~%"
-                    (printbits (aref (bitvector-of obj) 0) +affected-bits+)
-                    (printbits (aref (bitvector-of obj) 1) +affected2-bits+)
-                    (printbits (aref (bitvector-of obj) 2) +affected3-bits+)))
+                    (printbits (aref (bitvector-of obj) 0) +affected-bits+ "")
+                    (printbits (aref (bitvector-of obj) 1) +affected2-bits+ "")
+                    (printbits (aref (bitvector-of obj) 2) +affected3-bits+ "")))
     (send-to-char ch "Extra flags : ~a~%"
-                  (printbits (extra-flags-of obj) +extra-bits+))
+                  (printbits (extra-flags-of obj) +extra-bits+ "NONE"))
     (send-to-char ch "Extra2 flags: ~a~%"
-                  (printbits (extra2-flags-of obj) +extra2-bits+))
+                  (printbits (extra2-flags-of obj) +extra2-bits+ "NONE"))
     (send-to-char ch "Extra3 flags: ~a~%"
-                  (printbits (extra3-flags-of obj) +extra3-bits+))
+                  (printbits (extra3-flags-of obj) +extra3-bits+ "NONE"))
     (send-to-char ch "Weight: ~d, Cost: ~d, Rent: ~d, Timer: ~d~%"
                   (weight-of obj)
                   (cost-of (shared-of obj))
@@ -673,7 +673,7 @@
                         (list-obj-to-char str (contains-of obj) ch :content t))))
       (unless (zerop (soilage-of obj))
         (send-to-char ch "Soilage: ~a~%"
-                      (printbits (soilage-of obj) +soilage-bits+)))
+                      (printbits (soilage-of obj) +soilage-bits+ "")))
 
       (unless (zerop (sigil-idnum-of obj))
         (send-to-char ch "Warding Sigil: ~a (~d), level ~d~%"
@@ -959,11 +959,11 @@
 
     (cond
       ((is-npc k)
-       (send-to-char ch "NPC flags: &c~a&n~%" (printbits (mob-flags-of k) +action-bits+))
-       (send-to-char ch "NPC flags(2): &c~a&n~%" (printbits (mob2-flags-of k) +action2-bits+)))
+       (send-to-char ch "NPC flags: &c~a&n~%" (printbits (mob-flags-of k) +action-bits+ "NONE"))
+       (send-to-char ch "NPC flags(2): &c~a&n~%" (printbits (mob2-flags-of k) +action2-bits+ "NONE")))
       (t
-       (send-to-char ch "PLR: &c~a&n~%" (printbits (plr-bits-of k) +player-bits+))
-       (send-to-char ch "PLR2: &c~a&n~%" (printbits (plr2-bits-of k) +player2-bits+))
+       (send-to-char ch "PLR: &c~a&n~%" (printbits (plr-bits-of k) +player-bits+ "NONE"))
+       (send-to-char ch "PLR2: &c~a&n~%" (printbits (plr2-bits-of k) +player2-bits+ "NONE"))
        (send-to-char ch "PRF: &c~a&n~%" (printbitarray (prefs-of k) +preference-bits+))
        (when (plr-flagged k +plr-frozen+)
          (send-to-char ch "&cFrozen by: ~a" (retrieve-player-name (freezer-id-of k)))
@@ -1009,11 +1009,11 @@
                     (mapcar 'name-of (followers-of k))))
 
     (when (plusp (aff-flags-of k))
-      (send-to-char ch "AFF: &y~a&n~%" (printbits (aff-flags-of k) +affected-bits+)))
+      (send-to-char ch "AFF: &y~a&n~%" (printbits (aff-flags-of k) +affected-bits+ "NONE")))
     (when (plusp (aff2-flags-of k))
-      (send-to-char ch "AFF2: &y~a&n~%" (printbits (aff2-flags-of k) +affected2-bits+)))
+      (send-to-char ch "AFF2: &y~a&n~%" (printbits (aff2-flags-of k) +affected2-bits+ "NONE")))
     (when (plusp (aff3-flags-of k))
-      (send-to-char ch "AFF3: &y~a&n~%" (printbits (aff3-flags-of k) +affected3-bits+)))
+      (send-to-char ch "AFF3: &y~a&n~%" (printbits (aff3-flags-of k) +affected3-bits+ "NONE")))
 
     (when (and (eql (position-of k) +pos-sitting+)
                (aff2-flagged k +aff2-meditate+))
@@ -1079,11 +1079,11 @@
         (when (bitvector-of aff)
           (case (aff-index-of aff)
             (1
-             (send-to-char ch "sets ~a" (printbits (bitvector-of aff) +affected-bits+)))
+             (send-to-char ch "sets ~a" (printbits (bitvector-of aff) +affected-bits+ "NONE")))
             (2
-             (send-to-char ch "sets ~a" (printbits (bitvector-of aff) +affected2-bits+)))
+             (send-to-char ch "sets ~a" (printbits (bitvector-of aff) +affected2-bits+ "NONE")))
             (3
-             (send-to-char ch "sets ~a" (printbits (bitvector-of aff) +affected3-bits+)))))
+             (send-to-char ch "sets ~a" (printbits (bitvector-of aff) +affected3-bits+ "NONE")))))
         (send-to-char ch "~%")))))
 
 (defun perform-oload (ch count vnum)
@@ -1687,7 +1687,8 @@
 (defcommand (ch "advance")
     (send-to-char ch "Advance who?~%"))
 
-(defcommand (ch "advance" name)
+(defcommand (ch "advance" name) ()
+    (declare (ignore name))
     (send-to-char ch "Advance them to what level?~%"))
 
 (defcommand (ch "advance" target-str level-str) (:immortal)

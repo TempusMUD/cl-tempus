@@ -534,12 +534,14 @@
     (setf (extra2-flags-of obj) (logandc2 (extra2-flags-of obj) +item2-hidden+))
     obj))
 
-(defun printbits (bits descriptions)
-  (format nil "~{~a~^ ~}"
-          (loop for idx from 0
-             for descrip across descriptions
-             when (logtest bits (ash 1 idx))
-             collect descrip)))
+(defun printbits (bits descriptions zero-desc)
+  (if (zerop bits)
+      zero-desc
+      (format nil "~{~a~^ ~}"
+              (loop for idx from 0
+                 for descrip across descriptions
+                 when (logtest bits (ash 1 idx))
+                 collect descrip))))
 
 (defun printbitarray (bits descriptions)
   (format nil "~{~a~^ ~}"
