@@ -20,12 +20,17 @@
 (defconstant +hflag-modified+ (ash 1 2)) ; help topic has been modified
 
 (defparameter +help-flags+ #("!APP" "IMM+" "MOD"))
+(defparameter +help-flag-names+ #("unapproved" "immortal" "modified"))
 
-(defparameter +help-groups+
+(defparameter +help-group-flags+
   #("OLC" "MISC" "NEWB" "SKIL" "SPEL" "CLAS" "CITY" "PLR" "MAGE" "CLE"
     "THI" "WAR" "BARB" "PSI" "PHY" "CYB" "KNIG" "RANG" "BARD" "MONK"
     "MERC" "HEDT" "HGOD" "IMM" "QCTR"))
 
+(defparameter +help-group-names+
+  #("olc" "misc" "newbie" "skill" "spell" "class" "city" "player" "mage"
+    "cleric" "thief" "warrior" "barb" "psionic" "physic" "cyborg" "knight"
+    "ranger" "bard" "monk" "merc" "helpeditors" "helpgod" "immhelp" "qcontrol"))
 
 (defvar *help-items* nil)
 
@@ -116,6 +121,18 @@
                  (return-from term-matches-keywords t))
                (setf start-pos (1+ end-pos))))))
     nil))
+
+(defun send-help-item-stat (ch item)
+  (load-help-item item)
+  (with-pagination ((link-of ch))
+    (send-to-char ch "&c~3d. &y~25a&cGroups:&n ~20a &cFlags: &n~a~%"
+                  (idnum-of item)
+                  (name-of item)
+                  (printbits (groups-of item) +help-group-flags+ "NOBITS")
+                  (printbits (flags-of item) +help-flags+ "NOBITS"))
+    (send-to-char ch "     &cKeywords: [ &n~a&c ]&n~%~a~%"
+                  (keywords-of item)
+                  (text-of item))))
 
 (defun send-help-item (ch item)
   (load-help-item item)
@@ -252,27 +269,63 @@ hcollect commands:
                           (setf (state-of cxn) 'playing))))))
 
 (defcommand (ch "hcollect" "set" "groups" plus-or-minus groups) (:immortal)
-  (let* ((group-names (split-sequence #\space groups))
-         (group-ids (mapcar (lambda (name)
-                              )
-                            group-names)))
-  (cond
-    ((null (olc-help-of ch))
-     (send-to-char ch "You have to be editing an item to set it.~%"))
-    (t
-     (dolist (group-name group-names)
-       (let ((group-id (position name +group-names+ :test #'string-equal)))
-         (cond
-           (group-id
-            (setf (groups-of (olc-help-of ch))
-                  (logior (groups-of (olc-help-of ch))
-                          (ash 1 group-id)))
-            (send-to-char ch "Item added to group ~a.~%" (aref +group-names+ group-id)))
-           (t
-            (send-to-char ch "'~a' is not a valid help group.~%" group-name)))))))))
+  (let ((group-names (split-sequence #\space groups)))
+    (cond
+      ((null (olc-help-of ch))
+       (send-to-char ch "You have to be editing an item to set it.~%"))
+      ((not (or (string= plus-or-minus "+")
+                (string= plus-or-minus "-")))
+       (send-to-char ch "Usage: hcollect set groups +/- <groups>~%"))
+      (t
+       (dolist (group-name group-names)
+         (let ((group-id (position group-name +help-group-names+
+                                   :test 'string-abbrev)))
+           (cond
+             ((null group-id)
+              (send-to-char ch "'~a' is not a valid help group.~%" group-name))
+             ((string= plus-or-minus "-")
+              (setf (groups-of (olc-help-of ch))
+                    (logandc2 (groups-of (olc-help-of ch))
+                              (ash 1 group-id)))
+              (send-to-char ch "Item removed from group ~a.~%"
+                            (aref +help-group-names+ group-id)))
+             (t
+              (setf (groups-of (olc-help-of ch))
+                    (logior (groups-of (olc-help-of ch))
+                            (ash 1 group-id)))
+              (send-to-char ch "Item added to group ~a.~%" (aref +help-group-names+ group-id))))))))))
 
 (defcommand (ch "hcollect" "set" "flags" plus-or-minus flags) (:immortal)
-  nil)
+  (let ((flag-names (split-sequence #\space flags)))
+    (cond
+      ((null (olc-help-of ch))
+       (send-to-char ch "You have to be editing an item to set it.~%"))
+      ((not (or (string= plus-or-minus "+")
+                (string= plus-or-minus "-")))
+       (send-to-char ch "Usage: hcollect set flags +/- <flags>~%"))
+      (t
+       (dolist (flag-name flag-names)
+         (let ((flag-id (position flag-name +help-flag-names+
+                                   :test 'string-abbrev)))
+           (cond
+             ((null flag-id)
+              (send-to-char ch "'~a' is not a valid help flag.~%" flag-name))
+             ((string= plus-or-minus "-")
+              (setf (flags-of (olc-help-of ch))
+                    (logandc2 (flags-of (olc-help-of ch))
+                              (ash 1 flag-id)))
+              (send-to-char ch "Flag ~a unset on item.~%"
+                            (aref +help-flag-names+ flag-id)))
+             (t
+              (setf (flags-of (olc-help-of ch))
+                    (logior (flags-of (olc-help-of ch))
+                            (ash 1 flag-id)))
+              (send-to-char ch "Flag ~a set on item.~%" (aref +help-flag-names+ flag-id))))))))))
+
+(defcommand (ch "hcollect" "stat") (:immortal)
+  (if (olc-help-of ch)
+      (send-help-item-stat ch (olc-help-of ch))
+      (send-to-char ch "Stat which item?~%")))
 
 (defcommand (ch "hcollect" "stat" topic) (:immortal)
   (let* ((idnum (parse-integer topic :junk-allowed t))
@@ -283,16 +336,7 @@ hcollect commands:
       ((null item)
        (send-to-char ch "Unable to find item.~%"))
       (t
-       (load-help-item item)
-       (with-pagination ((link-of ch))
-        (send-to-char ch "&c~3d. &y~25a&cGroups:&n ~20a &cFlags: &n~a~%"
-                      (idnum-of item)
-                      (name-of item)
-                      (printbits (groups-of item) +help-groups+ "NOBITS")
-                      (printbits (flags-of item) +help-flags+ "NOBITS"))
-        (send-to-char ch "     &cKeywords: [ &n~a&c ]&n~%~a~%"
-                      (keywords-of item)
-                      (text-of item)))))))
+       (send-help-item-stat ch item)))))
 
 (defcommand (ch "hcollect" "search" term) (:immortal)
   (with-pagination ((link-of ch))
@@ -301,7 +345,7 @@ hcollect commands:
         (send-to-char ch "&c~3d. &y~25a&cGroups:&n ~20a &cFlags: &n~a~%"
                       (idnum-of item)
                       (name-of item)
-                      (printbits (groups-of item) +help-groups+ "NOBITS")
+                      (printbits (groups-of item) +help-group-flags+ "NOBITS")
                       (printbits (flags-of item) +help-flags+ "NOBITS"))))))
 
 (defcommand (ch "hcollect" "unapprove" topic) (:immortal)
@@ -352,15 +396,20 @@ hcollect commands:
 
 (defcommand (ch "help" topic) ()
   (dolist (item *help-items*)
-    (when (term-matches-keywords topic (keywords-of item))
+    (when (and (not (zerop (logand (ash 1 7) (groups-of item))))
+               (term-matches-keywords topic (keywords-of item))
+               (or (zerop (logand (flags-of item) +hflag-immhelp+))
+                   (immortal-level-p ch))
+               (or (zerop (logand (flags-of item) +hflag-unapproved+))
+                   (security-is-member ch "Help")))
       (send-help-item ch item)
       (return-from do-help-topic)))
   (send-to-char ch "No items were found matching your search criteria.~%"))
 
-(defcommand (ch "immhelp") ()
+(defcommand (ch "immhelp") (:immortal)
   (send-help-item ch (find 699 *help-items* :key 'idnum-of)))
 
-(defcommand (ch "immhelp" topic) ()
+(defcommand (ch "immhelp" topic) (:immortal)
   (dolist (item *help-items*)
     (when (and (not (zerop (logand (ash 1 23) (groups-of item))))
                (term-matches-keywords topic (keywords-of item)))
@@ -368,10 +417,10 @@ hcollect commands:
       (return-from do-immhelp-topic)))
   (send-to-char ch "No items were found matching your search criteria.~%"))
 
-(defcommand (ch "olchelp") ()
+(defcommand (ch "olchelp") (:immortal)
   (send-help-item ch (find 700 *help-items* :key 'idnum-of)))
 
-(defcommand (ch "olchelp" topic) ()
+(defcommand (ch "olchelp" topic) (:immortal)
   (dolist (item *help-items*)
     (when (and (not (zerop (logand 1 (groups-of item))))
                (term-matches-keywords topic (keywords-of item)))
