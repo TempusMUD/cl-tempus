@@ -99,7 +99,9 @@
   nil)
 
 (defun renum-zone-table ()
-  (setf *zone-table* (sort *zone-table* #'< :key 'number-of)))
+  (setf *zone-table* (sort *zone-table* #'< :key 'number-of))
+  (dolist (zone *zone-table*)
+    (setf (world-of zone) (sort (world-of zone) #'< :key 'number-of))))
 
 (defun xml-boot ()
   nil)
@@ -385,10 +387,10 @@
         (error "Format error in ~a file near ~a #~d~%Offending line: '~a'~%"
                mode mode nr line))))))
 
-(defun asciiflag-conv (flag &key (start 0) end)
+(defun asciiflag-to-bits (flag &key (start 0) end)
   (loop
      with result = 0
-     for idx from start upto (or end (1- (length flag)))
+     for idx from start upto (1- (or end (length flag)))
      as char = (char flag idx)
      as code = (char-code char)
      when (alpha-char-p char)
@@ -399,10 +401,26 @@
               1)
      finally (return result)))
 
+(defun bits-to-asciiflag (bits)
+  (if (zerop bits)
+      "0"
+      (with-output-to-string (str)
+        (loop
+           for bit from 0 upto 25
+           when (logtest bits (ash 1 bit))
+           do (write-char (code-char (+ (char-code #\a) bit)) str))
+        (loop
+           for bit from 26 upto 31
+           when (logtest bits (ash 1 bit))
+           do (write-char (code-char (+ (char-code #\A) (- bit 26))) str)))))
+
+(defun zone-containing-number (num)
+  (find-if (lambda (zone)
+             (<= (* (number-of zone) 100) num (top-of zone)))
+           *zone-table*))
+
 (defun parse-room (inf vnum-nr)
-  (let ((zone (find-if (lambda (zone)
-                         (<= (* (number-of zone) 100) vnum-nr (top-of zone)))
-                       *zone-table*)))
+  (let ((zone (zone-containing-number vnum-nr)))
     (unless zone
       (error "Room ~d is outside of any zone.~%" vnum-nr))
 
@@ -418,7 +436,7 @@
           (unless result
             (error "Format error in room #~d~%" vnum-nr))
 
-          (setf (flags-of room) (asciiflag-conv (regref result 2)))
+          (setf (flags-of room) (asciiflag-to-bits (regref result 2)))
           (setf (terrain-of room) (parse-integer (regref result 3)))
           (setf zone (real-zone (parse-integer (regref result 1)))))
 
@@ -520,7 +538,7 @@
       (multiple-value-bind (start end reg-starts reg-ends)
           (cl-ppcre:scan #/^(\S+)\s+([0-9-]+)\s+([-0-9]+)/ line)
         (declare (ignore start end))
-        (setf (exit-info-of room-dir) (asciiflag-conv line
+        (setf (exit-info-of room-dir) (asciiflag-to-bits line
                                                       :start (aref reg-starts 0)
                                                       :end (aref reg-ends 0)))
         (setf (key-of room-dir) (parse-integer line
@@ -701,11 +719,11 @@
     (let* ((line (get-line inf))
            (result (scan #/^(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+([\d-]+)\s+(.)/ line)))
       (assert result nil "Illegal flag line of mobile ~d: ~s~%" nr line)
-      (setf (mob-flags-of mobile) (asciiflag-conv (regref result 1))
-            (mob2-flags-of mobile) (asciiflag-conv (regref result 2))
-            (aff-flags-of mobile) (asciiflag-conv (regref result 3))
-            (aff2-flags-of mobile) (asciiflag-conv (regref result 4))
-            (aff3-flags-of mobile) (asciiflag-conv (regref result 5))
+      (setf (mob-flags-of mobile) (asciiflag-to-bits (regref result 1))
+            (mob2-flags-of mobile) (asciiflag-to-bits (regref result 2))
+            (aff-flags-of mobile) (asciiflag-to-bits (regref result 3))
+            (aff2-flags-of mobile) (asciiflag-to-bits (regref result 4))
+            (aff3-flags-of mobile) (asciiflag-to-bits (regref result 5))
             (alignment-of mobile) (parse-integer (regref result 6))
             mob-type (char (regref result 7) 0)))
 
@@ -802,11 +820,11 @@
     (let ((result (scan #/(\d+) (\S+) (\S+) (\S+)(?: (\S+))?/ (get-line inf))))
       (assert result nil "Expected 4 or 5 args in first numeric line, object ~d" nr)
       (setf (kind-of obj) (parse-integer (regref result 1))
-            (extra-flags-of obj) (asciiflag-conv (regref result 2))
-            (extra2-flags-of obj) (asciiflag-conv (regref result 3))
-            (wear-flags-of obj) (asciiflag-conv (regref result 4))
+            (extra-flags-of obj) (asciiflag-to-bits (regref result 2))
+            (extra2-flags-of obj) (asciiflag-to-bits (regref result 3))
+            (wear-flags-of obj) (asciiflag-to-bits (regref result 4))
             (extra3-flags-of obj) (if (regref result 5)
-                                      (asciiflag-conv (regref result 5))
+                                      (asciiflag-to-bits (regref result 5))
                                       0)))
 
     (let ((result (scan #/(\d+) ([\d-]+) ([\d-]+)(?: (\d+))?/ (get-line inf))))
@@ -881,7 +899,7 @@
             (assert (<= 1 num 3) nil "Extra index ~d is out of bounds, ~a"
                     num place)
             (setf (aref (bitvector-of obj) (1- num))
-                  (asciiflag-conv (regref result 2)))))
+                  (asciiflag-to-bits (regref result 2)))))
          (#\P
           (setf (func-param-of (shared-of obj)) (fread-string inf)))
          ((#\$ #\#)
@@ -962,7 +980,7 @@
         (setf (reset-mode-of new-zone) (parse-integer (regref result 3)))
         (setf (time-frame-of new-zone) (parse-integer (regref result 4)))
         (setf (plane-of new-zone) (parse-integer (regref result 5)))
-        (setf (flags-of new-zone) (asciiflag-conv (regref result 6)))
+        (setf (flags-of new-zone) (asciiflag-to-bits (regref result 6)))
         (setf (hour-mod-of new-zone) (parse-integer (regref result 7)))
         (setf (year-mod-of new-zone) (parse-integer (regref result 8)))
         (let ((str (regref result 9)))
@@ -998,7 +1016,7 @@
               (setf (prob-of new-zonecmd) (parse-integer (regref result 2)))
               (setf (arg1-of new-zonecmd) (parse-integer (regref result 3)))
               (setf (arg2-of new-zonecmd) (parse-integer (regref result 4)))
-              (setf (arg3-of new-zonecmd) (asciiflag-conv (regref result 5)))))
+              (setf (arg3-of new-zonecmd) (asciiflag-to-bits (regref result 5)))))
            (t
             (let ((result (scan #/^. ([-01]+)\s+(\d+)\s+(\d+)\s+(\d+)/ line)))
               (unless result

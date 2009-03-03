@@ -33,12 +33,13 @@
   (logtest (flags-of zone) bit))
 
 (defun zone-approvedp (zone)
-  (and (not (zone-flagged zone +zone-mobs-approved+))
-       (not (zone-flagged zone +zone-rooms-approved+))
-       (not (zone-flagged zone +zone-objs-approved+))
-       (not (zone-flagged zone +zone-search-approved+))
-       (not (zone-flagged zone +zone-zcmds-approved+))
-       (not (zone-flagged zone +zone-shops-approved+))))
+  (not
+   (or (zone-flagged zone +zone-mobs-approved+)
+       (zone-flagged zone +zone-rooms-approved+)
+       (zone-flagged zone +zone-objs-approved+)
+       (zone-flagged zone +zone-search-approved+)
+       (zone-flagged zone +zone-zcmds-approved+)
+       (zone-flagged zone +zone-shops-approved+))))
 
 (defparameter +plane-prime-1+ 0)
 (defparameter +plane-prime-2+ 1)

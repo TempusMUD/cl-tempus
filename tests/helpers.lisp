@@ -145,7 +145,7 @@
                                 (make-mock-mobile ,(string-capitalize var))))
             ,@(loop
                  for var in vars
-                 collect `(setup-mock-mobile ,var 3002))
+                 collect `(setup-mock-mobile ,var 100))
             ,@body)
        (handler-case
            (progn
@@ -245,7 +245,7 @@
                                 (make-mock-player ,(string-capitalize var) nil)))
             ,@(loop
                  for var in vars
-                 collect `(setup-mock-player ,var 3002))
+                 collect `(setup-mock-player ,var 100))
             ,@body)
        (handler-case
            (progn
@@ -264,17 +264,48 @@
                                 (make-mock-player ,(string-capitalize var) t)))
             ,@(loop
                  for var in vars
-                 collect `(setup-mock-player ,var 3002))
+                 collect `(setup-mock-player ,var 100))
             ,@(loop
                  for var in vars
                  collect `(clear-mock-buffers ,var))
             ,@body)
-;       (handler-case
            (progn
              ,@(loop for var in vars
                     collect `(destroy-mock-player ,var))))))
-;         (t (err)
-;           (stefil::record-failure 'stefil::error-in-teardown :condition err))))))
+
+(defun make-mock-room (name)
+  (let* ((room-num (loop for num from 100 upto 199
+                      when (null (tempus::real-room num)) do (return num)
+                      finally (return nil)))
+         (room (make-instance 'tempus::room-data
+                              :number room-num
+                              :name name
+                              :description (format nil "This is test room '~a'.~%" name)
+                              :zone (tempus::real-zone 1))))
+    (setf (gethash room-num tempus::*rooms*) room)
+    (push room (tempus::world-of (tempus::real-zone 1)))
+    room))
+
+(defun destroy-mock-room (room)
+  (remhash (tempus::number-of room) tempus::*rooms*)
+  (setf (tempus::world-of (tempus::zone-of room))
+        (delete room (tempus::world-of (tempus::zone-of room)))))
+
+(defmacro with-mock-rooms (vars &body body)
+  `(let ,vars
+     (unwind-protect
+          (progn
+            ,@(loop
+                 for var in vars
+                 collect `(setf ,var
+                                (make-mock-room ,(string-capitalize var))))
+            ,@body)
+       (handler-case
+           (progn
+             ,@(loop for var in vars
+                  collect `(destroy-mock-room ,var)))
+         (t (err)
+           (stefil::record-failure 'stefil::error-in-teardown :condition err))))))
 
 (defmacro with-captured-log (log expr &body body)
   `(let ((tempus::*log-output* (make-string-output-stream)))

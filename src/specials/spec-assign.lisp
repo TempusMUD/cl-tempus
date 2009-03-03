@@ -12,8 +12,12 @@
 (defvar *special-funcs* (make-hash-table :test 'equal))
 (defvar *special-flags* (make-hash-table :test 'equal))
 
-(defun find-spec-index-arg (str)
-  (position str *spec-list* :test #'string-equal))
+(defun find-special-by-func (search-func)
+  (maphash (lambda (name func)
+             (when (eql search-func func)
+               (return-from find-special-by-func name)))
+           *special-funcs*)
+  nil)
 
 (defun assign-specials (kind flag config-path retrieval-func setter-func)
   (handler-case

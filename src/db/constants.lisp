@@ -55,6 +55,7 @@
 (defparameter +dirs+ #("north" "east" "south" "west" "up" "down" "future" "past"))
 (defparameter +to-dirs+ #("north" "east" "south" "west" "up" "down" "into the future" "into the past"))
 (defparameter +from-dirs+ #("the south" "the west" "the north" "the east" "below" "above" "the past" "the future"))
+(defparameter +rev-dir+ #(2 3 0 1 5 4 7 6))
 (defparameter +num-of-dirs+ (length +dirs+))
 
 (defparameter +room-bits+
@@ -63,12 +64,27 @@
     "CLAN" "ARENA" "DOCK" "BURN" "FREEZ" "NULLMAG" "HOLYO" "RAD"
     "SLEEP" "EXPLOD" "POISON" "VACUUM" "\n"))
 
+(defparameter +room-flags+
+  #("dark" "deathtrap" "nomob" "indoor" "noviolence" "soundproof"
+    "notrack" "nomagic" "RES (tunnel)" "noteleport" "godroom"
+    "RES (house)" "RES (house crash)" "comfortable" "smoke-filled"
+    "noflee" "nopsionics" "noscience" "norecall" "clanroom" "arena"
+    "dock" "burning" "freezing" "nullmagic" "holyocean" "radioactive"
+    "sleep gas" "explosive gas" "poison gas" "vacuum"))
+
 (defparameter +exit-bits+
   #("DOOR" "CLOSED" "LOCKED" "PICKPROOF" "HEAVY" "HARD-PICK"
     "!MOB" "HIDDEN" "!SCAN" "TECH" "ONE-WAY" "NOPASS"
     "THORNS" "THORNS_NOPASS" "STONE" "ICE" "FIRE" "FIRE_NOPASS"
     "FLESH" "IRON" "ENERGY_F" "ENERGY_F_NOPASS" "FORCE" "SPECIAL"
     "REINF" "SECRET"))
+
+(defparameter +exit-flags+
+  #("door" "closed" "locked" "pickproof" "heavy" "hardpick"
+    "nomob" "hidden" "noscan" "tech" "oneway" "nopass"
+    "thorns" "thornsnopass" "stone" "ice" "fire" "firenopass"
+    "flesh" "iron" "energy" "energynopass" "force" "special"
+    "reinf" "secret"))
 
 (defparameter +sector-types+
   #("Inside" "City" "Field" "Forest" "Hills" "Mountains"

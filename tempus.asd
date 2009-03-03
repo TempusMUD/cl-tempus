@@ -88,7 +88,7 @@
              (:file "creature-io" :pathname "structs/creature-io"
                                   :depends-on ("creature"))
              (:file "dyntext" :pathname "dyntext/dyntext"
-                              :depends-on ("defs" "creature" "editor"))
+                              :depends-on ("defs" "creature" "editor" "interpreter"))
              (:file "editor" :pathname "editor/editor"
                              :depends-on ("network" "creature"))
              (:file "fight" :pathname "combat/fight"
@@ -100,7 +100,7 @@
              (:file "handler" :pathname "util/handler"
                               :depends-on ("defs"))
              (:file "help" :pathname "help/help"
-                           :depends-on ("defs" "utils"))
+                           :depends-on ("defs" "utils" "interpreter"))
              (:file "house" :pathname "house/house"
                             :depends-on ("defs" "utils"))
              (:file "interpreter" :pathname "interpreter/interpreter"
@@ -120,6 +120,10 @@
                               :depends-on ("defs"))
              (:file "obj-data" :pathname "structs/obj-data"
                                :depends-on ("defs"))
+             (:file "olc" :pathname "olc/olc"
+                               :depends-on ("defs" "interpreter"))
+             (:file "olc-wld" :pathname "olc/olc-wld"
+                               :depends-on ("defs" "olc" "interpreter"))
              (:file "paths" :pathname "objects/paths"
                             :depends-on ("defs" "utils"))
              (:file "prog-compile" :pathname "search/prog-compile"
@@ -192,6 +196,8 @@
                (:file "test-network" :pathname "tests/test-network"
                       :depends-on ("helpers"))
                (:file "test-obj" :pathname "tests/test-obj"
+                      :depends-on ("helpers"))
+               (:file "test-olc" :pathname "tests/test-olc"
                       :depends-on ("helpers"))
                (:file "test-parser" :pathname "tests/test-parser"
                       :depends-on ("helpers"))
