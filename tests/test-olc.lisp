@@ -129,3 +129,156 @@
     (tempus::interpret-command alice "olc exit s doorflags - door closed locked ")
     (char-output-is alice "Flag door unset on exit.~%Flag closed unset on exit.~%Flag locked unset on exit.~%")
     (is (zerop (tempus::exit-info-of (aref (tempus::dir-option-of test-room) tempus::+south+))))))
+
+(deftest do-olc-create-search/creates-search ()
+  (with-room-olc-fixture (alice test-room)
+    (tempus::interpret-command alice "olc create search pull lever")
+    (char-output-is alice "Search creation successful.~%Now editing search (pull)/(lever)~%")
+    (is (not (null (tempus::searches-of test-room))))
+    (is (equal "pull" (tempus::trigger-of (first (tempus::searches-of test-room)))))
+    (is (equal "lever" (tempus::keywords-of (first (tempus::searches-of test-room)))))))
+
+(deftest do-olc-create-search/search-exists/emits-error ()
+  (with-room-olc-fixture (alice test-room)
+    (push (make-instance 'tempus::special-search-data
+                         :trigger "pull"
+                         :keywords "lever")
+          (tempus::searches-of test-room))
+    (tempus::interpret-command alice "olc create search pull lever")
+    (char-output-is alice "There is already a search here on that trigger.~%")
+    (is (= 1 (length (tempus::searches-of test-room))))))
+
+(deftest do-olc-destroy-search/destroys-search ()
+  (with-room-olc-fixture (alice test-room)
+    (push (make-instance 'tempus::special-search-data
+                         :trigger "pull"
+                         :keywords "lever")
+          (tempus::searches-of test-room))
+    (tempus::interpret-command alice "olc destroy search pull lever")
+    (char-output-is alice "Search destroyed.~%")
+    (is (null (tempus::searches-of test-room)))))
+
+(deftest do-olc-destroy-search/no-such-search/emits-error ()
+  (with-room-olc-fixture (alice test-room)
+    (tempus::interpret-command alice "olc destroy search pull lever")
+    (char-output-is alice "There is no such search here.~%")
+    (is (null (tempus::searches-of test-room)))))
+
+(deftest do-olc-xedit/search-exists/sets-search-edit ()
+  (with-room-olc-fixture (alice test-room)
+    (push (make-instance 'tempus::special-search-data
+                         :trigger "pull"
+                         :keywords "lever")
+          (tempus::searches-of test-room))
+    (tempus::interpret-command alice "olc xedit pull lever")
+    (char-output-is alice "Now editing search (pull)/(lever)~%")
+    (is (eql (tempus::olc-srch-of alice) (first (tempus::searches-of test-room))))))
+
+(deftest do-olc-xedit/no-such-search/emits-error ()
+  (with-room-olc-fixture (alice test-room)
+    (tempus::interpret-command alice "olc xedit pull lever")
+    (char-output-is alice "There is no such search here.~%")
+    (is (null (tempus::olc-srch-of alice)))))
+
+(deftest do-olc-xset-trigger/sets-trigger ()
+  (with-room-olc-fixture (alice test-room)
+    (let ((search (make-instance 'tempus::special-search-data
+                                 :trigger "pull"
+                                 :keywords "lever")))
+      (setf (tempus::olc-srch-of alice) search)
+      (tempus::interpret-command alice "olc xset trigger push")
+      (char-output-is alice "Search command trigger set.~%")
+      (is (equal "push" (tempus::trigger-of search))))))
+
+(deftest do-olc-xset-to-vict/sets-to-vict-emit ()
+  (with-room-olc-fixture (alice test-room)
+    (let ((search (make-instance 'tempus::special-search-data
+                                 :trigger "pull"
+                                 :keywords "lever")))
+      (setf (tempus::olc-srch-of alice) search)
+      (tempus::interpret-command alice "olc xset to_vict You pull the lever.")
+      (char-output-is alice "To_vict message set.~%")
+      (is (equal "You pull the lever." (tempus::to-vict-of search))))))
+
+(deftest do-olc-xset-to-room/sets-to-room-emit ()
+  (with-room-olc-fixture (alice test-room)
+    (let ((search (make-instance 'tempus::special-search-data
+                                 :trigger "pull"
+                                 :keywords "lever")))
+      (setf (tempus::olc-srch-of alice) search)
+      (tempus::interpret-command alice "olc xset to_room You pull the lever.")
+      (char-output-is alice "To_room message set.~%")
+      (is (equal "You pull the lever." (tempus::to-room-of search))))))
+
+(deftest do-olc-xset-to-remote/sets-to-remote-emit ()
+  (with-room-olc-fixture (alice test-room)
+    (let ((search (make-instance 'tempus::special-search-data
+                                 :trigger "pull"
+                                 :keywords "lever")))
+      (setf (tempus::olc-srch-of alice) search)
+      (tempus::interpret-command alice "olc xset to_remote You pull the lever.")
+      (char-output-is alice "To_remote message set.~%")
+      (is (equal "You pull the lever." (tempus::to-remote-of search))))))
+
+(deftest do-olc-xset-command/sets-search-command ()
+  (with-room-olc-fixture (alice test-room)
+    (let ((search (make-instance 'tempus::special-search-data
+                                 :trigger "pull"
+                                 :keywords "lever")))
+      (setf (tempus::olc-srch-of alice) search)
+      (tempus::interpret-command alice "olc xset command trans")
+      (char-output-is alice "Search command set.~%")
+      (is (= tempus::+search-com-transport+ (tempus::command-of search))))))
+
+(deftest do-olc-xset-value/sets-value-arg ()
+  (with-room-olc-fixture (alice test-room)
+    (let ((search (make-instance 'tempus::special-search-data
+                                 :trigger "pull"
+                                 :keywords "lever")))
+      (setf (tempus::olc-srch-of alice) search)
+      (tempus::interpret-command alice "olc xset value 1 35")
+      (char-output-is alice "Ok, value set.~%")
+      (is (= 35 (aref (tempus::arg-of search) 1))))))
+
+(deftest do-olc-xset-flags/with-plus/sets-flags ()
+  (with-room-olc-fixture (alice test-room)
+    (let ((search (make-instance 'tempus::special-search-data
+                                 :trigger "pull"
+                                 :keywords "lever")))
+      (setf (tempus::olc-srch-of alice) search)
+      (tempus::interpret-command alice "olc xset flag + repeatable noevil")
+      (char-output-is alice "Flag REPEATABLE set on search.~%Flag NOEVIL set on search.~%")
+      (is (= (logior tempus::+search-repeatable+
+                     tempus::+search-noevil+)
+             (tempus::flags-of search))))))
+
+(deftest do-olc-xset-flags/with-minus/removes-flags ()
+  (with-room-olc-fixture (alice test-room)
+    (let ((search (make-instance 'tempus::special-search-data
+                                 :trigger "pull"
+                                 :keywords "lever")))
+      (setf (tempus::olc-srch-of alice) search)
+      (setf (tempus::flags-of search) (logior tempus::+search-repeatable+ tempus::+search-noevil+))
+      (tempus::interpret-command alice "olc xset flag - repeatable noevil")
+      (char-output-is alice "Flag REPEATABLE unset on search.~%Flag NOEVIL unset on search.~%")
+      (is (zerop (tempus::flags-of search))))))
+
+(deftest do-olc-xset-fail-chance/sets-fail-chance ()
+  (with-room-olc-fixture (alice test-room)
+    (let ((search (make-instance 'tempus::special-search-data
+                                 :trigger "pull"
+                                 :keywords "lever")))
+      (setf (tempus::olc-srch-of alice) search)
+      (tempus::interpret-command alice "olc xset fail_chance 42")
+      (char-output-is alice "This search will now have a 42% chance of failure.~%")
+      (is (= 42 (tempus::fail-chance-of search))))))
+
+(deftest do-olc-xstat/calls-format-search-data ()
+  (with-room-olc-fixture (alice test-room)
+    (let ((search (make-instance 'tempus::special-search-data
+                                 :trigger "pull"
+                                 :keywords "lever")))
+      (setf (tempus::olc-srch-of alice) search)
+      (function-trace-bind ((calls tempus::format-search-data))
+          (tempus::interpret-command alice "olc xstat")
+        (is (equal `((,alice ,test-room ,search)) calls))))))

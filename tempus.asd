@@ -124,6 +124,8 @@
                                :depends-on ("defs" "interpreter"))
              (:file "olc-wld" :pathname "olc/olc-wld"
                                :depends-on ("defs" "olc" "interpreter"))
+             (:file "olc-srch" :pathname "olc/olc-srch"
+                               :depends-on ("defs" "olc" "interpreter"))
              (:file "paths" :pathname "objects/paths"
                             :depends-on ("defs" "utils"))
              (:file "prog-compile" :pathname "search/prog-compile"

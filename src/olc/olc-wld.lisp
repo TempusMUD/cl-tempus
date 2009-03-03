@@ -82,7 +82,7 @@
     (format ouf "R~%~a~~~%" (prog-text-of room)))
   (dolist (search (searches-of room))
     (format ouf "Z~%~a~~~%~a~~~%~a~~~%~a~~~%~a~~~%~d ~d ~d ~d ~d ~d~%"
-            (command-keys-of search)
+            (trigger-of search)
             (keywords-of search)
             (to-vict-of search)
             (to-room-of search)
@@ -184,24 +184,6 @@
        (setf (to-room-of (aref (dir-option-of target-room) (aref +rev-dir+ dir)))
              (number-of room))
        (send-to-char ch "To room set.  Return exit set in to room.~%")))))
-
-(defun perform-set-flags (ch plus-or-minus flag-names valid-flags target-desc usage getter setter)
-  (if (or (string= plus-or-minus "+") (string= plus-or-minus "-"))
-      (dolist (flag-name (split-sequence #\space flag-names :remove-empty-subseqs t))
-        (let ((flag-id (position flag-name valid-flags :test 'string-abbrev)))
-          (cond
-            ((null flag-id)
-             (send-to-char ch "'~a' is not a valid ~a flag.~%Valid flags: ~{  ~a~%~}"
-                           flag-name
-                           target-desc
-                           (coerce valid-flags 'list)))
-            ((string= plus-or-minus "-")
-             (funcall setter (logandc2 (funcall getter) (ash 1 flag-id)))
-             (send-to-char ch "Flag ~a unset on ~a.~%" (aref valid-flags flag-id) target-desc))
-            (t
-             (funcall setter (logior (funcall getter) (ash 1 flag-id)))
-             (send-to-char ch "Flag ~a set on ~a.~%" (aref valid-flags flag-id) target-desc)))))
-      (send-to-char ch "Usage: ~a~%" usage)))
 
 (defcommand (ch "olc" "create" "room") (:immortal)
   (send-to-char ch "Create a room with what vnum?~%"))

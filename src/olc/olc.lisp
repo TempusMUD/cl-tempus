@@ -25,6 +25,24 @@
 
     can-edit))
 
+(defun perform-set-flags (ch plus-or-minus flag-names valid-flags target-desc usage getter setter)
+  (if (or (string= plus-or-minus "+") (string= plus-or-minus "-"))
+      (dolist (flag-name (split-sequence #\space flag-names :remove-empty-subseqs t))
+        (let ((flag-id (position flag-name valid-flags :test 'string-abbrev)))
+          (cond
+            ((null flag-id)
+             (send-to-char ch "'~a' is not a valid ~a flag.~%Valid flags: ~{  ~a~%~}"
+                           flag-name
+                           target-desc
+                           (coerce valid-flags 'list)))
+            ((string= plus-or-minus "-")
+             (funcall setter (logandc2 (funcall getter) (ash 1 flag-id)))
+             (send-to-char ch "Flag ~a unset on ~a.~%" (aref valid-flags flag-id) target-desc))
+            (t
+             (funcall setter (logior (funcall getter) (ash 1 flag-id)))
+             (send-to-char ch "Flag ~a set on ~a.~%" (aref valid-flags flag-id) target-desc)))))
+      (send-to-char ch "Usage: ~a~%" usage)))
+
 (defcommand (ch "worldwrite") (:immortal)
   (setf (bitp (prefs-of ch) +pref-worldwrite+) (not (bitp (prefs-of ch) +pref-worldwrite+)))
   (send-to-char ch "Worldwrite ~:[disabled~;enabled~].~%"
@@ -97,4 +115,7 @@ olc zsave [zone]
   nil)
 
 (defcommand (ch "olc" "unapprove" "zone" vnum) (:immortal)
+  nil)
+
+(defcommand (ch "olc" "show") (:immortal)
   nil)

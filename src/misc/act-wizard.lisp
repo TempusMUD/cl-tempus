@@ -332,8 +332,8 @@
 
 (defun format-search-data (ch room search)
   (send-to-char ch "&rCommand triggers:&n ~a, &rkeywords:&n ~a~%"
-                (if (string/= "" (command-keys-of search))
-                    (command-keys-of search) "None.")
+                (if (string/= "" (trigger-of search))
+                    (trigger-of search) "None.")
                 (cond
                   ((string= "" (keywords-of search))
                    "None.")

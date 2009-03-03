@@ -490,7 +490,7 @@
                     (flow-kind-of room) flow-type))))
          (#\Z
           (let ((new-search (make-instance 'special-search-data)))
-            (setf (command-keys-of new-search) (fread-string inf)
+            (setf (trigger-of new-search) (fread-string inf)
                   (keywords-of new-search) (fread-string inf)
                   (to-vict-of new-search) (fread-string inf)
                   (to-room-of new-search) (fread-string inf)
