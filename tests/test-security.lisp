@@ -98,6 +98,7 @@
 
 (deftest do-access-addmember/cant-admin-group/emits-error ()
   (with-full-mock-players (alice bob)
+    (setf (tempus::level-of alice) 51)
     (function-trace-bind ((calls tempus::add-group-member))
         (tempus::interpret-command alice "access addmember OLC Bob Chuck")
       (is (null calls))
@@ -129,6 +130,7 @@
 
 (deftest do-access-addcmd/cant-admin-group/emits-error ()
   (with-full-mock-players (alice)
+    (setf (tempus::level-of alice) 51)
     (function-trace-bind ((calls tempus::add-group-command))
         (tempus::interpret-command alice "access addcmd OLC giggle")
       (is (null calls))
@@ -149,6 +151,7 @@
 
 (deftest do-access-admin/cant-admin-group/emits-error ()
   (with-full-mock-players (alice)
+    (setf (tempus::level-of alice) 51)
     (let ((group (gethash "CoderAdmin" tempus::*access-groups-name*)))
       (unwind-protect
            (progn
@@ -172,6 +175,7 @@
 
 (deftest do-access-admin-none/cant-admin-group/emits-error ()
   (with-full-mock-players (alice)
+    (setf (tempus::level-of alice) 51)
     (let ((group (gethash "CoderAdmin" tempus::*access-groups-name*)))
       (unwind-protect
            (progn
@@ -204,6 +208,8 @@
 
 (deftest do-access-describe/sets-description ()
   (with-mock-players (alice)
+    (setf (tempus::level-of alice) 51)
+    (setf (override-security-p alice) t)
     (let ((group nil))
       (unwind-protect
            (progn
@@ -222,6 +228,8 @@
 
 (deftest do-access-grouplist/shows-grouplist ()
   (with-full-mock-players (alice)
+    (setf (tempus::level-of alice) 51)
+    (setf (override-security-p alice) t)
     (let ((group nil))
       (unwind-protect
            (progn
@@ -234,6 +242,8 @@
 
 (deftest do-access-list/shows-list-of-groups ()
   (with-mock-players (alice)
+    (setf (override-security-p alice) t)
+    (setf (tempus::level-of alice) 51)
     (let ((group nil))
       (unwind-protect
            (progn
@@ -245,6 +255,7 @@
 (deftest do-access-remmember/removes-member ()
   (with-full-mock-players (alice)
     (setf (override-security-p alice) t)
+    (setf (tempus::level-of alice) 51)
     (let ((group nil))
       (unwind-protect
            (progn
@@ -258,6 +269,7 @@
 (deftest do-access-remcmd/removes-command ()
   (with-mock-players (alice)
     (setf (override-security-p alice) t)
+    (setf (tempus::level-of alice) 51)
     (let ((group nil))
       (unwind-protect
            (progn
@@ -271,6 +283,7 @@
 (deftest do-access-destroy/destroys-group ()
   (with-mock-players (alice)
     (setf (override-security-p alice) t)
+    (setf (tempus::level-of alice) 51)
     (let ((group nil))
       (unwind-protect
            (progn
@@ -285,6 +298,7 @@
 (deftest do-access-stat/shows-group-stats ()
   (with-full-mock-players (alice)
     (setf (override-security-p alice) t)
+    (setf (tempus::level-of alice) 51)
     (let ((group nil))
       (unwind-protect
            (progn
