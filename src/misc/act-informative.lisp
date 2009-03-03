@@ -10,8 +10,8 @@
                   (string-upcase (name-of object) :end 1)))
       (show-obj-bits object ch stream)
       (when (> count 1)
-        (format stream "&g [~d]&n" count))
-      (format stream "~%"))))
+        (format stream " [~d]" count))
+      (format stream "&n~%"))))
 
 (defun show-obj-bits (object ch stream)
   (when (is-obj-stat2 object +item2-broken+)
@@ -480,7 +480,7 @@
                 (format stream " &g(afk: ~a)&y" (afk-reason-of i))
                 (format stream " &g(afk)&y"))))
 
-        (format stream "~%")
+        (format stream "&n~%")
 
         (unless (pref-flagged ch +pref-notrailers+)
           (desc-char-trailers stream ch i))))))
@@ -662,9 +662,9 @@
 
   (send-to-char ch
                 (case (pk-style-of (zone-of room))
-                  (0 "&c[ &g!PK&c ] ")
-                  (1 "&c[ &YNPK&c ] ")
-                  (2 "&c[ &RCPK&c ] ")))
+                  (0 "&c[ &g!PK &c] ")
+                  (1 "&c[ &YNPK &c] ")
+                  (2 "&c[ &RCPK &c] ")))
 
   (unless (or (immortalp ch)
               (not (room-flagged room +room-smoke-filled+))
@@ -674,15 +674,15 @@
 
   ;; autoexits
   (when (pref-flagged ch +pref-autoexit+)
-      (do-auto-exits ch room))
-  (send-to-char ch "~%")
+    (do-auto-exits ch room))
+  (send-to-char ch "&n~%")
 
   ;; now list characters & objects
   (show-blood-and-ice ch room)
-  (send-to-char ch "&g~a&n"
+  (send-to-char ch "~a"
                 (with-output-to-string (s)
                   (list-obj-to-char s (contents-of room) ch :room nil)))
-  (send-to-char ch "&y~a&n"
+  (send-to-char ch "~a"
                 (with-output-to-string (s)
                   (list-char-to-char s (people-of room) ch))))
 
