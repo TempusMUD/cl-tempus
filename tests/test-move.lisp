@@ -10,10 +10,9 @@
       (is (eql (tempus::to-room-of
                 (aref (tempus::dir-option-of orig-room) tempus::+east+))
                (tempus::number-of (tempus::in-room-of alice))))
-      (char-output-has alice "The Chamber of Healing")
-      (char-output-has alice "[ Exits: s w ]")
-      (is (search "   You stand in a small alcove which is nestled into"
-                       (char-output alice)))
+      (char-output-has alice "Test Room B")
+      (char-output-has alice "[ Exits: w ]")
+      (is (search "This is Test Room B." (char-output alice)))
       (is (or (string= (char-output bob) "Alice walks east.~%")
               (string= (char-output bob) "Alice strolls east.~%")
               (string= (char-output bob) "Alice departs eastward.~%")
@@ -23,7 +22,7 @@
 
       (tempus::interpret-command alice "w")
       (is (eql (tempus::in-room-of alice) orig-room))
-      (char-output-has alice "Inside the Great Silver Archway")
+      (char-output-has alice "Test Room A")
       (is (or (string= (char-output bob) "Alice walks in from the east.~%")
               (string= (char-output bob) "Alice strolls in from the east.~%")
               (string= (char-output bob) "Alice has arrived from the east.~%")
@@ -33,9 +32,8 @@
   (with-mock-players (alice)
     (setf (tempus::bitp (tempus::prefs-of alice) tempus::+pref-brief+) t)
     (tempus::interpret-command alice "e")
-    (char-output-has alice "The Chamber of Healing")
-    (is (null (search "   You stand in a small alcove which is nestled into"
-                      (char-output alice))))))
+    (char-output-has alice "Test Room B")
+    (is (null (search "This is Test Room B." (char-output alice))))))
 
 (deftest standing ()
   (with-mock-players (alice)
@@ -182,8 +180,8 @@
 (deftest goto-command ()
   (with-mock-players (alice bob)
     (setf (tempus::level-of alice) 51)
-    (tempus::interpret-command alice "goto 3001")
-    (is (= 3001 (tempus::number-of (tempus::in-room-of alice))))
+    (tempus::interpret-command alice "goto 101")
+    (is (= 101 (tempus::number-of (tempus::in-room-of alice))))
     (tempus::interpret-command alice "goto bob")
     (is (= (tempus::number-of (tempus::in-room-of bob))
            (tempus::number-of (tempus::in-room-of alice))))))

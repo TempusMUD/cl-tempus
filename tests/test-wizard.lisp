@@ -26,8 +26,8 @@
     (setf (tempus::level-of alice) 51)
     (setf (override-security-p alice) t)
     (tempus::char-from-room alice t)
-    (tempus::char-to-room alice (tempus::real-room 3001))
-    (tempus::interpret-command alice "at 3002 say hi")
+    (tempus::char-to-room alice (tempus::real-room 101))
+    (tempus::interpret-command alice "at 100 say hi")
     (char-output-is alice "&BYou say, &c'hi'&n~%")
     (char-output-is bob "&BAlice says, &c'hi'&n~%")))
 
@@ -36,9 +36,9 @@
     (setf (tempus::level-of alice) 51)
     (setf (override-security-p alice) t)
     (tempus::char-from-room alice t)
-    (tempus::char-to-room alice (tempus::real-room 3001))
-    (tempus::interpret-command alice "goto 3002")
-    (is (= 3002 (tempus::number-of (tempus::in-room-of alice))))
+    (tempus::char-to-room alice (tempus::real-room 101))
+    (tempus::interpret-command alice "goto 100")
+    (is (= 100 (tempus::number-of (tempus::in-room-of alice))))
     (char-output-is bob "Alice appears with an ear-splitting bang.~%")))
 
 (deftest goto/char-target/changes-room ()
@@ -46,9 +46,9 @@
     (setf (tempus::level-of alice) 51)
     (setf (override-security-p alice) t)
     (tempus::char-from-room alice t)
-    (tempus::char-to-room alice (tempus::real-room 3001))
+    (tempus::char-to-room alice (tempus::real-room 101))
     (tempus::interpret-command alice "goto .bob")
-    (is (= 3002 (tempus::number-of (tempus::in-room-of alice))))
+    (is (= 100 (tempus::number-of (tempus::in-room-of alice))))
     (char-output-is bob "Alice appears with an ear-splitting bang.~%")))
 
 (deftest goto/following-imm/imm-in-same-room ()
@@ -58,16 +58,18 @@
     (setf (tempus::level-of bob) 51)
     (tempus::add-follower bob alice)
     (clear-mock-buffers bob alice)
-    (tempus::interpret-command alice "goto 3001")
-    (is (= 3001 (tempus::number-of (tempus::in-room-of alice))))
-    (is (= 3001 (tempus::number-of (tempus::in-room-of bob))))
+    (tempus::interpret-command alice "goto 101")
+    (is (= 101 (tempus::number-of (tempus::in-room-of alice))))
+    (is (= 101 (tempus::number-of (tempus::in-room-of bob))))
     (char-output-has alice "Bob appears with an ear-splitting bang.~%")
     (char-output-has bob "Alice disappears in a puff of smoke.~%")))
 
 (deftest distance/valid-rooms/returns-distance ()
-  (with-mock-players (alice bob)
+  (with-mock-players (alice)
     (setf (tempus::level-of alice) 51)
     (setf (override-security-p alice) t)
+    (tempus::char-from-room alice nil)
+    (tempus::char-to-room alice (tempus::real-room 3002) nil)
     (tempus::interpret-command alice "distance 24800")
     (char-output-is alice "Room 24800 is 36 steps away.~%")))
 
@@ -82,10 +84,10 @@
   (with-mock-players (alice bob)
     (setf (override-security-p alice) t)
     (tempus::char-from-room alice t)
-    (tempus::char-to-room alice (tempus::real-room 3001))
+    (tempus::char-to-room alice (tempus::real-room 101))
     (with-captured-log log
         (tempus::do-transport-targets alice ".bob")
-      (is (= 3001 (tempus::number-of (tempus::in-room-of bob))))
+      (is (= 101 (tempus::number-of (tempus::in-room-of bob))))
       (char-output-is alice "Bob arrives from a puff of smoke.~%")
       (char-output-is bob "Alice has transported you!~%")
       (is (search "Alice has transported Bob" log)))))
@@ -99,8 +101,8 @@
   (with-mock-players (alice bob)
     (setf (override-security-p alice) t)
     (with-captured-log log
-        (tempus::do-teleport-name-to-target alice ".bob" "3001")
-      (is (= 3001 (tempus::number-of (tempus::in-room-of bob))))
+        (tempus::do-teleport-name-to-target alice ".bob" "101")
+      (is (= 101 (tempus::number-of (tempus::in-room-of bob))))
       (char-output-is alice "Okay.~%Bob disappears in a puff of smoke.~%")
       (char-output-has bob "Alice has teleported you!~%")
       (is (search "Alice has teleported Bob" log)))))
@@ -129,7 +131,7 @@
 (deftest stat-zone/normal/returns-zone-info ()
   (with-mock-players (alice)
     (tempus::do-stat-zone alice)
-    (char-output-has alice "Zone #&y30: &cThe Holy City of Modrian&n~%")))
+    (char-output-has alice "Zone #&y1: &cCoder Test Zone&n~%")))
 
 (deftest do-stat-trails/no-trails/returns-error ()
   (with-mock-players (alice)
@@ -174,7 +176,7 @@
     (unwind-protect
          (with-captured-log log
              (tempus::interpret-command alice "mload 1201")
-           (is (search "(GC) Alice mloaded the Immortal Postmaster[1201] at 3002" log))
+           (is (search "(GC) Alice mloaded the Immortal Postmaster[1201] at 100" log))
            (char-output-is alice "You create the Immortal Postmaster.~%")
            (let ((mob (find 1201 (tempus::people-of (tempus::in-room-of alice)) :key 'tempus::vnum-of)))
              (is (not (null mob)))
@@ -194,7 +196,7 @@
     (unwind-protect
          (with-captured-log log
              (tempus::interpret-command alice "oload 1203")
-           (is (search "(GC) Alice oloaded his large coffee mug[1203] at 3002" log))
+           (is (search "(GC) Alice oloaded his large coffee mug[1203] at 100" log))
            (char-output-is alice "You create his large coffee mug.~%")
            (let ((obj (find 1203 (tempus::contents-of (tempus::in-room-of alice)) :key 'tempus::vnum-of)))
              (is (not (null obj)))))
@@ -232,7 +234,7 @@
          (let ((count (+ 2 (random 100))))
            (with-captured-log log
                (tempus::interpret-command alice (format nil "oload ~d 1203" count))
-             (is (search (format nil "(GC) Alice oloaded his large coffee mug[1203] at 3002 (x~d)" count)
+             (is (search (format nil "(GC) Alice oloaded his large coffee mug[1203] at 100 (x~d)" count)
                          log))
              (is (equal (format nil "You create his large coffee mug. (x~d)~~%" count)
                         (char-output alice)))
@@ -269,7 +271,7 @@
     (setf (override-security-p alice) t)
     (with-captured-log log
         (tempus::perform-pload alice 1203 1 alice)
-      (is (search "(GC) Alice ploaded his large coffee mug[1203] onto self at 3002" log))
+      (is (search "(GC) Alice ploaded his large coffee mug[1203] onto self at 100" log))
       (char-output-is alice "You create his large coffee mug.~%")
       (char-output-is bob "Alice does something suspicious and alters reality.~%")
       (is (= 1 (count 1203 (tempus::carrying-of alice) :key 'tempus::vnum-of))))))
@@ -279,7 +281,7 @@
     (setf (override-security-p alice) t)
     (with-captured-log log
         (tempus::perform-pload alice 1203 10 alice)
-      (is (search "(GC) Alice ploaded his large coffee mug[1203] onto self at 3002 (x10)" log))
+      (is (search "(GC) Alice ploaded his large coffee mug[1203] onto self at 100 (x10)" log))
       (char-output-is alice "You create his large coffee mug. (x10)~%")
       (char-output-is bob "Alice does something suspicious and alters reality.~%")
       (is (= 10 (count 1203 (tempus::carrying-of alice) :key 'tempus::vnum-of))))))
@@ -291,7 +293,7 @@
         (tempus::perform-pload alice 1203 1 bob)
       ;; hackily skip the mock player id
       (is (search "(GC) Alice ploaded his large coffee mug[1203] onto PC Bob[" log))
-      (is (search "] at 3002" log))
+      (is (search "] at 100" log))
       (char-output-is alice "You load his large coffee mug onto Bob.~%")
       (char-output-is bob "Alice causes his large coffee mug to appear in your hands.~%")
       (char-output-is eva "Alice does something suspicious and alters reality.~%")
@@ -304,7 +306,7 @@
         (tempus::perform-pload alice 1203 10 bob)
       ;; hackily skip the mock player id
       (is (search "(GC) Alice ploaded his large coffee mug[1203] onto PC Bob[" log))
-      (is (search "] at 3002 (x10)" log))
+      (is (search "] at 100 (x10)" log))
       (char-output-is alice "You load his large coffee mug onto Bob. (x10)~%")
       (char-output-is bob "Alice causes his large coffee mug to appear in your hands. (x10)~%")
       (char-output-is eva "Alice does something suspicious and alters reality.~%")
@@ -596,9 +598,9 @@
     (function-trace-bind ((calls tempus::reset-zone))
         (with-captured-log log
             (tempus::interpret-command alice "zreset .")
-          (is (search "(GC) Alice reset zone 30" log)))
+          (is (search "(GC) Alice reset zone 1" log)))
       (is (equal `((,(tempus::zone-of (tempus::in-room-of alice)))) calls)))
-    (is (equal "You feel a strangely refreshing breeze.~%Reset zone 30 : The Holy City of Modrian~%"
+    (is (equal "You feel a strangely refreshing breeze.~%Reset zone 1 : Coder Test Zone~%"
                (char-output alice)))))
 
 (deftest do-zreset/numeric-arg/reset-specific-zone ()

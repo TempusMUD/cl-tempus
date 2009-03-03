@@ -6,9 +6,7 @@
   (with-mock-players (alice)
     (setf (tempus::bitp (tempus::prefs-of alice) tempus::+pref-autoexit+) t)
     (tempus::interpret-command alice "l")
-    (char-output-has alice "&cInside the Great Silver Archway")
-    (char-output-has alice "   To the north, a giant silver arch")
-    (char-output-has alice "[ Exits: n e s w ]")))
+    (char-output-is alice "&cTest Room A&n~%This is Test Room A.~%&c[ &g!PK &c] &c[ Exits: e d ]&n~%")))
 
 (deftest look-at-creature ()
   (with-mock-players (alice bob)

@@ -19,7 +19,7 @@
                   for read-line = (read-line inf nil nil)
                   as last-line = (if read-line read-line last-line)
                   while read-line
-                  finally (is (cl-ppcre:scan #/^Alice    \(... ..\) \[ 3002\] I have an idea!$/ last-line)))))
+                  finally (is (cl-ppcre:scan #/^Alice    \(... ..\) \[  100\] I have an idea!$/ last-line)))))
         (when (probe-file real-path)
           (rename-file real-path path))))))
 
@@ -107,7 +107,7 @@
     (setf (tempus::level-of alice) 51)
     (with-captured-log log
         (tempus::interpret-command alice "mortalize")
-      (is (search "(GC): Alice has mortalized at 3002" log))
+      (is (search "(GC): Alice has mortalized at 100" log))
       (is (equal "Other gods may now kill you...  if you don't watch it.~%"
                  (char-output alice)))
       (is (logtest (tempus::plr-bits-of alice) tempus::+plr-mortalized+)))))
@@ -118,7 +118,7 @@
     (setf (tempus::plr-bits-of alice) tempus::+plr-mortalized+)
     (with-captured-log log
         (tempus::interpret-command alice "mortalize")
-      (is (search "(GC): Alice has immortalized at 3002" log))
+      (is (search "(GC): Alice has immortalized at 100" log))
       (char-output-has alice "You resume your immortal status.~%")
       (is (not (logtest (tempus::plr-bits-of alice)
                         tempus::+plr-mortalized+))))))

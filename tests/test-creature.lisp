@@ -35,7 +35,7 @@
 
 (deftest extract-creature/with-mobile/extracted ()
   (let ((mob (tempus::read-mobile 1201)))
-    (tempus::char-to-room mob (tempus::real-room 3002))
+    (tempus::char-to-room mob (tempus::real-room 100))
     (tempus::extract-creature mob 'disconnecting)
     (is (not (member mob tempus::*characters*)))
     (is (null (tempus::in-room-of mob)))))

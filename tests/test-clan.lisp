@@ -220,12 +220,12 @@
 
 (deftest clan-house-can-enter/non-clan-room/returns-t ()
   (with-mock-players (alice)
-    (is (tempus::clan-house-can-enter alice (tempus::real-room 3001)))))
+    (is (tempus::clan-house-can-enter alice (tempus::real-room 101)))))
 
 (deftest clan-house-can-enter/in-clan/returns-t ()
   (with-mock-clan (clan)
     (with-full-mock-players (alice)
-      (let ((room (tempus::real-room 3001)))
+      (let ((room (tempus::real-room 101)))
         (tempus::add-clan-member alice clan)
         (tempus::add-clan-room room clan)
         (is (tempus::clan-house-can-enter alice room))
@@ -234,7 +234,7 @@
 (deftest clan-house-can-enter/not-in-clan/returns-nil ()
   (with-mock-clan (clan)
     (with-full-mock-players (alice)
-      (let ((room (tempus::real-room 3001)))
+      (let ((room (tempus::real-room 101)))
         (tempus::add-clan-room room clan)
         (is (null (tempus::clan-house-can-enter alice room)))
         (tempus::remove-clan-room room clan)))))
