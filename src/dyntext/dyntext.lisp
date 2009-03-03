@@ -9,9 +9,9 @@
    (buffer :accessor buffer-of :initarg :buffer :initform nil)
    (tmp-buffer :accessor tmp-buffer-of :initarg :tmp-buffer :initform nil)))
 
-(defmethod print-object ((ch dynamic-text-file) stream)
-  (print-unreadable-object (ch stream :type t)
-    (format stream "~s" (filename-of ch))))
+(defmethod print-object ((dyntext dynamic-text-file) stream)
+  (print-unreadable-object (dyntext stream :type t)
+    (format stream "~s" (filename-of dyntext))))
 
 (defvar *dyntext-files* nil)
 
