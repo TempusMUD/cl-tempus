@@ -16,7 +16,7 @@
   (is (= 100 (tempus::pin 200 10 100))))
 
 (deftest act-str ()
-  (with-mock-players (alice)
+  (with-fixtures ((alice mock-player))
     (is (equal "Alice says, 'checking $ in languages'"
                (tempus::act-str alice
                         (format nil "Alice says, '$[~a]'"
@@ -58,7 +58,7 @@
   (is (equal '(nil) (multiple-value-list (tempus::get-number "-5.foo")))))
 
 (deftest get-matching-objects ()
-  (with-mock-players (alice)
+  (with-fixtures ((alice mock-player))
     (let ((objs (mapcar 'make-mock-object
                         '("armor" "armor" "armor" "book" "book"
                           "candle" "doublet"))))
@@ -71,7 +71,7 @@
       (is (equal (subseq objs 2 3) (tempus::resolve-alias alice "3.armor" objs))))))
 
 (deftest resolve-alias ()
-  (with-mock-players (alice)
+  (with-fixtures ((alice mock-player))
     (let ((objs (loop
                    for name in '("armor" "armor" "armor" "book" "book"
                                  "candle" "doublet")

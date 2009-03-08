@@ -3,7 +3,8 @@
 (in-suite (defsuite (tempus.move :in test)))
 
 (deftest basic-movement ()
-  (with-mock-players (alice bob)
+  (with-fixtures ((alice mock-player)
+                  (bob mock-player))
     (let ((orig-room (tempus::in-room-of alice)))
       (setf (tempus::bitp (tempus::prefs-of alice) tempus::+pref-autoexit+) t)
       (tempus::interpret-command alice "e")
@@ -29,14 +30,14 @@
               (char-output bob))))))
 
 (deftest movement-with-brief ()
-  (with-mock-players (alice)
+  (with-fixtures ((alice mock-player))
     (setf (tempus::bitp (tempus::prefs-of alice) tempus::+pref-brief+) t)
     (tempus::interpret-command alice "e")
     (char-output-has alice "Test Room B")
     (is (null (search "This is Test Room B." (char-output alice))))))
 
 (deftest standing ()
-  (with-mock-players (alice)
+  (with-fixtures ((alice mock-player))
     (setf (tempus::position-of alice) tempus::+pos-sitting+)
     (tempus::interpret-command alice "stand")
     (is (= (tempus::position-of alice) tempus::+pos-standing+))
@@ -72,7 +73,7 @@
     (is (string= (char-output alice) "You settle lightly to the ground.~%"))))
 
 (deftest resting ()
-  (with-mock-players (alice)
+  (with-fixtures ((alice mock-player))
     (setf (tempus::position-of alice) tempus::+pos-sitting+)
     (tempus::interpret-command alice "rest")
     (is (= (tempus::position-of alice) tempus::+pos-resting+))
@@ -108,7 +109,7 @@
     (is (string= (char-output alice) "You better not try that while flying.~%"))))
 
 (deftest sleeping ()
-  (with-mock-players (alice)
+  (with-fixtures ((alice mock-player))
     (setf (tempus::position-of alice) tempus::+pos-sitting+)
     (tempus::interpret-command alice "sleep")
     (is (= tempus::+pos-sleeping+ (tempus::position-of alice)))
@@ -157,7 +158,7 @@
     (is (string= (char-output alice) "That's a really bad idea while flying!~%"))))
 
 (deftest waking ()
-  (with-mock-players (alice)
+  (with-fixtures ((alice mock-player))
     (setf (tempus::position-of alice) tempus::+pos-sleeping+)
     (tempus::interpret-command alice "wake")
     (is (= (tempus::position-of alice) tempus::+pos-sitting+))
@@ -178,7 +179,8 @@
     (is (string= (char-output alice) "Reactivating processes...~%"))))
 
 (deftest goto-command ()
-  (with-mock-players (alice bob)
+  (with-fixtures ((alice mock-player)
+                  (bob mock-player))
     (setf (tempus::level-of alice) 51)
     (tempus::interpret-command alice "goto 101")
     (is (= 101 (tempus::number-of (tempus::in-room-of alice))))

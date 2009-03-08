@@ -7,7 +7,7 @@
 (deftest feedback-command ()
   (let ((path (tempus::tempus-path "lib/misc/ideas"))
         (real-path (tempus::tempus-path "lib/misc/ideas.real")))
-    (with-mock-players (alice)
+    (with-fixtures ((alice mock-player))
       (unwind-protect
            (progn
              (when (probe-file path)
@@ -24,11 +24,13 @@
           (rename-file real-path path))))))
 
 (deftest find-visible-group-members/no-group/returns-nil ()
-  (with-mock-players (alice)
+  (with-fixtures ((alice mock-player))
     (is (null (tempus::find-visible-group-members alice)))))
 
 (deftest find-visible-group-members/master-of-group/returns-followers ()
-  (with-mock-players (alice bob chuck)
+  (with-fixtures ((alice mock-player)
+                  (bob mock-player)
+                  (chuck mock-player))
     (setf (tempus::master-of bob) alice)
     (setf (tempus::master-of chuck) alice)
     (setf (tempus::followers-of alice) (list bob chuck))
@@ -38,7 +40,9 @@
     (is (equal (list bob chuck) (tempus::find-visible-group-members alice)))))
 
 (deftest find-visible-group-members/not-master-of-group/returns-groupies ()
-  (with-mock-players (alice bob chuck)
+  (with-fixtures ((alice mock-player)
+                  (bob mock-player)
+                  (chuck mock-player))
     (setf (tempus::master-of bob) alice)
     (setf (tempus::master-of chuck) alice)
     (setf (tempus::followers-of alice) (list bob chuck))
@@ -48,23 +52,24 @@
     (is (equal (list alice chuck) (tempus::find-visible-group-members bob)))))
 
 (deftest perform-split/no-group/error-message ()
-  (with-mock-players (alice)
+  (with-fixtures ((alice mock-player))
     (setf (tempus::gold-of alice) 1000)
     (tempus::perform-split alice 1000 :gold)
     (char-output-has alice "You aren't in a group.~%")))
 
 (deftest perform-split/not-enough-gold/error-message ()
-  (with-mock-players (alice)
+  (with-fixtures ((alice mock-player))
     (tempus::perform-split alice 1000 :gold)
     (char-output-has alice "You don't seem to have that much gold.~%")))
 
 (deftest perform-split/not-enough-cash/error-message ()
-  (with-mock-players (alice)
+  (with-fixtures ((alice mock-player))
     (tempus::perform-split alice 1000 :cash)
     (char-output-has alice "You don't seem to have that many credits.~%")))
 
 (deftest perform-split/with-gold/splits-gold ()
-  (with-mock-players (alice bob)
+  (with-fixtures ((alice mock-player)
+                  (bob mock-player))
     (setf (tempus::gold-of alice) 1000)
     (setf (tempus::master-of bob) alice)
     (setf (tempus::followers-of alice) (list bob))
@@ -77,33 +82,33 @@
     (is (= 500 (tempus::gold-of bob)))))
 
 (deftest do-color/no-arg/shows-current-setting ()
-  (with-mock-players (alice)
+  (with-fixtures ((alice mock-player))
     (setf (tempus::ansi-level-of (tempus::account-of alice)) 0)
     (tempus::interpret-command alice "color")
     (char-output-has alice "Your current color level is none.~%")))
 
 (deftest do-color/with-arg/changes-setting ()
-  (with-mock-players (alice)
+  (with-fixtures ((alice mock-player))
     (setf (tempus::ansi-level-of (tempus::account-of alice)) 0)
     (tempus::interpret-command alice "color complete")
     (char-output-has alice "Your color is now &Ycomplete&n.~%")
     (is (= (tempus::ansi-level-of (tempus::account-of alice)) 3))))
 
 (deftest do-compact/no-arg/shows-current-setting ()
-  (with-mock-players (alice)
+  (with-fixtures ((alice mock-player))
     (setf (tempus::compact-level-of (tempus::account-of alice)) 0)
     (tempus::interpret-command alice "compact")
     (char-output-has alice "Your current compact level is off.~%")))
 
 (deftest do-compact/with-arg/changes-setting ()
-  (with-mock-players (alice)
+  (with-fixtures ((alice mock-player))
     (setf (tempus::compact-level-of (tempus::account-of alice)) 0)
     (tempus::interpret-command alice "compact full")
     (char-output-has alice "Your &rcompact setting&n is now &Yfull&n.~%")
     (is (= (tempus::compact-level-of (tempus::account-of alice)) 3))))
 
 (deftest do-mortalize/not-mortalized/mortalize ()
-  (with-mock-players (alice)
+  (with-fixtures ((alice mock-player))
     (setf (tempus::level-of alice) 51)
     (with-captured-log log
         (tempus::interpret-command alice "mortalize")
@@ -113,7 +118,7 @@
       (is (logtest (tempus::plr-bits-of alice) tempus::+plr-mortalized+)))))
 
 (deftest do-mortalize/mortalized/immortalize ()
-  (with-mock-players (alice)
+  (with-fixtures ((alice mock-player))
     (setf (tempus::level-of alice) 51)
     (setf (tempus::plr-bits-of alice) tempus::+plr-mortalized+)
     (with-captured-log log
@@ -124,7 +129,7 @@
                         tempus::+plr-mortalized+))))))
 
 (deftest do-display-vnums/normal/turns-on-vnum-bit ()
-  (with-mock-players (alice)
+  (with-fixtures ((alice mock-player))
     (setf (tempus::level-of alice) 51)
     (tempus::interpret-command alice "display vnums")
     (is (equal "You will now see vnums on mobs and object ldescs.~%"
@@ -132,7 +137,7 @@
       (is (tempus::pref-flagged alice tempus::+pref-disp-vnums+))))
 
 (deftest do-display-all/normal/turns-on-all-disp-bits ()
-  (with-mock-players (alice)
+  (with-fixtures ((alice mock-player))
     (tempus::interpret-command alice "display all")
     (char-output-has alice "You got it.~%")
     (is (tempus::pref-flagged alice tempus::+pref-disphp+))
@@ -142,7 +147,7 @@
     (is (tempus::pref-flagged alice tempus::+pref-disptime+))))
 
 (deftest do-display-normal/normal/turns-on-normal-disp-bits ()
-  (with-mock-players (alice)
+  (with-fixtures ((alice mock-player))
     (tempus::interpret-command alice "display normal")
     (char-output-has alice "You got it.~%")
     (is (tempus::pref-flagged alice tempus::+pref-disphp+))
@@ -152,5 +157,5 @@
     (is (not (tempus::pref-flagged alice tempus::+pref-disptime+)))))
 
 (deftest do-toggles/normal/finishes ()
-  (with-mock-players (alice)
+  (with-fixtures ((alice mock-player))
     (finishes (tempus::interpret-command alice "toggle"))))

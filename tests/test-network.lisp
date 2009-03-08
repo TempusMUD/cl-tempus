@@ -3,7 +3,7 @@
 (in-suite (defsuite (tempus.net :in test)))
 
 (deftest prompts ()
-  (with-mock-players (alice)
+  (with-fixtures ((alice mock-player))
     ;; Odd compact level must be set
     (setf (tempus::compact-level-of (tempus::account-of alice)) 1)
     ;; Must not already need prompt

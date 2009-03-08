@@ -3,12 +3,12 @@
 (in-suite (defsuite (tempus.security :in test-full)))
 
 (deftest can-admin-group/is-level-72/returns-t ()
-  (with-full-mock-players (alice)
+  (with-fixtures ((alice mock-player :fullp t))
     (setf (tempus::level-of alice) 72)
     (is (tempus::can-admin-group alice "Clan"))))
 
 (deftest can-admin-group/in-admin-group/returns-nil ()
-  (with-full-mock-players (alice)
+  (with-fixtures ((alice mock-player :fullp t))
     (let ((group (gethash "OLCAdmin" tempus::*access-groups-name*)))
       (push (tempus::idnum-of alice) (tempus::members-of group))
       (is (tempus::can-admin-group alice "OLC"))
@@ -16,11 +16,11 @@
             (delete (tempus::idnum-of alice) (tempus::members-of group))))))
 
 (deftest can-admin-group/not-in-admin-group/returns-t ()
-  (with-full-mock-players (alice)
+  (with-fixtures ((alice mock-player :fullp t))
     (is (not (tempus::can-admin-group alice "OLC")))))
 
 (deftest add-group-member/adds-member-to-group-and-db ()
-  (with-full-mock-players (alice)
+  (with-fixtures ((alice mock-player :fullp t))
     (let ((group (gethash "OLC" tempus::*access-groups-name*)))
       (is (not (null (tempus::add-group-member group (tempus::name-of alice)))))
       (is (not (zerop (postmodern:query (:select (:count :*)
@@ -31,7 +31,7 @@
       (is (not (null (find (tempus::idnum-of alice) (tempus::members-of group))))))))
 
 (deftest remove-group-member/removes-member-from-group ()
-  (with-full-mock-players (alice)
+  (with-fixtures ((alice mock-player :fullp t))
     (let ((group (gethash "OLC" tempus::*access-groups-name*)))
       (tempus::add-group-member group (tempus::name-of alice))
       (tempus::remove-group-member group (tempus::name-of alice))
@@ -67,7 +67,7 @@
       (is (null (find "giggle" (tempus::commands-of group) :test #'string=)))))
 
 (deftest create-and-destroy-group/creates-and-destroys ()
-  (with-full-mock-players (alice)
+  (with-fixtures ((alice mock-player :fullp t))
     (let ((new-group nil))
       (unwind-protect
            (progn
@@ -88,7 +88,9 @@
         (tempus::remove-group "TestGroup")))))
 
 (deftest do-access-addmember/adds-member-and-emits ()
-  (with-full-mock-players (alice bob chuck)
+  (with-fixtures ((alice mock-player :fullp t)
+                  (bob mock-player :fullp t)
+                  (chuck mock-player :fullp t))
     (let ((group (gethash "OLC" tempus::*access-groups-name*)))
       (setf (tempus::level-of alice) 72)
       (function-trace-bind ((calls tempus::add-group-member))
@@ -97,7 +99,8 @@
         (char-output-is alice "Member added: Bob~%Member added: Chuck~%")))))
 
 (deftest do-access-addmember/cant-admin-group/emits-error ()
-  (with-full-mock-players (alice bob)
+  (with-fixtures ((alice mock-player :fullp t)
+                  (bob mock-player :fullp t))
     (setf (tempus::level-of alice) 51)
     (function-trace-bind ((calls tempus::add-group-member))
         (tempus::interpret-command alice "access addmember OLC Bob Chuck")
@@ -105,7 +108,7 @@
       (char-output-is alice "You cannot add members to this group.~%"))))
 
 (deftest do-access-addmember/already-added/emits-error ()
-  (with-full-mock-players (alice)
+  (with-fixtures ((alice mock-player :fullp t))
     (let ((group (gethash "OLC" tempus::*access-groups-name*)))
       (setf (tempus::level-of alice) 72)
       (tempus::add-group-member group "Bob")
@@ -115,7 +118,7 @@
         (char-output-is alice "Unable to add member: Bob~%")))))
 
 (deftest do-access-addcmd/adds-command-and-emits ()
-  (with-full-mock-players (alice)
+  (with-fixtures ((alice mock-player :fullp t))
     (let ((group (gethash "OLC" tempus::*access-groups-name*)))
       (unwind-protect
            (progn
@@ -129,7 +132,7 @@
           (tempus::remove-group-command group "fart"))))))
 
 (deftest do-access-addcmd/cant-admin-group/emits-error ()
-  (with-full-mock-players (alice)
+  (with-fixtures ((alice mock-player :fullp t))
     (setf (tempus::level-of alice) 51)
     (function-trace-bind ((calls tempus::add-group-command))
         (tempus::interpret-command alice "access addcmd OLC giggle")
@@ -137,7 +140,7 @@
       (char-output-is alice "You cannot add commands to this group.~%"))))
 
 (deftest do-access-addcmd/already-added/emits-error ()
-  (with-full-mock-players (alice)
+  (with-fixtures ((alice mock-player :fullp t))
     (let ((group (gethash "OLC" tempus::*access-groups-name*)))
       (unwind-protect
            (progn
@@ -150,7 +153,7 @@
         (tempus::remove-group-command group "giggle")))))
 
 (deftest do-access-admin/cant-admin-group/emits-error ()
-  (with-full-mock-players (alice)
+  (with-fixtures ((alice mock-player :fullp t))
     (setf (tempus::level-of alice) 51)
     (let ((group (gethash "CoderAdmin" tempus::*access-groups-name*)))
       (unwind-protect
@@ -162,7 +165,7 @@
         (setf (tempus::admin-group-of group) nil)))))
 
 (deftest do-access-admin/sets-group-admin ()
-  (with-full-mock-players (alice)
+  (with-fixtures ((alice mock-player :fullp t))
     (setf (tempus::level-of alice) 72)
     (let ((group (gethash "CoderAdmin" tempus::*access-groups-name*)))
       (unwind-protect
@@ -174,7 +177,7 @@
         (setf (tempus::admin-group-of group) nil)))))
 
 (deftest do-access-admin-none/cant-admin-group/emits-error ()
-  (with-full-mock-players (alice)
+  (with-fixtures ((alice mock-player :fullp t))
     (setf (tempus::level-of alice) 51)
     (let ((group (gethash "CoderAdmin" tempus::*access-groups-name*)))
       (unwind-protect
@@ -187,7 +190,7 @@
         (setf (tempus::admin-group-of group) nil)))))
 
 (deftest do-access-admin-none/sets-group-admin ()
-  (with-full-mock-players (alice)
+  (with-fixtures ((alice mock-player :fullp t))
     (setf (tempus::level-of alice) 72)
     (let ((group (gethash "CoderAdmin" tempus::*access-groups-name*)))
       (unwind-protect
@@ -200,14 +203,14 @@
         (setf (tempus::admin-group-of group) nil)))))
 
 (deftest do-access-cmdlist/lists-commands ()
-  (with-mock-players (alice)
+  (with-fixtures ((alice mock-player))
     (setf (tempus::level-of alice) 51)
     (tempus::interpret-command alice "access cmdlist Coder")
     (char-output-has alice "Commands:~%")
     (char-output-has alice "shutdown")))
 
 (deftest do-access-describe/sets-description ()
-  (with-mock-players (alice)
+  (with-fixtures ((alice mock-player))
     (setf (tempus::level-of alice) 51)
     (setf (override-security-p alice) t)
     (let ((group nil))
@@ -227,7 +230,7 @@
         (tempus::remove-group "TestGroup")))))
 
 (deftest do-access-grouplist/shows-grouplist ()
-  (with-full-mock-players (alice)
+  (with-fixtures ((alice mock-player :fullp t))
     (setf (tempus::level-of alice) 51)
     (setf (override-security-p alice) t)
     (let ((group nil))
@@ -241,7 +244,7 @@
         (tempus::remove-group "TestGroup")))))
 
 (deftest do-access-list/shows-list-of-groups ()
-  (with-mock-players (alice)
+  (with-fixtures ((alice mock-player))
     (setf (override-security-p alice) t)
     (setf (tempus::level-of alice) 51)
     (let ((group nil))
@@ -253,7 +256,7 @@
         (tempus::remove-group "TestGroup")))))
 
 (deftest do-access-remmember/removes-member ()
-  (with-full-mock-players (alice)
+  (with-fixtures ((alice mock-player :fullp t))
     (setf (override-security-p alice) t)
     (setf (tempus::level-of alice) 51)
     (let ((group nil))
@@ -267,7 +270,7 @@
         (tempus::remove-group "TestGroup")))))
 
 (deftest do-access-remcmd/removes-command ()
-  (with-mock-players (alice)
+  (with-fixtures ((alice mock-player))
     (setf (override-security-p alice) t)
     (setf (tempus::level-of alice) 51)
     (let ((group nil))
@@ -281,7 +284,7 @@
         (tempus::remove-group "TestGroup")))))
 
 (deftest do-access-destroy/destroys-group ()
-  (with-mock-players (alice)
+  (with-fixtures ((alice mock-player))
     (setf (override-security-p alice) t)
     (setf (tempus::level-of alice) 51)
     (let ((group nil))
@@ -296,7 +299,7 @@
         (tempus::remove-group "TestGroup")))))
 
 (deftest do-access-stat/shows-group-stats ()
-  (with-full-mock-players (alice)
+  (with-fixtures ((alice mock-player :fullp t))
     (setf (override-security-p alice) t)
     (setf (tempus::level-of alice) 51)
     (let ((group nil))

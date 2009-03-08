@@ -3,17 +3,16 @@
 (in-suite (defsuite (tempus.olc :in test)))
 
 (defmacro with-room-olc-fixture ((player room) &body body)
-  `(with-mock-players (,player)
-     (with-mock-rooms (,room)
-       (tempus::char-from-room ,player nil)
-       (tempus::char-to-room ,player ,room nil)
-      (setf (override-security-p ,player) t)
-      (setf (tempus::level-of ,player) 51)
-      (setf (tempus::owner-idnum-of (tempus::zone-of (tempus::in-room-of alice))) (tempus::idnum-of ,player))
-      ,@body)))
+  `(with-fixtures ((,player mock-player :level 51 :override-security t)
+                   (,room mock-room))
+     (tempus::char-from-room ,player nil)
+     (tempus::char-to-room ,player ,room nil)
+     (setf (tempus::owner-idnum-of (tempus::zone-of (tempus::in-room-of ,player)))
+           (tempus::idnum-of ,player))
+     ,@body))
 
 (deftest perform-create-and-destroy-room/creates-and-destroys-room ()
-  (with-mock-players (alice)
+  (with-fixtures ((alice mock-player :level 51 :override-security t))
     (setf (tempus::owner-idnum-of (tempus::zone-of (tempus::in-room-of alice))) (tempus::idnum-of alice))
     (tempus::perform-create-room alice (tempus::zone-containing-number 102) 102)
     (char-output-is alice "Room 102 successfully created.~%")
@@ -26,6 +25,21 @@
         (char-output-is alice "Room eliminated.~%")
         (is (null (gethash 102 tempus::*rooms*)))
         (is (null (find room (tempus::world-of (tempus::zone-of room)))))))))
+
+(deftest save-zone-rooms/saves-zone-file ()
+  (with-fixtures ((alice mock-player :level 51 :override-security t))
+    (unwind-protect
+         (progn
+           (rename-file (tempus::tempus-path "lib/world/wld/376.wld") (tempus::tempus-path "lib/world/wld/376.wld.test"))
+           (with-captured-log log
+               (tempus::save-zone-rooms alice (tempus::real-zone 376))
+             (is (search "OLC: Alice rsaved 376" log))
+             (is (equal (tempus::snarf-file (tempus::tempus-path "lib/world/wld/376.wld"))
+                        (tempus::snarf-file (tempus::tempus-path "lib/world/wld/376.wld.test"))))))
+      (progn
+        (when (probe-file (tempus::tempus-path "lib/world/wld/376.wld"))
+          (delete-file (tempus::tempus-path "lib/world/wld/376.wld")))
+        (rename-file (tempus::tempus-path "lib/world/wld/376.wld.test") (tempus::tempus-path "lib/world/wld/376.wld"))))))
 
 (deftest perform-clear-room/clears-room ()
   (with-room-olc-fixture (alice test-room)

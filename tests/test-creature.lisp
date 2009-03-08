@@ -3,7 +3,7 @@
 (in-suite (defsuite (tempus.creature :in test)))
 
 (deftest gain-condition ()
-  (with-mock-players (alice)
+  (with-fixtures ((alice mock-player))
     (setf (tempus::conditions-of alice) (coerce '(12 12 12) 'vector))
     (tempus::gain-condition alice tempus::+full+ 5)
     (is (= 17 (tempus::get-condition alice tempus::+full+)))
@@ -19,7 +19,7 @@
     (is (= 24 (tempus::get-condition alice tempus::+drunk+)))))
 
 (deftest affect-to-char ()
-  (with-mock-players (alice)
+  (with-fixtures ((alice mock-player))
     (let ((af (make-instance 'tempus::affected-type
                              :kind tempus::+spell-invisible+
                              :location tempus::+apply-hit+
@@ -41,7 +41,7 @@
     (is (null (tempus::in-room-of mob)))))
 
 (deftest extract-creature/with-player/extracted ()
-  (with-mock-players (alice)
+  (with-fixtures ((alice mock-player))
     (tempus::extract-creature alice 'tempus::disconnecting)
     (is (not (member alice tempus::*characters*)))
     (is (null (tempus::in-room-of alice)))
