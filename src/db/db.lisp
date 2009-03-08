@@ -499,7 +499,7 @@
             (unless (setf line (get-line inf))
               (error "Search error in room #~d." vnum-nr))
 
-            (let ((result (scan #/^(\d+)\s+([-0-9]+)\s+([-0-9]+)\s+([-0-9]+)\s+([-0-9]+)(?:\s+(\d+))?/ line)))
+            (let ((result (scan #/^(\d+)\s+([-\d]+)\s+([-\d]+)\s+([-\d]+)\s+([-\d]+)(?:\s+(\d+))?/ line)))
               (setf (command-of new-search) (parse-integer (regref result 1))
                     (aref (arg-of new-search) 0) (parse-integer (regref result 2))
                     (aref (arg-of new-search) 1) (parse-integer (regref result 3))
@@ -536,7 +536,7 @@
         (error "Format error room #~d, direction D~d." (number-of room) dir))
 
       (multiple-value-bind (start end reg-starts reg-ends)
-          (cl-ppcre:scan #/^(\S+)\s+([0-9-]+)\s+([-0-9]+)/ line)
+          (cl-ppcre:scan #/^(\S+)\s+([\d-]+)\s+([-\d]+)/ line)
         (declare (ignore start end))
         (setf (exit-info-of room-dir) (asciiflag-to-bits line
                                                       :start (aref reg-starts 0)
@@ -733,7 +733,7 @@
             nr)
 
     (let* ((line (get-line inf))
-           (result (scan #/^(\d+)\s+([\d-]+)\s+([\d-]+)\s+(\d+)d(\d+)\+(\d+)\s+(\d+)d(\d+)\+([-0-9]+)/ line)))
+           (result (scan #/^(\d+)\s+([\d-]+)\s+([\d-]+)\s+(\d+)d(\d+)\+(\d+)\s+(\d+)d(\d+)\+([-\d]+)/ line)))
       (assert result nil "Illegal numbers-1 line of mobile ~d: ~s~%" nr line)
       (setf (level-of mobile) (parse-integer (regref result 1))
             (hitroll-of mobile) (- 20 (parse-integer (regref result 2)))
@@ -827,7 +827,7 @@
                                       (asciiflag-to-bits (regref result 5))
                                       0)))
 
-    (let ((result (scan #/(\d+) ([\d-]+) ([\d-]+)(?: (\d+))?/ (get-line inf))))
+    (let ((result (scan #/(\d+) ([\d-]+) ([\d-]+)(?: ([\d-]+))?/ (get-line inf))))
       (assert result nil "Expected 3 or 4 args in second numeric line, object ~d" nr)
       (setf (aref (value-of obj) 0) (parse-integer (regref result 1))
             (aref (value-of obj) 1) (parse-integer (regref result 2))
@@ -837,13 +837,13 @@
                 (parse-integer (regref result 4))
                 0)))
 
-    (let ((result (scan #/(\d+) ([-0-9]+) ([-0-9]+)/ (get-line inf))))
+    (let ((result (scan #/(\d+) ([-\d]+) ([-\d]+)/ (get-line inf))))
       (assert result nil "Expected 3 args in third numeric line, object ~d" nr)
       (setf (material-of obj) (parse-integer (regref result 1))
             (max-dam-of obj) (parse-integer (regref result 2))
             (damage-of obj) (parse-integer (regref result 3))))
 
-    (let ((result (scan #/(\d+) ([\d-]+) ([\d-]+)(?: ([\d-]+))?/ (get-line inf))))
+    (let ((result (scan #/([\d-]+) ([\d-]+) ([\d-]+)(?: ([\d-]+))?/ (get-line inf))))
       (assert result nil "Expected 3 or 4 args in fourth numeric line, object ~d" nr)
       (set-weight obj (parse-integer (regref result 1)))
       (setf (cost-of (shared-of obj)) (parse-integer (regref result 2))
@@ -970,7 +970,7 @@
             (return))))
        (get-line-with-count inf))
 
-      (let ((result (scan #/^(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\S+)\s+([-0-9]+)\s+([-0-9]+)\s*(\d+)?/ line)))
+      (let ((result (scan #/^(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\S+)\s+([-\d]+)\s+([-\d]+)\s*(\d+)?/ line)))
 
         (unless result
           (error "Format error in 9-constant line of ~a~%Line was ~s" zonename line))
