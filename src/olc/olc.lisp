@@ -13,6 +13,13 @@
                (zone-flagged zone +zone-fullcontrol+)
                (zone-flagged zone flag)))))
 
+(defun check-is-editing (ch desc thing)
+  (unless thing
+    (send-to-char ch "You aren't editing a~:[~;n~] ~a.~%"
+                  (find (char desc 0) '(#\a #\e #\i #\o #\u))
+                  desc))
+  thing)
+
 (defun check-can-edit (ch zone flag)
   (let ((can-edit (can-edit-zone ch zone flag)))
     (unless can-edit
@@ -42,6 +49,22 @@
              (funcall setter (logior (funcall getter) (ash 1 flag-id)))
              (send-to-char ch "Flag ~a set on ~a.~%" (aref valid-flags flag-id) target-desc)))))
       (send-to-char ch "Usage: ~a~%" usage)))
+
+(defun update-index-file (path number kind)
+  (let ((entries (with-open-file (inf path)
+                   (loop for line = (read-line inf nil nil)
+                      while (and line (string/= line "$"))
+                      collect line into result
+                      finally (return (nreverse result))))))
+    (pushnew (format nil "~d.~a" number kind)
+             entries
+             :test #'string=)
+    (with-open-file (ouf path
+                         :direction :output
+                         :if-exists :rename-and-delete)
+      (format ouf "~{~a~%~}$~%" (sort entries #'<
+                                      :key (lambda (line)
+                                             (parse-integer line :junk-allowed t)))))))
 
 (defcommand (ch "worldwrite") (:immortal)
   (setf (bitp (prefs-of ch) +pref-worldwrite+) (not (bitp (prefs-of ch) +pref-worldwrite+)))

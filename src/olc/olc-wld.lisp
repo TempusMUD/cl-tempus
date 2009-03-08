@@ -111,17 +111,14 @@
     (handler-case
         (progn
           (setf context "world index")
-          (with-open-file (ouf (tempus-path "lib/world/wld/index")
-                               :direction :output
-                               :if-exists :rename-and-delete)
-            (format ouf "~{~d.wld~%~}$~%" (sort (mapcar 'number-of *zone-table*) #'<)))
+          (update-index-file (tempus-path "lib/world/wld/index") (number-of zone) "wld")
 
           (setf context "world file")
           (with-open-file (ouf (tempus-path "lib/world/wld/~d.wld" (number-of zone))
                                :direction :output
                                :if-exists :rename-and-delete
                                :if-does-not-exist :create)
-            (dolist (room (reverse (world-of zone)))
+            (dolist (room (world-of zone))
               (save-room ouf room))
             (format ouf "$~~~%"))
 
@@ -194,6 +191,8 @@
                       when (null (real-room num)) do (return num)
                       finally (return nil))))
     (cond
+      ((not (check-can-edit ch zone +zone-rooms-approved+))
+       nil)
       ((null room-num)
        (send-to-char ch "No allocatable rooms found in zone.~%"))
       (t
@@ -203,6 +202,8 @@
   (let* ((room-num (parse-integer number :junk-allowed t))
          (zone (and room-num (zone-containing-number room-num))))
     (cond
+      ((not (check-can-edit ch zone +zone-rooms-approved+))
+       nil)
       ((null room-num)
        (send-to-char ch "You must enter a room number or 'next'.~%"))
       ((null zone)
@@ -219,6 +220,8 @@
   (let* ((room-num (parse-integer number :junk-allowed t))
          (room (and room-num (real-room room-num))))
     (cond
+      ((not (check-can-edit ch (zone-of room) +zone-rooms-approved+))
+       nil)
       ((null room-num)
        (send-to-char ch "You must enter an actual number.~%"))
       ((null room)
@@ -255,7 +258,16 @@
          (send-to-char ch "Okay, done mimicing.~%"))))))
 
 (defcommand (ch "olc" "rset") (:immortal)
-  (send-to-char ch "Usage: olc rset (title|description|sector|flags|flow|special|specparam|prog)~%"))
+  (with-pagination ((link-of ch))
+    (send-to-char ch "Valid rset commands:~%~{  &y~a&n~%~}"
+                  (remove-duplicates
+                   (mapcan (lambda (cmd)
+                             (when (and (string= "olc" (first (command-info-pattern cmd)))
+                                        (string= "rset" (second (command-info-pattern cmd)))
+                                        (stringp (third (command-info-pattern cmd))))
+                               (list (third (command-info-pattern cmd)))))
+                           *commands*)
+                   :test #'string=))))
 
 (defcommand (ch "olc" "rset" "title") (:immortal)
   (when (check-can-edit ch (zone-of (in-room-of ch)) +zone-rooms-approved+)
@@ -630,7 +642,7 @@ Use the 'olc rexdesc remove' command to remove it, or the
          (setf (plr-bits-of ch) (logior (plr-bits-of ch) +plr-olc+))
          (act ch :place-emit "$n begins to write an extra description.~%")
          (start-text-editor (link-of ch)
-                            (in-room-of ch)
+                            exd
                             "an extradesc"
                             ""
                             (lambda (cxn exd buf)
@@ -638,8 +650,8 @@ Use the 'olc rexdesc remove' command to remove it, or the
                               (setf (plr-bits-of (actor-of cxn))
                                     (logandc2 (plr-bits-of (actor-of cxn)) +plr-olc+))
                               (setf (state-of cxn) 'playing))
-                            (lambda (cxn room)
-                              (declare (ignore room))
+                            (lambda (cxn exd)
+                              (declare (ignore exd))
                               (setf (plr-bits-of (actor-of cxn))
                                     (logandc2 (plr-bits-of (actor-of cxn)) +plr-olc+))
                               (setf (state-of cxn) 'playing))))))))

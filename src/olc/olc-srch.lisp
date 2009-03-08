@@ -83,7 +83,8 @@
     (perform-edit-search ch trigger keywords)))
 
 (defcommand (ch "olc" "xset") (:immortal)
-  (when (check-can-edit ch (zone-of (in-room-of ch)) +zone-rooms-approved+)
+  (when (and (check-is-editing ch "search" (olc-srch-of ch))
+             (check-can-edit ch (zone-of (in-room-of ch)) +zone-rooms-approved+))
     (send-to-char ch "Valid xset commands:~%~{  ~a~%~}"
                   (delete "xset"
                           (remove "olc" *commands* :test-not #'string=
@@ -94,69 +95,51 @@
                                  (second (command-info-pattern cmd)))))))
 
 (defcommand (ch "olc" "xset" junk) (:immortal)
-  (when (check-can-edit ch (zone-of (in-room-of ch)) +zone-rooms-approved+)
+  (when (and (check-is-editing ch "search" (olc-srch-of ch))
+             (check-can-edit ch (zone-of (in-room-of ch)) +zone-rooms-approved+))
     (send-to-char ch "No such xset command '~a'~%" junk)))
 
 (defcommand (ch "olc" "xset" "trigger" trigger) (:immortal)
-  (when (check-can-edit ch (zone-of (in-room-of ch)) +zone-rooms-approved+)
-    (cond
-      ((null (olc-srch-of ch))
-       (send-to-char ch "You aren't editing a search.~%"))
-      (t
-       (setf (trigger-of (olc-srch-of ch)) trigger)
-       (send-to-char ch "Search command trigger set.~%")))))
+  (when (and (check-is-editing ch "search" (olc-srch-of ch))
+             (check-can-edit ch (zone-of (in-room-of ch)) +zone-rooms-approved+))
+    (setf (trigger-of (olc-srch-of ch)) trigger)
+    (send-to-char ch "Search command trigger set.~%")))
 
 (defcommand (ch "olc" "xset" "keywords") (:immortal)
-  (when (check-can-edit ch (zone-of (in-room-of ch)) +zone-rooms-approved+)
-    (cond
-      ((null (olc-srch-of ch))
-       (send-to-char ch "You aren't editing a search.~%"))
-      (t
-       (setf (keywords-of (olc-srch-of ch)) nil)
-       (send-to-char ch "Search argument keywords cleared.~%")))))
+  (when (and (check-is-editing ch "search" (olc-srch-of ch))
+             (check-can-edit ch (zone-of (in-room-of ch)) +zone-rooms-approved+))
+    (setf (keywords-of (olc-srch-of ch)) nil)
+    (send-to-char ch "Search argument keywords cleared.~%")))
 
 (defcommand (ch "olc" "xset" "keywords" keywords) (:immortal)
-  (when (check-can-edit ch (zone-of (in-room-of ch)) +zone-rooms-approved+)
-    (cond
-      ((null (olc-srch-of ch))
-       (send-to-char ch "You aren't editing a search.~%"))
-      (t
-       (setf (keywords-of (olc-srch-of ch)) keywords)
-       (send-to-char ch "Search argument keywords set.~%")))))
+  (when (and (check-is-editing ch "search" (olc-srch-of ch))
+             (check-can-edit ch (zone-of (in-room-of ch)) +zone-rooms-approved+))
+    (setf (keywords-of (olc-srch-of ch)) keywords)
+    (send-to-char ch "Search argument keywords set.~%")))
 
 (defcommand (ch "olc" "xset" "to_vict" to-vict) (:immortal)
-  (when (check-can-edit ch (zone-of (in-room-of ch)) +zone-rooms-approved+)
-    (cond
-      ((null (olc-srch-of ch))
-       (send-to-char ch "You aren't editing a search.~%"))
-      (t
-       (setf (to-vict-of (olc-srch-of ch)) to-vict)
-       (send-to-char ch "To_vict message set.~%")))))
+  (when (and (check-is-editing ch "search" (olc-srch-of ch))
+             (check-can-edit ch (zone-of (in-room-of ch)) +zone-rooms-approved+))
+    (setf (to-vict-of (olc-srch-of ch)) to-vict)
+    (send-to-char ch "To_vict message set.~%")))
 
 (defcommand (ch "olc" "xset" "to_room" to-room) (:immortal)
-  (when (check-can-edit ch (zone-of (in-room-of ch)) +zone-rooms-approved+)
-    (cond
-      ((null (olc-srch-of ch))
-       (send-to-char ch "You aren't editing a search.~%"))
-      (t
-       (setf (to-room-of (olc-srch-of ch)) to-room)
-       (send-to-char ch "To_room message set.~%")))))
+  (when (and (check-is-editing ch "search" (olc-srch-of ch))
+             (check-can-edit ch (zone-of (in-room-of ch)) +zone-rooms-approved+))
+    (setf (to-room-of (olc-srch-of ch)) to-room)
+    (send-to-char ch "To_room message set.~%")))
 
 (defcommand (ch "olc" "xset" "to_remote" to-remote) (:immortal)
-  (when (check-can-edit ch (zone-of (in-room-of ch)) +zone-rooms-approved+)
-    (cond
-      ((null (olc-srch-of ch))
-       (send-to-char ch "You aren't editing a search.~%"))
-      (t
-       (setf (to-remote-of (olc-srch-of ch)) to-remote)
-       (send-to-char ch "To_remote message set.~%")))))
+  (when (and (check-is-editing ch "search" (olc-srch-of ch))
+             (check-can-edit ch (zone-of (in-room-of ch)) +zone-rooms-approved+))
+    (setf (to-remote-of (olc-srch-of ch)) to-remote)
+    (send-to-char ch "To_remote message set.~%")))
 
 (defcommand (ch "olc" "xset" "command" command) (:immortal)
-  (when (check-can-edit ch (zone-of (in-room-of ch)) +zone-rooms-approved+)
+  (when (and (check-is-editing ch "search" (olc-srch-of ch))
+             (check-can-edit ch (zone-of (in-room-of ch)) +zone-rooms-approved+))
     (let ((cmd (position command +search-commands+ :test 'string-abbrev)))
       (cond
-        ((null (olc-srch-of ch))
-         (send-to-char ch "You aren't editing a search.~%"))
         ((null cmd)
          (send-to-char ch "No such search command '~a'~%" command))
         (t
@@ -164,12 +147,11 @@
          (send-to-char ch "Search command set.~%"))))))
 
 (defcommand (ch "olc" "xset" "value" index value) (:immortal)
-  (when (check-can-edit ch (zone-of (in-room-of ch)) +zone-rooms-approved+)
+  (when (and (check-is-editing ch "search" (olc-srch-of ch))
+             (check-can-edit ch (zone-of (in-room-of ch)) +zone-rooms-approved+))
     (let ((idx (parse-integer index :junk-allowed t))
           (val (parse-integer value :junk-allowed t)))
       (cond
-        ((null (olc-srch-of ch))
-         (send-to-char ch "You aren't editing a search.~%"))
         ((or (null idx) (null val))
          (send-to-char ch "Usage: olc xset value (0|1|2) <value>~%"))
         (t
@@ -181,24 +163,22 @@
   (send-to-char ch "Usage: olc xset flags (+|-) <flags>~%"))
 
 (defcommand (ch "olc" "xset" "flags" plus-or-minus flag-names) (:immortal)
-  (when (check-can-edit ch (zone-of (in-room-of ch)) +zone-rooms-approved+)
-    (if (olc-srch-of ch)
-        (perform-set-flags ch plus-or-minus flag-names
-                           +search-bits+
-                           "search"
-                           "olc xset flags (+|-) <flags>"
-                           (lambda ()
-                             (flags-of (olc-srch-of ch)))
-                           (lambda (val)
-                             (setf (flags-of (olc-srch-of ch)) val)))
-        (send-to-char ch "You aren't editing a search.~%"))))
+  (when (and (check-is-editing ch "search" (olc-srch-of ch))
+             (check-can-edit ch (zone-of (in-room-of ch)) +zone-rooms-approved+))
+    (perform-set-flags ch plus-or-minus flag-names
+                       +search-bits+
+                       "search"
+                       "olc xset flags (+|-) <flags>"
+                       (lambda ()
+                         (flags-of (olc-srch-of ch)))
+                       (lambda (val)
+                         (setf (flags-of (olc-srch-of ch)) val)))))
 
 (defcommand (ch "olc" "xset" "fail_chance" chance) (:immortal)
-  (when (check-can-edit ch (zone-of (in-room-of ch)) +zone-rooms-approved+)
+  (when (and (check-is-editing ch "search" (olc-srch-of ch))
+             (check-can-edit ch (zone-of (in-room-of ch)) +zone-rooms-approved+))
     (let ((chance (parse-integer chance :junk-allowed t)))
       (cond
-        ((null (olc-srch-of ch))
-         (send-to-char ch "You aren't editing a search.~%"))
         ((null chance)
          (send-to-char ch "Usage: olc xset fail_chance <percent chance>~%"))
         ((not (<= 0 chance 100))
@@ -208,7 +188,6 @@
          (send-to-char ch "This search will now have a ~d% chance of failure.~%" chance))))))
 
 (defcommand (ch "olc" "xstat") (:immortal)
-  (when (check-can-edit ch (zone-of (in-room-of ch)) +zone-rooms-approved+)
-    (if (olc-srch-of ch)
-        (format-search-data ch (in-room-of ch) (olc-srch-of ch))
-        (send-to-char ch "You aren't editing a search.~%"))))
+  (when (and (check-is-editing ch "search" (olc-srch-of ch))
+             (check-can-edit ch (zone-of (in-room-of ch)) +zone-rooms-approved+))
+    (format-search-data ch (in-room-of ch) (olc-srch-of ch))))
