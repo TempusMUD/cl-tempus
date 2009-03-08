@@ -58,10 +58,15 @@
   (is (equal '(nil) (multiple-value-list (tempus::get-number "-5.foo")))))
 
 (deftest get-matching-objects ()
-  (with-fixtures ((alice mock-player))
-    (let ((objs (mapcar 'make-mock-object
-                        '("armor" "armor" "armor" "book" "book"
-                          "candle" "doublet"))))
+  (with-fixtures ((alice mock-player)
+                  (armor-1 mock-object :name "armor")
+                  (armor-2 mock-object :name "armor")
+                  (armor-3 mock-object :name "armor")
+                  (book-1 mock-object :name "book")
+                  (book-2 mock-object :name "book")
+                  (candle mock-object :name "candle")
+                  (doublet mock-object :name "doublet"))
+    (let ((objs (list armor-1 armor-2 armor-3 book-1 book-2 candle doublet)))
       (is (equal objs (tempus::resolve-alias alice "all" objs)))
       (is (equal (subseq objs 0 3) (tempus::resolve-alias alice "all.armor" objs)))
       (is (equal (subseq objs 3 5) (tempus::resolve-alias alice "all.book" objs)))
@@ -71,11 +76,15 @@
       (is (equal (subseq objs 2 3) (tempus::resolve-alias alice "3.armor" objs))))))
 
 (deftest resolve-alias ()
-  (with-fixtures ((alice mock-player))
-    (let ((objs (loop
-                   for name in '("armor" "armor" "armor" "book" "book"
-                                 "candle" "doublet")
-                   collect (make-mock-object name))))
+  (with-fixtures ((alice mock-player)
+                  (armor-1 mock-object :name "armor")
+                  (armor-2 mock-object :name "armor")
+                  (armor-3 mock-object :name "armor")
+                  (book-1 mock-object :name "book")
+                  (book-2 mock-object :name "book")
+                  (candle mock-object :name "candle")
+                  (doublet mock-object :name "doublet"))
+    (let ((objs (list armor-1 armor-2 armor-3 book-1 book-2 candle doublet)))
       (is (eql (first objs) (first (tempus::resolve-alias alice "armor" objs))))
       (is (eql (second objs) (first (tempus::resolve-alias alice "2.armor" objs))))
       (is (eql (third objs) (first (tempus::resolve-alias alice "3.armor" objs))))

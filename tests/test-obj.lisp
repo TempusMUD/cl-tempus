@@ -204,7 +204,6 @@
 (deftest get-gold ()
   (with-fixtures ((alice mock-player)
                   (obj mock-object :name "a pile of gold"))
-    (setf obj (make-mock-object "a pile of gold"))
     (setf (tempus::wear-flags-of obj) tempus::+item-wear-take+)
     (setf (tempus::kind-of obj) tempus::+item-money+)
     (setf (aref (tempus::value-of obj) 0) 12345)
