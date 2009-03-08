@@ -44,10 +44,10 @@
                            (coerce valid-flags 'list)))
             ((string= plus-or-minus "-")
              (funcall setter (logandc2 (funcall getter) (ash 1 flag-id)))
-             (send-to-char ch "Flag ~a unset on ~a.~%" (aref valid-flags flag-id) target-desc))
+             (send-to-char ch "Flag ~a unset on ~a flags.~%" (aref valid-flags flag-id) target-desc))
             (t
              (funcall setter (logior (funcall getter) (ash 1 flag-id)))
-             (send-to-char ch "Flag ~a set on ~a.~%" (aref valid-flags flag-id) target-desc)))))
+             (send-to-char ch "Flag ~a set on ~a flags.~%" (aref valid-flags flag-id) target-desc)))))
       (send-to-char ch "Usage: ~a~%" usage)))
 
 (defun update-index-file (path number kind)

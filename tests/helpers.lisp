@@ -180,6 +180,35 @@
   (:teardown (obj)
     (tempus::extract-obj obj)))
 
+(defixture mock-obj-prototype
+  (:setup (var &key (name "a mock object"))
+    (let* ((vnum (loop for num from 100 upto 199
+                        when (null (tempus::real-object-proto num)) do (return num)
+                        finally (return nil)))
+           (new-object-shared (make-instance 'tempus::obj-shared-data :vnum vnum))
+           (new-object (make-instance 'tempus::obj-data
+                                      :name name
+                                      :aliases name
+                                      :line-desc (format nil "~a is here." name)
+                                      :shared new-object-shared)))
+    (dotimes (i tempus::+max-obj-affect+)
+      (setf (aref (tempus::affected-of new-object) i)
+            (make-instance 'tempus::obj-affected-type)))
+    (setf (tempus::proto-of new-object-shared) new-object)
+    (setf (gethash vnum tempus::*object-prototypes*) new-object)))
+  (:teardown (obj)
+    (dolist (obj (copy-list tempus::*object-list*))
+      (when (= (tempus::vnum-of obj) (tempus::vnum-of obj))
+        (tempus::extract-obj obj)))
+
+    (remhash (tempus::vnum-of obj) tempus::*object-prototypes*)
+
+    (dolist (tch tempus::*characters*)
+      (when (and (typep tch 'tempus::player)
+                 (tempus::olc-obj-of tch)
+                 (eql (tempus::vnum-of (tempus::olc-obj-of tch)) (tempus::vnum-of obj)))
+        (setf (tempus::olc-obj-of tch) nil)))))
+
 (defixture mock-room
   (:setup (var &key name)
     (let* ((room-num (loop for num from 100 upto 199

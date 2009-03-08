@@ -1890,6 +1890,9 @@
     "!PaIN" "ReTNa" "ADReN" "CoNFi" "ReJV" "ReGN" "GlWL" "BlR"
     "31"))
 
+(defparameter +affected-bits-desc+
+  #("Blind" "Invisible" "Det_Alignment" "Det_Invisible" "Det_Magic" "Sense_Life" "Waterwalk" "Sanctuary" "Group" "Curse" "Infravision" "Poison" "Prot_Evil" "Prot_Good" "Sleep" "NoTrack" "inflight" "Time_Warp" "Sneak" "Hide" "WaterBreath" "Charm" "Confusion" "NoPain" "Retina" "Adrenaline" "Confidence" "Rejuvenation" "Regeneration" "Glowlight" "Blur"))
+
 (defparameter +affected2-bits+
   #("FLUOR" "TRANSP" "SLOW" "HASTE" "MOUNTED" "FIRESHLD" "BERSERK"
     "INTIMD" "TRUE_SEE" "DIV_ILL" "PROT_UND" "INVS_UND" "ANML_KIN"
@@ -1897,6 +1900,9 @@
     "BURNING!" "!BEHEAD" "DISPLACR" "PROT_DEVILS" "MEDITATE" "EVADE"
     "BLADE BARRIER" "OBLIVITY" "NRG_FIELD" "PETRI" "VERTIGO"
     "PROT_DEMONS"))
+
+(defparameter +affected2-bits-desc+
+  #("Fluorescent" "Transparent" "Slow" "Haste" "Mounted" "Fireshield" "Berserk" "Intimidation" "True_See" "Divine_Ill" "Prot_Undead" "Invis_Undead" "Invis_Animals" "End_Cold" "Paralyze" "Prot_Lightning" "Prot_Fire" "Telekinesis" "Prot_Radiation" "Burning" "No_BeHead" "Displacer" "Prot_Devils" "Meditate" "Evade" "Blade_Barrier" "Oblivity" "Energy_Field" "Petri" "Vertigo" "Prot_Demons"))
 
 (defparameter +affected3-bits+
   #("ATTR-FIELD" "ENERGY_LEAK" "POISON-2" "POISON-3" "SICK"
@@ -1906,14 +1912,27 @@
     "GRV WELL" "SMBL PAIN" "EMP_SHLD" "IAFF" "!UNUSED!" "TAINTED"
     "INFIL" "DivPwR" "MANA_LEAK"))
 
+(defparameter +affected3-bits-desc+
+  #("attraction_field" "Energy_Leak" "Poison_2" "Poison_3" "Sick" "Self_Destruct" "Damage_Control" "Stasis" "Prismatic_Sphere" "Radioactive" "Detect Poison" "Mana_Tap" "Energy_Tap" "Sonic_Imagery" "Shroud_Obscurement" "Nobreathe" "Prot_Heat" "psishield" "psychic_crush" "double_damage" "acidity" "hamstring" "gravity well" "symbol of pain" "emp shielding" "!instant affect!" "Sniped" "Tainted" "Infiltrating" "Divine Power" "Mana_Leak"))
+
+
 (defparameter +extra-bits+
   #("GLOW" "HUM" "!RENT" "!DON" "!INVIS" "INVIS" "MAGIC" "!DROP" "BLESS" "!GOOD" "!EVIL" "!NEU" "!MAGE" "!CLE" "!THI" "!WAR" "!SELL" "!BAR" "!PSI" "!PHY" "!CYB" "!KNI" "!RAN" "!BARD" "!MONK" "BLUR" "!DISP_MAG" "unused138" "REP_FLD" "TRANSP" "DAMNED"))
+
+(defparameter +extra-names+
+  #("glow" "hum" "norent" "nodonate" "noinvis" "invisible" "magic" "nodrop" "bless" "nogood" "noevil" "noneutral" "nomage" "nocleric" "nothief" "nowarrior" "nosell" "nobarb" "nopsionic" "nophysic" "nocyborg" "noknight" "noranger" "nobard" "nomonk" "blur" "nodispel_magic" "unused138" "repulsion_field" "transparent" "evil_bless"))
 
 (defparameter +extra2-bits+
   #("RADACT" "!MERC" "!SPR1" "!SPR2" "!SPR3" "HIDDEN" "TRAPPED" "SINGULAR" "!LOC" "!SOIL" "CAST_W" "2_HAND" "BODY PART" "ABLAZE" "PERM_CURSE" "!REMOVE" "THROWN" "GODEQ" "!MORT" "BROKEN" "IMPLANT" "REINF" "ENHAN" "MORT" "*" "*" "*" "*" "PROT_HUNT" "RENAMED" "_!APPROVE_"))
 
+(defparameter +extra2-names+
+  #("radioactive" "nomerc" "nospare1" "nospare2" "nospare3" "hidden" "trapped" "singular" "nolocate" "nosoilage" "casting_weapon" "two_handed" "body_part" "ablaze" "perm_curse" "noremove" "throwable" "godeq" "nomort" "broken" "implant" "reinforced" "enhanced" "mort" "*" "*" "*" "*" "prot_hunt" "renamed" "unapproved"))
+
 (defparameter +extra3-bits+
   #("MAGE" "CLE" "THI" "WAR" "BAR" "PSI" "PHY" "CYB" "KNI" "RAN" "BARD" "MONK" "VAMP" "MER" "SPR1" "SPR2" "SPR3" "HARD" "STAY" "HUNT" "!MAG" "!SCI"))
+
+(defparameter +extra3-names+
+  #("mage" "cleric" "thief" "warrior" "barbarian" "psionic" "physic" "cyborg" "knight" "ranger" "bard" "monk" "vampire" "mercenary" "spare1" "spare2" "spare3" "hardened" "stayzone" "hunted" "nomagic" "noscience"))
 
 (defparameter +apply-types+
   #("NONE" "STR" "DEX" "INT" "WIS" "CON" "CHA" "CLASS" "LEVEL" "AGE" "WEIGHT" "HEIGHT" "MAXMANA" "MAXHIT" "MAXMOVE" "GOLD" "EXP" "ARMOR" "HITROLL" "DAMROLL" "SAV_PARA" "SAV_ROD" "SAV_PETRI" "SAV_BREATH" "SAV_SPELL" "SNEAK" "HIDE" "RACE" "SEX" "BACKST" "PICK" "PUNCH" "SHOOT" "KICK" "TRACK" "IMPALE" "BEHEAD" "THROW" "RIDING" "TURN" "SAV_CHEM" "SAV_PSI" "ALIGN" "SAV_PHY" "CASTER" "WEAP_SPEED" "DISGUISE" "NOTHIRST" "NOHUNGER" "NODRUNK" "SPEED"))

@@ -296,7 +296,7 @@
    (extra2-flags :accessor extra2-flags-of :initarg :extra2-flags :initform 0)
    (extra3-flags :accessor extra3-flags-of :initarg :extra3-flags :initform 0)
    (weight :accessor weight-of :initarg :weight :initform 0)
-   (timer :accessor timer-of :initarg :timer :initform 0)
+   (timer :accessor timer-of :initarg :timer :initform -1)
    (bitvector :accessor bitvector-of :initarg :bitvector
               :initform (make-array 3 :initial-element 0))
    (material :accessor material-of :initarg :material :initform 0)
@@ -328,7 +328,7 @@
                  :extra3-flags (extra3-flags-of proto)
                  :weight (weight-of proto)
                  :timer (timer-of proto)
-                 :bitvector (bitvector-of proto)
+                 :bitvector (make-array 3 :initial-contents (bitvector-of proto))
                  :material (material-of proto)
                  :max-dam (max-dam-of proto)
                  :damage (damage-of proto)
