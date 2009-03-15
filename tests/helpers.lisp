@@ -132,7 +132,8 @@
          (tempus::save-account account)
          (tempus::create-new-player player account)
          (let ((tempus::*log-output* (make-broadcast-stream)))
-           (tempus::player-to-game player)))
+           (tempus::player-to-game player))
+         (setf (tempus::cxn-output-buf link) nil))
         (t
          (push player tempus::*characters*)
          (setf (gethash (tempus::idnum-of player) tempus::*character-map*) player)
