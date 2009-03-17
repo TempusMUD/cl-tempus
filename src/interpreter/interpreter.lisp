@@ -28,6 +28,13 @@
 ;; "get" thing
 ;; "get"
 
+(defun literal-token-p (token)
+  (or (stringp token)
+      (characterp token)))
+
+(defun var-token-p (token)
+  (not (literal-token-p token)))
+
 (defun pattern-sort< (a b)
   (cond
     ((and (null a) (null b))
@@ -39,13 +46,13 @@
     ((null b)
      ;; a is longer, therefore should go first
      t)
-    ((and (symbolp (car a)) (not (symbolp (car b))))
+    ((and (var-token-p (car a)) (literal-token-p (car b)))
      ;; a is a symbol and b isn't, so a should go later
      nil)
-    ((and (not (symbolp (car a))) (symbolp (car b)))
+    ((and (literal-token-p (car a)) (var-token-p (car b)))
      ;; a isn't a symbol and b is, so a should go first
      t)
-    ((and (symbolp (car a)) (symbolp (car b)))
+    ((and (var-token-p (car a)) (var-token-p (car b)))
      ;; both a and b are symbols, so check the next element
      (pattern-sort< (cdr a) (cdr b)))
     ((string= (car a) (car b))
@@ -135,14 +142,93 @@
        (add-command (quote ,pattern) (quote ,flags) ',func-name)
        ',func-name)))
 
-(defparameter *parser-trace* nil)
+(defparameter *parser-trace* t)
 (defun trace-msg (fmt &rest args)
   (when *parser-trace*
     (slog "~?" fmt args)))
 
+(defun pattern-match-wildcard (string tokens vars)
+  ;; wildcard matching
+  (trace-msg "Matching symbol ~a" (first tokens))
+  (setf tokens (rest tokens))
+  (cond
+    ((string= string "")
+     ;; wildcards don't match the empty string
+     (trace-msg "No match - empty string")
+     nil)
+    ((null tokens)
+     (trace-msg "Last token, rest of string is var")
+     (values t nil nil (cons (string-trim '(#\space) string) vars)))
+    ((symbolp (first tokens))
+     (let ((space-pos (position #\space string)))
+       (cond
+         ((null space-pos)
+          (trace-msg "No match - Next token is sym and no space found")
+          nil)
+         (t
+          (trace-msg "Next tokens is sym - Pushing single word into var")
+          (values t
+                  (subseq string (1+ space-pos))
+                  tokens
+                  (cons (subseq string 0 space-pos) vars))))))
+    ((stringp (first tokens))
+     (let* ((space-pos (position #\space string))
+            (match-pos (and space-pos (search (first tokens) string :start2 space-pos))))
+       (cond
+         ((null space-pos)
+          (trace-msg "No match - Next token is string and no space found")
+          nil)
+         ((null match-pos)
+          (trace-msg "No match - Next token is string and not found")
+          nil)
+         (t
+          (trace-msg "Next token is str - Pushing subseq into var")
+          (values t
+                  (string-trim '(#\space) (subseq string (+ match-pos (length (first tokens)))))
+                  (rest tokens) ; We skip the next token, since we've already matched it
+                  (cons (string-trim '(#\space) (subseq string 0 match-pos)) vars))))))))
+
+(defun pattern-match-char (string tokens)
+  (trace-msg "Matching character ~a" (first tokens))
+  (cond
+    ((not (eql (first tokens) (char string 0)))
+     (trace-msg "No match - single character didn't match")
+     nil)
+    (t
+     (trace-msg "Single character matched")
+     (values (string-left-trim '(#\space) (subseq string 1)) (rest tokens)))))
+
+(defun pattern-match-string (string tokens)
+  (trace-msg "Matching string ~a in middle" (first tokens))
+  ;; string matching
+  (cond
+    ((null (rest tokens))
+     ;; end of string
+     (trace-msg "Matching string ~a at end" (first tokens))
+     (when (string-abbrev string (first tokens))
+       (values t nil nil)))
+    (t
+     (let* ((space-pos (position #\space string))
+            (word (if space-pos (subseq string 0 space-pos) string)))
+       (cond
+         ((not (string-abbrev word (first tokens)))
+          (trace-msg "No match - didn't match string")
+          nil)
+         ((null space-pos)
+          (trace-msg "String matched at end")
+          (values t
+                  ""
+                  (rest tokens)))
+         (t
+          (trace-msg "String matched in middle")
+          (values t
+                  (string-left-trim '(#\space) (subseq string (1+ space-pos)))
+                  (rest tokens))))))))
+
 (defun command-pattern-matches (pattern string)
   (loop
      with vars = nil
+     with match-p = t
      with tokens = pattern
      while tokens
      for token = (car tokens)
@@ -150,70 +236,16 @@
        (trace-msg "string=~s" string)
        (trace-msg "vars=~s" vars)
        (cond
-          ((symbolp token)
-           ;; wildcard matching
-           (trace-msg "Matching symbol ~a" token)
-           (setf tokens (rest tokens))
-           (cond
-             ((string= string "")
-              ;; wildcards don't match the empty string
-              (trace-msg "No match - empty string")
-              (return-from command-pattern-matches nil))
-             ((null tokens)
-              (trace-msg "Last token, rest of string is var")
-              (push (string-trim '(#\space) string) vars))
-             ((symbolp (first tokens))
-              (let ((space-pos (position #\space string)))
-                (unless space-pos
-                  (trace-msg "No match - Next token is sym and no space found")
-                  (return-from command-pattern-matches nil))
-                (trace-msg "Next tokens is sym - Pushing single word into var")
-                (push (subseq string 0 space-pos) vars)
-                (setf string (subseq string (1+ space-pos)))))
-             ((stringp (first tokens))
-              (let ((space-pos (position #\space string)))
-                (unless space-pos
-                  (trace-msg "No match - Next token is string and no space found")
-                  (return-from command-pattern-matches nil))
-                (let ((match-pos (search (first tokens) string :start2 space-pos)))
-                  (unless match-pos
-                    (trace-msg "No match - Next token is string and not found")
-                    (return-from command-pattern-matches nil))
-                  (trace-msg "Next token is str - Pushing subseq into var")
-                  (push (string-trim '(#\space)
-                                     (subseq string 0 match-pos)) vars)
-                  ;; We skip the next token, since we've already matched it
-                  (setf string (string-trim '(#\space) (subseq string (+ match-pos (length (first tokens))))))
-                  (setf tokens (rest tokens)))))))
-          ((characterp token)
-           (trace-msg "Matching character ~a" token)
-           (unless (eql token (char string 0))
-             (trace-msg "No match - single character didn't match")
-             (return-from command-pattern-matches nil))
-           (trace-msg "Single character matched")
-           (setf string (string-left-trim '(#\space) (subseq string 1)))
-           (setf tokens (rest tokens)))
-          ((rest tokens)
-           (trace-msg "Matching string ~a in middle" token)
-           ;; string matching
-           (let* ((space-pos (position #\space string))
-                  (word (if space-pos (subseq string 0 space-pos) string)))
-             (unless (string-abbrev word token)
-               (trace-msg "No match - didn't match string")
-               (return-from command-pattern-matches nil))
-             (trace-msg "String matched")
-             (if space-pos
-                 (setf string (string-left-trim '(#\space)
-                                                (subseq string (1+ space-pos))))
-                 (setf string ""))
-             (setf tokens (rest tokens))))
-          (t
-           ;; end of string
-           (trace-msg "Matching string ~a at end" token)
-           (unless (string-abbrev string token)
-             (return-from command-pattern-matches nil))
-           (setf tokens nil)))
-     finally (return (list t (nreverse vars)))))
+         ((var-token-p token)
+          (multiple-value-setq (match-p string tokens vars)
+            (pattern-match-wildcard string tokens vars)))
+         ((characterp token)
+          (multiple-value-setq (match-p string tokens)
+            (pattern-match-char string tokens)))
+         (t
+          (multiple-value-setq (match-p string tokens)
+            (pattern-match-string string tokens))))
+     finally (return (when match-p (list t (nreverse vars))))))
 
 (defun can-do-command (ch command)
   (and (or (not (member :immortal (command-info-flags command)))
