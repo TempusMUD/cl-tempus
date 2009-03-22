@@ -17,10 +17,11 @@
     (format stream "#<CMD-INFO ~s~{ ~a~}>"
             (command-info-pattern cmd)
             (command-info-flags cmd)))
-  (define-condition parser-error ()
-    ((message :reader message-of :initarg :message)))
-  (defmethod print-object ((err parser-error) stream)
-    (princ (message-of err) stream)))
+
+  (define-condition parser-error (simple-error)
+    ((message :reader message-of :initarg :message))
+    (:report (lambda (err stream)
+               (princ (message-of err) stream)))))
 
 ;; "get" thing "from" container
 ;; "get" thing "from"
@@ -113,8 +114,7 @@
         *commands*)))))
 
 (defmacro defcommand ((actor &rest pattern) flags &body body)
-  (let* ((err (gensym "ERR"))
-         (body-docstr (when (stringp (first body))
+  (let* ((body-docstr (when (stringp (first body))
                         (prog1
                             (list (first body))
                           (setf body (rest body)))))
@@ -131,10 +131,7 @@
                   ,@body-docstr
                   ,@body-declare
                   (check-type ,actor creature)
-                  (handler-case
-                      (block nil ,@body)
-                    (parser-error (,err)
-                      (send-to-char ,actor "~a~%" ,err))))))
+                      (block nil ,@body))))
     (assert (not (symbolp (first pattern))) nil
             "First token of pattern must not be a symbol.")
     `(progn
@@ -196,7 +193,9 @@
      nil)
     (t
      (trace-msg "Single character matched")
-     (values (string-left-trim '(#\space) (subseq string 1)) (rest tokens)))))
+     (values t
+             (string-left-trim '(#\space) (subseq string 1))
+             (rest tokens)))))
 
 (defun pattern-match-string (string tokens)
   (trace-msg "Matching string ~a in middle" (first tokens))
@@ -291,7 +290,10 @@
       ((and (is-npc ch) (member :player (command-info-flags command)))
        (send-to-char ch "Sorry, players ONLY!~%"))
       ((not (check-specials 'command ch command vars))
-       (apply (command-info-function command) ch vars)))))
+       (handler-case
+           (apply (command-info-function command) ch vars)
+         (parser-error (err)
+           (send-to-char ch "~a~%" (message-of err))))))))
 
 (defun check-specials (trigger ch command vars)
   (or
