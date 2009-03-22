@@ -15,6 +15,9 @@
 (defclass mock-account (tempus::account)
   ())
 
+(defclass mock-zone (tempus::zone-data)
+  ((original-zone :accessor original-zone-of :initarg original-zone)))
+
 (defun escape-mock-str (str)
   (with-output-to-string (result)
     (loop for idx from 0 to (1- (length str)) do
@@ -210,6 +213,34 @@
                  (eql (tempus::vnum-of (tempus::olc-obj-of tch)) (tempus::vnum-of obj)))
         (setf (tempus::olc-obj-of tch) nil)))))
 
+(defixture mock-mob-prototype
+  (:setup (var &key (name "a mock mobile"))
+    (let* ((vnum (loop for num from 100 upto 199
+                        when (null (tempus::real-mobile-proto num)) do (return num)
+                        finally (return nil)))
+           (new-mobile-shared (make-instance 'tempus::mob-shared-data :vnum vnum))
+           (new-mobile (make-instance 'tempus::mobile
+                                      :name name
+                                      :aliases name
+                                      :ldesc (format nil "~a is here." name)
+                                      :shared new-mobile-shared)))
+    (setf (tempus::proto-of new-mobile-shared) new-mobile)
+    (setf (gethash vnum tempus::*mobile-prototypes*) new-mobile)))
+  (:teardown (mob)
+    (dolist (target-mob (copy-list tempus::*characters*))
+      (when (and (tempus::is-npc target-mob)
+                 (= (tempus::vnum-of target-mob) (tempus::vnum-of mob)))
+        (tempus::extract-creature target-mob nil)))
+
+    (remhash (tempus::vnum-of mob) tempus::*mobile-prototypes*)
+
+    (dolist (tch tempus::*characters*)
+      (when (and (typep tch 'tempus::player)
+                 (tempus::olc-mob-of tch)
+                 (eql (tempus::vnum-of (tempus::olc-mob-of tch))
+                      (tempus::vnum-of mob)))
+        (setf (tempus::olc-mob-of tch) nil)))))
+
 (defixture mock-room
   (:setup (var &key name)
     (let* ((room-num (loop for num from 100 upto 199
@@ -224,9 +255,33 @@
       (push room (tempus::world-of (tempus::real-zone 1)))
       room))
   (:teardown (room)
+    (dolist (obj (copy-list (tempus::contents-of room)))
+      (tempus::extract-obj obj))
+    (dolist (ch (copy-list (tempus::people-of room)))
+      (if (tempus::is-npc ch)
+          (tempus::extract-creature ch nil)
+          (tempus::char-from-room ch nil)))
     (remhash (tempus::number-of room) tempus::*rooms*)
     (setf (tempus::world-of (tempus::zone-of room))
           (delete room (tempus::world-of (tempus::zone-of room))))))
+
+(defvar *original-zones* (make-hash-table))
+
+(defixture mock-zone
+  (:setup (var &key zone-num)
+    (let* ((old-zone (tempus::real-zone zone-num))
+           (mock-zone (tempus::copy-zone old-zone)))
+      (setf (gethash (tempus::number-of old-zone) *original-zones*) old-zone)
+      (dolist (room (tempus::world-of mock-zone))
+        (setf (tempus::zone-of room) mock-zone))
+      (setf tempus::*zone-table* (substitute mock-zone old-zone tempus::*zone-table*))
+      mock-zone))
+  (:teardown (mock-zone)
+    (let ((old-zone (gethash (tempus::number-of mock-zone) *original-zones*)))
+      (remhash (tempus::number-of mock-zone) *original-zones*)
+      (dolist (room (tempus::world-of old-zone))
+        (setf (tempus::zone-of room) old-zone))
+      (setf tempus::*zone-table* (substitute old-zone mock-zone tempus::*zone-table*)))))
 
 (defmacro with-captured-log (log expr &body body)
   `(let ((tempus::*log-output* (make-string-output-stream)))

@@ -999,7 +999,7 @@
          (setf (command-of new-zonecmd) (char line 0))
 
          (cond
-           ((find (char line 0) "MOEPIVW")
+           ((find (char line 0) "MOEPIVWGR")
             (let ((result (scan #/^. ([-01]+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)/ line)))
               (unless result
                 (error "Format error in ~a, line ~d: ~s" zonename line-num line))

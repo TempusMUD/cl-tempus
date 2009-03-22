@@ -20,6 +20,23 @@
        (setf (tempus::olc-obj-of ,player) ,obj)
        ,@body)))
 
+(defmacro with-zone-olc-fixture ((player room zone) &body body)
+  `(with-fixtures ((,player mock-player :level 51 :override-security t)
+                   (,room mock-room)
+                   (,zone mock-zone :zone-num 1))
+     (tempus::char-from-room ,player nil)
+     (tempus::char-to-room ,player ,room nil)
+     (setf (tempus::owner-idnum-of ,zone) (tempus::idnum-of ,player))
+     ,@body))
+
+(defun zcmd-equal (zcmd if-flag command arg1 arg2 arg3 prob)
+  (and (eql command (tempus::command-of zcmd))
+       (= if-flag (tempus::if-flag-of zcmd))
+       (= arg1 (tempus::arg1-of zcmd))
+       (= arg2 (tempus::arg2-of zcmd))
+       (= arg3 (tempus::arg3-of zcmd))
+       (= prob (tempus::prob-of zcmd))))
+
 (deftest perform-create-and-destroy-room/creates-and-destroys-room ()
   (with-fixtures ((alice mock-player :level 51 :override-security t))
     (setf (tempus::owner-idnum-of (tempus::zone-of (tempus::in-room-of alice))) (tempus::idnum-of alice))
@@ -468,3 +485,419 @@
     (tempus::interpret-command alice "olc oset affection 1 + inflight")
     (char-output-is alice "Flag inflight set on affect object flags.~%")
     (is (= tempus::+aff-inflight+ (aref (tempus::bitvector-of (tempus::olc-obj-of alice)) 0)))))
+
+(deftest save-zone-data/saves-zone-file ()
+  (with-fixtures ((alice mock-player :level 51 :override-security t))
+    (unwind-protect
+         (progn
+           (rename-file (tempus::tempus-path "lib/world/zon/376.zon") (tempus::tempus-path "lib/world/zon/376.zon.test"))
+           (with-captured-log log
+               (tempus::save-zone-data alice (tempus::real-zone 376))
+             (is (search "OLC: Alice zsaved 376" log))
+             (is (equal (tempus::snarf-file (tempus::tempus-path "lib/world/zon/376.zon"))
+                        (tempus::snarf-file (tempus::tempus-path "lib/world/zon/376.zon.test"))))))
+      (progn
+        (when (probe-file (tempus::tempus-path "lib/world/zon/376.zon"))
+          (delete-file (tempus::tempus-path "lib/world/zon/376.zon")))
+        (rename-file (tempus::tempus-path "lib/world/zon/376.zon.test") (tempus::tempus-path "lib/world/zon/376.zon"))))))
+
+(deftest do-olc-zcmd-list/no-args/lists-zone-commands ()
+  (with-fixtures ((alice mock-player :level 51 :override-security t))
+    (tempus::char-from-room alice nil)
+    (tempus::char-to-room alice (tempus::real-room 3013) nil)
+    (tempus::interpret-command alice "olc zcmd list")
+    (char-output-has alice "Mobile")
+    (char-output-has alice "Give")
+    (char-output-has alice "Equip")))
+
+(deftest do-olc-zcmd-list/with-args/lists-zone-commands ()
+  (with-fixtures ((alice mock-player :level 51 :override-security t))
+    (tempus::char-from-room alice nil)
+    (tempus::char-to-room alice (tempus::real-room 3013) nil)
+    (tempus::interpret-command alice "olc zcmd list mobile")
+    (char-output-has alice "Mobile")
+    (is (null (search "Give" (char-output alice))))
+    (is (null (search "Equip" (char-output alice))))))
+
+(deftest do-olc-zset-name/sets-zone-name ()
+  (with-zone-olc-fixture (alice room zone)
+    (tempus::interpret-command alice "olc zset name Testing")
+    (is (equal "Testing" (tempus::name-of zone)))
+    (char-output-is alice "Zone 1 name set to: Testing~%")))
+
+(deftest do-olc-zset-respawn-pt/arg-is-none/clears-respawn-point ()
+  (with-zone-olc-fixture (alice room zone)
+    (tempus::interpret-command alice "olc zset respawn_pt none")
+    (is (null (tempus::respawn-pt-of zone)))
+    (char-output-is alice "Zone 1 respawn point cleared.~%")))
+
+(deftest do-olc-zset-respawn-pt/arg-is-number/sets-respawn-point ()
+  (with-zone-olc-fixture (alice room zone)
+    (tempus::interpret-command alice "olc zset respawn_pt 100")
+    (is (= 100 (tempus::respawn-pt-of zone)))
+    (char-output-is alice "Zone 1 respawn point set to room 100.~%")))
+
+(deftest do-olc-zset-top/sets-zone-top ()
+  (with-zone-olc-fixture (alice room zone)
+    (tempus::interpret-command alice "olc zset top 262")
+    (is (= 262 (tempus::top-of zone)))
+    (char-output-is alice "Zone 1 top number set to 262.~%")))
+
+(deftest do-olc-zset-reset/sets-zone-reset ()
+  (with-zone-olc-fixture (alice room zone)
+    (tempus::interpret-command alice "olc zset reset 2")
+    (is (= 2 (tempus::reset-mode-of zone)))
+    (char-output-is alice "Zone 1 reset mode set to 2.~%")))
+
+(deftest do-olc-zset-timeframe/sets-zone-timeframe ()
+  (with-zone-olc-fixture (alice room zone)
+    (tempus::interpret-command alice "olc zset tframe electro")
+    (is (= tempus::+time-future+ (tempus::time-frame-of zone)))
+    (char-output-is alice "Zone 1 timeframe set to Electro Era.~%")))
+
+(deftest do-olc-zset-plane/sets-zone-plane ()
+  (with-zone-olc-fixture (alice room zone)
+    (tempus::interpret-command alice "olc zset plane astral")
+    (is (= tempus::+plane-astral+ (tempus::plane-of zone)))
+    (char-output-is alice "Zone 1 plane set to Astral.~%")))
+
+(deftest do-olc-zset-author/sets-zone-author ()
+  (with-zone-olc-fixture (alice room zone)
+    (tempus::interpret-command alice "olc zset author Alice of TempusMUD")
+    (is (equal "Alice of TempusMUD" (tempus::author-of zone)))
+    (char-output-is alice "Zone 1 author set to: Alice of TempusMUD~%")))
+
+(deftest do-olc-zset-owner/with-player/sets-zone-owner ()
+  (with-zone-olc-fixture (alice room zone)
+    (tempus::interpret-command alice "olc zset owner Azimuth")
+    (is (= 2 (tempus::owner-idnum-of zone)))
+    (char-output-is alice "Zone 1 owner set to Azimuth.~%")))
+
+(deftest do-olc-zset-owner/with-none/clears-zone-owner ()
+  (with-zone-olc-fixture (alice room zone)
+    (tempus::interpret-command alice "olc zset owner none")
+    (is (zerop (tempus::owner-idnum-of zone)))
+    (char-output-is alice "Zone 1 owner unset.~%")))
+
+(deftest do-olc-zset-co-owner/with-player/sets-zone-co-owner ()
+  (with-zone-olc-fixture (alice room zone)
+    (tempus::interpret-command alice "olc zset co-owner Azimuth")
+    (is (= 2 (tempus::co-owner-idnum-of zone)))
+    (char-output-is alice "Zone 1 co-owner set to Azimuth.~%")))
+
+(deftest do-olc-zset-co-owner/with-none/clears-zone-co-owner ()
+  (with-zone-olc-fixture (alice room zone)
+    (tempus::interpret-command alice "olc zset co-owner none")
+    (is (zerop (tempus::co-owner-idnum-of zone)))
+    (char-output-is alice "Zone 1 co-owner unset.~%")))
+
+(deftest do-olc-zset-flags/with-plus-and-minus/sets-and-clears-zone-flags ()
+  (with-zone-olc-fixture (alice room zone)
+    (setf (tempus::flags-of zone) 0)
+    (tempus::interpret-command alice "olc zset flags + !magic !law !weather inplay")
+    (is (= (logior tempus::+zone-nomagic+
+                   tempus::+zone-nolaw+
+                   tempus::+zone-noweather+
+                   tempus::+zone-inplay+)
+           (tempus::flags-of zone)))
+    (char-output-is alice "Flag !MAGIC set on zone flags.~%Flag !LAW set on zone flags.~%Flag !WEATHER set on zone flags.~%Flag INPLAY set on zone flags.~%")
+    (clear-mock-buffers alice)
+    (tempus::interpret-command alice "olc zset flags - !magic !law !weather inplay")
+    (is (zerop (tempus::flags-of zone)))
+    (char-output-is alice "Flag !MAGIC unset on zone flags.~%Flag !LAW unset on zone flags.~%Flag !WEATHER unset on zone flags.~%Flag INPLAY unset on zone flags.~%")))
+
+(deftest do-olc-zset-hour/sets-zone-hour-offset ()
+  (with-zone-olc-fixture (alice room zone)
+    (tempus::interpret-command alice "olc zset hour 10")
+    (is (= 10 (tempus::hour-mod-of zone)))
+    (char-output-is alice "Zone 1 hour mod set to 10.~%")))
+
+(deftest do-olc-zset-year/sets-zone-year-offset ()
+  (with-zone-olc-fixture (alice room zone)
+    (tempus::interpret-command alice "olc zset year 10")
+    (is (= 10 (tempus::year-mod-of zone)))
+    (char-output-is alice "Zone 1 year mod set to 10.~%")))
+
+(deftest do-olc-zset-pkstyle/set-zone-pkstyle ()
+  (with-zone-olc-fixture (alice room zone)
+    (tempus::interpret-command alice "olc zset pkstyle npk")
+    (is (= tempus::+zone-neutral-pk+ (tempus::pk-style-of zone)))
+    (char-output-is alice "Zone 1 pk-style set to NPK.~%")))
+
+(deftest do-olc-zset-min-lvl/set-zone-min-lvl ()
+  (with-zone-olc-fixture (alice room zone)
+    (tempus::interpret-command alice "olc zset min_lvl 35")
+    (is (= 35 (tempus::min-lvl-of zone)))
+    (char-output-is alice "Zone 1 minimum recommended player level set to 35.~%")))
+
+(deftest do-olc-zset-min-gen/set-zone-min-gen ()
+  (with-zone-olc-fixture (alice room zone)
+    (tempus::interpret-command alice "olc zset min_gen 6")
+    (is (= 6 (tempus::min-gen-of zone)))
+    (char-output-is alice "Zone 1 minimum recommended player gen set to 6.~%")))
+
+(deftest do-olc-zset-max-lvl/set-zone-max-lvl ()
+  (with-zone-olc-fixture (alice room zone)
+    (tempus::interpret-command alice "olc zset max_lvl 35")
+    (is (= 35 (tempus::max-lvl-of zone)))
+    (char-output-is alice "Zone 1 maximum recommended player level set to 35.~%")))
+
+(deftest do-olc-zset-max-gen/set-zone-max-gen ()
+  (with-zone-olc-fixture (alice room zone)
+    (tempus::interpret-command alice "olc zset max_gen 6")
+    (is (= 6 (tempus::max-gen-of zone)))
+    (char-output-is alice "Zone 1 maximum recommended player gen set to 6.~%")))
+
+(deftest do-olc-zcmd-cmdremove/removes-command ()
+  (with-zone-olc-fixture (alice room zone)
+    (let ((reset-cmds (list (make-instance 'tempus::reset-com
+                                           :command #\M
+                                           :if-flag 0
+                                           :arg1 100
+                                           :arg2 1
+                                           :arg3 100
+                                           :prob 100)
+                            (make-instance 'tempus::reset-com
+                                           :command #\G
+                                           :if-flag 1
+                                           :arg1 100
+                                           :arg2 1
+                                           :arg3 100
+                                           :prob 100)
+                            (make-instance 'tempus::reset-com
+                                           :command #\O
+                                           :if-flag 0
+                                           :arg1 100
+                                           :arg2 1
+                                           :arg3 100
+                                           :prob 100))))
+      (setf (tempus::cmds-of zone) (copy-list reset-cmds))
+      (tempus::interpret-command alice "olc zcmd cmdremove 2")
+      (is (equal (list (nth 0 reset-cmds)
+                       (nth 2 reset-cmds))
+                 (tempus::cmds-of zone)))
+      (char-output-is alice "Command 2 removed.~%"))))
+
+(deftest do-olc-zcmd-m/adds-zone-command ()
+  (with-zone-olc-fixture (alice room zone)
+    (tempus::interpret-command alice "olc zcmd m 0 100 1 101 42")
+    (char-output-is alice "Command completed ok.~%")
+    (is (= 1 (length (tempus::cmds-of zone))))
+    (is (zcmd-equal (first (tempus::cmds-of zone))
+                    0 #\M 100 1 101 42))))
+
+(deftest do-olc-zcmd-o/adds-zone-command ()
+  (with-zone-olc-fixture (alice room zone)
+    (tempus::interpret-command alice "olc zcmd o 1 100 1 101 42")
+    (char-output-is alice "Command completed ok.~%")
+    (is (= 1 (length (tempus::cmds-of zone))))
+    (is (zcmd-equal (first (tempus::cmds-of zone))
+                    1 #\O 100 1 101 42))))
+
+(deftest do-olc-zcmd-p/adds-zone-command ()
+  (with-zone-olc-fixture (alice room zone)
+    (tempus::interpret-command alice "olc zcmd p 1 100 1 102 42")
+    (char-output-is alice "Command completed ok.~%")
+    (is (= 1 (length (tempus::cmds-of zone))))
+    (is (zcmd-equal (first (tempus::cmds-of zone))
+                    1 #\P 100 1 102 42))))
+
+(deftest do-olc-zcmd-g/adds-zone-command ()
+  (with-zone-olc-fixture (alice room zone)
+    (tempus::interpret-command alice "olc zcmd g 1 100 1 100 42")
+    (char-output-is alice "Command completed ok.~%")
+    (is (= 1 (length (tempus::cmds-of zone))))
+    (is (zcmd-equal (first (tempus::cmds-of zone))
+                    1 #\G 100 1 100 42))))
+
+(deftest do-olc-zcmd-e/adds-zone-command ()
+  (with-zone-olc-fixture (alice room zone)
+    (tempus::interpret-command alice "olc zcmd e 1 100 1 5 42")
+    (char-output-is alice "Command completed ok.~%")
+    (is (= 1 (length (tempus::cmds-of zone))))
+    (is (zcmd-equal (first (tempus::cmds-of zone))
+                    1 #\E 100 1 5 42))))
+
+(deftest do-olc-zcmd-i/adds-zone-command ()
+  (with-zone-olc-fixture (alice room zone)
+    (tempus::interpret-command alice "olc zcmd i 1 100 1 5 42")
+    (char-output-is alice "Command completed ok.~%")
+    (is (= 1 (length (tempus::cmds-of zone))))
+    (is (zcmd-equal (first (tempus::cmds-of zone))
+                    1 #\I 100 1 5 42))))
+
+(deftest do-olc-zcmd-r/adds-zone-command ()
+  (with-zone-olc-fixture (alice room zone)
+    (tempus::interpret-command alice "olc zcmd r 0 100 101 42")
+    (char-output-is alice "Command completed ok.~%")
+    (is (= 1 (length (tempus::cmds-of zone))))
+    (is (zcmd-equal (first (tempus::cmds-of zone))
+                    0 #\R 100 101 -1 42))))
+
+(deftest do-olc-zcmd-d/adds-zone-command ()
+  (with-zone-olc-fixture (alice room zone)
+    (tempus::interpret-command alice "olc zcmd d 0 100 east closed locked")
+    (char-output-is alice "Command completed ok.~%")
+    (is (= 1 (length (tempus::cmds-of zone))))
+    (is (zcmd-equal (first (tempus::cmds-of zone))
+                    0 #\D 100 1
+                    (logior tempus::+door-closed+
+                            tempus::+door-locked+)
+                    100))))
+
+(deftest do-olc-zmob/adds-zcmd-and-mob ()
+  (with-zone-olc-fixture (alice room zone)
+    (tempus::interpret-command alice "olc zmob 100 1 42")
+    (char-output-is alice "Command completed ok.~%")
+    (is (= 1 (length (tempus::cmds-of zone))))
+    (is (zcmd-equal (first (tempus::cmds-of zone))
+                    0 #\M 100 1 (tempus::number-of room) 42))
+    (is (typep (first (tempus::people-of room))
+               'tempus::mobile))
+    (is (= 100 (tempus::vnum-of (first (tempus::people-of room)))))))
+
+(deftest do-olc-zequip/adds-zcmd-and-equips ()
+  (with-zone-olc-fixture (alice room zone)
+    (with-fixtures ((proto-mallory mock-mob-prototype))
+      (tempus::push-zcmd zone nil #\M 0
+                         (tempus::vnum-of proto-mallory) 1
+                         (tempus::number-of room) 100)
+      (let ((mallory (tempus::read-mobile (tempus::vnum-of proto-mallory))))
+        (tempus::char-to-room mallory room nil)
+        (tempus::interpret-command alice "olc zequip mobile 100 1 12 42")
+        (char-output-is alice "Command completed ok.~%")
+        (is (= 2 (length (tempus::cmds-of zone))))
+        (is (zcmd-equal (second (tempus::cmds-of zone))
+                    1 #\E 100 1 12 42))
+        (is (= 100
+               (tempus::vnum-of (aref (tempus::equipment-of mallory) 12))))))))
+
+(deftest do-olc-zimplant/adds-zcmd-and-implants ()
+  (with-zone-olc-fixture (alice room zone)
+    (with-fixtures ((proto-mallory mock-mob-prototype))
+      (tempus::push-zcmd zone nil #\M 0
+                         (tempus::vnum-of proto-mallory) 1
+                         (tempus::number-of room) 100)
+      (let ((mallory (tempus::read-mobile (tempus::vnum-of proto-mallory))))
+        (tempus::char-to-room mallory room nil)
+        (tempus::interpret-command alice "olc zimplant mobile 100 1 12 42")
+        (char-output-is alice "Command completed ok.~%")
+        (is (= 2 (length (tempus::cmds-of zone))))
+        (is (zcmd-equal (second (tempus::cmds-of zone))
+                    1 #\I 100 1 12 42))
+        (is (= 100
+               (tempus::vnum-of (aref (tempus::implants-of mallory) 12))))))))
+
+(deftest do-olc-zobj/adds-zcmd-and-obj ()
+  (with-zone-olc-fixture (alice room zone)
+    (tempus::interpret-command alice "olc zobj 100 1 42")
+    (char-output-is alice "Command completed ok.~%")
+    (is (= 1 (length (tempus::cmds-of zone))))
+    (is (zcmd-equal (first (tempus::cmds-of zone))
+                    0 #\O 100 1 (tempus::number-of room) 42))
+    (is (typep (first (tempus::contents-of room))
+               'tempus::obj-data))
+    (is (= 100 (tempus::vnum-of (first (tempus::contents-of room)))))))
+
+(deftest do-olc-zdoor/one-way/adds-zcmd ()
+  (with-zone-olc-fixture (alice room zone)
+    (setf (aref (tempus::dir-option-of room) tempus::+south+)
+          (make-instance 'tempus::room-direction-data
+                         :exit-info tempus::+door-open+
+                         :to-room (tempus::real-room 100)))
+    (tempus::interpret-command alice "olc zdoor south closed locked")
+    (char-output-is alice "Command completed ok.~%")
+    (is (= 1 (length (tempus::cmds-of zone))))
+    (is (zcmd-equal (first (tempus::cmds-of zone))
+                    0 #\D (tempus::number-of room) 2 (logior tempus::+door-closed+
+                                                             tempus::+door-locked+)
+                    100))))
+
+(deftest do-olc-zdoor/two-way/adds-zcmd ()
+  (with-zone-olc-fixture (alice room zone)
+    (unwind-protect
+         (progn
+           (setf (aref (tempus::dir-option-of room) tempus::+south+)
+                 (make-instance 'tempus::room-direction-data
+                                :exit-info tempus::+door-open+
+                                :to-room (tempus::real-room 100)))
+           (setf (aref (tempus::dir-option-of (tempus::real-room 100)) tempus::+north+)
+                 (make-instance 'tempus::room-direction-data
+                                :exit-info tempus::+door-open+
+                                :to-room room))
+           (tempus::interpret-command alice "olc zdoor south closed locked")
+           (char-output-is alice "Command completed ok.~%")
+           (is (= 2 (length (tempus::cmds-of zone))))
+           (is (zcmd-equal (first (tempus::cmds-of zone))
+                           0 #\D (tempus::number-of room) 2 (logior tempus::+door-closed+
+                                                                    tempus::+door-locked+)
+                           100))
+           (is (zcmd-equal (second (tempus::cmds-of zone))
+                           0 #\D 100 0 (logior tempus::+door-closed+ tempus::+door-locked+)
+                           100)))
+      (setf (aref (tempus::dir-option-of (tempus::real-room 100)) tempus::+north+) nil))))
+
+(deftest do-olc-zput/adds-zcmd-and-loads ()
+  (with-zone-olc-fixture (alice room zone)
+    (with-fixtures ((proto-obj mock-obj-prototype))
+      (tempus::push-zcmd zone nil #\O 0
+                         (tempus::vnum-of proto-obj) 1
+                         (tempus::number-of room) 100)
+      (let ((obj (tempus::read-object (tempus::vnum-of proto-obj))))
+        (tempus::obj-to-room obj room)
+        (tempus::interpret-command alice "olc zput mock 100 1 42")
+        (char-output-is alice "Command completed ok.~%")
+        (is (= 2 (length (tempus::cmds-of zone))))
+        (is (zcmd-equal (second (tempus::cmds-of zone))
+                    1 #\P 100 1 (tempus::vnum-of proto-obj) 42))
+        (is (= 100 (tempus::vnum-of (first (tempus::contains-of obj)))))))))
+
+(deftest do-olc-zgive/adds-zcmd-and-loads-obj ()
+  (with-zone-olc-fixture (alice room zone)
+    (with-fixtures ((proto-mallory mock-mob-prototype))
+      (tempus::push-zcmd zone nil #\M 0
+                         (tempus::vnum-of proto-mallory) 1
+                         (tempus::number-of room) 100)
+      (let ((mallory (tempus::read-mobile (tempus::vnum-of proto-mallory))))
+        (tempus::char-to-room mallory room nil)
+        (tempus::interpret-command alice "olc zgive mobile 100 1 42")
+        (char-output-is alice "Command completed ok.~%")
+        (is (= 2 (length (tempus::cmds-of zone))))
+        (is (zcmd-equal (second (tempus::cmds-of zone))
+                    1 #\G 100 1 (tempus::vnum-of proto-mallory) 42))
+        (is (= 100 (tempus::vnum-of (first (tempus::carrying-of mallory)))))))))
+
+(deftest do-olc-zpath-mobile/adds-zcmd ()
+  (with-zone-olc-fixture (alice room zone)
+    (with-fixtures ((proto-mallory mock-mob-prototype))
+      (tempus::push-zcmd zone nil #\M 0
+                         (tempus::vnum-of proto-mallory) 1
+                         (tempus::number-of room) 100)
+      (let ((mallory (tempus::read-mobile (tempus::vnum-of proto-mallory))))
+        (tempus::char-to-room mallory room nil)
+        (tempus::interpret-command alice "olc zpath mobile mock alpha")
+        (char-output-is alice "Command completed ok.~%")
+        (is (= 2 (length (tempus::cmds-of zone))))
+        (is (zcmd-equal (second (tempus::cmds-of zone))
+                    1 #\W 1 0 (tempus::vnum-of proto-mallory) 100))))))
+
+(deftest do-olc-zpath-object/adds-zcmd ()
+  (with-zone-olc-fixture (alice room zone)
+    (with-fixtures ((proto-obj mock-obj-prototype))
+      (tempus::push-zcmd zone nil #\O 0
+                         (tempus::vnum-of proto-obj) 1
+                         (tempus::number-of room) 100)
+      (let ((obj (tempus::read-object (tempus::vnum-of proto-obj))))
+        (tempus::obj-to-room obj room)
+        (tempus::interpret-command alice "olc zpath object mock alpha")
+        (char-output-is alice "Command completed ok.~%")
+        (is (= 2 (length (tempus::cmds-of zone))))
+        (is (zcmd-equal (second (tempus::cmds-of zone))
+                    1 #\V 1 0 (tempus::vnum-of proto-obj) 100))))))
+
+(deftest do-olc-zpurge/purges-zone ()
+  (with-zone-olc-fixture (alice room zone)
+    (with-captured-log log
+        (tempus::interpret-command alice "olc zpurge")
+      (is (search "(GC) Alice olc-purged zone 1 (Coder Test Zone)" log))
+      (char-output-has alice "Zone 1 cleared of"))))
