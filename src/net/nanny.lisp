@@ -1044,8 +1044,9 @@ else is noticable about your character?
      (let ((trimmed-line (string-left-trim '(#\/ #\space #\tab) line)))
        (when (plusp (length trimmed-line))
          (interpret-command (actor-of cxn)
-                            (expand-aliases (actor-of cxn)
-                                            trimmed-line))))))
+                            (string-trim '(#\space)
+                                         (expand-aliases (actor-of cxn)
+                                                         trimmed-line)))))))
 
 (define-connection-state editing
   (prompt (cxn)
