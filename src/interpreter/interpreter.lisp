@@ -139,7 +139,7 @@
        (add-command (quote ,pattern) (quote ,flags) ',func-name)
        ',func-name)))
 
-(defparameter *parser-trace* t)
+(defparameter *parser-trace* nil)
 (defun trace-msg (fmt &rest args)
   (when *parser-trace*
     (slog "~?" fmt args)))
