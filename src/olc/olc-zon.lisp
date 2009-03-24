@@ -418,20 +418,16 @@
 (defcommand (ch "olc" "zset" "respawn_pt" value) (:immortal)
   (let ((zone (zone-of (in-room-of ch))))
     (when (check-can-edit ch zone +zone-zcmds-approved+)
-      (let ((value (parse-integer value :junk-allowed t)))
-        (cond
-          ((null value)
-           (send-to-char ch "The argument must be a number.~%"))
-          (t
-           (setf (respawn-pt-of zone) value)
-           (setf (flags-of zone) (logior (flags-of zone) +zone-zone-modified+))
-           (if (real-room value)
-               (send-to-char ch "Zone ~d respawn point set to room ~d.~%"
-                             (number-of zone)
-                             value)
-               (send-to-char ch "Zone ~d respawn point set to nonexistent room ~d.~%"
-                             (number-of zone)
-                             value))))))))
+      (with-numeric-input ((value "The respawn point must be a room number."))
+        (setf (respawn-pt-of zone) value)
+        (setf (flags-of zone) (logior (flags-of zone) +zone-zone-modified+))
+        (if (real-room value)
+            (send-to-char ch "Zone ~d respawn point set to room ~d.~%"
+                          (number-of zone)
+                          value)
+            (send-to-char ch "Zone ~d respawn point set to nonexistent room ~d.~%"
+                          (number-of zone)
+                          value))))))
 
 (defcommand (ch "olc" "zset" "top") (:immortal)
   (send-to-char ch "Usage: olc zset top <top of zone>~%"))
@@ -439,12 +435,10 @@
 (defcommand (ch "olc" "zset" "top" value) (:immortal)
   (let ((zone (zone-of (in-room-of ch))))
     (when (check-can-edit ch zone +zone-zcmds-approved+)
-      (let ((value (parse-integer value :junk-allowed t)))
+      (with-numeric-input ((value "The zone top must be a number."))
         (cond
           ((not (security-is-member ch "OLCWorldWrite"))
            (send-to-char ch "You cannot alter zones in this way.~%"))
-          ((null value)
-           (send-to-char ch "The argument must be a number.~%"))
           ((some (lambda (zone)
                    (>= (* (number-of zone) 100) value (top-of zone)))
                  *zone-table*)
@@ -462,10 +456,8 @@
 (defcommand (ch "olc" "zset" "reset" value) (:immortal)
   (let ((zone (zone-of (in-room-of ch))))
     (when (check-can-edit ch zone +zone-zcmds-approved+)
-      (let ((value (parse-integer value :junk-allowed t)))
+      (with-numeric-input ((value "The reset mode must be 0, 1 or 2."))
         (cond
-          ((null value)
-           (send-to-char ch "The argument must be a number.~%"))
           ((not (<= 0 value 2))
            (send-to-char ch "The zone reset mode must be 0, 1, or 2.~%"))
           (t
@@ -616,6 +608,9 @@
            (send-to-char ch "Zone ~d year mod set to ~d.~%"
                          (number-of zone)
                          value)))))))
+
+(defcommand (ch "olc" "zset" "pkstyle") (:immortal)
+  (send-to-char ch "Usage: olc zset pkstyle (!PK|NPK|CPK)~%"))
 
 (defcommand (ch "olc" "zset" "pkstyle" value) (:immortal)
   (let ((zone (zone-of (in-room-of ch))))
@@ -819,6 +814,9 @@ olc zcmd [zone] <I> <if_flag> <obj> <num> <pos> <mob> <prob>
     (perform-zcmd-list ch (zone-of (in-room-of ch)) (or options +zcmd-list-options+)
                        start-pos (or end-pos (+ start-pos 100)))))
 
+(defcommand (ch "olc" "zcmd" "cmdremove") (:immortal)
+  (send-to-char ch "Usage: olc zcmd cmdremove <zcmd number>~%"))
+
 (defcommand (ch "olc" "zcmd" "cmdremove" number) (:immortal)
   (let ((zone (zone-of (in-room-of ch))))
     (when (check-can-edit ch zone +zone-zcmds-approved+)
@@ -834,6 +832,13 @@ olc zcmd [zone] <I> <if_flag> <obj> <num> <pos> <mob> <prob>
            (setf (cmds-of zone) (delete (nth (1- doomed-idx) (cmds-of zone)) (cmds-of zone)))
            (send-to-char ch "Command ~d removed.~%" doomed-idx)))))))
 
+(defcommand (ch "olc" "zcmd" "m") (:immortal)
+  (send-to-char ch "Usage; olc zcmd m <if-flag> <vnum> <max-loaded> <room num> <prob>~%"))
+
+(defcommand (ch "olc" "zcmd" "m" junk) (:immortal)
+  (declare (ignore junk))
+  (send-to-char ch "Usage; olc zcmd m <if-flag> <vnum> <max-loaded> <room num> <prob>~%"))
+
 (defcommand (ch "olc" "zcmd" "m" if-flag vnum max-loaded room prob) (:immortal)
   (with-numeric-input ((if-flag "If-flag must be -1, 0, or 1.")
                        (vnum "Invalid vnum specified.")
@@ -842,6 +847,13 @@ olc zcmd [zone] <I> <if_flag> <obj> <num> <pos> <mob> <prob>
                        (prob "Prob must be a number from 1 to 100." (make-range-p 1 100)))
     (when (perform-olc-zcmd ch #\M if-flag vnum max-loaded room prob :test 'check-zcmd-mobile)
       (send-to-char ch "Command completed ok.~%"))))
+
+(defcommand (ch "olc" "zcmd" "o") (:immortal)
+  (send-to-char ch "olc zcmd o <if-flag> <vnum> <max-loaded> <room> <prob>~%"))
+
+(defcommand (ch "olc" "zcmd" "o" junk) (:immortal)
+  (declare (ignore junk))
+  (send-to-char ch "olc zcmd o <if-flag> <vnum> <max-loaded> <room> <prob>~%"))
 
 (defcommand (ch "olc" "zcmd" "o" if-flag vnum max-loaded room prob) (:immortal)
   (with-numeric-input ((if-flag "If-flag must be -1, 0, or 1.")
@@ -852,6 +864,13 @@ olc zcmd [zone] <I> <if_flag> <obj> <num> <pos> <mob> <prob>
     (when (perform-olc-zcmd ch #\O if-flag vnum max-loaded room prob :test 'check-zcmd-object)
       (send-to-char ch "Command completed ok.~%"))))
 
+(defcommand (ch "olc" "zcmd" "p") (:immortal)
+  (send-to-char ch "Usage: olc zcmd p <if-flag> <vnum> <max-loaded> <dest-vnum> <prob>~%"))
+
+(defcommand (ch "olc" "zcmd" "p" junk) (:immortal)
+  (declare (ignore junk))
+  (send-to-char ch "Usage: olc zcmd p <if-flag> <vnum> <max-loaded> <dest-vnum> <prob>~%"))
+
 (defcommand (ch "olc" "zcmd" "p" if-flag vnum max-loaded dest-vnum prob) (:immortal)
   (with-numeric-input ((if-flag "If-flag must be -1, 0, or 1.")
                        (vnum "Invalid vnum specified.")
@@ -860,6 +879,13 @@ olc zcmd [zone] <I> <if_flag> <obj> <num> <pos> <mob> <prob>
                        (prob "Prob must be a number from 1 to 100." (make-range-p 1 100)))
     (when (perform-olc-zcmd ch #\P if-flag vnum max-loaded dest-vnum prob :test 'check-zcmd-put)
       (send-to-char ch "Command completed ok.~%"))))
+
+(defcommand (ch "olc" "zcmd" "g") (:immortal)
+  (send-to-char ch "Usage: olc zcmd g <if-flag> <vnum> <max-loaded> <dest-vnum> <prob>~%"))
+
+(defcommand (ch "olc" "zcmd" "g" junk) (:immortal)
+  (declare (ignore junk))
+  (send-to-char ch "Usage: olc zcmd g <if-flag> <vnum> <max-loaded> <dest-vnum> <prob>~%"))
 
 (defcommand (ch "olc" "zcmd" "g" if-flag vnum max-loaded dest-vnum prob) (:immortal)
   (with-numeric-input ((if-flag "If-flag must be -1, 0, or 1.")
@@ -870,6 +896,13 @@ olc zcmd [zone] <I> <if_flag> <obj> <num> <pos> <mob> <prob>
     (when (perform-olc-zcmd ch #\G if-flag vnum max-loaded dest-vnum prob :test 'check-zcmd-give)
       (send-to-char ch "Command completed ok.~%"))))
 
+(defcommand (ch "olc" "zcmd" "e") (:immortal)
+  (send-to-char ch "Usage: olc zcmd e <if-flag> <vnum> <max-loaded> <pos> <prob>~%"))
+
+(defcommand (ch "olc" "zcmd" "e" junk) (:immortal)
+  (declare (ignore junk))
+  (send-to-char ch "Usage: olc zcmd e <if-flag> <vnum> <max-loaded> <pos> <prob>~%"))
+
 (defcommand (ch "olc" "zcmd" "e" if-flag vnum max-loaded pos prob) (:immortal)
   (with-numeric-input ((if-flag "If-flag must be -1, 0, or 1.")
                        (vnum "Invalid vnum specified.")
@@ -878,6 +911,13 @@ olc zcmd [zone] <I> <if_flag> <obj> <num> <pos> <mob> <prob>
                        (prob "Prob must be a number from 1 to 100." (make-range-p 1 100)))
     (when (perform-olc-zcmd ch #\E if-flag vnum max-loaded pos prob :test 'check-zcmd-equip)
       (send-to-char ch "Command completed ok.~%"))))
+
+(defcommand (ch "olc" "zcmd" "i") (:immortal)
+  (send-to-char ch "Usage: olc zcmd i <if-flag> <vnum> <max-loaded> <pos> <prob>~%"))
+
+(defcommand (ch "olc" "zcmd" "i" junk) (:immortal)
+  (declare (ignore junk))
+  (send-to-char ch "Usage: olc zcmd i <if-flag> <vnum> <max-loaded> <pos> <prob>~%"))
 
 (defcommand (ch "olc" "zcmd" "i" if-flag vnum max-loaded pos prob) (:immortal)
   (with-numeric-input ((if-flag "If-flag must be -1, 0, or 1.")
@@ -888,6 +928,13 @@ olc zcmd [zone] <I> <if_flag> <obj> <num> <pos> <mob> <prob>
     (when (perform-olc-zcmd ch #\I if-flag vnum max-loaded pos prob :test 'check-zcmd-implant)
       (send-to-char ch "Command completed ok.~%"))))
 
+(defcommand (ch "olc" "zcmd" "r") (:immortal)
+  (send-to-char ch "Usage: olc zcmd r <if-flag> <vnum> <room> <prob>~%"))
+
+(defcommand (ch "olc" "zcmd" "r" junk) (:immortal)
+  (declare (ignore junk))
+  (send-to-char ch "Usage: olc zcmd r <if-flag> <vnum> <room> <prob>~%"))
+
 (defcommand (ch "olc" "zcmd" "r" if-flag vnum room prob) (:immortal)
   (with-numeric-input ((if-flag "If-flag must be -1, 0, or 1.")
                        (vnum "Invalid vnum specified.")
@@ -895,6 +942,13 @@ olc zcmd [zone] <I> <if_flag> <obj> <num> <pos> <mob> <prob>
                        (prob "Prob must be a number from 1 to 100." (make-range-p 1 100)))
     (when (perform-olc-zcmd ch #\R if-flag vnum room -1 prob :test 'check-zcmd-remove)
       (send-to-char ch "Command completed ok.~%"))))
+
+(defcommand (ch "olc" "zcmd" "d") (:immortal)
+  (send-to-char ch "Usage: olc zcmd d <if-flag> <room> <direction> <flag-names>~%"))
+
+(defcommand (ch "olc" "zcmd" "d" junk) (:immortal)
+  (declare (ignore junk))
+  (send-to-char ch "Usage: olc zcmd d <if-flag> <room> <direction> <flag-names>~%"))
 
 (defcommand (ch "olc" "zcmd" "d" if-flag room direction flag-names) (:immortal)
   (with-numeric-input ((if-flag "If-flag must be -1, 0, or 1.")
@@ -920,6 +974,13 @@ olc zcmd [zone] <I> <if_flag> <obj> <num> <pos> <mob> <prob>
              (push-zcmd zone nil #\D if-flag room dir exit-flags 100)
              (send-to-char ch "Command completed ok.~%"))))))))
 
+(defcommand (ch "olc" "zmob") (:immortal)
+  (send-to-char ch "Usage: olc zmob <vnum> <max-loaded> <prob>~%"))
+
+(defcommand (ch "olc" "zmob" junk) (:immortal)
+  (declare (ignore junk))
+  (send-to-char ch "Usage: olc zmob <vnum> <max-loaded> <prob>~%"))
+
 (defcommand (ch "olc" "zmob" vnum max-loaded prob) (:immortal)
   (with-numeric-input ((vnum "Invalid vnum specified.")
                        (max-loaded "Maxload must be a number from 1 to 1000." (make-range-p 1 1000))
@@ -928,6 +989,13 @@ olc zcmd [zone] <I> <if_flag> <obj> <num> <pos> <mob> <prob>
                             :test 'check-zcmd-mobile)
       (char-to-room (read-mobile vnum) (in-room-of ch) nil)
       (send-to-char ch "Command completed ok.~%"))))
+
+(defcommand (ch "olc" "zequip") (:immortal)
+  (send-to-char ch "Usage: olc zequip <mob-name> <obj-vnum> <max-loaded> <pos> <prob>~%"))
+
+(defcommand (ch "olc" "zequip" junk) (:immortal)
+  (declare (ignore junk))
+  (send-to-char ch "Usage: olc zequip <mob-name> <obj-vnum> <max-loaded> <pos> <prob>~%"))
 
 (defcommand (ch "olc" "zequip" mob-name obj-vnum max-loaded pos prob) (:immortal)
   (with-numeric-input ((obj-vnum "Invalid vnum specified.")
@@ -957,6 +1025,13 @@ olc zcmd [zone] <I> <if_flag> <obj> <num> <pos> <mob> <prob>
              (equip-char mob (read-object obj-vnum) pos :worn)))
          (send-to-char ch "Command completed ok.~%"))))))
 
+(defcommand (ch "olc" "zimplant") (:immortal)
+  (send-to-char ch "Usage: olc zimplant <mob-name> <obj-vnum> <max-loaded> <pos> <prob>~%"))
+
+(defcommand (ch "olc" "zimplant" junk) (:immortal)
+  (declare (ignore junk))
+  (send-to-char ch "Usage: olc zimplant <mob-name> <obj-vnum> <max-loaded> <pos> <prob>~%"))
+
 (defcommand (ch "olc" "zimplant" mob-name obj-vnum max-loaded pos prob) (:immortal)
   (with-numeric-input ((obj-vnum "Invalid vnum specified.")
                        (max-loaded "Maxload must be a number from 1 to 1000." (make-range-p 1 1000))
@@ -981,9 +1056,16 @@ olc zcmd [zone] <I> <if_flag> <obj> <num> <pos> <mob> <prob>
                            :insert-after mob-reset-cmd)
          (let ((obj (real-object-proto obj-vnum)))
            (when (and (< (number-of (shared-of obj)) max-loaded)
-                      (null (aref (equipment-of mob) pos)))
+                      (null (aref (implants-of mob) pos)))
              (equip-char mob (read-object obj-vnum) pos :implant)))
          (send-to-char ch "Command completed ok.~%"))))))
+
+(defcommand (ch "olc" "zobj") (:immortal)
+  (send-to-char ch "Usage: olc zobj <obj-vnum> <max-loaded> <prob>~%"))
+
+(defcommand (ch "olc" "zobj" junk) (:immortal)
+  (declare (ignore junk))
+  (send-to-char ch "Usage: olc zobj <obj-vnum> <max-loaded> <prob>~%"))
 
 (defcommand (ch "olc" "zobj" obj-vnum max-loaded prob) (:immortal)
   (with-numeric-input ((obj-vnum "Invalid vnum specified.")
@@ -993,6 +1075,13 @@ olc zcmd [zone] <I> <if_flag> <obj> <num> <pos> <mob> <prob>
                             :test 'check-zcmd-object)
       (obj-to-room (read-object obj-vnum) (in-room-of ch))
       (send-to-char ch "Command completed ok.~%"))))
+
+(defcommand (ch "olc" "zdoor") (:immortal)
+  (send-to-char ch "Usage: olc zdoor <direction> <flag-names>~%"))
+
+(defcommand (ch "olc" "zdoor" junk) (:immortal)
+  (declare (ignore junk))
+  (send-to-char ch "Usage: olc zdoor <direction> <flag-names>~%"))
 
 (defcommand (ch "olc" "zdoor" direction flag-names) (:immortal)
   (let ((zone (zone-of (in-room-of ch))))
@@ -1016,6 +1105,13 @@ olc zcmd [zone] <I> <if_flag> <obj> <num> <pos> <mob> <prob>
                (push-zcmd zone nil #\D 0 (number-of to-room)
                           (aref +rev-dir+ dir) exit-flags 100)))
            (send-to-char ch "Command completed ok.~%")))))))
+
+(defcommand (ch "olc" "zput") (:immortal)
+  (send-to-char ch "Usage: olc zput <container-name> <obj-vnum> <max-loaded> <prob>~%"))
+
+(defcommand (ch "olc" "zput" junk) (:immortal)
+  (declare (ignore junk))
+  (send-to-char ch "Usage: olc zput <container-name> <obj-vnum> <max-loaded> <prob>~%"))
 
 (defcommand (ch "olc" "zput" container-name obj-vnum max-loaded prob) (:immortal)
   (with-numeric-input ((obj-vnum "Invalid vnum specified.")
@@ -1043,6 +1139,13 @@ olc zcmd [zone] <I> <if_flag> <obj> <num> <pos> <mob> <prob>
                  (setf (extra2-flags-of obj) (logior (extra2-flags-of obj) +item2-unapproved+)))
                (obj-to-obj obj container))))
          (send-to-char ch "Command completed ok.~%"))))))
+
+(defcommand (ch "olc" "zgive") (:immortal)
+  (send-to-char ch "Usage: olc zgive <mob-name> <obj-vnum> <max-loaded> <prob>~%"))
+
+(defcommand (ch "olc" "zgive" junk) (:immortal)
+  (declare (ignore junk))
+  (send-to-char ch "Usage: olc zgive <mob-name> <obj-vnum> <max-loaded> <prob>~%"))
 
 (defcommand (ch "olc" "zgive" mob-name obj-vnum max-loaded prob) (:immortal)
   (with-numeric-input ((obj-vnum "Invalid vnum specified.")
@@ -1072,6 +1175,13 @@ olc zcmd [zone] <I> <if_flag> <obj> <num> <pos> <mob> <prob>
                  (setf (extra2-flags-of obj) (logior (extra2-flags-of obj) +item2-unapproved+)))
                (obj-to-char obj mob))))
          (send-to-char ch "Command completed ok.~%"))))))
+
+(defcommand (ch "olc" "zpath") (:immortal)
+  (send-to-char ch "Usage: olc zpath (mobile|object) <name> <path-name>~%"))
+
+(defcommand (ch "olc" "zpath" junk) (:immortal)
+  (declare (ignore junk))
+  (send-to-char ch "Usage: olc zpath (mobile|object) <name> <path-name>~%"))
 
 (defcommand (ch "olc" "zpath" "mobile" mob-name path-name) (:immortal)
   (let* ((mob (first (resolve-alias ch mob-name (people-of (in-room-of ch)))))
