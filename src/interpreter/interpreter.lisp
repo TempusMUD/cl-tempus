@@ -329,3 +329,43 @@
                  (funcall (func-of (shared-of obj)) trigger obj ch command vars)))
           (contents-of (in-room-of ch)))))
 
+(defcommand (ch "alias") ()
+  (with-pagination ((link-of ch))
+    (send-to-char ch "Currently defined aliases:~%")
+    (if (command-aliases-of ch)
+        (send-to-char ch "~:{ &c~15a &n~a~%~}" (command-aliases-of ch))
+        (send-to-char ch " None.~%"))))
+
+(defcommand (ch "alias" pattern) ()
+  (with-pagination ((link-of ch))
+    (send-to-char ch "Aliases matching '~a':~%" pattern)
+    (let ((aliases (remove-if-not (lambda (alias)
+                                    (search pattern (first alias)))
+                                  (command-aliases-of ch))))
+    (if aliases
+        (send-to-char ch "~:{ &c~15a &n~a~%~}" aliases)
+        (send-to-char ch " None.~%")))))
+
+(defcommand (ch "alias" pattern replacement) ()
+  (let ((alias (assoc pattern (command-aliases-of ch) :test 'string-equal)))
+    (cond
+      (alias
+        (setf (cdr alias) (list replacement))
+        (send-to-char ch "Alias '~a' modified.~%" pattern))
+      (t
+        (setf (command-aliases-of ch)
+              (sort (cons (list pattern replacement) (command-aliases-of ch))
+                    #'string<
+                    :key #'first))
+        (send-to-char ch "Alias '~a' added.~%" pattern)))))
+
+(defcommand (ch "unalias" pattern) ()
+  (cond
+    ((null (assoc pattern (command-aliases-of ch) :test 'string-equal))
+     (send-to-char ch "No such alias.~%"))
+    (t
+     (setf (command-aliases-of ch)
+           (remove pattern (command-aliases-of ch)
+                   :test #'string-equal
+                   :key #'first))
+     (send-to-char ch "Alias '~a' removed.~%" pattern))))
