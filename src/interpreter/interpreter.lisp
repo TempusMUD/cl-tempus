@@ -1,9 +1,5 @@
 (in-package :tempus)
 
-(defun expand-aliases (ch arg)
-  (declare (ignore ch))
-  arg)
-
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (defstruct command-info
     arity

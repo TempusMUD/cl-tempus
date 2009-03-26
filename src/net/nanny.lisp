@@ -160,16 +160,27 @@
      (account-logout (account-of cxn) cxn)
      (mudlog 'notice t "~a logged out" (name-of (account-of cxn))))))
 
+(defun expand-single-alias (alias args split-args)
+  (format nil "\\~a"
+          (string-trim '(#\space #\tab)
+                       (cl-ppcre:regex-replace-all
+                        #/\$([*1-9])/
+                        alias
+                        (lambda (target start end mstart mend rstarts rends)
+                          (declare (ignore start end mstart mend rends))
+                          (let ((digit (digit-char-p (char target (aref rstarts 0)))))
+                            (if digit
+                                (format nil "~@[ ~a~]" (nth (1- digit) split-args))
+                                (format nil "~:[ ~a~;~]" (null split-args) args))))))))
+
 (defun apply-player-alias (actor alias args)
   ;; split replacements into lines
-  (let ((replacements (split-sequence #\; (second alias))))
+  (let ((replacements (split-sequence #\; (second alias)))
+        (split-args (split-sequence #\space args :remove-empty-subseqs t)))
     (dolist (cmd-line (reverse replacements))
       ;; push each alias expansion into the command queue of the actor
       ;; (in reverse for proper ordering)
-      (push (concatenate 'string
-                         "\\"
-                         (string-left-trim '(#\space #\tab)
-                                           (string-replace "$*" cmd-line args)))
+      (push (expand-single-alias cmd-line args split-args)
             (cxn-commands (link-of actor))))
     ;; return the first command string
     (string-left-trim '(#\\) (pop (cxn-commands (link-of actor))))))
