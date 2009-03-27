@@ -609,8 +609,7 @@
       ("Str"
        (setf (str-of (real-abils-of mobile)) (pin num-arg 3 25)))
       ("StrAdd"
-       ;; ignored
-       nil)
+       (setf (str-add-of (real-abils-of mobile)) (pin num-arg 0 100)))
       ("Int"
        (setf (int-of (real-abils-of mobile)) (pin num-arg 3 25)))
       ("Wis"

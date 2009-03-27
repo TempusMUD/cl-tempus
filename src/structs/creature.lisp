@@ -2,6 +2,7 @@
 
 (defclass char-ability-data ()
   ((str :accessor str-of :initarg :str :initform 11)
+   (str-add :accessor str-add-of :initarg :str-add :initform 0)
    (int :accessor int-of :initarg :int :initform 11)
    (wis :accessor wis-of :initarg :wis :initform 11)
    (dex :accessor dex-of :initarg :dex :initform 11)
@@ -96,7 +97,7 @@
    (ldesc :accessor ldesc-of :initarg :ldesc :initform nil)
    (fdesc :accessor fdesc-of :initarg :fdesc :initform nil)
    (char-class :accessor char-class-of :initarg :char-class :initform 0)
-   (remort-char-class :accessor remort-char-class-of :initarg :remort-char-class :initform 0)
+   (remort-char-class :accessor remort-char-class-of :initarg :remort-char-class :initform -1)
    (weight :accessor weight-of :initarg :weight :initform 200)
    (height :accessor height-of :initarg :height :initform 198)
    (sex :accessor sex-of :initarg :sex :initform 'male)
@@ -216,6 +217,7 @@
 (defun copy-abilities (abils)
   (make-instance 'char-ability-data
                  :str (str-of abils)
+                 :str-add (str-add-of abils)
                  :int (int-of abils)
                  :wis (wis-of abils)
                  :dex (dex-of abils)
