@@ -1040,9 +1040,10 @@ else is noticable about your character?
      ((not (or (pref-flagged (actor-of cxn) +pref-disphp+)
                (pref-flagged (actor-of cxn) +pref-dispmana+)
                (pref-flagged (actor-of cxn) +pref-dispmove+)))
-      (cxn-write cxn "&W>&n "))
+      (cxn-write cxn "~:[&B(debug) ~;~]&N>&n " *production-mode*))
      (t
-      (cxn-write cxn "&W< ~@[&G~a&YH ~]~@[&M~a&YM ~]~@[&C~a&YV ~]&W>&n "
+      (cxn-write cxn "&N< ~:[&B(debug) ~;~]~@[&G~a&YH ~]~@[&M~a&YM ~]~@[&C~a&YV ~]&N>&n "
+                 *production-mode*
                  (when (pref-flagged (actor-of cxn) +pref-disphp+)
                    (hitp-of (actor-of cxn)))
                  (when (pref-flagged (actor-of cxn) +pref-dispmana+)
