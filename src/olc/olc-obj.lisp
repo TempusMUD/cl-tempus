@@ -113,20 +113,6 @@
               (find-special-by-func (func-of (shared-of obj)))
               (name-of obj)))))
 
-(defun perform-numeric-oset (ch obj slot slot-desc value-str)
-  (when (and (check-is-editing ch "object" obj)
-             (check-can-edit ch (zone-containing-number (vnum-of obj)) +zone-objs-approved+))
-    (let ((value (parse-integer value-str :junk-allowed t)))
-      (cond
-        ((null value)
-         (send-to-char ch "The argument must be a number.~%"))
-        (t
-         (setf (slot-value obj slot) value)
-         (send-to-char ch "Object ~d ~a set to ~d.~%"
-                       (vnum-of (olc-obj-of ch))
-                       slot-desc
-                       value))))))
-
 (defun perform-olc-oload (ch vnum)
   (when (check-can-edit ch (zone-containing-number vnum) +zone-objs-approved+)
     (cond
@@ -252,7 +238,7 @@
        (send-to-char ch "Usage: olc destroy object <vnum>~%"))
       ((null zone)
        (send-to-char ch "That object doesn't belong to any zone.~%"))
-      ((can-edit-zone ch (zone-containing-number vnum) +zone-objs-approved+)
+      ((can-edit-zone ch zone +zone-objs-approved+)
        (perform-destroy-object ch vnum)))))
 
 (defcommand (ch "olc" "osave") (:immortal)
@@ -293,8 +279,9 @@
                      vnum (name-of obj))))))
 
 (defcommand (ch "olc" "ostat") (:immortal)
-  (when (check-is-editing ch "object" (olc-obj-of ch))
-    (send-stats-to-char ch (olc-obj-of ch))))
+  (if (check-is-editing ch "object" (olc-obj-of ch))
+      (send-stats-to-char ch (olc-obj-of ch))
+      (send-to-char ch "You aren't editing an object.~%")))
 
 (defcommand (ch "olc" "ostat" number) (:immortal)
   (let* ((vnum (parse-integer number :junk-allowed t))
@@ -327,7 +314,8 @@
 
 (defcommand (ch "olc" "oset" "alias" value) (:immortal)
   (when (and (check-is-editing ch "object" (olc-obj-of ch))
-             (check-can-edit ch (zone-containing-number (vnum-of (olc-obj-of ch)))
+             (check-can-edit ch
+                             (zone-containing-number (vnum-of (olc-obj-of ch)))
                              +zone-objs-approved+))
     (dolist (exd (ex-description-of (olc-obj-of ch)))
       (when (string= (aliases-of (olc-obj-of ch)) (keyword-of exd))
@@ -340,40 +328,38 @@
   (send-to-char ch "Usage: olc oset name <name>~%"))
 
 (defcommand (ch "olc" "oset" "name" value) (:immortal)
-  (when (and (check-is-editing ch "object" (olc-obj-of ch))
-             (check-can-edit ch (zone-containing-number (vnum-of (olc-obj-of ch)))
-                             +zone-objs-approved+))
-    (setf (name-of (olc-obj-of ch)) value)
-    (update-objlist-full (vnum-of (olc-obj-of ch)))
-    (send-to-char ch "Object name set.~%")))
+  (when (perform-set-string ch
+                            value
+                            (olc-obj-of ch) 'name (vnum-of (olc-obj-of ch))
+                            "object" "name"
+                            (zone-containing-number (vnum-of (olc-obj-of ch)))
+                            +zone-objs-approved+ t)
+    (update-objlist-full (vnum-of (olc-obj-of ch)))))
+
 
 (defcommand (ch "olc" "oset" "ldesc") (:immortal)
   (send-to-char ch "Usage: olc oset ldesc <line description>~%"))
 
 (defcommand (ch "olc" "oset" "ldesc" value) (:immortal)
-  (when (and (check-is-editing ch "object" (olc-obj-of ch))
-             (check-can-edit ch (zone-containing-number (vnum-of (olc-obj-of ch)))
-                             +zone-objs-approved+))
-    (setf (line-desc-of (olc-obj-of ch))
-          (if (string/= value "~")
-              value
-              nil))
-    (update-objlist-full (vnum-of (olc-obj-of ch)))
-    (send-to-char ch "Object L-desc set.~%")))
+  (when (perform-set-string ch
+                            value
+                            (olc-obj-of ch) 'line-desc (vnum-of (olc-obj-of ch))
+                            "object" "line description"
+                            (zone-containing-number (vnum-of (olc-obj-of ch)))
+                            +zone-objs-approved+ t)
+    (update-objlist-full (vnum-of (olc-obj-of ch)))))
 
 (defcommand (ch "olc" "oset" "action_desc") (:immortal)
   (send-to-char ch "Usage: olc oset action_desc <action desc>~%"))
 
 (defcommand (ch "olc" "oset" "action_desc" value) (:immortal)
-  (when (and (check-is-editing ch "object" (olc-obj-of ch))
-             (check-can-edit ch (zone-containing-number (vnum-of (olc-obj-of ch)))
-                             +zone-objs-approved+))
-    (setf (action-desc-of (olc-obj-of ch))
-          (if (string/= value "~")
-              value
-              nil))
-    (update-objlist-full (vnum-of (olc-obj-of ch)))
-    (send-to-char ch "Object action desc set.~%")))
+  (when (perform-set-string ch
+                            value
+                            (olc-obj-of ch) 'action-desc (vnum-of (olc-obj-of ch))
+                            "object" "action description"
+                            (zone-containing-number (vnum-of (olc-obj-of ch)))
+                            +zone-objs-approved+ t)
+    (update-objlist-full (vnum-of (olc-obj-of ch)))))
 
 (defcommand (ch "olc" "oset" "description") (:immortal)
   (when (and (check-is-editing ch "object" (olc-obj-of ch))
@@ -410,18 +396,12 @@
   (send-to-char ch "Usage: olc oset type <type>~%"))
 
 (defcommand (ch "olc" "oset" "type" value) (:immortal)
-  (when (and (check-is-editing ch "object" (olc-obj-of ch))
-             (check-can-edit ch (zone-containing-number (vnum-of (olc-obj-of ch)))
-                             +zone-objs-approved+))
-    (let ((kind (position value +item-kinds+ :test 'string-abbrev)))
-      (cond
-        ((null kind)
-         (send-to-char ch "Type olchelp otypes for a valid list.~%"))
-        (t
-         (setf (kind-of (olc-obj-of ch)) kind)
-         (send-to-char ch "Object ~d type set to ~(~a~).~%"
-                       (vnum-of (olc-obj-of ch))
-                       (aref +item-kinds+ kind)))))))
+  (perform-set-enumerated ch
+                          value
+                          (olc-obj-of ch) 'kind  (vnum-of (olc-obj-of ch))
+                          "object" "type"
+                          (zone-containing-number (vnum-of (olc-obj-of ch)))
+                          +zone-objs-approved+ +item-kinds+))
 
 (defcommand (ch "olc" "oset" "extra1") (:immortal)
   (send-to-char ch "Usage: olc oset extra1 (+/-) <flags>~%"))
@@ -506,52 +486,57 @@
   (send-to-char ch "Usage: olc oset material <material name>~%"))
 
 (defcommand (ch "olc" "oset" "material" value) (:immortal)
-  (when (and (check-is-editing ch "object" (olc-obj-of ch))
-             (check-can-edit ch (zone-containing-number (vnum-of (olc-obj-of ch)))
-                             +zone-objs-approved+))
-    (let ((material (or (parse-integer value :junk-allowed t)
-                        (position value +material-names+ :test 'string-abbrev))))
-      (cond
-        ((null material)
-         (send-to-char ch "Type olchelp material for a valid list.~%"))
-        ((not (<= 0 material +top-material+))
-         (send-to-char ch "Object material out of range.~%"))
-        (t
-         (setf (material-of (olc-obj-of ch)) material)
-         (send-to-char ch "Object ~d material set to ~a (~d).~%"
-                       (vnum-of (olc-obj-of ch))
-                       (aref +material-names+ material)
-                       material))))))
+  (perform-set-enumerated ch
+                          value
+                          (olc-obj-of ch) 'material  (vnum-of (olc-obj-of ch))
+                          "object" "material"
+                          (zone-containing-number (vnum-of (olc-obj-of ch)))
+                          +zone-objs-approved+ +material-names+))
 
 (defcommand (ch "olc" "oset" "maxdamage") (:immortal)
   (send-to-char ch "Usage: olc oset maxdamage <maximum damage>~%"))
 
 (defcommand (ch "olc" "oset" "maxdamage" value) (:immortal)
-  (perform-numeric-oset ch (olc-obj-of ch) 'max-dam "maxdamage" value))
+  (perform-set-number ch value (olc-obj-of ch) 'max-dam (vnum-of (olc-obj-of ch))
+                      "object" "maxdamage"
+                      (zone-containing-number (vnum-of (olc-obj-of ch)))
+                      +zone-objs-approved+))
 
 (defcommand (ch "olc" "oset" "damage") (:immortal)
   (send-to-char ch "Usage: olc oset damage <current damage>~%"))
 
 (defcommand (ch "olc" "oset" "damage" value) (:immortal)
-  (perform-numeric-oset ch (olc-obj-of ch) 'damage "damage" value))
+  (perform-set-number ch value (olc-obj-of ch) 'damage (vnum-of (olc-obj-of ch))
+                      "object" "damage"
+                      (zone-containing-number (vnum-of (olc-obj-of ch)))
+                      +zone-objs-approved+))
 
 (defcommand (ch "olc" "oset" "weight") (:immortal)
   (send-to-char ch "Usage: olc oset weight <pounds>~%"))
 
 (defcommand (ch "olc" "oset" "weight" value) (:immortal)
-  (perform-numeric-oset ch (olc-obj-of ch) 'weight "weight" value))
+  (perform-set-number ch value (olc-obj-of ch) 'weight (vnum-of (olc-obj-of ch))
+                      "object" "weight"
+                      (zone-containing-number (vnum-of (olc-obj-of ch)))
+                      +zone-objs-approved+))
 
 (defcommand (ch "olc" "oset" "cost") (:immortal)
   (send-to-char ch "Usage: olc oset cost <amount>~%"))
 
 (defcommand (ch "olc" "oset" "cost" value) (:immortal)
-  (perform-numeric-oset ch (olc-obj-of ch) 'cost "cost" value))
+  (perform-set-number ch value (olc-obj-of ch) 'cost (vnum-of (olc-obj-of ch))
+                      "object" "cost"
+                      (zone-containing-number (vnum-of (olc-obj-of ch)))
+                      +zone-objs-approved+))
 
 (defcommand (ch "olc" "oset" "rent") (:immortal)
   (send-to-char ch "Usage: olc oset rent <amount>~%"))
 
 (defcommand (ch "olc" "oset" "rent" value) (:immortal)
-  (perform-numeric-oset ch (olc-obj-of ch) 'rent "rent" value))
+  (perform-set-number ch value (olc-obj-of ch) 'rent (vnum-of (olc-obj-of ch))
+                      "object" "rent"
+                      (zone-containing-number (vnum-of (olc-obj-of ch)))
+                      +zone-objs-approved+))
 
 (defcommand (ch "olc" "oset" "apply") (:immortal)
   (send-to-char ch "Usage: olc oset apply <location> <modifier>~%"))
@@ -631,7 +616,10 @@
   (send-to-char ch "Usage: olc oset timer <fade-away timer>~%"))
 
 (defcommand (ch "olc" "oset" "timer" value) (:immortal)
-  (perform-numeric-oset ch (olc-obj-of ch) 'timer "timer" value))
+  (perform-set-number ch value (olc-obj-of ch) 'timer (vnum-of (olc-obj-of ch))
+                      "object" "timer"
+                      (zone-containing-number (vnum-of (olc-obj-of ch)))
+                      +zone-objs-approved+))
 
 (defcommand (ch "olc" "oset" "specparam") (:immortal)
   (when (and (check-is-editing ch "object" (olc-obj-of ch))
@@ -658,7 +646,10 @@
   (send-to-char ch "Usage: olc oset owner <object owner>~%"))
 
 (defcommand (ch "olc" "oset" "owner" value) (:immortal)
-  (perform-numeric-oset ch (olc-obj-of ch) 'owner "owner" value))
+  (perform-set-number ch value (olc-obj-of ch) 'owner (vnum-of (olc-obj-of ch))
+                      "object" "owner"
+                      (zone-containing-number (vnum-of (olc-obj-of ch)))
+                      +zone-objs-approved+))
 
 (defcommand (ch "olc" "oexdesc" "create" keywords) (:immortal)
   (when (and (check-is-editing ch "object" (olc-obj-of ch))
@@ -769,6 +760,9 @@ Use the 'olc oexdesc remove' command to remove it, or the
        (send-to-char ch "No such object exists.~%"))
       (t
        (perform-olc-oload ch vnum)))))
+
+(defcommand (ch "olc" "omimic") (:immortal)
+  (send-to-char ch "Usage: olc omimic <vnum>~%"))
 
 (defcommand (ch "olc" "omimic" number) (:immortal)
   (when (and (check-is-editing ch "object" (olc-obj-of ch))

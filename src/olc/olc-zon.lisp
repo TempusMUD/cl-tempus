@@ -1,19 +1,5 @@
 (in-package #:tempus)
 
-(defmacro with-numeric-input (vars &body body)
-  `(let ,(loop for var-tuple in vars
-              as var = (first var-tuple)
-            collect `(,var (parse-integer ,var :junk-allowed t)))
-     (cond
-       ,@(loop for var-tuple in vars
-              as var = (first var-tuple)
-              as message = (second var-tuple)
-              as pred = (third var-tuple)
-            if pred collect `((not (and ,var (funcall ,pred ,var))) (signal 'parser-error :message ,message))
-            else collect  `((null ,var) (signal 'parser-error :message ,message)))
-       (t
-        ,@body))))
-
 (defun push-zcmd (zone insert-after cmd if-flag arg1 arg2 arg3 prob)
   "Adds a new RESET-COM to the zone's command list.  If INSERT-AFTER is NIL, the new command is appended to the end of the command list, otherwise it is inserted after the given cons."
   (let ((new-reset-com (make-instance 'reset-com

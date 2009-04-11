@@ -101,7 +101,7 @@
 (deftest do-rset-sector/sets-sector ()
   (with-room-olc-fixture (alice test-room)
     (tempus::interpret-command alice "olc rset sector road")
-    (char-output-is alice "Room sector type set to Road.~%")
+    (char-output-is alice "Room 102 sector type set to road.~%")
     (is (= (tempus::terrain-of test-room) tempus::+sect-road+))))
 
 (deftest do-rset-flags/using-plus/adds-room-flags ()
@@ -148,7 +148,7 @@
 (deftest do-rset-occupancy/sets-max-occupancy ()
   (with-room-olc-fixture (alice test-room)
     (tempus::interpret-command alice "olc rset occupancy 15")
-    (char-output-is alice "Room occupancy set to 15.~%")
+    (char-output-is alice "Room 102 occupancy set to 15.~%")
     (is (= (tempus::max-occupancy-of test-room) 15))))
 
 (deftest do-olc-exit-doorflags/with-plus/adds-door-flags ()
@@ -389,31 +389,31 @@
 (deftest do-olc-oset-name/sets-object-name ()
   (with-obj-olc-fixture (alice)
     (tempus::interpret-command alice "olc oset name testing")
-    (char-output-is alice "Object name set.~%")
+    (char-output-is alice "Object 101 name set to 'testing'.~%")
     (is (equal "testing" (tempus::name-of (tempus::olc-obj-of alice))))))
 
 (deftest do-olc-oset-ldesc/not-tilde/sets-object-ldesc ()
   (with-obj-olc-fixture (alice)
     (tempus::interpret-command alice "olc oset ldesc testing")
-    (char-output-is alice "Object L-desc set.~%")
+    (char-output-is alice "Object 101 line description set to 'testing'.~%")
     (is (equal "testing" (tempus::line-desc-of (tempus::olc-obj-of alice))))))
 
 (deftest do-olc-oset-ldesc/with-tilde/nulls-object-ldesc ()
   (with-obj-olc-fixture (alice)
     (tempus::interpret-command alice "olc oset ldesc ~")
-    (char-output-is alice "Object L-desc set.~%")
+    (char-output-is alice "Object 101 line description unset.~%")
     (is (null (tempus::line-desc-of (tempus::olc-obj-of alice))))))
 
 (deftest do-olc-oset-action-desc/not-tilde/sets-object-action-desc ()
   (with-obj-olc-fixture (alice)
     (tempus::interpret-command alice "olc oset action_desc testing")
-    (char-output-is alice "Object action desc set.~%")
+    (char-output-is alice "Object 101 action description set to 'testing'.~%")
     (is (equal "testing" (tempus::action-desc-of (tempus::olc-obj-of alice))))))
 
 (deftest do-olc-oset-action-desc/with-tilde/nulls-object-action-desc ()
   (with-obj-olc-fixture (alice)
     (tempus::interpret-command alice "olc oset action_desc ~")
-    (char-output-is alice "Object action desc set.~%")
+    (char-output-is alice "Object 101 action description unset.~%")
     (is (null (tempus::action-desc-of (tempus::olc-obj-of alice))))))
 
 (deftest do-olc-oset-type/sets-object-kind ()
@@ -462,7 +462,7 @@
 (deftest do-olc-oset-material/sets-object-material ()
   (with-obj-olc-fixture (alice)
     (tempus::interpret-command alice "olc oset material glass")
-    (char-output-is alice (format nil "Object ~d material set to glass (160).~~%"
+    (char-output-is alice (format nil "Object ~d material set to glass.~~%"
                                   (tempus::vnum-of (tempus::olc-obj-of alice))))
     (is (= 160 (tempus::material-of (tempus::olc-obj-of alice))))))
 
@@ -901,3 +901,33 @@
         (tempus::interpret-command alice "olc zpurge")
       (is (search "(GC) Alice olc-purged zone 1 (Coder Test Zone)" log))
       (char-output-has alice "Zone 1 cleared of"))))
+
+(deftest save-zone-mobiles/complex-mobiles/saves-zone-file ()
+  (with-fixtures ((alice mock-player :level 51 :override-security t))
+    (unwind-protect
+         (progn
+           (rename-file (tempus::tempus-path "lib/world/mob/376.mob") (tempus::tempus-path "lib/world/mob/376.mob.test"))
+           (with-captured-log log
+               (tempus::save-zone-mobiles alice (tempus::real-zone 376))
+             (is (search "OLC: Alice msaved 376" log))
+             (is (equal (tempus::snarf-file (tempus::tempus-path "lib/world/mob/376.mob"))
+                        (tempus::snarf-file (tempus::tempus-path "lib/world/mob/376.mob.test"))))))
+      (progn
+        (when (probe-file (tempus::tempus-path "lib/world/mob/376.mob"))
+          (delete-file (tempus::tempus-path "lib/world/mob/376.mob")))
+        (rename-file (tempus::tempus-path "lib/world/mob/376.mob.test") (tempus::tempus-path "lib/world/mob/376.mob"))))))
+
+(deftest save-zone-mobiles/simple-mobiles/saves-zone-file ()
+  (with-fixtures ((alice mock-player :level 51 :override-security t))
+    (unwind-protect
+         (progn
+           (rename-file (tempus::tempus-path "lib/world/mob/348.mob") (tempus::tempus-path "lib/world/mob/348.mob.test"))
+           (with-captured-log log
+               (tempus::save-zone-mobiles alice (tempus::real-zone 348))
+             (is (search "OLC: Alice msaved 348" log))
+             (is (equal (tempus::snarf-file (tempus::tempus-path "lib/world/mob/348.mob"))
+                        (tempus::snarf-file (tempus::tempus-path "lib/world/mob/348.mob.test"))))))
+      (progn
+        (when (probe-file (tempus::tempus-path "lib/world/mob/348.mob"))
+          (delete-file (tempus::tempus-path "lib/world/mob/348.mob")))
+        (rename-file (tempus::tempus-path "lib/world/mob/348.mob.test") (tempus::tempus-path "lib/world/mob/348.mob"))))))

@@ -274,9 +274,10 @@
     (send-to-char ch "Set title to what?~%")))
 
 (defcommand (ch "olc" "rset" "title" title) (:immortal)
-  (when (check-can-edit ch (zone-of (in-room-of ch)) +zone-rooms-approved+)
-    (setf (name-of (in-room-of ch)) title)
-    (send-to-char ch "Okay, room title changed.~%")))
+  (perform-set-string ch title (in-room-of ch) 'title (number-of (in-room-of ch))
+                      "room" "title"
+                      (zone-of (in-room-of ch)) +zone-rooms-approved+
+                      nil))
 
 (defcommand (ch "olc" "rset" "description") (:immortal)
   (if (description-of (in-room-of ch))
@@ -302,15 +303,10 @@
   (send-to-char ch "Set sector to what?~%"))
 
 (defcommand (ch "olc" "rset" "sector" terrain) (:immortal)
-  (when (check-can-edit ch (zone-of (in-room-of ch)) +zone-rooms-approved+)
-    (let ((terrain-id (or (parse-integer terrain :junk-allowed t)
-                          (position terrain +sector-types+ :test 'string-abbrev))))
-      (cond
-        ((null terrain-id)
-         (send-to-char ch "No such sector type.  Type olchelp rsector.~%"))
-        (t
-         (setf (terrain-of (in-room-of ch)) terrain-id)
-         (send-to-char ch "Room sector type set to ~a.~%" (aref +sector-types+ terrain-id)))))))
+  (perform-set-enumerated ch terrain (in-room-of ch) 'terrain (number-of (in-room-of ch))
+                      "room" "sector type"
+                      (zone-of (in-room-of ch)) +zone-rooms-approved+
+                      +sector-types+))
 
 (defcommand (ch "olc" "rset" "flags" plus-or-minus flag-names) (:immortal)
   (when (check-can-edit ch (zone-of (in-room-of ch)) +zone-rooms-approved+)
@@ -382,14 +378,9 @@
          (send-to-char ch "Flow state set.~%"))))))
 
 (defcommand (ch "olc" "rset" "occupancy" occupancy) (:immortal)
-  (when (check-can-edit ch (zone-of (in-room-of ch)) +zone-rooms-approved+)
-    (let ((num (parse-integer occupancy :junk-allowed t)))
-      (cond
-        ((or (null num) (not (plusp num)))
-         (send-to-char ch "The occupancy must be a positive number.~%"))
-        (t
-         (setf (max-occupancy-of (in-room-of ch)) num)
-         (send-to-char ch "Room occupancy set to ~d.~%" num))))))
+  (perform-set-number ch occupancy (in-room-of ch) 'max-occupancy (number-of (in-room-of ch))
+                      "room" "occupancy"
+                      (zone-of (in-room-of ch)) +zone-rooms-approved+))
 
 (defcommand (ch "olc" "rset" "special" special-name) (:immortal)
   (when (check-can-edit ch (zone-of (in-room-of ch)) +zone-rooms-approved+)
