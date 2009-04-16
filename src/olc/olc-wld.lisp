@@ -274,10 +274,10 @@
     (send-to-char ch "Set title to what?~%")))
 
 (defcommand (ch "olc" "rset" "title" title) (:immortal)
-  (perform-set-string ch title (in-room-of ch) 'title (number-of (in-room-of ch))
-                      "room" "title"
-                      (zone-of (in-room-of ch)) +zone-rooms-approved+
-                      nil))
+  (perform-set-string ch title (in-room-of ch) "room title"
+                      (number-of (in-room-of ch)) +zone-rooms-approved+
+                      nil
+                      #'(setf title-of)))
 
 (defcommand (ch "olc" "rset" "description") (:immortal)
   (if (description-of (in-room-of ch))
@@ -303,10 +303,9 @@
   (send-to-char ch "Set sector to what?~%"))
 
 (defcommand (ch "olc" "rset" "sector" terrain) (:immortal)
-  (perform-set-enumerated ch terrain (in-room-of ch) 'terrain (number-of (in-room-of ch))
-                      "room" "sector type"
-                      (zone-of (in-room-of ch)) +zone-rooms-approved+
-                      +sector-types+))
+  (perform-set-enumerated ch terrain (in-room-of ch) "room sector type"
+                      (number-of (in-room-of ch)) +zone-rooms-approved+
+                      +sector-types+ #'(setf terrain-of)))
 
 (defcommand (ch "olc" "rset" "flags" plus-or-minus flag-names) (:immortal)
   (when (check-can-edit ch (zone-of (in-room-of ch)) +zone-rooms-approved+)
@@ -378,9 +377,10 @@
          (send-to-char ch "Flow state set.~%"))))))
 
 (defcommand (ch "olc" "rset" "occupancy" occupancy) (:immortal)
-  (perform-set-number ch occupancy (in-room-of ch) 'max-occupancy (number-of (in-room-of ch))
-                      "room" "occupancy"
-                      (zone-of (in-room-of ch)) +zone-rooms-approved+))
+  (perform-set-number ch occupancy (in-room-of ch) "room occupancy"
+                      (number-of (in-room-of ch)) +zone-rooms-approved+
+                      1 256
+                      #'(setf max-occupancy-of)))
 
 (defcommand (ch "olc" "rset" "special" special-name) (:immortal)
   (when (check-can-edit ch (zone-of (in-room-of ch)) +zone-rooms-approved+)
