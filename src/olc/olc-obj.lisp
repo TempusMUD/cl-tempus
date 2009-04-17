@@ -21,8 +21,9 @@
     (setf (proto-of new-object-shared) new-object)
     (setf (gethash vnum *object-prototypes*) new-object)
     (setf (olc-obj-of ch) new-object)
-    (send-to-char ch "Object ~d successfully created.~%Now editing object ~d~%"
-                  vnum vnum)))
+    (send-to-char ch "Object ~d successfully created.~%" vnum)
+       (send-to-char ch "Now editing object [~d] &g~a&n.~%"
+                     vnum (name-of new-object))))
 
 (defun perform-destroy-object (ch vnum)
   (dolist (obj (copy-list *object-list*))
@@ -125,9 +126,9 @@
          (obj-to-char obj ch)
          (setf (timer-of obj) (level-of ch))
          (act ch :target-item obj
-              :subject-emit "$p appears in your hands."
-              :place-emit "$n creates $p in $s hands.")
-         (slog "OLC: ~a oloaded ~a(~d)" (name-of ch) (vnum-of obj) (name-of obj)))))))
+              :subject-emit "$P appears in your hands."
+              :place-emit "$n creates $P in $s hands.")
+         (slog "OLC: ~a oloaded ~a(~d)" (name-of ch) (name-of obj) (vnum-of obj)))))))
 
 (defun perform-omimic (dst src)
    (setf (name-of dst) (name-of src))
@@ -275,7 +276,7 @@
        (send-to-char ch "There is no such object.~%"))
       ((check-can-edit ch (zone-containing-number vnum) +zone-objs-approved+)
        (setf (olc-obj-of ch) obj)
-       (send-to-char ch "Now editing object [~d] &g~a&n~%"
+       (send-to-char ch "Now editing object [~d] &g~a&n.~%"
                      vnum (name-of obj))))))
 
 (defcommand (ch "olc" "ostat") (:immortal)

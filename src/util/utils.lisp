@@ -324,8 +324,6 @@ sequences in seq-list with the delimiter between each element"
     (#\$
      "$")))
 
-
-
 (defun act-escape (str)
   "Given STR, returns a string, which has escaped the characters considered meaningful by the ACT and ACT-EVENT function"
   (with-output-to-string (result)
