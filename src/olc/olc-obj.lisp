@@ -195,6 +195,46 @@
       (t
        (perform-create-object ch obj-vnum)))))
 
+(defcommand (ch "approve" "object") (:immortal)
+  (send-to-char ch "Usage: approve object <vnum>~%"))
+
+(defcommand (ch "approve" "object" vnum) (:immortal)
+  (with-numeric-input ((vnum "That's no object vnum.~%"))
+    (let* ((obj (real-object-proto vnum))
+           (zone (zone-containing-number vnum)))
+      (cond
+        ((null obj)
+         (send-to-char ch "There exists no object with that number, slick.~%"))
+        ((null zone)
+         (send-to-char ch "That object belongs to no zone.~%"))
+        ((not (logtest (extra2-flags-of obj) +item2-unapproved+))
+         (send-to-char ch "That item is already approved.~%"))
+        (t
+         (setf (extra2-flags-of obj) (logandc2 (extra2-flags-of obj) +item2-unapproved+))
+         (send-to-char ch "Object approved for full inclusion in the game.~%")
+         (slog "~a approved object ~a[~d]" (name-of ch) (name-of obj) (vnum-of obj))
+         (save-zone-objects ch zone))))))
+
+(defcommand (ch "unapprove" "object") (:immortal)
+  (send-to-char ch "Usage: unapprove object <vnum>~%"))
+
+(defcommand (ch "unapprove" "object" vnum) (:immortal)
+  (with-numeric-input ((vnum "That's no object vnum.~%"))
+    (let* ((obj (real-object-proto vnum))
+           (zone (zone-containing-number vnum)))
+      (cond
+        ((null obj)
+         (send-to-char ch "There exists no object with that number, slick.~%"))
+        ((null zone)
+         (send-to-char ch "That object belongs to no zone.~%"))
+        ((logtest (extra2-flags-of obj) +item2-unapproved+)
+         (send-to-char ch "That item is already unapproved.~%"))
+        (t
+         (setf (extra2-flags-of obj) (logior (extra2-flags-of obj) +item2-unapproved+))
+         (send-to-char ch "Object unapproved.~%")
+         (slog "~a unapproved object ~a[~d]" (name-of ch) (name-of obj) (vnum-of obj))
+         (save-zone-objects ch zone))))))
+
 (defcommand (ch "olc" "clear" "object") (:immortal)
   (when (and (check-is-editing ch "object" (olc-obj-of ch))
              (check-can-edit ch

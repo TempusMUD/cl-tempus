@@ -367,7 +367,7 @@
     (setf (tempus::owner-idnum-of (tempus::zone-of (tempus::in-room-of alice)))
           (tempus::idnum-of alice))
     (tempus::interpret-command alice "olc oedit 100")
-    (char-output-is alice "Now editing object [100] &ga test object&n~%")
+    (char-output-is alice "Now editing object [100] &ga test object&n.~%")
     (is (eql (tempus::real-object-proto 100) (tempus::olc-obj-of alice)))
     (clear-mock-buffers alice)
     (tempus::interpret-command alice "olc oedit exit")

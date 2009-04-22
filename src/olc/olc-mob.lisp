@@ -277,6 +277,46 @@
         (t
          (perform-create-mobile ch number))))))
 
+(defcommand (ch "approve" "mobile") (:immortal)
+  (send-to-char ch "Usage: approve mobile <vnum>~%"))
+
+(defcommand (ch "approve" "mobile" vnum) (:immortal)
+  (with-numeric-input ((vnum "That's no mobile vnum.~%"))
+    (let* ((mob (real-mobile-proto vnum))
+           (zone (zone-containing-number vnum)))
+      (cond
+        ((null mob)
+         (send-to-char ch "There exists no mobile with that number, slick.~%"))
+        ((null zone)
+         (send-to-char ch "That mobile belongs to no zone.~%"))
+        ((not (logtest (mob2-flags-of mob) +mob2-unapproved+))
+         (send-to-char ch "That item is already approved.~%"))
+        (t
+         (setf (mob2-flags-of mob) (logandc2 (mob2-flags-of mob) +mob2-unapproved+))
+         (send-to-char ch "Mobile approved for full inclusion in the game.~%")
+         (slog "~a approved mobile ~a[~d]" (name-of ch) (name-of mob) (vnum-of mob))
+         (save-zone-mobiles ch zone))))))
+
+(defcommand (ch "unapprove" "mobile") (:immortal)
+  (send-to-char ch "Usage: unapprove mobile <vnum>~%"))
+
+(defcommand (ch "unapprove" "mobile" vnum) (:immortal)
+  (with-numeric-input ((vnum "That's no mobile vnum.~%"))
+    (let* ((mob (real-mobile-proto vnum))
+           (zone (zone-containing-number vnum)))
+      (cond
+        ((null mob)
+         (send-to-char ch "There exists no mobile with that number, slick.~%"))
+        ((null zone)
+         (send-to-char ch "That mobile belongs to no zone.~%"))
+        ((logtest (mob2-flags-of mob) +mob2-unapproved+)
+         (send-to-char ch "That item is already approved.~%"))
+        (t
+         (setf (mob2-flags-of mob) (logior (mob2-flags-of mob) +mob2-unapproved+))
+         (send-to-char ch "Mobile unapproved.~%")
+         (slog "~a unapproved mobile ~a[~d]" (name-of ch) (name-of mob) (vnum-of mob))
+         (save-zone-mobiles ch zone))))))
+
 (defcommand (ch "olc" "clear" "mobile") (:immortal)
   (when (and (check-is-editing ch "mobile" (olc-mob-of ch))
              (check-can-edit ch

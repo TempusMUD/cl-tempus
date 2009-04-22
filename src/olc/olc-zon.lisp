@@ -368,6 +368,91 @@
 (defparameter +zcmd-list-options+
   '(:objects :removes :mobiles :equips :implants :gives :puts :doors :paths))
 
+(defun perform-approve-zone (ch vnum-str approve-mobs-p approve-objs-p)
+  (let* ((vnum (if (string= vnum-str ".")
+                   (number-of (zone-of (in-room-of ch)))
+                   (parse-integer vnum-str :junk-allowed t)))
+         (zone (and vnum (real-zone vnum))))
+    (cond
+      ((null vnum)
+       (send-to-char ch "You need to specify . or the zone number.~%"))
+      ((null zone)
+       (send-to-char ch "No such zone.~%"))
+      (t
+       (send-to-char ch "Zone approved for full inclusion in the game.~%")
+       (send-to-char ch "Zone modification from this point on must be approved by an olc god.~%")
+       (slog "~a approved zone ~a[~d]" (name-of ch) vnum)
+
+       (setf (flags-of zone) (logandc2 (flags-of zone)
+                                       (logior +zone-mobs-approved+
+                                               +zone-objs-approved+
+                                               +zone-rooms-approved+
+                                               +zone-zcmds-approved+
+                                               +zone-search-approved+)))
+       (save-zone-data ch zone)
+
+       (when approve-mobs-p
+         (loop for mob-vnum from (* (number-of zone) 100) upto (top-of zone)
+              as mob = (real-mobile-proto mob-vnum)
+              when mob
+              do (setf (mob2-flags-of mob) (logandc2 (mob2-flags-of mob)
+                                                     +mob2-unapproved+)))
+         (save-zone-objects ch zone)
+         (send-to-char ch "Mobs approved for full inclusion in the game.~%")
+         (slog "~a approved mobs in zone ~a[~d]" (name-of ch) (name-of zone) (number-of zone)))
+
+       (when approve-objs-p
+         (loop for obj-vnum from (* (number-of zone) 100) upto (top-of zone)
+              as obj = (real-object-proto obj-vnum)
+              when obj
+              do (setf (extra2-flags-of obj) (logandc2 (extra2-flags-of obj)
+                                                       +item2-unapproved+)))
+         (save-zone-objects ch zone)
+         (send-to-char ch "Objects approved for full inclusion in the game.~%")
+         (slog "~a approved objects in zone ~a[~d]" (name-of ch) (name-of zone) (number-of zone)))))))
+
+(defun perform-unapprove-zone (ch vnum-str mobiles-p objects-p)
+  (let* ((vnum (if (string= vnum-str ".")
+                   (number-of (zone-of (in-room-of ch)))
+                   (parse-integer vnum-str :junk-allowed t)))
+         (zone (and vnum (real-zone vnum))))
+    (cond
+      ((null vnum)
+       (send-to-char ch "You need to specify . or the zone number.~%"))
+      ((null zone)
+       (send-to-char ch "No such zone.~%"))
+      (t
+       (send-to-char ch "Zone approved for olc.~%")
+       (slog "~a unapproved zone ~a[~d]" (name-of ch) vnum)
+
+       (setf (flags-of zone) (logior (flags-of zone)
+                                     +zone-mobs-approved+
+                                     +zone-objs-approved+
+                                     +zone-rooms-approved+
+                                     +zone-zcmds-approved+
+                                     +zone-search-approved+))
+       (save-zone-data ch zone)
+
+       (when mobiles-p
+         (loop for mob-vnum from (* (number-of zone) 100) upto (top-of zone)
+            as mob = (real-mobile-proto mob-vnum)
+            when mob
+            do (setf (mob2-flags-of mob) (logior (mob2-flags-of mob)
+                                                 +mob2-unapproved+)))
+         (save-zone-objects ch zone)
+         (send-to-char ch "Mobs approved for olc.~%")
+         (slog "~a unapproved mobs in zone ~a[~d]" (name-of ch) (name-of zone) (number-of zone)))
+
+       (when objects-p
+         (loop for obj-vnum from (* (number-of zone) 100) upto (top-of zone)
+            as obj = (real-object-proto obj-vnum)
+            when obj
+            do (setf (extra2-flags-of obj) (logior (extra2-flags-of obj)
+                                                   +item2-unapproved+)))
+         (save-zone-objects ch zone)
+         (send-to-char ch "Objects approved for olc.~%")
+         (slog "~a unapproved objects in zone ~a[~d]" (name-of ch) (name-of zone) (number-of zone)))))))
+
 (defcommand (ch "olc" "create" "zone") (:immortal)
   (send-to-char ch "Create a zone with what number?~%"))
 
@@ -380,6 +465,36 @@
        (send-to-char ch "You must specify a number for the zone.~%"))
       (t
        (perform-create-zone ch number)))))
+
+(defcommand (ch "approve" "zone") (:immortal)
+  (send-to-char ch "Usage: approve zone (.|<vnum>) [all|mobile|object]~%"))
+
+(defcommand (ch "approve" "zone" vnum) (:immortal)
+  (perform-approve-zone ch vnum nil nil))
+
+(defcommand (ch "approve" "zone" vnum "all") (:immortal)
+  (perform-approve-zone ch vnum t t))
+
+(defcommand (ch "approve" "zone" vnum "mobile") (:immortal)
+  (perform-approve-zone ch vnum t nil))
+
+(defcommand (ch "approve" "zone" vnum "object") (:immortal)
+  (perform-approve-zone ch vnum nil t))
+
+(defcommand (ch "unapprove" "zone") (:immortal)
+  (send-to-char ch "Usage: unapprove zone (.|<vnum>) [all|mobile|object]~%"))
+
+(defcommand (ch "unapprove" "zone" vnum) (:immortal)
+  (perform-unapprove-zone ch vnum nil nil))
+
+(defcommand (ch "unapprove" "zone" vnum "all") (:immortal)
+  (perform-unapprove-zone ch vnum t t))
+
+(defcommand (ch "unapprove" "zone" vnum "mobile") (:immortal)
+  (perform-unapprove-zone ch vnum t nil))
+
+(defcommand (ch "unapprove" "zone" vnum "object") (:immortal)
+  (perform-unapprove-zone ch vnum nil t))
 
 (defcommand (ch "olc" "zset" "name") (:immortal)
   (send-to-char ch "Usage: olc zset name <zone name>~%"))
