@@ -123,13 +123,15 @@
              (:file "olc" :pathname "olc/olc"
                                :depends-on ("defs" "interpreter"))
              (:file "olc-wld" :pathname "olc/olc-wld"
-                               :depends-on ("defs" "olc" "interpreter"))
+                               :depends-on ("defs" "olc" "interpreter" "room-data"))
              (:file "olc-srch" :pathname "olc/olc-srch"
-                               :depends-on ("defs" "olc" "interpreter"))
+                               :depends-on ("defs" "olc" "interpreter" "room-data"))
              (:file "olc-obj" :pathname "olc/olc-obj"
-                               :depends-on ("defs" "olc" "interpreter"))
+                               :depends-on ("defs" "olc" "interpreter" "obj-data"))
              (:file "olc-zon" :pathname "olc/olc-zon"
-                               :depends-on ("defs" "olc" "interpreter"))
+                               :depends-on ("defs" "olc" "interpreter" "zone-data"))
+             (:file "olc-mob" :pathname "olc/olc-mob"
+                               :depends-on ("defs" "olc" "interpreter" "creature"))
              (:file "paths" :pathname "objects/paths"
                             :depends-on ("defs" "utils"))
              (:file "prog-compile" :pathname "search/prog-compile"

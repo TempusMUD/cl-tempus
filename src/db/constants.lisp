@@ -1250,28 +1250,28 @@
 (defparameter +plr2-buried+ (ash 1 1))  ; Player has died way too many times.
 (defparameter +plr2-in-combat+ (ash 1 2))
 
-(defparameter +mob-spec+ (ash 1 0)) ; Mob has a callable spec-proc
+(defparameter +mob-spec+ (ash 1 0))     ; Mob has a callable spec-proc
 (defparameter +mob-sentinel+ (ash 1 1)) ; Mob should not move
-(defparameter +mob-scavenger+ (ash 1 2))    ; Mob picks up stuff on the ground
-(defparameter +mob-isnpc+ (ash 1 3))    ; (R) Automatically set on all Mobs
-(defparameter +mob-aware+ (ash 1 4))    ; Mob can't be backstabbed
-(defparameter +mob-aggressive+ (ash 1 5))   ; Mob hits players in the room
-(defparameter +mob-stay-zone+ (ash 1 6))    ; Mob shouldn't wander out of zone
-(defparameter +mob-wimpy+ (ash 1 7))    ; Mob flees if severely injured
-(defparameter +mob-aggr-evil+ (ash 1 8))    ; auto attack evil PC's
-(defparameter +mob-aggr-good+ (ash 1 9))    ; auto attack good PC's
-(defparameter +mob-aggr-neutral+ (ash 1 10))    ; auto attack neutral PC's
-(defparameter +mob-memory+ (ash 1 11))  ; remember attackers if attacked
-(defparameter +mob-helper+ (ash 1 12))  ; attack PCs fighting other NPCs
-(defparameter +mob-nocharm+ (ash 1 13)) ; Mob can't be charmed
-(defparameter +mob-nosummon+ (ash 1 14))    ; Mob can't be summoned
-(defparameter +mob-nosleep+ (ash 1 15)) ; Mob can't be slept
-(defparameter +mob-nobash+ (ash 1 16))  ; Mob can't be bashed (e.g. trees)
+(defparameter +mob-scavenger+ (ash 1 2)) ; Mob picks up stuff on the ground
+(defparameter +mob-isnpc+ (ash 1 3)) ; (R) Automatically set on all Mobs
+(defparameter +mob-aware+ (ash 1 4)) ; Mob can't be backstabbed
+(defparameter +mob-aggressive+ (ash 1 5)) ; Mob hits players in the room
+(defparameter +mob-stay-zone+ (ash 1 6)) ; Mob shouldn't wander out of zone
+(defparameter +mob-wimpy+ (ash 1 7))   ; Mob flees if severely injured
+(defparameter +mob-aggr-evil+ (ash 1 8))     ; auto attack evil PC's
+(defparameter +mob-aggr-good+ (ash 1 9))     ; auto attack good PC's
+(defparameter +mob-aggr-neutral+ (ash 1 10)) ; auto attack neutral PC's
+(defparameter +mob-memory+ (ash 1 11)) ; remember attackers if attacked
+(defparameter +mob-helper+ (ash 1 12)) ; attack PCs fighting other NPCs
+(defparameter +mob-nocharm+ (ash 1 13))  ; Mob can't be charmed
+(defparameter +mob-nosummon+ (ash 1 14)) ; Mob can't be summoned
+(defparameter +mob-nosleep+ (ash 1 15))  ; Mob can't be slept
+(defparameter +mob-nobash+ (ash 1 16)) ; Mob can't be bashed (e.g. trees)
 (defparameter +mob-noblind+ (ash 1 17)) ; Mob can't be blinded
 (defparameter +mob-noturn+ (ash 1 18))  ; Hard to turn
 (defparameter +mob-nopetri+ (ash 1 19)) ; Cannot be petrified
 (defparameter +mob-pet+ (ash 1 20)) ; Mob is a conjured pet and shouldn't
-                                         ; get nor give any xp in any way.
+                                        ; get nor give any xp in any way.
 (defparameter +mob-soulless+ (ash 1 21))    ; Mobile is Soulless - Unholy compact.
 (defparameter +mob-spirit-tracker+ (ash 1 22))  ; Can track through !track
 (defparameter +mob-utility+ (ash 1 23)) ; Can't be seen, hit, etc...
@@ -2782,6 +2782,28 @@
       ("rip" "rips")
       ("chop" "chops")
       ("shoot" "shoots")))
+
+(defparameter +attack-types+
+  #("hit"                                ; 0
+    "sting"
+    "whip"
+    "slash"
+    "bite"
+    "bludgeon"                           ; 5
+    "crush"
+    "pound"
+    "claw"
+    "maul"
+    "thrash"                             ; 10
+    "pierce"
+    "blast"
+    "punch"
+    "stab"
+    "zap"                                ; Raygun blasting
+    "rip"
+    "chop"
+    "shoot"))
+
 
 (defparameter +component-names+
   #2A(("NONE" "NONE" "NONE")

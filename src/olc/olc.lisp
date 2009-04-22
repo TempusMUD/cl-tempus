@@ -100,11 +100,10 @@
                          desc
                          (or text "")
                          (lambda (cxn target buf)
-                           (declare (ignore target))
                            (setf (plr-bits-of (actor-of cxn))
                                  (logandc2 (plr-bits-of (actor-of cxn)) +plr-olc+))
                            (setf (state-of cxn) 'playing)
-                           (funcall setter buf))
+                           (funcall setter buf target))
                          (lambda (cxn target)
                            (declare (ignore target))
                            (setf (plr-bits-of (actor-of cxn))
