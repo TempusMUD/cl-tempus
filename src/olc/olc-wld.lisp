@@ -182,6 +182,21 @@
              (number-of room))
        (send-to-char ch "To room set.  Return exit set in to room.~%")))))
 
+(defun perform-rlist (ch vnum-start vnum-end)
+  (with-pagination ((link-of ch))
+    (loop
+       with index = 1
+       for vnum from vnum-start upto vnum-end
+       as room = (real-room vnum)
+       when room
+       do
+         (send-to-char ch "~4d. &g[&n~5d&g]&c ~40a &n~:[ (nodesc)~;~]~:[~; (prog)~]~%"
+                       index vnum
+                       (name-of room)
+                       (find-if (complement #'cl-ppcre::whitespacep) (description-of room))
+                       (prog-text-of room))
+         (incf index))))
+
 (defcommand (ch "olc" "create" "room") (:immortal)
   (send-to-char ch "Create a room with what vnum?~%"))
 
@@ -665,3 +680,18 @@ Use the 'olc rexdesc remove' command to remove it, or the
         (t
          (setf (keyword-of exd) (format nil "~a ~a" (keyword-of exd) more-keywords))
          (send-to-char ch "Keywords added.~%"))))))
+
+(defcommand (ch "rlist") (:immortal)
+  (let ((zone (zone-of (in-room-of ch))))
+    (perform-rlist ch (* (number-of zone) 100) (top-of zone))))
+
+(defcommand (ch "rlist" junk) (:immortal)
+  (declare (ignore junk))
+  (send-to-char ch "Usage: rlist [<start vnum> <end vnum>]~%"))
+
+(defcommand (ch "rlist" start end) (:immortal)
+  (let ((start-num (parse-integer start :junk-allowed t))
+        (end-num (parse-integer end :junk-allowed t)))
+    (if (or (null start-num) (null end-num))
+        (send-to-char ch "Usage: rlist [<start vnum> <end vnum>]~%")
+        (perform-rlist ch (min start-num end-num) (max start-num end-num)))))

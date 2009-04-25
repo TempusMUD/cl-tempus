@@ -249,6 +249,23 @@
               (find-special-by-func (func-of (shared-of obj)))
               (name-of obj)))))
 
+(defun perform-mlist (ch vnum-start vnum-end)
+  (with-pagination ((link-of ch))
+    (loop
+       with index = 1
+       for vnum from vnum-start upto vnum-end
+       as mob = (real-mobile-proto vnum)
+       when mob
+       do
+         (send-to-char ch "~4d. &g[&n~5d&g]&y ~40a &n[~2d] <~3d>~:[~; (!ap)~]~:[~; (prog)~]~%"
+                       index vnum
+                       (name-of mob)
+                       (level-of mob)
+                       (number-of (shared-of mob))
+                       (mob2-flagged mob +mob2-unapproved+)
+                       (prog-text-of (shared-of mob)))
+         (incf index))))
+
 (defcommand (ch "olc" "create" "mobile" "next") (:immortal)
   (let* ((zone (zone-of (in-room-of ch)))
          (number (loop for num from (* (number-of zone) 100) upto (top-of zone)
@@ -1003,3 +1020,18 @@
                     (prog-text-of (shared-of (olc-mob-of ch)))
                     (lambda (val mob)
                       (setf (prog-text-of (shared-of mob)) val))))
+
+(defcommand (ch "mlist") (:immortal)
+  (let ((zone (zone-of (in-room-of ch))))
+    (perform-mlist ch (* (number-of zone) 100) (top-of zone))))
+
+(defcommand (ch "mlist" junk) (:immortal)
+  (declare (ignore junk))
+  (send-to-char ch "Usage: mlist [<start vnum> <end vnum>]~%"))
+
+(defcommand (ch "mlist" start end) (:immortal)
+  (let ((start-num (parse-integer start :junk-allowed t))
+        (end-num (parse-integer end :junk-allowed t)))
+    (if (or (null start-num) (null end-num))
+        (send-to-char ch "Usage: mlist [<start vnum> <end vnum>]~%")
+        (perform-mlist ch (min start-num end-num) (max start-num end-num)))))

@@ -48,6 +48,15 @@
                      (trigger-of search)
                      (keywords-of search))))))
 
+(defun perform-xlist (ch zone command)
+  (with-pagination ((link-of ch))
+    (dolist (room (world-of zone))
+      (let ((searches (remove command (searches-of room) :test-not #'= :key 'command-of)))
+        (when searches
+          (send-to-char ch "-- Room [&c~d&n] &c~a&n~%" (number-of room) (name-of room))
+          (dolist (search searches)
+            (format-search-data ch room search)))))))
+
 (defcommand (ch "olc" "create" "search") (:immortal)
   (send-to-char ch "Usage: olc create search <trigger word> [<keywords>]~%"))
 
@@ -191,3 +200,37 @@
   (when (and (check-is-editing ch "search" (olc-srch-of ch))
              (check-can-edit ch (zone-of (in-room-of ch)) +zone-rooms-approved+))
     (format-search-data ch (in-room-of ch) (olc-srch-of ch))))
+
+(defcommand (ch "xlist") (:immortal)
+  (perform-xlist ch (zone-of (in-room-of ch)) nil))
+
+(defcommand (ch "xlist" option-str) (:immortal)
+  (let ((zone (zone-of (in-room-of ch)))
+        (command nil))
+    (loop
+       for (opt val) on (split-sequence #\space option-str :remove-empty-subseqs t) by #'cddr
+       do
+         (cond
+           ((string-abbrev opt "zone")
+            (let ((num (parse-integer val :junk-allowed t)))
+              (cond
+                ((null num)
+                 (send-to-char ch "That's not a valid zone number.~%")
+                 (return-from do-xlist-option-str))
+                ((null (real-zone num))
+                 (send-to-char ch "There's not a zone by that number.~%")
+                 (return-from do-xlist-option-str))
+                (t
+                 (setf zone (real-zone num))))))
+           ((string-abbrev opt "type")
+            (let ((num (position val +search-commands+ :test 'string-abbrev)))
+              (cond
+                ((null num)
+                 (send-to-char ch "That's not a valid search type.~%")
+                 (return-from do-xlist-option-str))
+                (t
+                 (setf command num)))))
+           (t
+            (send-to-char ch "Usage: xlist [(help|zone <zone number>|type <search type>)...]~%")
+            (return-from do-xlist-option-str))))
+    (perform-xlist ch zone command)))

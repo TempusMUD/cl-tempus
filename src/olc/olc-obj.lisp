@@ -164,6 +164,22 @@
                                   :description (description-of exd)))
                  (ex-description-of src))))
 
+(defun perform-olist (ch vnum-start vnum-end)
+  (with-pagination ((link-of ch))
+    (loop
+       with index = 1
+       for vnum from vnum-start upto vnum-end
+       as obj = (real-object-proto vnum)
+       when obj
+       do
+         (send-to-char ch "~4d. &g[&n~5d&g]&g ~40a &n<~3d>~:[~; (!ap)~]~:[~; (nodesc)~]~%"
+                       index vnum
+                       (name-of obj)
+                       (number-of (shared-of obj))
+                       (is-obj-stat2 obj +item2-unapproved+)
+                       (zerop (length (line-desc-of obj))))
+         (incf index))))
+
 (defcommand (ch "olc" "create" "object") (:immortal)
   (send-to-char ch "Create an object with what vnum?~%"))
 
@@ -817,3 +833,18 @@ Use the 'olc oexdesc remove' command to remove it, or the
                                                              +item2-unapproved+)))
          (update-objlist-full vnum)
          (send-to-char ch "Okay, done mimicing.~%"))))))
+
+(defcommand (ch "olist") (:immortal)
+  (let ((zone (zone-of (in-room-of ch))))
+    (perform-olist ch (* (number-of zone) 100) (top-of zone))))
+
+(defcommand (ch "olist" junk) (:immortal)
+  (declare (ignore junk))
+  (send-to-char ch "Usage: olist [<start vnum> <end vnum>]~%"))
+
+(defcommand (ch "olist" start end) (:immortal)
+  (let ((start-num (parse-integer start :junk-allowed t))
+        (end-num (parse-integer end :junk-allowed t)))
+    (if (or (null start-num) (null end-num))
+        (send-to-char ch "Usage: olist [<start vnum> <end vnum>]~%")
+        (perform-olist ch (min start-num end-num) (max start-num end-num)))))
