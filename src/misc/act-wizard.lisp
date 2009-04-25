@@ -1364,6 +1364,26 @@
                    (send-stats-to-char ch o)
                    (send-to-char ch "Nothing around by that name.~%")))))))))
 
+(defun perform-zonepurge (ch zone olcp)
+  (let ((mob-count 0)
+        (obj-count 0))
+    (dolist (room (world-of zone))
+      (unless (or (room-flagged room +room-godroom+)
+                  (room-flagged room +room-house+))
+        (dolist (tch (copy-list (people-of room)))
+          (cond
+            ((is-npc tch)
+             (purge-creature tch t)
+             (incf mob-count))
+            (t
+             (send-to-char ch "You feel a rush of heat wash over you!~%"))))
+        (dolist (obj (copy-list (contents-of room)))
+          (extract-obj obj)
+          (incf obj-count))))
+    (send-to-char ch "Zone ~d cleared of ~d mobile~:p.~%" (number-of zone) mob-count)
+    (send-to-char ch "Zone ~d cleared of ~d object~:p.~%" (number-of zone) obj-count)
+    (slog "(GC) ~a ~:[~;olc-~]purged zone ~d (~a)" (name-of ch) olcp (number-of zone) (name-of zone))))
+
 (defcommand (ch "stat" thing) (:immortal)
   (perform-stat ch thing))
 
@@ -2187,3 +2207,19 @@ You feel slightly different.")
     (send-to-char ch "~a~%" msg)
     (slog "~a" msg))
   (setf *jet-stream-state* (not *jet-stream-state*)))
+
+(defcommand (ch "zonepurge") (:immortal)
+  (perform-zonepurge ch (zone-of (in-room-of ch)) nil))
+
+(defcommand (ch "zonepurge" zone-spec) (:immortal)
+  (let* ((zone-num (if (string= zone-spec ".")
+                       (number-of (zone-of (in-room-of ch)))
+                       (parse-integer zone-spec :junk-allowed t)))
+         (zone (and zone-num (real-zone zone-num))))
+    (cond
+      ((null zone-num)
+       (send-to-char ch "That's not a valid zone number.~%"))
+      ((null zone)
+       (send-to-char ch "That zone doesn't exist.~%"))
+      (t
+       (perform-zonepurge ch zone nil)))))

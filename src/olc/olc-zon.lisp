@@ -1336,21 +1336,6 @@ olc zcmd [zone] <I> <if_flag> <obj> <num> <pos> <mob> <prob>
                         (name-of zone))))))
 
 (defcommand (ch "olc" "zpurge") (:immortal)
-  (let ((mob-count 0)
-        (obj-count 0)
-        (zone (zone-of (in-room-of ch))))
+  (let ((zone (zone-of (in-room-of ch))))
     (when (check-can-edit ch zone +zone-zcmds-approved+)
-      (dolist (room (world-of zone))
-        (unless (or (room-flagged room +room-godroom+)
-                    (room-flagged room +room-house+))
-          (dolist (mob (remove-if-not 'is-npc (people-of room)))
-            (incf mob-count)
-            (purge-creature mob t))
-          (loop
-             for obj = (first (contents-of room))
-             until (null obj) do
-               (incf obj-count)
-               (extract-obj obj))))
-      (send-to-char ch "Zone ~d cleared of ~d mobile~:p.~%" (number-of zone) mob-count)
-      (send-to-char ch "Zone ~d cleared of ~d object~:p.~%" (number-of zone) obj-count)
-      (slog "(GC) ~a olc-purged zone ~d (~a)" (name-of ch) (number-of zone) (name-of zone)))))
+      (perform-zonepurge ch zone t))))
