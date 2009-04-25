@@ -202,11 +202,10 @@
                           (format nil "<#~d>" (co-owner-idnum-of zone)))
                       "<none>"))
     (let ((weather (weather-of zone)))
-      (send-to-char ch "Sun [~(~a~)] Sky: [~(~a~)] Moon: [~a (~d)] Pres: [~3d] Chng: [~3d]~%"
+      (send-to-char ch "Sun [~(~a~)] Sky: [~(~a~)] Moon: [~a] Pres: [~3d] Chng: [~3d]~%"
                     (sunlight-of weather)
                     (sky-of weather)
-                    (aref +moon-sky-types+ (moonlight-of weather))
-                    (moonlight-of weather)
+                    (gethash (moonlight-of weather) +moon-sky-types+)
                     (pressure-of weather)
                     (change-of weather)))
     (send-to-char ch "Flags: &g~a ~a&n~%"

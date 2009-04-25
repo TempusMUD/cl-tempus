@@ -126,7 +126,7 @@
                                                                +zone-search-approved+))
    (hour-mod :accessor hour-mod-of :initarg :hour-mod :initform 0)
    (year-mod :accessor year-mod-of :initarg :year-mod :initform 0)
-   (latitude :accessor latitude-of :initarg :latitude :initform nil)
+   (latitude :accessor latitude-of :initarg :latitude :initform 0)
    (min-lvl :accessor min-lvl-of :initarg :min-lvl :initform nil)
    (min-gen :accessor min-gen-of :initarg :min-gen :initform nil)
    (max-lvl :accessor max-lvl-of :initarg :max-lvl :initform nil)
@@ -149,6 +149,15 @@
             (arg2-of cmd)
             (arg3-of cmd)
             (prob-of cmd))))
+
+(defmethod print-object ((weather weather-data) stream)
+  (print-unreadable-object (weather stream :type t)
+    (format stream "~a ~a ~a ~a ~a"
+            (pressure-of weather)
+            (change-of weather)
+            (sky-of weather)
+            (sunlight-of weather)
+            (moonlight-of weather))))
 
 (defmethod print-object ((zone zone-data) stream)
   (print-unreadable-object (zone stream :type t)

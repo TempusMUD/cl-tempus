@@ -1604,13 +1604,16 @@
     "waning gibbous"
     "last quarter"
     "waning crescent"))
+
 (defparameter +moon-sky-types+
-  #("not visible"
-    "rising"
-    "in the east"
-    "directly overhead"
-    "in the west"
-    "setting"))
+  (new-hash-table :none "not visible"
+                  :rising "rising"
+                  :east "in the east"
+                  :high "directly overhead"
+                  :west "in the west"
+                  :setting "setting"))
+
+(defparameter +daylight-modifiers+ #(-1 -1 0 0 0 0 1 1 1 1 0 0 0 0 -1 -1))
 
 (defparameter +eq-pos-order+
   (coerce (list +wear-head+ +wear-face+ +wear-eyes+ +wear-ear-l+

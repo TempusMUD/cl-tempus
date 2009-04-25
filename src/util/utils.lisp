@@ -193,6 +193,12 @@ sequences in seq-list with the delimiter between each element"
         (first seq-list)
         (loop for elt in (rest seq-list) append (list delimiter elt))))
 
+(defun new-hash-table (&rest args)
+  (let ((table (make-hash-table)))
+    (loop for (key val) on args by #'cddr do
+         (setf (gethash key table) val))
+    table))
+
 (defun hash-to-assoc (hash)
   (let ((result nil))
     (maphash (lambda (key val)
