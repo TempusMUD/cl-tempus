@@ -2154,3 +2154,10 @@ You feel slightly different.")
        (setf (last-tell-from-of target) nil)
        (setf (last-tell-to-of target) nil)
        (send-to-char ch "Reply severed.~%")))))
+
+(defcommand (ch "jet_stream") (:immortal)
+  (let ((msg (format nil "~a has toggled jet_stream_state ~:[ON~;OFF~]"
+                     (name-of ch) *jet-stream-state*)))
+    (send-to-char ch "~a~%" msg)
+    (slog "~a" msg))
+  (setf *jet-stream-state* (not *jet-stream-state*)))

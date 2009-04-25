@@ -874,3 +874,21 @@
     (char-output-is alice "Reply severed.~%")
     (is (null (tempus::last-tell-from-of bob)))
     (is (null (tempus::last-tell-to-of bob)))))
+
+(deftest do-jet-stream/jet-stream-enabled/disable-jet-stream ()
+  (let ((tempus::*jet-stream-state* t))
+    (with-fixtures ((alice mock-player :level 51 :override-security t))
+      (with-captured-log log
+          (tempus::interpret-command alice "jet_stream")
+        (is (search "Alice has toggled jet_stream_state OFF" log))
+        (char-output-is alice "Alice has toggled jet_stream_state OFF~%")
+        (is (null tempus::*jet-stream-state*))))))
+
+(deftest do-jet-stream/jet-stream-disabled/enable-jet-stream ()
+  (let ((tempus::*jet-stream-state* nil))
+    (with-fixtures ((alice mock-player :level 51 :override-security t))
+      (with-captured-log log
+          (tempus::interpret-command alice "jet_stream")
+        (is (search "Alice has toggled jet_stream_state ON" log))
+        (char-output-is alice "Alice has toggled jet_stream_state ON~%")
+        (is (not (null tempus::*jet-stream-state*)))))))
