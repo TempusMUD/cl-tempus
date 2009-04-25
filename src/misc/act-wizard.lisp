@@ -2133,6 +2133,32 @@ You feel slightly different.")
 (define-tester-setter "con" real-con-of 3 25)
 (define-tester-setter "cha" real-cha-of 3 25)
 
+(defcommand (ch "tester" "class" class-name) (:tester)
+  (let ((number (if (every #'digit-char-p class-name)
+                    (parse-integer class-name)
+                    (position class-name +class-names+ :test 'string-abbrev))))
+    (cond
+      ((null number)
+       (send-to-char ch "'~a' is an invalid character class.~%" class-name))
+      ((not (<= 0 number (1- (length +class-names+))))
+       (send-to-char ch "~a is out of range for character classes.~%" number))
+      (t
+       (setf (char-class-of ch) number)
+       (send-to-char ch "Class set to ~(~a~).~%" (elt +class-names+ number))))))
+
+(defcommand (ch "tester" "remort" class-name) (:tester)
+  (let ((number (if (every #'digit-char-p class-name)
+                    (parse-integer class-name)
+                    (position class-name +class-names+ :test 'string-abbrev))))
+    (cond
+      ((null number)
+       (send-to-char ch "'~a' is an invalid character class.~%" class-name))
+      ((not (<= 0 number (1- (length +class-names+))))
+       (send-to-char ch "~a is out of range for character classes.~%" number))
+      (t
+       (setf (remort-char-class-of ch) number)
+       (send-to-char ch "Remort class set to ~(~a~).~%" (elt +class-names+ number))))))
+
 (defcommand (ch "tester" bad-subcmd) (:tester)
   (send-to-char ch "Invalid tester command: ~a~%" bad-subcmd))
 
