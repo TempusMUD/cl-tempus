@@ -1746,3 +1746,21 @@
                     (send-good-char-affects ch str)))))
       (send-to-char ch "~a" affs))))
 
+(defcommand (ch "time") ()
+  (if (eql (time-frame-of (zone-of (in-room-of ch))) +time-timeless+)
+      (send-to-char ch "Time has no meaning here.~%")
+      (multiple-value-bind (hour day month year)
+          (local-time-of (zone-of (in-room-of ch)))
+        (send-to-char ch "It is ~d o'clock ~a, on the ~d~a day of the ~a, Year ~d.~%"
+                      (if (zerop (mod hour 12)) 12 (mod hour 12))
+                      (if (>= hour 12) "pm" "am")
+                      (1+ day)
+                      (case (mod (1+ day) 10)
+                        (1 "st")
+                        (2 "nd")
+                        (3 "rd")
+                        (t "th"))
+                      (aref +month-name+ month)
+                      year)
+        (send-to-char ch "The moon is currently ~a.~%"
+                      (aref +lunar-phases+ (lunar-phase *lunar-day*))))))
