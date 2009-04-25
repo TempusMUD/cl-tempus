@@ -408,13 +408,13 @@
                    (aref (arg-of search) 0)
                    (aref (arg-of search) 1)
                    (aref (arg-of search) 2)
-                   (name-of (aref (aref (arg-of search) 2) *spell-info*))))
+                   (name-of (aref *spell-info* (aref (arg-of search) 2)))))
     ((= (command-of search) +search-com-damage+)
      (send-to-char ch "DAMAGE     ~5d        ~5d        ~5d (~a)~%"
                    (aref (arg-of search) 0)
                    (aref (arg-of search) 1)
                    (aref (arg-of search) 2)
-                   (name-of (aref (aref (arg-of search) 2) *spell-info*))))
+                   (name-of (aref *spell-info* (aref (arg-of search) 2)))))
     ((= (command-of search) +search-com-spawn+)
      (send-to-char ch "SPAWN  Spawn_rm: ~5d   Targ_rm:~5d   Hunt: ~5d~%"
                    (aref (arg-of search) 0)
