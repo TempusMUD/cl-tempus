@@ -1,5 +1,26 @@
 (in-package #:tempus)
 
+(defparameter +zset-params+
+  '(("name" :type string :slot name :desc "zone name")
+    ("respawn_pt" :type number :slot respawn_pt :desc "zone respawn point")
+    ("top" :type number :slot top :desc "zone top number")
+    ("reset" :type enumerated :slot reset-mode :desc "zone reset mode" :table +reset-mode+)
+    ("tframe" :type enumerated :slot time-frame :desc "zone timeframe" :table +time-frames+)
+    ("plane" :type enumerated :slot plane :desc "zone plane" :table +planes+)
+    ("author" :type string :slot author :desc "zone author")
+    ("owner" :type number :slot owner :desc "zone owner")
+    ("co-owner" :type number :slot co-owner :desc "zone co-owner")
+    ("flags" :type bitflag :slot flags :desc "zone" :table +zone-flags+)
+    ("hours" :type number :slot hour-mod :desc "zone hour mod")
+    ("years" :type number :slot year-mod :desc "zone year mod")
+    ("pkstyle" :type enumerated :slot pk-style :desc "zone pk-style" :table +zone-pk-flags+)
+    ("public_desc" :type text :slot public-desc :desc "zone public_desc")
+    ("private_desc" :type text :slot private-desc :desc "zone private_desc")
+    ("min_lvl" :type number :slot min-lvl :desc "zone minimum recommended player level" :min 1 :max 49)
+    ("max_lvl" :type number :slot max-lvl :desc "zone maximum recommended player level" :min 1 :max 49)
+    ("min_gen" :type number :slot min-gen :desc "zone minimum recommended player gen" :min 0 :max 10)
+    ("max_gen" :type number :slot max-gen :desc "zone maximum recommended player gen" :min 0 :max 10)))
+
 (defun push-zcmd (zone insert-after cmd if-flag arg1 arg2 arg3 prob)
   "Adds a new RESET-COM to the zone's command list.  If INSERT-AFTER is NIL, the new command is appended to the end of the command list, otherwise it is inserted after the given cons."
   (let ((new-reset-com (make-instance 'reset-com
@@ -496,18 +517,10 @@
 (defcommand (ch "unapprove" "zone" vnum "object") (:immortal)
   (perform-unapprove-zone ch vnum nil t))
 
-(defcommand (ch "olc" "zset" "name") (:immortal)
-  (send-to-char ch "Usage: olc zset name <zone name>~%"))
-
-(defcommand (ch "olc" "zset" "name" value) (:immortal)
+(defcommand (ch "olc" "zset" param value) (:immortal)
   (let ((zone (zone-of (in-room-of ch))))
     (when (check-can-edit ch zone +zone-zcmds-approved+)
-      (setf (name-of zone) value)
-      (setf (flags-of zone) (logior (flags-of zone) +zone-zone-modified+))
-      (send-to-char ch "Zone ~d name set to: ~a~%" (number-of zone) (name-of zone)))))
-
-(defcommand (ch "olc" "zset" "respawn_pt") (:immortal)
-  (send-to-char ch "Usage: olc zset respawn_pt <respawn point>~%"))
+      (perform-set ch zone t +zset-params+ param value))))
 
 (defcommand (ch "olc" "zset" "respawn_pt" "none") (:immortal)
   (let ((zone (zone-of (in-room-of ch))))
@@ -550,65 +563,6 @@
            (send-to-char ch "Zone ~d top number set to ~d.~%"
                          (number-of zone)
                          value)))))))
-
-(defcommand (ch "olc" "zset" "reset") (:immortal)
-  (send-to-char ch "Usage: olc zset reset (0|1|2)~%"))
-
-(defcommand (ch "olc" "zset" "reset" value) (:immortal)
-  (let ((zone (zone-of (in-room-of ch))))
-    (when (check-can-edit ch zone +zone-zcmds-approved+)
-      (with-numeric-input ((value "The reset mode must be 0, 1 or 2."))
-        (cond
-          ((not (<= 0 value 2))
-           (send-to-char ch "The zone reset mode must be 0, 1, or 2.~%"))
-          (t
-           (setf (reset-mode-of zone) value)
-           (setf (flags-of zone) (logior (flags-of zone) +zone-zone-modified+))
-           (send-to-char ch "Zone ~d reset mode set to ~d.~%"
-                         (number-of zone)
-                         value)))))))
-
-(defcommand (ch "olc" "zset" "tframe") (:immortal)
-  (send-to-char ch "Usage: olc zset tframe (past|future|timeless)~%"))
-
-(defcommand (ch "olc" "zset" "tframe" value) (:immortal)
-  (let ((zone (zone-of (in-room-of ch))))
-    (when (check-can-edit ch zone +zone-zcmds-approved+)
-      (let ((value (position value +time-frames+ :test 'string-abbrev)))
-        (cond
-          ((null value)
-           (send-to-char ch "Invalid timeframe.  Valid timeframes are: ~{~a~^, ~}~%"
-                         (coerce +time-frames+ 'list)))
-          (t
-           (setf (time-frame-of zone) value)
-           (setf (flags-of zone) (logior (flags-of zone) +zone-zone-modified+))
-           (send-to-char ch "Zone ~d timeframe set to ~a.~%"
-                         (number-of zone)
-                         (aref +time-frames+ value))))))))
-
-(defcommand (ch "olc" "zset" "plane" value) (:immortal)
-  (let ((zone (zone-of (in-room-of ch))))
-    (when (check-can-edit ch zone +zone-zcmds-approved+)
-      (let ((value (position value +planes+ :test 'string-abbrev)))
-        (cond
-          ((null value)
-           (send-to-char ch "Invalid plane."))
-          (t
-           (setf (plane-of zone) value)
-           (setf (flags-of zone) (logior (flags-of zone) +zone-zone-modified+))
-           (send-to-char ch "Zone ~d plane set to ~d.~%"
-                         (number-of zone)
-                         (aref +planes+ value))))))))
-
-(defcommand (ch "olc" "zset" "author") (:immortal)
-  (send-to-char ch "Usage: olc zset author <zone author>~%"))
-
-(defcommand (ch "olc" "zset" "author" value) (:immortal)
-  (let ((zone (zone-of (in-room-of ch))))
-    (when (check-can-edit ch zone +zone-zcmds-approved+)
-      (setf (author-of zone) value)
-      (setf (flags-of zone) (logior (flags-of zone) +zone-zone-modified+))
-      (send-to-char ch "Zone ~d author set to: ~a~%" (number-of zone) (author-of zone)))))
 
 (defcommand (ch "olc" "zset" "owner") (:immortal)
   (send-to-char ch "You must supply a value to owner.~%"))
@@ -659,190 +613,6 @@
       (setf (flags-of zone) (logior (flags-of zone) +zone-zone-modified+))
       (send-to-char ch "Zone ~d co-owner unset.~%"
                          (number-of zone)))))
-
-(defcommand (ch "olc" "zset" "flags") (:immortal)
-  (send-to-char ch "Usage: olc zset flags (+|-) <flags>~%"))
-
-(defcommand (ch "olc" "zset" "flags" junk) (:immortal)
-  (declare (ignore junk))
-  (send-to-char ch "Usage: olc zset flags (+|-) <flags>~%"))
-
-(defcommand (ch "olc" "zset" "flags" plus-or-minus flag-names) (:immortal)
-  (perform-set-flags ch plus-or-minus flag-names +zone-flags+
-                     "zone"
-                     "olc zset flags (+|-) <flags>"
-                     (lambda ()
-                       (flags-of (zone-of (in-room-of ch))))
-                     (lambda (val)
-                       (setf (flags-of (zone-of (in-room-of ch))) val))))
-
-(defcommand (ch "olc" "zset" "hours") (:immortal)
-  (send-to-char ch "Usage: olc zset hours <hours offset from Modrian Time~%"))
-
-(defcommand (ch "olc" "zset" "hours" value) (:immortal)
-  (let ((zone (zone-of (in-room-of ch))))
-    (when (check-can-edit ch zone +zone-zcmds-approved+)
-      (let ((value (parse-integer value :junk-allowed t)))
-        (cond
-          ((null value)
-           (send-to-char ch "The argument must be a number.~%"))
-          (t
-           (setf (hour-mod-of zone) value)
-           (setf (flags-of zone) (logior (flags-of zone) +zone-zone-modified+))
-           (send-to-char ch "Zone ~d hour mod set to ~d.~%"
-                         (number-of zone)
-                         value)))))))
-
-(defcommand (ch "olc" "zset" "years") (:immortal)
-  (send-to-char ch "Usage: olc zset years <years offset from Modrian Time~%"))
-
-(defcommand (ch "olc" "zset" "years" value) (:immortal)
-  (let ((zone (zone-of (in-room-of ch))))
-    (when (check-can-edit ch zone +zone-zcmds-approved+)
-      (let ((value (parse-integer value :junk-allowed t)))
-        (cond
-          ((null value)
-           (send-to-char ch "The argument must be a number.~%"))
-          (t
-           (setf (year-mod-of zone) value)
-           (setf (flags-of zone) (logior (flags-of zone) +zone-zone-modified+))
-           (send-to-char ch "Zone ~d year mod set to ~d.~%"
-                         (number-of zone)
-                         value)))))))
-
-(defcommand (ch "olc" "zset" "pkstyle") (:immortal)
-  (send-to-char ch "Usage: olc zset pkstyle (!PK|NPK|CPK)~%"))
-
-(defcommand (ch "olc" "zset" "pkstyle" value) (:immortal)
-  (let ((zone (zone-of (in-room-of ch))))
-    (when (check-can-edit ch zone +zone-zcmds-approved+)
-      (let ((value (position value +zone-pk-flags+ :test 'string-abbrev)))
-        (cond
-          ((null value)
-           (send-to-char ch "Invalid pk style.  Valid pk styles are: ~{~a~^, ~}~%"
-                         (coerce +zone-pk-flags+ 'list)))
-          (t
-           (setf (pk-style-of zone) value)
-           (setf (flags-of zone) (logior (flags-of zone) +zone-zone-modified+))
-           (send-to-char ch "Zone ~d pk-style set to ~a.~%"
-                         (number-of zone)
-                         (aref +zone-pk-flags+ value))))))))
-
-(defcommand (ch "olc" "zset" "public_desc") (:immortal)
-  (let ((zone (zone-of (in-room-of ch))))
-    (when (check-can-edit ch zone +zone-zcmds-approved+)
-      (act ch :place-emit "$n begins to edit a zone description.")
-      (setf (plr-bits-of ch) (logior (plr-bits-of ch) +plr-olc+))
-      (start-text-editor (link-of ch)
-                         zone
-                         "a zone description"
-                         (public-desc-of zone)
-                         (lambda (cxn target buf)
-                           (setf (public-desc-of target) buf)
-                           (setf (plr-bits-of (actor-of cxn))
-                                 (logandc2 (plr-bits-of (actor-of cxn)) +plr-olc+))
-                           (setf (state-of cxn) 'playing))
-                         (lambda (cxn target)
-                           (declare (ignore target))
-                           (setf (plr-bits-of (actor-of cxn))
-                                 (logandc2 (plr-bits-of (actor-of cxn)) +plr-olc+))
-                           (setf (state-of cxn) 'playing))))))
-
-(defcommand (ch "olc" "zset" "private_desc") (:immortal)
-  (let ((zone (zone-of (in-room-of ch))))
-    (when (check-can-edit ch zone +zone-zcmds-approved+)
-      (act ch :place-emit "$n begins to edit a zone description.")
-      (setf (plr-bits-of ch) (logior (plr-bits-of ch) +plr-olc+))
-      (start-text-editor (link-of ch)
-                         zone
-                         "a zone description"
-                         (private-desc-of zone)
-                         (lambda (cxn target buf)
-                           (setf (private-desc-of target) buf)
-                           (setf (plr-bits-of (actor-of cxn))
-                                 (logandc2 (plr-bits-of (actor-of cxn)) +plr-olc+))
-                           (setf (state-of cxn) 'playing))
-                         (lambda (cxn target)
-                           (declare (ignore target))
-                           (setf (plr-bits-of (actor-of cxn))
-                                 (logandc2 (plr-bits-of (actor-of cxn)) +plr-olc+))
-                           (setf (state-of cxn) 'playing))))))
-
-(defcommand (ch "olc" "zset" "min_lvl") (:immortal)
-  (send-to-char ch "Usage: olc zset min_lvl <minimum recommended zone level>~%"))
-
-(defcommand (ch "olc" "zset" "min_lvl" value) (:immortal)
-  (let ((zone (zone-of (in-room-of ch))))
-    (when (check-can-edit ch zone +zone-zcmds-approved+)
-      (let ((value (parse-integer value :junk-allowed t)))
-        (cond
-          ((null value)
-           (send-to-char ch "The argument must be a number.~%"))
-          ((not (<= 0 value 49))
-           (send-to-char ch "You must supply a numerical argument from 0 to 49.~%"))
-          (t
-           (setf (min-lvl-of zone) value)
-           (setf (flags-of zone) (logior (flags-of zone) +zone-zone-modified+))
-           (send-to-char ch "Zone ~d minimum recommended player level set to ~d.~%"
-                         (number-of zone)
-                         value)))))))
-
-(defcommand (ch "olc" "zset" "max_lvl") (:immortal)
-  (send-to-char ch "Usage: olc zset max_lvl <minimum recommended zone level>~%"))
-
-(defcommand (ch "olc" "zset" "max_lvl" value) (:immortal)
-  (let ((zone (zone-of (in-room-of ch))))
-    (when (check-can-edit ch zone +zone-zcmds-approved+)
-      (let ((value (parse-integer value :junk-allowed t)))
-        (cond
-          ((null value)
-           (send-to-char ch "The argument must be a number.~%"))
-          ((not (<= 0 value 49))
-           (send-to-char ch "You must supply a numerical argument from 0 to 49.~%"))
-          (t
-           (setf (max-lvl-of zone) value)
-           (setf (flags-of zone) (logior (flags-of zone) +zone-zone-modified+))
-           (send-to-char ch "Zone ~d maximum recommended player level set to ~d.~%"
-                         (number-of zone)
-                         value)))))))
-
-(defcommand (ch "olc" "zset" "min_gen") (:immortal)
-  (send-to-char ch "Usage: olc zset min_gen <minimum recommended zone gen>~%"))
-
-(defcommand (ch "olc" "zset" "min_gen" value) (:immortal)
-  (let ((zone (zone-of (in-room-of ch))))
-    (when (check-can-edit ch zone +zone-zcmds-approved+)
-      (let ((value (parse-integer value :junk-allowed t)))
-        (cond
-          ((null value)
-           (send-to-char ch "The argument must be a number.~%"))
-          ((not (<= 0 value 49))
-           (send-to-char ch "You must supply a numerical argument from 0 to 49.~%"))
-          (t
-           (setf (min-gen-of zone) value)
-           (setf (flags-of zone) (logior (flags-of zone) +zone-zone-modified+))
-           (send-to-char ch "Zone ~d minimum recommended player gen set to ~d.~%"
-                         (number-of zone)
-                         value)))))))
-
-(defcommand (ch "olc" "zset" "max_gen") (:immortal)
-  (send-to-char ch "Usage: olc zset max_gen <minimum recommended zone gen>~%"))
-
-(defcommand (ch "olc" "zset" "max_gen" value) (:immortal)
-  (let ((zone (zone-of (in-room-of ch))))
-    (when (check-can-edit ch zone +zone-zcmds-approved+)
-      (let ((value (parse-integer value :junk-allowed t)))
-        (cond
-          ((null value)
-           (send-to-char ch "The argument must be a number.~%"))
-          ((not (<= 0 value 49))
-           (send-to-char ch "You must supply a numerical argument from 0 to 49.~%"))
-          (t
-           (setf (max-gen-of zone) value)
-           (setf (flags-of zone) (logior (flags-of zone) +zone-zone-modified+))
-           (send-to-char ch "Zone ~d maximum recommended player gen set to ~d.~%"
-                         (number-of zone)
-                         value)))))))
 
 (defcommand (ch "olc" "zcmd") (:immortal)
   (send-to-char ch "~

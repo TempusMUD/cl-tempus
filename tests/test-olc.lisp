@@ -22,10 +22,11 @@
 
 (defmacro with-zone-olc-fixture ((player room zone) &body body)
   `(with-fixtures ((,player mock-player :level 51 :override-security t)
-                   (,room mock-room)
-                   (,zone mock-zone :zone-num 1))
+                   (,zone mock-zone :zone-num 1)
+                   (,room mock-room))
      (tempus::char-from-room ,player nil)
      (tempus::char-to-room ,player ,room nil)
+     (setf (tempus::bitp (tempus::prefs-of ,player) tempus::+pref-worldwrite+) t)
      (setf (tempus::owner-idnum-of ,zone) (tempus::idnum-of ,player))
      ,@body))
 
@@ -102,7 +103,13 @@
     (is (zerop (tempus::find-path-index-of test-room)))
     (is (zerop (tempus::light-of test-room)))))
 
-(deftest do-rset-title/enters-editor ()
+(deftest do-rset-title/sets-room-title ()
+  (with-room-olc-fixture (alice test-room)
+    (tempus::interpret-command alice "olc rset title testing")
+    (char-output-is alice "Room title set to 'testing'.~%")
+    (is (equal "testing" (tempus::name-of test-room)))))
+
+(deftest do-rset-description/enters-editor ()
   (with-room-olc-fixture (alice test-room)
     (tempus::interpret-command alice "olc rset description")
     (is (eql (tempus::state-of (tempus::link-of alice)) 'tempus::editing))))
@@ -391,8 +398,12 @@
 
 (deftest do-olc-oset-alias/sets-object-alias ()
   (with-obj-olc-fixture (alice)
+    (setf (tempus::ex-description-of (tempus::olc-obj-of alice))
+          (list (make-instance 'tempus::extra-descr-data
+                               :keyword "a mock object"
+                               :description "This is a mock object.")))
     (tempus::interpret-command alice "olc oset alias testing")
-    (char-output-is alice "Aliases set.~%")
+    (char-output-is alice "Object aliases set to 'testing'.~%")
     (is (equal "testing" (tempus::aliases-of (tempus::olc-obj-of alice))))))
 
 (deftest do-olc-oset-name/sets-object-name ()
@@ -551,7 +562,7 @@
   (with-zone-olc-fixture (alice room zone)
     (tempus::interpret-command alice "olc zset name Testing")
     (is (equal "Testing" (tempus::name-of zone)))
-    (char-output-is alice "Zone 1 name set to: Testing~%")))
+    (char-output-is alice "Zone name set to 'Testing'.~%")))
 
 (deftest do-olc-zset-respawn-pt/arg-is-none/clears-respawn-point ()
   (with-zone-olc-fixture (alice room zone)
@@ -573,27 +584,27 @@
 
 (deftest do-olc-zset-reset/sets-zone-reset ()
   (with-zone-olc-fixture (alice room zone)
-    (tempus::interpret-command alice "olc zset reset 2")
+    (tempus::interpret-command alice "olc zset reset always")
     (is (= 2 (tempus::reset-mode-of zone)))
-    (char-output-is alice "Zone 1 reset mode set to 2.~%")))
+    (char-output-is alice "Zone reset mode set to ALWAYS.~%")))
 
 (deftest do-olc-zset-timeframe/sets-zone-timeframe ()
   (with-zone-olc-fixture (alice room zone)
     (tempus::interpret-command alice "olc zset tframe electro")
     (is (= tempus::+time-future+ (tempus::time-frame-of zone)))
-    (char-output-is alice "Zone 1 timeframe set to Electro Era.~%")))
+    (char-output-is alice "Zone timeframe set to Electro Era.~%")))
 
 (deftest do-olc-zset-plane/sets-zone-plane ()
   (with-zone-olc-fixture (alice room zone)
     (tempus::interpret-command alice "olc zset plane astral")
     (is (= tempus::+plane-astral+ (tempus::plane-of zone)))
-    (char-output-is alice "Zone 1 plane set to Astral.~%")))
+    (char-output-is alice "Zone plane set to Astral.~%")))
 
 (deftest do-olc-zset-author/sets-zone-author ()
   (with-zone-olc-fixture (alice room zone)
     (tempus::interpret-command alice "olc zset author Alice of TempusMUD")
     (is (equal "Alice of TempusMUD" (tempus::author-of zone)))
-    (char-output-is alice "Zone 1 author set to: Alice of TempusMUD~%")))
+    (char-output-is alice "Zone author set to 'Alice of TempusMUD'.~%")))
 
 (deftest do-olc-zset-owner/with-player/sets-zone-owner ()
   (with-zone-olc-fixture (alice room zone)
@@ -638,43 +649,43 @@
   (with-zone-olc-fixture (alice room zone)
     (tempus::interpret-command alice "olc zset hour 10")
     (is (= 10 (tempus::hour-mod-of zone)))
-    (char-output-is alice "Zone 1 hour mod set to 10.~%")))
+    (char-output-is alice "Zone hour mod set to 10.~%")))
 
 (deftest do-olc-zset-year/sets-zone-year-offset ()
   (with-zone-olc-fixture (alice room zone)
     (tempus::interpret-command alice "olc zset year 10")
     (is (= 10 (tempus::year-mod-of zone)))
-    (char-output-is alice "Zone 1 year mod set to 10.~%")))
+    (char-output-is alice "Zone year mod set to 10.~%")))
 
 (deftest do-olc-zset-pkstyle/set-zone-pkstyle ()
   (with-zone-olc-fixture (alice room zone)
     (tempus::interpret-command alice "olc zset pkstyle npk")
     (is (= tempus::+zone-neutral-pk+ (tempus::pk-style-of zone)))
-    (char-output-is alice "Zone 1 pk-style set to NPK.~%")))
+    (char-output-is alice "Zone pk-style set to NPK.~%")))
 
 (deftest do-olc-zset-min-lvl/set-zone-min-lvl ()
   (with-zone-olc-fixture (alice room zone)
     (tempus::interpret-command alice "olc zset min_lvl 35")
     (is (= 35 (tempus::min-lvl-of zone)))
-    (char-output-is alice "Zone 1 minimum recommended player level set to 35.~%")))
+    (char-output-is alice "Zone minimum recommended player level set to 35.~%")))
 
 (deftest do-olc-zset-min-gen/set-zone-min-gen ()
   (with-zone-olc-fixture (alice room zone)
     (tempus::interpret-command alice "olc zset min_gen 6")
     (is (= 6 (tempus::min-gen-of zone)))
-    (char-output-is alice "Zone 1 minimum recommended player gen set to 6.~%")))
+    (char-output-is alice "Zone minimum recommended player gen set to 6.~%")))
 
 (deftest do-olc-zset-max-lvl/set-zone-max-lvl ()
   (with-zone-olc-fixture (alice room zone)
     (tempus::interpret-command alice "olc zset max_lvl 35")
     (is (= 35 (tempus::max-lvl-of zone)))
-    (char-output-is alice "Zone 1 maximum recommended player level set to 35.~%")))
+    (char-output-is alice "Zone maximum recommended player level set to 35.~%")))
 
 (deftest do-olc-zset-max-gen/set-zone-max-gen ()
   (with-zone-olc-fixture (alice room zone)
     (tempus::interpret-command alice "olc zset max_gen 6")
     (is (= 6 (tempus::max-gen-of zone)))
-    (char-output-is alice "Zone 1 maximum recommended player gen set to 6.~%")))
+    (char-output-is alice "Zone maximum recommended player gen set to 6.~%")))
 
 (deftest do-olc-zcmd-cmdremove/removes-command ()
   (with-zone-olc-fixture (alice room zone)
@@ -1102,19 +1113,19 @@
 (deftest do-olc-mset-hitp-mod/sets-hitp-mod ()
   (with-mob-olc-fixture (alice)
     (tempus::interpret-command alice "olc mset hitp_mod 5")
-    (char-output-is alice "Mobile hit point modifier set to 5.~%")
+    (char-output-is alice "Mobile hitpoint modifier set to 5.~%")
     (is (= (tempus::move-of (tempus::olc-mob-of alice)) 5))))
 
 (deftest do-olc-mset-hitd-num/sets-hitd-num ()
   (with-mob-olc-fixture (alice)
     (tempus::interpret-command alice "olc mset hitd_num 5")
-    (char-output-is alice "Mobile hit point dice number set to 5.~%")
+    (char-output-is alice "Mobile hitpoint dice number set to 5.~%")
     (is (= (tempus::hitp-of (tempus::olc-mob-of alice)) 5))))
 
 (deftest do-olc-mset-hitd-size/sets-hitd-size ()
   (with-mob-olc-fixture (alice)
     (tempus::interpret-command alice "olc mset hitd_size 5")
-    (char-output-is alice "Mobile hit point dice size set to 5.~%")
+    (char-output-is alice "Mobile hitpoint dice size set to 5.~%")
     (is (= (tempus::mana-of (tempus::olc-mob-of alice)) 5))))
 
 (deftest do-olc-mset-mana/sets-mana ()
@@ -1174,7 +1185,7 @@
 (deftest do-olc-mset-remort-class/sets-remort-class ()
   (with-mob-olc-fixture (alice)
     (tempus::interpret-command alice "olc mset remort_class barb")
-    (char-output-is alice "Mobile remort class set to barbarian.~%")
+    (char-output-is alice "Mobile remort class set to Barbarian.~%")
     (is (= (tempus::remort-char-class-of (tempus::olc-mob-of alice)) tempus::+class-barb+))))
 
 (deftest do-olc-mset-cash/sets-cash ()
@@ -1204,13 +1215,13 @@
 (deftest do-olc-mset-class/sets-class ()
   (with-mob-olc-fixture (alice)
     (tempus::interpret-command alice "olc mset class barb")
-    (char-output-is alice "Mobile class set to barbarian.~%")
+    (char-output-is alice "Mobile class set to Barbarian.~%")
     (is (= (tempus::char-class-of (tempus::olc-mob-of alice)) tempus::+class-barb+))))
 
 (deftest do-olc-mset-race/sets-race ()
   (with-mob-olc-fixture (alice)
     (tempus::interpret-command alice "olc mset race minotaur")
-    (char-output-is alice "Mobile race set to minotaur.~%")
+    (char-output-is alice "Mobile race set to Minotaur.~%")
     (is (= (tempus::race-of (tempus::olc-mob-of alice)) tempus::+race-minotaur+))))
 
 (deftest do-olc-mset-dpos/sets-dpos ()

@@ -87,17 +87,17 @@
     "reinf" "secret"))
 
 (defparameter +sector-types+
-  #("Inside" "City" "Field" "Forest" "Hills" "Mountains"
-    "Water (Swim)" "Water (No Swim)" "Underwater" "Open Air" "Notime"
-    "Climbing" "Outer Space" "Road" "Vehicle" "Farmland" "Swamp"
-    "Desert" "Fire River" "Jungle" "Pitch Surface" "Pitch Submerged"
-    "Beach" "Astral" "Elemental Fire" "Elemental Earth" "Elemental Air"
-    "Elemental Water" "Elemental Positive" "Elemental Negative"
-    "Elemental Smoke" "Elemental Ice" "Elemental Ooze"
-    "Elemental Magma" "Elemental Lightning" "Elemental Steam"
-    "Elemental Radiance" "Elemental Minerals" "Elemental Vacuum"
-    "Elemental Salt" "Elemental Ash" "Elemental Dust" "Blood" "Rock"
-    "Muddy" "Trail" "Tundra" "Catacombs" "Cracked Road" "Deep Ocean"))
+  #("inside" "city" "field" "forest" "hills" "mountains"
+    "water (swim)" "water (no swim)" "underwater" "open air" "notime"
+    "climbing" "outer space" "road" "vehicle" "farmland" "swamp"
+    "desert" "fire river" "jungle" "pitch surface" "pitch submerged"
+    "beach" "astral" "elemental fire" "elemental earth" "elemental air"
+    "elemental water" "elemental positive" "elemental negative"
+    "elemental smoke" "elemental ice" "elemental ooze"
+    "elemental magma" "elemental lightning" "elemental steam"
+    "elemental radiance" "elemental minerals" "elemental vacuum"
+    "elemental salt" "elemental ash" "elemental dust" "blood" "rock"
+    "muddy" "trail" "tundra" "catacombs" "cracked road" "deep ocean"))
 
 ;;; Room search commands
 (defparameter +search-com-none+ 0)
@@ -1189,6 +1189,7 @@
 (defparameter +num-races+ 62)
 (defparameter +num-pc-races+ 9)
 
+(defparameter +sexes+ #("neuter" "male" "female"))
 (defparameter +sex-neuter+ 0)
 (defparameter +sex-male+ 1)
 (defparameter +sex-female+ 2)
@@ -2176,17 +2177,17 @@
        "You RAM $p up your ass!!!")))
 
 (defparameter +item-kinds+
-  #("UNDEFINED" "LIGHT" "SCROLL" "WAND" "STAFF" "WEAPON" "CAMERA" "MISSILE"
-    "TREASURE" "ARMOR" "POTION" "WORN" "OTHER" "TRASH" "TRAP" "CONTAINER" "NOTE"
-    "LIQ CONT" "KEY" "FOOD" "MONEY" "PEN" "BOAT" "FOUNTAIN" "WINGS" "VR_INTERFACE"
-    "SCUBA_MASK" "DEVICE" "INTERFACE" "HOLY SYMBOL" "VEHICLE" "ENGINE" "BATTERY"
-    "ENERGY_GUN" "WINDOW" "PORTAL" "TOBACCO" "CIGARETTE" "METAL" "V-STONE" "PIPE"
-    "TRANSPORTER" "SYRINGE" "CHIT" "SCUBA_TANK" "TATTOO" "TOOL" "BOMB" "DETONATOR"
-    "FUSE" "PODIUM" "PILL" "ENERGY_CELL" "V_WINDOW" "V_DOOR" "V_CONSOLE" "GUN"
-    "BULLET" "CLIP" "MICROCHIP" "COMMUNICATOR" "SCRIPT" "INSTRUMENT" "BOOK"))
+  #("undefined" "light" "scroll" "wand" "staff" "weapon" "camera" "missile"
+    "treasure" "armor" "potion" "worn" "other" "trash" "trap" "container" "note"
+    "liq cont" "key" "food" "money" "pen" "boat" "fountain" "wings" "vr_interface"
+    "scuba_mask" "device" "interface" "holy symbol" "vehicle" "engine" "battery"
+    "energy_gun" "window" "portal" "tobacco" "cigarette" "metal" "v-stone" "pipe"
+    "transporter" "syringe" "chit" "scuba_tank" "tattoo" "tool" "bomb" "detonator"
+    "fuse" "podium" "pill" "energy_cell" "v_window" "v_door" "v_console" "gun"
+    "bullet" "clip" "microchip" "communicator" "script" "instrument" "book"))
 
 (defparameter +item-kind-values+
-  #2A(("UNDEFINED" "UNDEFINED" "UNDEFINED" "UNDEFINED")
+  #2a(("UNDEFINED" "UNDEFINED" "UNDEFINED" "UNDEFINED")
       ("Color" "Type" "Hours" "UNDEFINED")  ; Light
       ("Level" "Spell1" "Spell2" "Spell3")  ; Scroll
       ("Level" "Max Charg" "Cur Chrg" "Spell")  ; wand

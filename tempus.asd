@@ -74,7 +74,7 @@
              (:file "char-class" :pathname "classes/char-class"
                     :depends-on ("defpackage" "constants"))
              (:file "constants" :pathname "db/constants"
-                    :depends-on ("defpackage"))
+                    :depends-on ("defpackage" "defs"))
              (:file "clan" :pathname "clan/clan"
                            :depends-on ("defs" "utils" "interpreter"))
              (:file "combat-messages" :pathname "combat/combat-messages"

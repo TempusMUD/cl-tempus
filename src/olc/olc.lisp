@@ -46,73 +46,65 @@
 
     can-edit))
 
-(defun perform-set-string (ch input target desc vnum zone-approval-flag nil-allowed-p setter)
-  (when (and (check-is-editing ch desc target)
-             (check-can-edit ch (zone-containing-number vnum) zone-approval-flag))
+(defun perform-set-string (ch input target desc nil-allowed-p setter)
+  (cond
+    ((and (string= input "~") nil-allowed-p)
+     (funcall setter nil)
+     (send-to-char ch "~a unset.~%" desc))
+    ((find #\~ input)
+     (send-to-char ch "Tildes are not allowed in ~a.~%" desc))
+    (t
+     (funcall setter input)
+     (send-to-char ch "~a set to '~a'.~%" desc input))))
+
+(defun perform-set-number (ch input target desc min max setter)
+  (let ((num (parse-integer input :junk-allowed t)))
     (cond
-      ((and (string= input "~") nil-allowed-p)
-       (funcall setter nil target)
-       (send-to-char ch "~a unset.~%" desc))
-      ((find #\~ input)
-       (send-to-char ch "Tildes are not allowed in ~a ~a.~%" desc))
+      ((null num)
+       (send-to-char ch "'~a' is an invalid ~a.~%" input desc))
+      ((and min (< num min))
+       (send-to-char ch "The ~a must be greater than ~d.~%" desc min))
+      ((and max (> num max))
+       (send-to-char ch "The ~a must be less than ~d.~%" desc max))
       (t
-       (funcall setter input target)
-       (send-to-char ch "~a set to '~a'.~%" desc input)))))
+       (funcall setter num)
+       (send-to-char ch "~a set to ~d.~%" desc input)))))
 
-(defun perform-set-number (ch input target desc vnum zone-approval-flag min max setter)
-  (when (and (check-is-editing ch desc target)
-             (check-can-edit ch (zone-containing-number vnum) zone-approval-flag))
-    (let ((num (parse-integer input :junk-allowed t)))
-      (cond
-        ((null num)
-         (send-to-char ch "'~a' is an invalid ~a.~%" input desc))
-        ((and min (< num min))
-         (send-to-char ch "The ~a must be greater than ~d.~%" desc min))
-        ((and max (> num max))
-         (send-to-char ch "The ~a must be less than ~d.~%" desc max))
-        (t
-         (funcall setter num target)
-         (send-to-char ch "~a set to ~d.~%" desc input))))))
+(defun perform-set-enumerated (ch input target desc allowed-values setter)
+  (let ((number (if (every #'digit-char-p input)
+                    (parse-integer input)
+                    (position input allowed-values :test 'string-abbrev))))
+    (cond
+      ((null number)
+       (send-to-char ch "'~a' is an invalid ~a.~%" input desc))
+      ((not (<= 0 number (1- (length allowed-values))))
+       (send-to-char ch "~a is out of range for ~a.~%" number desc))
+      (t
+       (funcall setter number)
+       (send-to-char ch "~a set to ~a.~%" desc (elt allowed-values number))))))
 
-(defun perform-set-enumerated (ch input target desc vnum zone-approval-flag allowed-values setter)
-  (when (and (check-is-editing ch desc target)
-             (check-can-edit ch (zone-containing-number vnum) zone-approval-flag))
-    (let ((number (if (every #'digit-char-p input)
-                      (parse-integer input)
-                      (position input allowed-values :test 'string-abbrev))))
-      (cond
-        ((null number)
-          (send-to-char ch "'~a' is an invalid ~a.~%" input desc))
-        ((not (<= 0 number (1- (length allowed-values))))
-         (send-to-char ch "~a is out of range for ~a.~%" number desc))
-        (t
-         (funcall setter number target)
-         (send-to-char ch "~a set to ~(~a~).~%" desc (elt allowed-values number)))))))
-
-(defun perform-set-text (ch target desc vnum zone-approval-flag text setter)
-  (when (and (check-is-editing ch desc target)
-             (check-can-edit ch (zone-containing-number vnum) zone-approval-flag))
-    (let ((desc (format nil "~a ~a" (a-or-an desc) desc)))
-      (act ch :place-emit (format nil "$n begins to edit ~a." desc))
-      (setf (plr-bits-of ch) (logior (plr-bits-of ch) +plr-olc+))
-      (start-text-editor (link-of ch)
-                         target
-                         desc
-                         (or text "")
-                         (lambda (cxn target buf)
-                           (setf (plr-bits-of (actor-of cxn))
-                                 (logandc2 (plr-bits-of (actor-of cxn)) +plr-olc+))
-                           (setf (state-of cxn) 'playing)
-                           (funcall setter buf target))
-                         (lambda (cxn target)
-                           (declare (ignore target))
-                           (setf (plr-bits-of (actor-of cxn))
-                                 (logandc2 (plr-bits-of (actor-of cxn)) +plr-olc+))
-                           (setf (state-of cxn) 'playing))))))
+(defun perform-set-text (ch target desc text setter)
+  (let ((desc (format nil "~a ~a" (a-or-an desc) desc)))
+    (act ch :place-emit (format nil "$n begins to edit ~a." desc))
+    (setf (plr-bits-of ch) (logior (plr-bits-of ch) +plr-olc+))
+    (start-text-editor (link-of ch)
+                       target
+                       desc
+                       (or text "")
+                       (lambda (cxn target buf)
+                         (setf (plr-bits-of (actor-of cxn))
+                               (logandc2 (plr-bits-of (actor-of cxn)) +plr-olc+))
+                         (setf (state-of cxn) 'playing)
+                         (funcall setter buf))
+                       (lambda (cxn target)
+                         (declare (ignore target))
+                         (setf (plr-bits-of (actor-of cxn))
+                               (logandc2 (plr-bits-of (actor-of cxn)) +plr-olc+))
+                         (setf (state-of cxn) 'playing)))))
 
 (defun perform-set-flags (ch plus-or-minus flag-names valid-flags target-desc usage getter setter)
   (if (or (string= plus-or-minus "+") (string= plus-or-minus "-"))
-      (dolist (flag-name (split-sequence #\space flag-names :remove-empty-subseqs t))
+      (dolist (flag-name flag-names)
         (let ((flag-id (position flag-name valid-flags :test 'string-abbrev)))
           (cond
             ((null flag-id)
@@ -127,6 +119,60 @@
              (funcall setter (logior (funcall getter) (ash 1 flag-id)))
              (send-to-char ch "Flag ~a set on ~a flags.~%" (aref valid-flags flag-id) target-desc)))))
       (send-to-char ch "Usage: ~a~%" usage)))
+
+(defun find-set-param (param-list param)
+  (rest (assoc param param-list :test 'string-abbrev)))
+
+(defun perform-set (ch object olcp param-list param-str value)
+  (let* ((param (find-set-param param-list param-str))
+         (slot-target (if (getf param :shared) (shared-of object) object))
+         (getter (lambda ()
+                   (slot-value slot-target (getf param :slot))))
+         (setter (lambda (val)
+                   (setf (slot-value slot-target (getf param :slot)) val))))
+    (cond
+      ((and (not olcp) (getf param :shared))
+       (send-to-char ch "You may only edit that field with OLC.~%" ))
+      ((getf param :func)
+       (funcall (getf param :func) ch object value))
+      (t
+       (ecase (getf param :type)
+         (number
+          (perform-set-number ch value object
+                              (getf param :desc)
+                              (getf param :min)
+                              (getf param :max)
+                              setter))
+         (string
+          (perform-set-string ch value object
+                              (getf param :desc)
+                              (getf param :nil-allowed)
+                              setter))
+         (text
+          (perform-set-text ch object (getf param :desc) (funcall getter) setter))
+         (bitflag
+          (let ((inputs (ppcre:split "\\s+" value)))
+            (perform-set-flags ch (first inputs) (rest inputs)
+                               (symbol-value (getf param :table))
+                               (getf param :desc)
+                               "FIXME"
+                               getter setter)))
+         (enumerated
+          (perform-set-enumerated ch value object
+                                  (getf param :desc)
+                                  (symbol-value (getf param :table))
+                                  setter))
+         (attribute
+          (perform-set-number ch value object
+                              (getf param :desc)
+                              1 25
+                              (lambda (val)
+                                (setf (slot-value (real-abils-of object) (getf param :slot)) val)
+                                (setf (slot-value (aff-abils-of object) (getf param :slot)) val)))))
+       (when (and olcp (getf param :update-objs))
+         (update-objlist-full (vnum-of object)))
+       (when (and olcp (getf param :update-mobiles))
+         (update-moblist-full (vnum-of object)))))))
 
 (defun update-index-file (path number kind)
   (let ((entries (with-open-file (inf path)

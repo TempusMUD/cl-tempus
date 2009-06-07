@@ -1,5 +1,34 @@
 (in-package #:tempus)
 
+(defparameter +oset-params+
+  '(("action_desc" :type string :slot action-desc :desc "object action description"
+     :nil-allowed t :update-objs t)
+    ("cost" :type string :slot cost :desc "object cost")
+    ("damage" :type number :slot damage :desc "object damage")
+    ("extra1" :type bitflag :slot extra-flags :desc "extra1 object" :table +extra-names+)
+    ("extra2" :type bitflag :slot extra2-flags :desc "extra2 object" :table +extra2-names+)
+    ("extra3" :type bitflag :slot extra3-flags :desc "extra3 object" :table +extra3-names+)
+    ("ldesc" :type string :slot line-desc :desc "object line description"
+     :nil-allowed t :update-objs t)
+    ("material" :type enumerated :slot material :desc "object material"
+     :table +material-names+)
+    ("maxdamage" :type number :slot max-dam :desc "object maxdamage")
+    ("name" :type string :slot name :desc "object name" :update-objs t)
+    ("owner" :type number :slot owner :desc "object owner" :shared t)
+    ("rent" :type number :slot rent :desc "object rent" :shared t)
+    ("specparam" :type text :slot specparam :desc "object specparam" :shared t)
+    ("timer" :type number :slot timer :desc "object timer")
+    ("type" :type enumerated :slot kind :desc "object type"
+     :table +item-kinds+)
+    ("weight" :type number :slot weight :desc "object weight")
+    ("worn" :type bitflag :slot wear-flags :desc "worn object" :table +wear-bits-desc+)
+    ("affection" :func perform-oset-affected)
+    ("alias" :func perform-oset-alias)
+    ("apply" :func perform-oset-apply)
+    ("description" :func perform-oset-description)
+    ("special" :func perform-oset-special :shared t)
+    ("value" :func perform-oset-value)))
+
 (defun update-objlist-full (vnum)
   (let ((proto (real-object-proto vnum)))
     (dolist (obj *object-list*)
@@ -157,12 +186,7 @@
    (dotimes (i +max-obj-affect+)
      (setf (location-of (aref (affected-of dst) i)) (location-of (aref (affected-of src) i)))
      (setf (modifier-of (aref (affected-of dst) i)) (modifier-of (aref (affected-of src) i))))
-   (setf (ex-description-of dst)
-         (mapcar (lambda (exd)
-                   (make-instance 'extra-descr-data
-                                  :keyword (keyword-of exd)
-                                  :description (description-of exd)))
-                 (ex-description-of src))))
+   (setf (ex-description-of dst) (copy-extra-descs src)))
 
 (defun perform-olist (ch vnum-start vnum-end)
   (with-pagination ((link-of ch))
@@ -179,6 +203,124 @@
                        (is-obj-stat2 obj +item2-unapproved+)
                        (zerop (length (line-desc-of obj))))
          (incf index))))
+
+(defun perform-oset-apply (ch object input)
+  (let* ((inputs (ppcre:split "\\s+" input))
+         (location (or (parse-integer (first inputs) :junk-allowed t)
+                       (position (first inputs) +apply-types+ :test 'string-abbrev)))
+         (value (parse-integer (second inputs) :junk-allowed t))
+         (idx (position 0 (affected-of object) :key 'location-of)))
+    (cond
+      ((null location)
+       (send-to-char ch "Unknown apply type... Type olchelp apply.~%"))
+      ((not (< 0 location +num-applies+))
+       (send-to-char ch "Location out of range.  Try olchelp apply.~%"))
+      ((not (<= -125 value 125))
+       (send-to-char ch "Modifier out of range. [-125, 125].~%"))
+      ((null idx)
+       (send-to-char ch "All apply slots are filled.  Set an existing apply modifier to zero to remove.~%"))
+      (t
+       (setf (modifier-of (aref (affected-of object) idx)) value)
+       (if (zerop value)
+           (setf (location-of (aref (affected-of object) idx)) 0)
+           (setf (location-of (aref (affected-of object) idx)) location))
+       (send-to-char ch "Done.~%")))))
+
+(defun perform-oset-value (ch object input)
+  (let* ((inputs (ppcre:split "\\s+" input))
+         (idx (parse-integer (first inputs) :junk-allowed t))
+         (value (parse-integer (second inputs) :junk-allowed t)))
+    (cond
+      ((or (null idx)
+           (null value)
+           (not (<= 0 idx 3)))
+       (send-to-char ch "Usage: olc oset value (0|1|2|3) <value>~%"))
+      (t
+       (setf (aref (value-of object) idx) value)
+       (send-to-char ch "Value ~d (~a) set to ~d.~%"
+                     idx (aref +item-kind-values+ (kind-of object) idx) value)))))
+
+(defun perform-oset-affected (ch object input)
+  (let* ((inputs (ppcre:split "\\s+" input))
+         (index (parse-integer (first inputs) :junk-allowed t)))
+    (cond
+      ((not (<= 1 index 3))
+       (send-to-char ch "Index must be between 1 and 3.~%"))
+      (t
+       (perform-set-flags ch (second inputs) (cddr inputs)
+                          (case index
+                            (1 +affected-bits-desc+)
+                            (2 +affected2-bits-desc+)
+                            (3 +affected3-bits-desc+))
+                          "affect object"
+                          "olc oset affection <index> (+/-) <flag>"
+                          (lambda ()
+                            (aref (bitvector-of object) (1- index)))
+                          (lambda (val)
+                            (setf (aref (bitvector-of object) (1- index)) val)))))))
+
+(defun perform-oset-special (ch object input)
+  (let ((special (find input (hash-keys *special-funcs*) :test 'string-abbrev)))
+    (cond
+      ((null special)
+       (send-to-char ch "That is not a valid special.~%"))
+      ((not (logtest (gethash special *special-flags*) +spec-obj+))
+       (send-to-char ch "This special is not for objects.~%"))
+      ((and (logtest (gethash special *special-flags*) +spec-res+)
+            (not (security-is-member ch "OLCWorldWrite")))
+       (send-to-char ch "This special is reserved.~%"))
+      (t
+       (setf (func-of (shared-of object)) (gethash special *special-funcs*))
+       (save-object-special-assignments)
+       (send-to-char ch "Object special set, you trickster you.~%")))))
+
+(defun perform-oset-description (ch object)
+  (let ((exd (find (aliases-of object)
+                   (ex-description-of object)
+                   :test #'string=
+                   :key 'keyword-of)))
+    (act ch :place-emit "$n begins to edit an object description.")
+    (setf (plr-bits-of ch) (logior (plr-bits-of ch) +plr-olc+))
+    (start-text-editor (link-of ch)
+                       object
+                       "an object description"
+                       (if exd (description-of exd) "")
+                       (lambda (cxn target buf)
+                         (when (and (not (eql (proto-of (shared-of object)) object))
+                                    (eql (ex-description-of (proto-of (shared-of object)))
+                                         (ex-description-of object)))
+                           (setf (ex-description-of object)
+                                 (copy-extra-descs (ex-description-of object))))
+
+                         (if exd
+                             (setf (description-of exd) buf)
+                             (push (make-instance 'extra-desc-data
+                                                  :keyword (aliases-of target)
+                                                  :description buf)
+                                   (ex-description-of target)))
+                         (when (eql (proto-of (shared-of object)) object)
+                           (update-objlist-full (vnum-of object)))
+                         (setf (plr-bits-of (actor-of cxn))
+                               (logandc2 (plr-bits-of (actor-of cxn)) +plr-olc+))
+                         (setf (state-of cxn) 'playing))
+                       (lambda (cxn target)
+                         (declare (ignore target))
+                         (setf (plr-bits-of (actor-of cxn))
+                               (logandc2 (plr-bits-of (actor-of cxn)) +plr-olc+))
+                         (setf (state-of cxn) 'playing)))))
+
+(defun perform-oset-alias (ch object input)
+  (perform-set-string ch input object "object aliases" nil
+                      (lambda (val)
+                        (let ((proto (proto-of (shared-of object))))
+                          (unless (or (null proto) (eql proto object))
+                            (when (eql (ex-description-of proto) (ex-description-of object))
+                              (setf (ex-description-of object)
+                                    (copy-extra-descs proto)))
+                            (dolist (exd (ex-description-of object))
+                              (when (string= (aliases-of object) (keyword-of exd))
+                                (setf (keyword-of exd) val))))
+                          (setf (aliases-of object) val)))))
 
 (defcommand (ch "olc" "create" "object") (:immortal)
   (send-to-char ch "Create an object with what vnum?~%"))
@@ -353,354 +495,24 @@
 
 (defcommand (ch "olc" "oset") (:immortal)
   (with-pagination ((link-of ch))
-    (send-to-char ch "Valid oset commands:~%~{  &y~a&n~%~}"
-                  (remove-duplicates
-                   (mapcan (lambda (cmd)
-                             (when (and (string= "olc" (first (command-info-pattern cmd)))
-                                        (string= "oset" (second (command-info-pattern cmd)))
-                                        (stringp (third (command-info-pattern cmd))))
-                               (list (third (command-info-pattern cmd)))))
-                           *commands*)
-                   :test #'string=))))
+    (send-to-char ch "Valid oset commands:~%&y~a&n"
+                  (print-columns-to-string 5 15
+                                           (sort (mapcar #'first +oset-params+)
+                                                 #'string<)))))
 
-(defcommand (ch "olc" "oset" junk) (:immortal)
-  (send-to-char ch "'~a' is not a supported oset command.~%" junk))
-
-(defcommand (ch "olc" "oset" "alias") (:immortal)
-  (send-to-char ch "Usage: olc oset alias <alias>~%"))
-
-(defcommand (ch "olc" "oset" "alias" value) (:immortal)
+(defcommand (ch "olc" "oset" param) (:immortal)
   (when (and (check-is-editing ch "object" (olc-obj-of ch))
              (check-can-edit ch
                              (zone-containing-number (vnum-of (olc-obj-of ch)))
                              +zone-objs-approved+))
-    (dolist (exd (ex-description-of (olc-obj-of ch)))
-      (when (string= (aliases-of (olc-obj-of ch)) (keyword-of exd))
-        (setf (keyword-of exd) value)))
-    (setf (aliases-of (olc-obj-of ch)) value)
-    (update-objlist-full (vnum-of (olc-obj-of ch)))
-    (send-to-char ch "Aliases set.~%")))
+    (perform-set ch (olc-obj-of ch) t +oset-params+ param nil)))
 
-(defcommand (ch "olc" "oset" "name") (:immortal)
-  (send-to-char ch "Usage: olc oset name <name>~%"))
-
-(defcommand (ch "olc" "oset" "name" value) (:immortal)
-  (perform-set-string ch value
-                      (olc-obj-of ch) "object name"
-                      (vnum-of (olc-obj-of ch))
-                      +zone-objs-approved+ t
-                      (lambda (val obj)
-                        (setf (name-of obj) val)
-                        (update-objlist-full (vnum-of obj)))))
-
-
-(defcommand (ch "olc" "oset" "ldesc") (:immortal)
-  (send-to-char ch "Usage: olc oset ldesc <line description>~%"))
-
-(defcommand (ch "olc" "oset" "ldesc" value) (:immortal)
-  (perform-set-string ch value (olc-obj-of ch) "object line description"
-                      (vnum-of (olc-obj-of ch))
-                      +zone-objs-approved+ t
-                      (lambda (val obj)
-                        (setf (line-desc-of obj) val)
-                        (update-objlist-full (vnum-of obj)))))
-
-(defcommand (ch "olc" "oset" "action_desc") (:immortal)
-  (send-to-char ch "Usage: olc oset action_desc <action desc>~%"))
-
-(defcommand (ch "olc" "oset" "action_desc" value) (:immortal)
-  (perform-set-string ch value (olc-obj-of ch) "object action description"
-                      (vnum-of (olc-obj-of ch))
-                      +zone-objs-approved+ t
-                      (lambda (val obj)
-                        (setf (action-desc-of obj) val)
-                        (update-objlist-full (vnum-of obj)))))
-
-(defcommand (ch "olc" "oset" "description") (:immortal)
+(defcommand (ch "olc" "oset" param value) (:immortal)
   (when (and (check-is-editing ch "object" (olc-obj-of ch))
-             (check-can-edit ch (zone-containing-number (vnum-of (olc-obj-of ch)))
+             (check-can-edit ch
+                             (zone-containing-number (vnum-of (olc-obj-of ch)))
                              +zone-objs-approved+))
-    (let ((exd (find (aliases-of (olc-obj-of ch))
-                     (ex-description-of (olc-obj-of ch))
-                     :test #'string=
-                     :key 'keyword-of)))
-      (act ch :place-emit "$n begins to edit an object description.")
-      (setf (plr-bits-of ch) (logior (plr-bits-of ch) +plr-olc+))
-      (start-text-editor (link-of ch)
-                         (olc-obj-of ch)
-                         "an object description"
-                         (if exd (description-of exd) "")
-                         (lambda (cxn target buf)
-                           (if exd
-                               (setf (description-of exd) buf)
-                               (push (make-instance 'extra-desc-data
-                                                    :keyword (aliases-of target)
-                                                    :description buf)
-                                     (ex-description-of target)))
-                           (update-objlist-full (vnum-of (olc-obj-of ch)))
-                           (setf (plr-bits-of (actor-of cxn))
-                                 (logandc2 (plr-bits-of (actor-of cxn)) +plr-olc+))
-                           (setf (state-of cxn) 'playing))
-                         (lambda (cxn target)
-                           (declare (ignore target))
-                           (setf (plr-bits-of (actor-of cxn))
-                                 (logandc2 (plr-bits-of (actor-of cxn)) +plr-olc+))
-                           (setf (state-of cxn) 'playing))))))
-
-(defcommand (ch "olc" "oset" "type") (:immortal)
-  (send-to-char ch "Usage: olc oset type <type>~%"))
-
-(defcommand (ch "olc" "oset" "type" value) (:immortal)
-  (perform-set-enumerated ch value (olc-obj-of ch) "object type"
-                          (vnum-of (olc-obj-of ch))
-                          +zone-objs-approved+ +item-kinds+
-                          #'(setf kind-of)))
-
-(defcommand (ch "olc" "oset" "extra1") (:immortal)
-  (send-to-char ch "Usage: olc oset extra1 (+/-) <flags>~%"))
-
-(defcommand (ch "olc" "oset" "extra1" plus-or-minus flag-names) (:immortal)
-  (when (and (check-is-editing ch "object" (olc-obj-of ch))
-             (check-can-edit ch (zone-containing-number (vnum-of (olc-obj-of ch)))
-                             +zone-objs-approved+))
-    (perform-set-flags ch plus-or-minus flag-names +extra-names+ "extra1 object"
-                       "olc oset extra1 (+|-) <flags>"
-                       (lambda ()
-                         (extra-flags-of (olc-obj-of ch)))
-                       (lambda (val)
-                         (setf (extra-flags-of (olc-obj-of ch)) val)))))
-
-(defcommand (ch "olc" "oset" "extra2") (:immortal)
-  (send-to-char ch "Usage: olc oset extra2 (+/-) <flags>~%"))
-
-(defcommand (ch "olc" "oset" "extra2" plus-or-minus flag-names) (:immortal)
-  (when (and (check-is-editing ch "object" (olc-obj-of ch))
-             (check-can-edit ch (zone-containing-number (vnum-of (olc-obj-of ch)))
-                             +zone-objs-approved+))
-    (perform-set-flags ch plus-or-minus flag-names +extra2-names+ "extra2 object"
-                       "olc oset extra2 (+|-) <flags>"
-                       (lambda ()
-                         (extra2-flags-of (olc-obj-of ch)))
-                       (lambda (val)
-                         (setf (extra2-flags-of (olc-obj-of ch)) val)))))
-
-(defcommand (ch "olc" "oset" "extra3") (:immortal)
-  (send-to-char ch "Usage: olc oset extra3 (+/-) <flags>~%"))
-
-(defcommand (ch "olc" "oset" "extra3" plus-or-minus flag-names) (:immortal)
-  (when (and (check-is-editing ch "object" (olc-obj-of ch))
-             (check-can-edit ch (zone-containing-number (vnum-of (olc-obj-of ch)))
-                             +zone-objs-approved+))
-    (perform-set-flags ch plus-or-minus flag-names +extra3-names+ "extra3 object"
-                       "olc oset extra3 (+|-) <flags>"
-                       (lambda ()
-                         (extra3-flags-of (olc-obj-of ch)))
-                       (lambda (val)
-                         (setf (extra3-flags-of (olc-obj-of ch)) val)))))
-
-(defcommand (ch "olc" "oset" "worn") (:immortal)
-  (send-to-char ch "Usage: olc oset worn (+/-) <flags>~%"))
-
-(defcommand (ch "olc" "oset" "worn" plus-or-minus flag-names) (:immortal)
-  (when (and (check-is-editing ch "object" (olc-obj-of ch))
-             (check-can-edit ch (zone-containing-number (vnum-of (olc-obj-of ch)))
-                             +zone-objs-approved+))
-    (perform-set-flags ch plus-or-minus flag-names +wear-bits-desc+ "worn object"
-                       "olc oset worn (+|-) <flags>"
-                       (lambda ()
-                         (wear-flags-of (olc-obj-of ch)))
-                       (lambda (val)
-                         (setf (wear-flags-of (olc-obj-of ch)) val)))))
-
-(defcommand (ch "olc" "oset" "value") (:immortal)
-  (send-to-char ch "Usage: olc oset value (0|1|2|3) <value>~%"))
-
-(defcommand (ch "olc" "oset" "value" junk) (:immortal)
-  (declare (ignore junk))
-  (send-to-char ch "Usage: olc oset value (0|1|2|3) <value>~%"))
-
-(defcommand (ch "olc" "oset" "value" idx value) (:immortal)
-  (when (and (check-is-editing ch "object" (olc-obj-of ch))
-             (check-can-edit ch (zone-containing-number (vnum-of (olc-obj-of ch)))
-                             +zone-objs-approved+))
-    (let ((idx (parse-integer idx :junk-allowed t))
-          (value (parse-integer value :junk-allowed t)))
-      (cond
-        ((or (null idx)
-             (null value)
-             (not (<= 0 idx 3)))
-         (send-to-char ch "Usage: olc oset value (0|1|2|3) <value>~%"))
-        (t
-         (setf (aref (value-of (olc-obj-of ch)) idx) value)
-         (send-to-char ch "Value ~d (~a) set to ~d.~%"
-                       idx (aref +item-kind-values+ (kind-of (olc-obj-of ch)) idx) value))))))
-
-(defcommand (ch "olc" "oset" "material") (:immortal)
-  (send-to-char ch "Usage: olc oset material <material name>~%"))
-
-(defcommand (ch "olc" "oset" "material" value) (:immortal)
-  (perform-set-enumerated ch value (olc-obj-of ch) "object material"
-                          (vnum-of (olc-obj-of ch))
-                          +zone-objs-approved+ +material-names+
-                          #'(setf material-of)))
-
-(defcommand (ch "olc" "oset" "maxdamage") (:immortal)
-  (send-to-char ch "Usage: olc oset maxdamage <maximum damage>~%"))
-
-(defcommand (ch "olc" "oset" "maxdamage" value) (:immortal)
-  (perform-set-number ch value (olc-obj-of ch) "object maxdamage"
-                      (vnum-of (olc-obj-of ch)) 1 nil
-                      +zone-objs-approved+ #'(setf max-dam-of)))
-
-(defcommand (ch "olc" "oset" "damage") (:immortal)
-  (send-to-char ch "Usage: olc oset damage <current damage>~%"))
-
-(defcommand (ch "olc" "oset" "damage" value) (:immortal)
-  (perform-set-number ch value (olc-obj-of ch) "object current damage"
-                      (vnum-of (olc-obj-of ch)) 1 nil
-                      +zone-objs-approved+ #'(setf damage-of)))
-
-(defcommand (ch "olc" "oset" "weight") (:immortal)
-  (send-to-char ch "Usage: olc oset weight <pounds>~%"))
-
-(defcommand (ch "olc" "oset" "weight" value) (:immortal)
-  (perform-set-number ch value (olc-obj-of ch) "object weight"
-                      (vnum-of (olc-obj-of ch)) 1 nil
-                      +zone-objs-approved+ #'(setf weight-of)))
-
-(defcommand (ch "olc" "oset" "cost") (:immortal)
-  (send-to-char ch "Usage: olc oset cost <amount>~%"))
-
-(defcommand (ch "olc" "oset" "cost" value) (:immortal)
-  (perform-set-number ch value (olc-obj-of ch) "object cost"
-                      (vnum-of (olc-obj-of ch)) 1 nil
-                      +zone-objs-approved+
-                      (lambda (val obj)
-                        (setf (cost-of (shared-of obj)) val))))
-
-(defcommand (ch "olc" "oset" "rent") (:immortal)
-  (send-to-char ch "Usage: olc oset rent <amount>~%"))
-
-(defcommand (ch "olc" "oset" "rent" value) (:immortal)
-  (perform-set-number ch value (olc-obj-of ch) "object rent"
-                      (vnum-of (olc-obj-of ch)) 1 nil
-                      +zone-objs-approved+
-                      (lambda (val obj)
-                        (setf (cost-per-day-of (shared-of obj)) val))))
-
-(defcommand (ch "olc" "oset" "apply") (:immortal)
-  (send-to-char ch "Usage: olc oset apply <location> <modifier>~%"))
-
-(defcommand (ch "olc" "oset" "apply" location value) (:immortal)
-  (when (and (check-is-editing ch "object" (olc-obj-of ch))
-             (check-can-edit ch (zone-containing-number (vnum-of (olc-obj-of ch)))
-                             +zone-objs-approved+))
-    (let ((location (or (parse-integer location :junk-allowed t)
-                        (position location +apply-types+ :test 'string-abbrev)))
-          (value (parse-integer value :junk-allowed t))
-          (idx (position 0 (affected-of (olc-obj-of ch)) :key 'location-of)))
-      (cond
-        ((null location)
-         (send-to-char ch "Unknown apply type... Type olchelp apply.~%"))
-        ((not (< 0 location +num-applies+))
-         (send-to-char ch "Location out of range.  Try olchelp apply.~%"))
-        ((not (<= -125 value 125))
-         (send-to-char ch "Modifier out of range. [-125, 125].~%"))
-        ((null idx)
-         (send-to-char ch "All apply slots are filled.  Set an existing apply modifier to zero to remove.~%"))
-        (t
-         (setf (location-of (aref (affected-of (olc-obj-of ch)) idx)) location)
-         (setf (modifier-of (aref (affected-of (olc-obj-of ch)) idx)) value)
-         (send-to-char ch "Done.~%"))))))
-
-(defcommand (ch "olc" "oset" "affection") (:immortal)
-  (send-to-char ch "Usage: olc oset affection (0|1|2) (+|-) <affect flags>~%"))
-
-(defcommand (ch "olc" "oset" "affection" junk) (:immortal)
-  (declare (ignore junk))
-  (send-to-char ch "Usage: olc oset affection (0|1|2) (+|-) <affect flags>~%"))
-
-(defcommand (ch "olc" "oset" "affection" index plus-or-minus flag-names) (:immortal)
-  (when (and (check-is-editing ch "object" (olc-obj-of ch))
-             (check-can-edit ch (zone-containing-number (vnum-of (olc-obj-of ch)))
-                             +zone-objs-approved+))
-    (let ((index (parse-integer index :junk-allowed t)))
-      (cond
-        ((not (<= 1 index 3))
-         (send-to-char ch "Index must be between 1 and 3.~%"))
-        (t
-         (perform-set-flags ch plus-or-minus flag-names
-                         (case index
-                           (1 +affected-bits-desc+)
-                           (2 +affected2-bits-desc+)
-                           (3 +affected3-bits-desc+))
-                         "affect object"
-                         "olc oset affection <index> (+/-) <flag>"
-                         (lambda ()
-                           (aref (bitvector-of (olc-obj-of ch)) (1- index)))
-                         (lambda (val)
-                           (setf (aref (bitvector-of (olc-obj-of ch)) (1- index)) val))))))))
-
-(defcommand (ch "olc" "oset" "special") (:immortal)
-  (send-to-char ch "Usage: olc oset special <special name>~%"))
-
-(defcommand (ch "olc" "oset" "special" special-name) (:immortal)
-  (when (and (check-is-editing ch "object" (olc-obj-of ch))
-             (check-can-edit ch (zone-containing-number (vnum-of (olc-obj-of ch)))
-                             +zone-objs-approved+))
-    (let ((special (find special-name (hash-keys *special-funcs*) :test 'string-abbrev)))
-      (cond
-        ((null special)
-         (send-to-char ch "That is not a valid special.~%"))
-        ((not (logtest (gethash special *special-flags*) +spec-obj+))
-         (send-to-char ch "This special is not for objects.~%"))
-        ((and (logtest (gethash special *special-flags*) +spec-res+)
-              (not (security-is-member ch "OLCWorldWrite")))
-         (send-to-char ch "This special is reserved.~%"))
-        (t
-         (setf (func-of (shared-of (olc-obj-of ch))) (gethash special *special-funcs*))
-         (save-object-special-assignments)
-         (send-to-char ch "Object special set, you trickster you.~%"))))))
-
-(defcommand (ch "olc" "oset" "timer") (:immortal)
-  (send-to-char ch "Usage: olc oset timer <fade-away timer>~%"))
-
-(defcommand (ch "olc" "oset" "timer" value) (:immortal)
-  (perform-set-number ch value (olc-obj-of ch) "object timer"
-                      (vnum-of (olc-obj-of ch)) 0 nil
-                      +zone-objs-approved+
-                      #'(setf timer-of)))
-
-(defcommand (ch "olc" "oset" "specparam") (:immortal)
-  (when (and (check-is-editing ch "object" (olc-obj-of ch))
-             (check-can-edit ch (zone-containing-number (vnum-of (olc-obj-of ch)))
-                             +zone-objs-approved+))
-    (act ch :place-emit "$n begins to edit an object.")
-    (setf (plr-bits-of ch) (logior (plr-bits-of ch) +plr-olc+))
-    (start-text-editor (link-of ch)
-                       (olc-obj-of ch)
-                       "an object specparam"
-                       (func-param-of (shared-of (olc-obj-of ch)))
-                       (lambda (cxn target buf)
-                         (setf (func-param-of (shared-of target)) buf)
-                         (setf (plr-bits-of (actor-of cxn))
-                               (logandc2 (plr-bits-of (actor-of cxn)) +plr-olc+))
-                         (setf (state-of cxn) 'playing))
-                       (lambda (cxn target)
-                         (declare (ignore target))
-                         (setf (plr-bits-of (actor-of cxn))
-                               (logandc2 (plr-bits-of (actor-of cxn)) +plr-olc+))
-                         (setf (state-of cxn) 'playing)))))
-
-(defcommand (ch "olc" "oset" "owner") (:immortal)
-  (send-to-char ch "Usage: olc oset owner <object owner>~%"))
-
-(defcommand (ch "olc" "oset" "owner" value) (:immortal)
-  (perform-set-number ch value (olc-obj-of ch) "object owner id"
-                      (vnum-of (olc-obj-of ch)) 0 nil
-                      +zone-objs-approved+
-                      (lambda (val obj)
-                        (setf (owner-id-of (shared-of obj)) val))))
+    (perform-set ch (olc-obj-of ch) t +oset-params+ param value)))
 
 (defcommand (ch "olc" "oexdesc" "create" keywords) (:immortal)
   (when (and (check-is-editing ch "object" (olc-obj-of ch))

@@ -1,5 +1,18 @@
 (in-package #:tempus)
 
+(defparameter +rset-params+
+  '(("name" :type string :slot name :desc "room name")
+    ("title" :type string :slot name :desc "room title")
+    ("description" :type text :slot description :desc "room description")
+    ("sector" :type enumerated :slot terrain :desc "room sector type" :table +sector-types+)
+    ("flags" :type bitflag :slot flags :desc "room" :table +room-flags+)
+    ("sound" :type text :slot sounds :desc "room sound")
+    ("flow" :func perform-rset-flow)
+    ("occupancy" :type number :slot max-occupancy :desc "room occupancy" :min 1 :max 256)
+    ("special" :func perform-rset-special :desc "room special")
+    ("specparam" :type text :slot func-param :desc "room specparam")
+    ("prog" :type text :slot prog-text :desc "room prog")))
+
 (defun perform-create-room (ch zone room-num)
   (when (check-can-edit ch zone +zone-rooms-approved+)
     (let ((room (make-instance 'room-data
@@ -197,6 +210,50 @@
                        (prog-text-of room))
          (incf index))))
 
+(defun perform-rset-flow (ch room input)
+  (cond
+    ((string= "remove" input)
+     (setf (flow-speed-of (in-room-of ch)) 0)
+     (setf (flow-kind-of (in-room-of ch)) 0)
+     (setf (flow-dir-of (in-room-of ch)) 0)
+     (send-to-char ch "Flow removed from room.~%"))
+    (t
+     (let* ((inputs (ppcre:split "\\s+" input))
+            (dir (position (first inputs) +dirs+ :test 'string-abbrev))
+            (speed (parse-integer (second inputs) :junk-allowed t))
+            (kind (if (every #'digit-char-p (third inputs))
+                      (parse-integer (third inputs) :junk-allowed t)
+                      (position (third inputs) +flow-types+ :test 'string-abbrev))))
+       (cond
+         ((null dir)
+          (send-to-char ch "Invalid flow direction.~%"))
+         ((null speed)
+          (send-to-char ch "Invalid flow speed.~%"))
+         ((minusp speed)
+          (send-to-char ch "Flow speed must be a positive number.~%"))
+         ((null kind)
+          (send-to-char ch "Invalid flow kind.~%"))
+         (t
+          (setf (flow-dir-of room) dir)
+          (setf (flow-speed-of room) speed)
+          (setf (flow-kind-of room) kind)
+          (send-to-char ch "Flow state set.~%")))))))
+
+(defun perform-rset-special (ch room special-name)
+  (let ((special (find special-name (hash-keys *special-funcs*) :test 'string-abbrev)))
+    (cond
+      ((null special)
+       (send-to-char ch "That is not a valid special.~%"))
+      ((not (logtest (gethash special *special-flags*) +spec-rm+))
+       (send-to-char ch "This special is not for rooms.~%"))
+      ((and (logtest (gethash special *special-flags*) +spec-res+)
+            (not (security-is-member ch "OLCWorldWrite")))
+       (send-to-char ch "This special is reserved.~%"))
+      (t
+       (setf (func-of room) (gethash special *special-funcs*))
+       (save-room-special-assignments)
+       (send-to-char ch "Room special set.~%")))))
+
 (defcommand (ch "olc" "create" "room") (:immortal)
   (send-to-char ch "Create a room with what vnum?~%"))
 
@@ -284,180 +341,18 @@
                            *commands*)
                    :test #'string=))))
 
-(defcommand (ch "olc" "rset" "title") (:immortal)
+(defcommand (ch "olc" "rset" param) (:immortal)
   (when (check-can-edit ch (zone-of (in-room-of ch)) +zone-rooms-approved+)
-    (send-to-char ch "Set title to what?~%")))
+    (perform-set ch (in-room-of ch) t +rset-params+ param nil)))
 
-(defcommand (ch "olc" "rset" "title" title) (:immortal)
-  (perform-set-string ch title (in-room-of ch) "room title"
-                      (number-of (in-room-of ch)) +zone-rooms-approved+
-                      nil
-                      #'(setf title-of)))
-
-(defcommand (ch "olc" "rset" "description") (:immortal)
-  (if (description-of (in-room-of ch))
-      (act ch :place-emit "$n begins to edit a room description.")
-      (act ch :place-emit "$n begins to write a room description."))
-  (setf (plr-bits-of ch) (logior (plr-bits-of ch) +plr-olc+))
-  (start-text-editor (link-of ch)
-                     (in-room-of ch)
-                     "a room description"
-                     (description-of (in-room-of ch))
-                     (lambda (cxn target buf)
-                       (setf (description-of target) buf)
-                       (setf (plr-bits-of (actor-of cxn))
-                             (logandc2 (plr-bits-of (actor-of cxn)) +plr-olc+))
-                       (setf (state-of cxn) 'playing))
-                     (lambda (cxn target)
-                       (declare (ignore target))
-                       (setf (plr-bits-of (actor-of cxn))
-                             (logandc2 (plr-bits-of (actor-of cxn)) +plr-olc+))
-                       (setf (state-of cxn) 'playing))))
-
-(defcommand (ch "olc" "rset" "sector") (:immortal)
-  (send-to-char ch "Set sector to what?~%"))
-
-(defcommand (ch "olc" "rset" "sector" terrain) (:immortal)
-  (perform-set-enumerated ch terrain (in-room-of ch) "room sector type"
-                      (number-of (in-room-of ch)) +zone-rooms-approved+
-                      +sector-types+ #'(setf terrain-of)))
-
-(defcommand (ch "olc" "rset" "flags" plus-or-minus flag-names) (:immortal)
+(defcommand (ch "olc" "rset" param value) (:immortal)
   (when (check-can-edit ch (zone-of (in-room-of ch)) +zone-rooms-approved+)
-    (perform-set-flags ch plus-or-minus flag-names
-                       +room-flags+ "room"
-                       "olc rset flags +/- <flags>"
-                       (lambda ()
-                         (flags-of (in-room-of ch)))
-                       (lambda (val)
-                         (setf (flags-of (in-room-of ch)) val)))))
+    (perform-set ch (in-room-of ch) t +rset-params+ param value)))
 
-(defcommand (ch "olc" "rset" "sound" "remove") (:immortal)
+(defcommand (ch "olc" "rset" "sounds" "remove") (:immortal)
   (when (check-can-edit ch (zone-of (in-room-of ch)) +zone-rooms-approved+)
     (setf (sounds-of (in-room-of ch)) nil)
     (send-to-char ch "Sounds removed from room.~%")))
-
-(defcommand (ch "olc" "rset" "sound") (:immortal)
-  (when (check-can-edit ch (zone-of (in-room-of ch)) +zone-rooms-approved+)
-    (if (description-of (in-room-of ch))
-        (act ch :place-emit "$n begins to edit the room sounds.")
-        (act ch :place-emit "$n begins to write the room sounds."))
-    (setf (plr-bits-of ch) (logior (plr-bits-of ch) +plr-olc+))
-    (start-text-editor (link-of ch)
-                       (in-room-of ch)
-                       "the room sounds"
-                       (sounds-of (in-room-of ch))
-                       (lambda (cxn target buf)
-                         (setf (sounds-of target) buf)
-                         (setf (plr-bits-of (actor-of cxn))
-                               (logandc2 (plr-bits-of (actor-of cxn)) +plr-olc+))
-                         (setf (state-of cxn) 'playing))
-                       (lambda (cxn target)
-                         (declare (ignore target))
-                         (setf (plr-bits-of (actor-of cxn))
-                               (logandc2 (plr-bits-of (actor-of cxn)) +plr-olc+))
-                         (setf (state-of cxn) 'playing)))))
-
-(defcommand (ch "olc" "rset" "flow" args) (:immortal)
-  (declare (ignore args))
-  (send-to-char ch "Usage: olc rset flow (<direction> <speed> <kind>|remove)~%"))
-
-(defcommand (ch "olc" "rset" "flow" "remove") (:immortal)
-  (when (check-can-edit ch (zone-of (in-room-of ch)) +zone-rooms-approved+)
-    (setf (flow-speed-of (in-room-of ch)) 0)
-    (setf (flow-kind-of (in-room-of ch)) 0)
-    (setf (flow-dir-of (in-room-of ch)) 0)
-    (send-to-char ch "Flow removed from room.~%")))
-
-(defcommand (ch "olc" "rset" "flow" flow-direction flow-speed flow-kind) (:immortal)
-  (when (check-can-edit ch (zone-of (in-room-of ch)) +zone-rooms-approved+)
-    (let ((dir (position flow-direction +dirs+ :test 'string-abbrev))
-          (speed (parse-integer flow-speed :junk-allowed t))
-          (kind (if (every #'digit-char-p flow-kind)
-                    (parse-integer flow-kind :junk-allowed t)
-                    (position flow-kind +flow-types+ :test 'string-abbrev))))
-      (cond
-        ((null dir)
-         (send-to-char ch "Invalid flow direction.~%"))
-        ((null speed)
-         (send-to-char ch "Invalid flow speed.~%"))
-        ((minusp speed)
-         (send-to-char ch "Flow speed must be a positive number.~%"))
-        ((null kind)
-         (send-to-char ch "Invalid flow kind.~%"))
-        (t
-         (setf (flow-dir-of (in-room-of ch)) dir)
-         (setf (flow-speed-of (in-room-of ch)) speed)
-         (setf (flow-kind-of (in-room-of ch)) kind)
-         (send-to-char ch "Flow state set.~%"))))))
-
-(defcommand (ch "olc" "rset" "occupancy" occupancy) (:immortal)
-  (perform-set-number ch occupancy (in-room-of ch) "room occupancy"
-                      (number-of (in-room-of ch)) +zone-rooms-approved+
-                      1 256
-                      #'(setf max-occupancy-of)))
-
-(defcommand (ch "olc" "rset" "special" special-name) (:immortal)
-  (when (check-can-edit ch (zone-of (in-room-of ch)) +zone-rooms-approved+)
-    (let ((special (find special-name (hash-keys *special-funcs*) :test 'string-abbrev)))
-      (cond
-        ((null special)
-         (send-to-char ch "That is not a valid special.~%"))
-        ((not (logtest (gethash special *special-flags*) +spec-rm+))
-         (send-to-char ch "This special is not for rooms.~%"))
-        ((and (logtest (gethash special *special-flags*) +spec-res+)
-              (not (security-is-member ch "OLCWorldWrite")))
-         (send-to-char ch "This special is reserved.~%"))
-        (t
-         (setf (func-of (in-room-of ch)) (gethash special *special-funcs*))
-         (save-room-special-assignments)
-         (send-to-char ch "Room special set.~%"))))))
-
-(defcommand (ch "olc" "rset" "specparam") (:immortal)
-  (when (check-can-edit ch (zone-of (in-room-of ch)) +zone-rooms-approved+)
-    (cond
-      ((null (func-of (in-room-of ch)))
-       (send-to-char ch "You should set a special first!~%"))
-      (t
-       (if (description-of (in-room-of ch))
-           (act ch :place-emit "$n begins to edit the room specparam.")
-           (act ch :place-emit "$n begins to write the room specparam."))
-       (setf (plr-bits-of ch) (logior (plr-bits-of ch) +plr-olc+))
-       (start-text-editor (link-of ch)
-                          (in-room-of ch)
-                          "the room specparam"
-                          (func-param-of (in-room-of ch))
-                          (lambda (cxn target buf)
-                            (setf (func-param-of target) buf)
-                            (setf (plr-bits-of (actor-of cxn))
-                                  (logandc2 (plr-bits-of (actor-of cxn)) +plr-olc+))
-                            (setf (state-of cxn) 'playing))
-                          (lambda (cxn target)
-                            (declare (ignore target))
-                            (setf (plr-bits-of (actor-of cxn))
-                                  (logandc2 (plr-bits-of (actor-of cxn)) +plr-olc+))
-                            (setf (state-of cxn) 'playing)))))))
-
-(defcommand (ch "olc" "rset" "prog") (:immortal)
-  (when (check-can-edit ch (zone-of (in-room-of ch)) +zone-rooms-approved+)
-    (if (description-of (in-room-of ch))
-        (act ch :place-emit "$n begins to edit the room prog.")
-        (act ch :place-emit "$n begins to write the room prog."))
-    (setf (plr-bits-of ch) (logior (plr-bits-of ch) +plr-olc+))
-    (start-text-editor (link-of ch)
-                       (in-room-of ch)
-                       "the room prog"
-                       (prog-text-of (in-room-of ch))
-                       (lambda (cxn target buf)
-                         (setf (prog-text-of target) buf)
-                         (setf (plr-bits-of (actor-of cxn))
-                               (logandc2 (plr-bits-of (actor-of cxn)) +plr-olc+))
-                         (setf (state-of cxn) 'playing))
-                       (lambda (cxn target)
-                         (declare (ignore target))
-                         (setf (plr-bits-of (actor-of cxn))
-                               (logandc2 (plr-bits-of (actor-of cxn)) +plr-olc+))
-                         (setf (state-of cxn) 'playing)))))
 
 (defcommand (ch "olc" "exit") (:immortal)
   (send-to-char ch "Usage: olc exit <direction> <parameter> [<values>]~%"))
@@ -504,7 +399,7 @@
         (t
          (when (null (aref (dir-option-of (in-room-of ch)) dir))
            (setf (aref (dir-option-of (in-room-of ch)) dir) (make-instance 'room-direction-data)))
-         (perform-set-flags ch plus-or-minus flag-names
+         (perform-set-flags ch plus-or-minus (ppcre:split "\\s+" flag-names)
                             +exit-flags+ "exit"
                             "olc exit <direction> doorflags +/- <flags>"
                             (lambda ()

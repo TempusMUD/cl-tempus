@@ -1,5 +1,17 @@
 (in-package #:tempus)
 
+(defparameter +xset-params+
+  '(("trigger" :type string :slot trigger :desc "search trigger")
+    ("keywords" :type string :slot keywords :desc "search keywords")
+    ("to_vict" :type string :slot to_vict :desc "search vict emit")
+    ("to_room" :type string :slot to_room :desc "search room emit")
+    ("to_remote" :type string :slot to_remote :desc "search remote emit")
+    ("command" :type enumerated :slot command :desc "search command"
+     :table +search-commands+)
+    ("value" :type number :slot value :desc "search value" :indexed 3)
+    ("flags" :type bitflag :slot flags :desc "search" :table +search-bits+)
+    ("fail_chance" :type number :slot fail_chance :desc "search failure chance")))
+
 (defun perform-create-search (ch trigger keywords)
   (cond
     ((find-if (lambda (search)
@@ -103,6 +115,11 @@
                           :key (lambda (cmd)
                                  (second (command-info-pattern cmd)))))))
 
+(defcommand (ch "olc" "xset" param value) (:immortal)
+  (when (and (check-is-editing ch "search" (olc-srch-of ch))
+             (check-can-edit ch (zone-of (in-room-of ch)) +zone-rooms-approved+))
+    (perform-set ch (olc-srch-of ch) t +xset-params+ param value)))
+
 (defcommand (ch "olc" "xset" junk) (:immortal)
   (when (and (check-is-editing ch "search" (olc-srch-of ch))
              (check-can-edit ch (zone-of (in-room-of ch)) +zone-rooms-approved+))
@@ -174,7 +191,7 @@
 (defcommand (ch "olc" "xset" "flags" plus-or-minus flag-names) (:immortal)
   (when (and (check-is-editing ch "search" (olc-srch-of ch))
              (check-can-edit ch (zone-of (in-room-of ch)) +zone-rooms-approved+))
-    (perform-set-flags ch plus-or-minus flag-names
+    (perform-set-flags ch plus-or-minus (ppcre:split "\\s+" flag-names)
                        +search-bits+
                        "search"
                        "olc xset flags (+|-) <flags>"

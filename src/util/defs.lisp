@@ -178,3 +178,9 @@ Understands the &rest qualifier."
   (plusp (bit bitv idx)))
 (defsetf bitp (bitv idx) (val)
 `(setf (bit ,bitv ,idx) (if ,val 1 0)))
+
+(defun new-hash-table (&rest args)
+  (let ((table (make-hash-table)))
+    (loop for (key val) on args by #'cddr do
+         (setf (gethash key table) val))
+    table))

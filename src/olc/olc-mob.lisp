@@ -1,5 +1,67 @@
 (in-package #:tempus)
 
+(defparameter +mset-params+
+  '(("alias" :type string :slot aliases :desc "mobile alias" :update-mobiles t)
+    ("name" :type string :slot name :desc "mobile name" :update-mobiles t)
+    ("ldesc" :type string :slot ldesc :desc "mobile ldesc" :nil-allowed t :update-mobiles t)
+    ("desc" :type text :slot desc :desc "mobile description")
+    ("flags" :type bitflag :slot mob-flags :desc "mobile" :table +action-bits-desc+)
+    ("flags2" :type bitflag :slot mob2-flags :desc "mobile" :table +action2-bits-desc+)
+    ("aff" :type bitflag :slot aff-flags :desc "mobile aff" :table +affected-bits-desc+)
+    ("aff2" :type bitflag :slot aff2-flags :desc "mobile aff2" :table +affected2-bits-desc+)
+    ("aff3" :type bitflag :slot aff3-flags :desc "mobile aff3" :table +affected3-bits-desc+)
+    ("alignment" :type number :slot alignment :desc "mobile alignment" :min -1000 :max 1000)
+    ("str" :type attribute :slot str :desc "mobile strength")
+    ("int" :type attribute :slot int :desc "mobile intelligence")
+    ("wis" :type attribute :slot wis :desc "mobile wisdom")
+    ("dex" :type attribute :slot dex :desc "mobile dexterity")
+    ("con" :type attribute :slot con :desc "mobile constitution")
+    ("cha" :type attribute :slot cha :desc "mobile charisma")
+    ("level" :type number :slot level :desc "mobile level" :min 1 :max 50)
+    ("generation" :type number :slot remort-gen :desc "mobile remort generation"
+     :min 0 :max 10)
+    ("hitp_mod" :type number :slot move :desc "mobile hitpoint modifier"
+     :min 1 :max 32767)
+    ("hitd_num" :type number :slot hitp :desc "mobile hitpoint dice number"
+     :min 1 :max 200)
+    ("hitd_size" :type number :slot mana :desc "mobile hitpoint dice size"
+     :min 1 :max 200)
+    ("mana" :type number :slot max-mana :desc "mobile mana" :min 1 :max 32767)
+    ("move" :type number :slot max-move :desc "mobile movement" :min 1 :max 32767)
+    ("baredam" :type number :slot damnodice :desc "mobile bare hand damage"
+     :shared t :min 1 :max 125)
+    ("baredsize" :type number :slot damsizedice :desc "mobile bare hand damage dice size"
+     :shared t :min 1 :max 125)
+    ("gold" :type number :slot gold :desc "mobile gold" :min 0 :max 10000000)
+    ("exp" :type number :slot exp :desc "mobile experience" :min 1 :max 200000000)
+    ("attacktype" :type enumerated :slot attack-type :desc "mobile attack type"
+     :shared t :table +attack-types+)
+    ("position" :type enumerated :slot position :desc "mobile position"
+     :table +position-types+)
+    ("sex" :type enumerated :slot sex :desc "mobile sex" :table +sexes+)
+    ("remort_class" :type enumerated :slot remort-char-class :desc "mobile remort class"
+     :table +class-names+)
+    ("cash" :type number :slot cash :desc "mobile cash credits" :min 0 :max 10000000)
+    ("hitroll" :type number :slot hitroll :desc "mobile hitroll" :min -125 :max 125)
+    ("damroll" :type number :slot damroll :desc "mobile damroll" :min -125 :max 125)
+    ("ac" :type number :slot armor :desc "mobile armor class" :min -500 :max 100)
+    ("class" :type enumerated :slot char-class :desc "mobile class"
+     :table +class-names+)
+    ("race" :type enumerated :slot race :desc "mobile race" :table +player-races+)
+    ("dpos" :type enumerated :slot default-pos :desc "mobile default position"
+     :table +position-types+ :shared t)
+    ("height" :type number :slot height :desc "mobile height" :min 1 :max 10000)
+    ("weight" :type number :slot weight :desc "mobile weight" :min 1 :max 50000)
+    ("morale" :type number :slot morale :desc "mobile morale"
+     :shared t :min 1 :max 125)
+    ("move_buf" :type string :slot move-buf :desc "mobile move buffer"
+     :shared t :allow-nil t)
+    ("lair" :type number :slot lair :desc "mobile lair" :shared t)
+    ("leader" :type number :slot leader :desc "mobile leader vnum" :shared t)
+    ("specparam" :type text :slot func-param :desc "mobile specparam" :shared t)
+    ("loadparam" :type text :slot load-param :desc "mobile loadparam" :shared t)
+    ("prog" :type text :slot prog-text :desc "mobile prog" :shared t)))
+
 (defun update-moblist-full (vnum)
   (let ((proto (real-mobile-proto vnum)))
     (dolist (ch *characters*)
@@ -497,394 +559,17 @@
                            *commands*)
                    :test #'string=))))
 
-(defcommand (ch "olc" "mset" junk) (:immortal)
-  (send-to-char ch "'~a' is not a supported mset command.~%" junk))
-
-(defcommand (ch "olc" "mset" "alias") (:immortal)
-  (send-to-char ch "Usage: olc mset alias <alias>~%"))
-
-(defcommand (ch "olc" "mset" "alias" alias) (:immortal)
-  (perform-set-string ch alias (olc-mob-of ch) "mobile alias"
-                      (vnum-of (olc-mob-of ch))
-                      +zone-mobs-approved+
-                      nil
-                      (lambda (val mob)
-                        (setf (aliases-of mob) val)
-                        (update-moblist-full (vnum-of (olc-mob-of ch))))))
-
-(defcommand (ch "olc" "mset" "name") (:immortal)
-  (send-to-char ch "Usage: olc mset name <name>~%"))
-
-(defcommand (ch "olc" "mset" "name" name) (:immortal)
-  (perform-set-string ch name (olc-mob-of ch) "mobile name"
-                      (vnum-of (olc-mob-of ch))
-                      +zone-mobs-approved+
-                      nil
-                      (lambda (val mob)
-                        (setf (name-of mob) val)
-                        (update-moblist-full (vnum-of (olc-mob-of ch))))))
-
-(defcommand (ch "olc" "mset" "ldesc") (:immortal)
-  (send-to-char ch "Usage: olc mset ldesc <ldesc>~%"))
-
-(defcommand (ch "olc" "mset" "ldesc" ldesc) (:immortal)
-  (perform-set-string ch ldesc (olc-mob-of ch) "mobile ldesc"
-                      (vnum-of (olc-mob-of ch))
-                      +zone-mobs-approved+
-                      nil
-                      (lambda (val mob)
-                        (setf (ldesc-of mob) val)
-                        (update-moblist-full (vnum-of (olc-mob-of ch))))))
-
-(defcommand (ch "olc" "mset" "desc") (:immortal)
-  (perform-set-text ch (olc-mob-of ch) "mobile description"
-                    (vnum-of (olc-mob-of ch))
-                    +zone-mobs-approved+
-                    (fdesc-of (olc-mob-of ch))
-                    #'(setf fdesc-of)))
-
-(defcommand (ch "olc" "mset" "flags") (:immortal)
-  (send-to-char ch "Usage: olc mset flags (+|-) <flags>"))
-
-(defcommand (ch "olc" "mset" "flags" plus-or-minus flags) (:immortal)
+(defcommand (ch "olc" "mset" param) (:immortal)
   (when (and (check-is-editing ch "mobile" (olc-mob-of ch))
              (check-can-edit ch (zone-containing-number (vnum-of (olc-mob-of ch)))
-                             +zone-mobs-approved+))
-    (perform-set-flags ch plus-or-minus flags +action-bits-desc+
-                       "mobile"
-                       "olc mset flags (+|-) <flags>"
-                       (lambda () (mob-flags-of (olc-mob-of ch)))
-                       (lambda (val) (setf (mob-flags-of (olc-mob-of ch)) val)))))
+                             +zone-objs-approved+))
+    (perform-set ch (olc-mob-of ch) t +mset-params+ param nil)))
 
-(defcommand (ch "olc" "mset" "flags2") (:immortal)
-  (send-to-char ch "Usage: olc mset flags2 (+|-) <flags>"))
-
-(defcommand (ch "olc" "mset" "flags2" plus-or-minus flags) (:immortal)
+(defcommand (ch "olc" "mset" param value) (:immortal)
   (when (and (check-is-editing ch "mobile" (olc-mob-of ch))
              (check-can-edit ch (zone-containing-number (vnum-of (olc-mob-of ch)))
-                             +zone-mobs-approved+))
-    (perform-set-flags ch plus-or-minus flags +action2-bits-desc+
-                       "mobile"
-                       "olc mset flags2 (+|-) <flags>"
-                       (lambda () (mob2-flags-of (olc-mob-of ch)))
-                       (lambda (val) (setf (mob2-flags-of (olc-mob-of ch)) val)))))
-
-(defcommand (ch "olc" "mset" "aff") (:immortal)
-  (send-to-char ch "Usage: olc mset aff (+|-) <flags>"))
-
-(defcommand (ch "olc" "mset" "aff" plus-or-minus flags) (:immortal)
-  (when (and (check-is-editing ch "mobile" (olc-mob-of ch))
-             (check-can-edit ch (zone-containing-number (vnum-of (olc-mob-of ch)))
-                             +zone-mobs-approved+))
-    (perform-set-flags ch plus-or-minus flags +affected-bits-desc+
-                       "mobile aff"
-                       "olc mset aff (+|-) <flags>"
-                       (lambda () (aff-flags-of (olc-mob-of ch)))
-                       (lambda (val) (setf (aff-flags-of (olc-mob-of ch)) val)))))
-
-(defcommand (ch "olc" "mset" "aff2") (:immortal)
-  (send-to-char ch "Usage: olc mset aff2 (+|-) <flags>"))
-
-(defcommand (ch "olc" "mset" "aff2" plus-or-minus flags) (:immortal)
-  (when (and (check-is-editing ch "mobile" (olc-mob-of ch))
-             (check-can-edit ch (zone-containing-number (vnum-of (olc-mob-of ch)))
-                             +zone-mobs-approved+))
-    (perform-set-flags ch plus-or-minus flags +affected2-bits-desc+
-                       "mobile aff2"
-                       "olc mset aff2 (+|-) <flags>"
-                       (lambda () (aff2-flags-of (olc-mob-of ch)))
-                       (lambda (val) (setf (aff2-flags-of (olc-mob-of ch)) val)))))
-
-(defcommand (ch "olc" "mset" "aff3") (:immortal)
-  (send-to-char ch "Usage: olc mset aff3 (+|-) <flags>"))
-
-(defcommand (ch "olc" "mset" "aff3" plus-or-minus flags) (:immortal)
-  (when (and (check-is-editing ch "mobile" (olc-mob-of ch))
-             (check-can-edit ch (zone-containing-number (vnum-of (olc-mob-of ch)))
-                             +zone-mobs-approved+))
-    (perform-set-flags ch plus-or-minus flags +affected3-bits-desc+
-                       "mobile aff3"
-                       "olc mset aff3 (+|-) <flags>"
-                       (lambda () (aff3-flags-of (olc-mob-of ch)))
-                       (lambda (val) (setf (aff3-flags-of (olc-mob-of ch)) val)))))
-
-(defcommand (ch "olc" "mset" "alignment") (:immortal)
-  (send-to-char ch "Usage: olc mset align <align>~%"))
-
-(defcommand (ch "olc" "mset" "alignment" align) (:immortal)
-  (perform-set-number ch align (olc-mob-of ch) "mobile alignment" (vnum-of (olc-mob-of ch))
-                      +zone-mobs-approved+ -1000 1000
-                      #'(setf alignment-of)))
-
-(defcommand (ch "olc" "mset" "str") (:immortal)
-  (send-to-char ch "Usage: olc mset str <str>~%"))
-
-(defcommand (ch "olc" "mset" "str" str) (:immortal)
-  (perform-set-number ch str (olc-mob-of ch) "mobile strength" (vnum-of (olc-mob-of ch))
-                      +zone-mobs-approved+ 1 25
-                      (lambda (val mob)
-                        (setf (str-of (real-abils-of mob)) val)
-                        (setf (str-of (aff-abils-of mob)) val))))
-
-(defcommand (ch "olc" "mset" "int") (:immortal)
-  (send-to-char ch "Usage: olc mset int <int>~%"))
-
-(defcommand (ch "olc" "mset" "int" int) (:immortal)
-  (perform-set-number ch int (olc-mob-of ch) "mobile intelligence" (vnum-of (olc-mob-of ch))
-                      +zone-mobs-approved+ 1 25
-                      (lambda (val mob)
-                        (setf (int-of (real-abils-of mob)) val)
-                        (setf (int-of (aff-abils-of mob)) val))))
-
-(defcommand (ch "olc" "mset" "wis") (:immortal)
-  (send-to-char ch "Usage: olc mset wis <wis>~%"))
-
-(defcommand (ch "olc" "mset" "wis" wis) (:immortal)
-  (perform-set-number ch wis (olc-mob-of ch) "mobile wisdom" (vnum-of (olc-mob-of ch))
-                      +zone-mobs-approved+ 1 25
-                      (lambda (val mob)
-                        (setf (wis-of (real-abils-of mob)) val)
-                        (setf (wis-of (aff-abils-of mob)) val))))
-
-(defcommand (ch "olc" "mset" "dex") (:immortal)
-  (send-to-char ch "Usage: olc mset dex <dex>~%"))
-
-(defcommand (ch "olc" "mset" "dex" dex) (:immortal)
-  (perform-set-number ch dex (olc-mob-of ch) "mobile dexterity" (vnum-of (olc-mob-of ch))
-                      +zone-mobs-approved+ 1 25
-                      (lambda (val mob)
-                        (setf (dex-of (real-abils-of mob)) val)
-                        (setf (dex-of (aff-abils-of mob)) val))))
-
-(defcommand (ch "olc" "mset" "con") (:immortal)
-  (send-to-char ch "Usage: olc mset con <con>~%"))
-
-(defcommand (ch "olc" "mset" "con" con) (:immortal)
-  (perform-set-number ch con (olc-mob-of ch) "mobile constitution" (vnum-of (olc-mob-of ch))
-                      +zone-mobs-approved+ 1 25
-                      (lambda (val mob)
-                        (setf (con-of (real-abils-of mob)) val)
-                        (setf (con-of (aff-abils-of mob)) val))))
-
-(defcommand (ch "olc" "mset" "cha") (:immortal)
-  (send-to-char ch "Usage: olc mset cha <cha>~%"))
-
-(defcommand (ch "olc" "mset" "cha" cha) (:immortal)
-  (perform-set-number ch cha (olc-mob-of ch) "mobile charisma" (vnum-of (olc-mob-of ch))
-                      +zone-mobs-approved+ 1 25
-                      (lambda (val mob)
-                        (setf (cha-of (real-abils-of mob)) val)
-                        (setf (cha-of (aff-abils-of mob)) val))))
-
-(defcommand (ch "olc" "mset" "level") (:immortal)
-  (send-to-char ch "Usage: olc mset level <level>~%"))
-
-(defcommand (ch "olc" "mset" "level" level) (:immortal)
-  (perform-set-number ch level (olc-mob-of ch) "mobile level" (vnum-of (olc-mob-of ch))
-                      +zone-mobs-approved+ 1 50
-                      #'(setf level-of)))
-
-(defcommand (ch "olc" "mset" "hitp_mod") (:immortal)
-  (send-to-char ch "Usage: olc mset hitp_mod <hitp_mod>~%"))
-
-(defcommand (ch "olc" "mset" "hitp_mod" hitp-mod) (:immortal)
-  (perform-set-number ch hitp-mod (olc-mob-of ch) "mobile hit point modifier"
-                      (vnum-of (olc-mob-of ch))
-                      +zone-mobs-approved+ 1 32767
-                      #'(setf move-of)))
-
-(defcommand (ch "olc" "mset" "hitd_num") (:immortal)
-  (send-to-char ch "Usage: olc mset hitd_num <hitd_num>~%"))
-
-(defcommand (ch "olc" "mset" "hitd_num" hitd-num) (:immortal)
-  (perform-set-number ch hitd-num (olc-mob-of ch) "mobile hit point dice number"
-                      (vnum-of (olc-mob-of ch))
-                      +zone-mobs-approved+ 1 200
-                      #'(setf hitp-of)))
-
-(defcommand (ch "olc" "mset" "hitd_size") (:immortal)
-  (send-to-char ch "Usage: olc mset hitd_size <hitd_size>~%"))
-
-(defcommand (ch "olc" "mset" "hitd_size" hitd-size) (:immortal)
-  (perform-set-number ch hitd-size (olc-mob-of ch) "mobile hit point dice size"
-                      (vnum-of (olc-mob-of ch))
-                      +zone-mobs-approved+ 1 200
-                      #'(setf mana-of)))
-
-(defcommand (ch "olc" "mset" "mana") (:immortal)
-  (send-to-char ch "Usage: olc mset mana <mana>~%"))
-
-(defcommand (ch "olc" "mset" "mana" mana) (:immortal)
-  (perform-set-number ch mana (olc-mob-of ch) "mobile mana"
-                      (vnum-of (olc-mob-of ch))
-                      +zone-mobs-approved+ 1 32767
-                      #'(setf max-mana-of)))
-
-(defcommand (ch "olc" "mset" "move") (:immortal)
-  (send-to-char ch "Usage: olc mset move <move>~%"))
-
-(defcommand (ch "olc" "mset" "move" movement) (:immortal)
-  (perform-set-number ch movement (olc-mob-of ch) "mobile movement"
-                      (vnum-of (olc-mob-of ch))
-                      +zone-mobs-approved+ 1 32767
-                      #'(setf max-move-of)))
-
-(defcommand (ch "olc" "mset" "baredam") (:immortal)
-  (send-to-char ch "Usage: olc mset baredam <baredam>~%"))
-
-(defcommand (ch "olc" "mset" "baredam" baredam) (:immortal)
-  (perform-set-number ch baredam (olc-mob-of ch) "mobile bare hand damage"
-                      (vnum-of (olc-mob-of ch))
-                      +zone-mobs-approved+ 1 125
-                      (lambda (val mob)
-                        (setf (damnodice-of (shared-of mob)) val))))
-
-(defcommand (ch "olc" "mset" "baredsize") (:immortal)
-  (send-to-char ch "Usage: olc mset baredsize <baredsize>~%"))
-
-(defcommand (ch "olc" "mset" "baredsize" baredsize) (:immortal)
-  (perform-set-number ch baredsize (olc-mob-of ch) "mobile bare hand damage dice size"
-                      (vnum-of (olc-mob-of ch))
-                      +zone-mobs-approved+ 1 125
-                      (lambda (val mob)
-                        (setf (damsizedice-of (shared-of mob)) val))))
-
-(defcommand (ch "olc" "mset" "gold") (:immortal)
-  (send-to-char ch "Usage: olc mset gold <gold>~%"))
-
-(defcommand (ch "olc" "mset" "gold" gold) (:immortal)
-  (perform-set-number ch gold (olc-mob-of ch) "mobile gold"
-                      (vnum-of (olc-mob-of ch))
-                      +zone-mobs-approved+ 1 10000000
-                      #'(setf gold-of)))
-
-(defcommand (ch "olc" "mset" "exp") (:immortal)
-  (send-to-char ch "Usage: olc mset exp <exp>~%"))
-
-(defcommand (ch "olc" "mset" "exp" exp) (:immortal)
-  (perform-set-number ch exp (olc-mob-of ch) "mobile experience"
-                      (vnum-of (olc-mob-of ch))
-                      +zone-mobs-approved+ 1 200000000
-                      #'(setf exp-of)))
-
-(defcommand (ch "olc" "mset" "attacktype") (:immortal)
-  (send-to-char ch "Usage: olc mset attacktype <attacktype>~%"))
-
-(defcommand (ch "olc" "mset" "attacktype" attacktype) (:immortal)
-  (perform-set-enumerated ch attacktype (olc-mob-of ch) "mobile attack type"
-                      (vnum-of (olc-mob-of ch))
-                      +zone-mobs-approved+ +attack-types+
-                      (lambda (val mob)
-                        (setf (attack-type-of (shared-of mob)) val))))
-
-(defcommand (ch "olc" "mset" "position") (:immortal)
-  (send-to-char ch "Usage: olc mset position <position>~%"))
-
-(defcommand (ch "olc" "mset" "position" position) (:immortal)
-  (perform-set-enumerated ch position (olc-mob-of ch) "mobile position"
-                      (vnum-of (olc-mob-of ch))
-                      +zone-mobs-approved+ +position-types+
-                      #'(setf position-of)))
-
-(defcommand (ch "olc" "mset" "sex") (:immortal)
-  (send-to-char ch "Usage: olc mset sex <sex>~%"))
-
-(defcommand (ch "olc" "mset" "sex" sex) (:immortal)
-  (perform-set-enumerated ch sex (olc-mob-of ch) "mobile sex"
-                      (vnum-of (olc-mob-of ch))
-                      +zone-mobs-approved+ #("neuter" "male" "female")
-                      #'(setf sex-of)))
-
-(defcommand (ch "olc" "mset" "remort_class") (:immortal)
-  (send-to-char ch "Usage: olc mset remort_class <remort_class>~%"))
-
-(defcommand (ch "olc" "mset" "remort_class" remort-class) (:immortal)
-  (perform-set-enumerated ch remort-class (olc-mob-of ch) "mobile remort class"
-                      (vnum-of (olc-mob-of ch))
-                      +zone-mobs-approved+ +class-names+
-                      #'(setf remort-char-class-of)))
-
-(defcommand (ch "olc" "mset" "cash") (:immortal)
-  (send-to-char ch "Usage: olc mset cash <cash>~%"))
-
-(defcommand (ch "olc" "mset" "cash" cash) (:immortal)
-  (perform-set-number ch cash (olc-mob-of ch) "mobile cash credits"
-                      (vnum-of (olc-mob-of ch))
-                      +zone-mobs-approved+ 1 10000000
-                      #'(setf cash-of)))
-
-(defcommand (ch "olc" "mset" "hitroll") (:immortal)
-  (send-to-char ch "Usage: olc mset hitroll <hitroll>~%"))
-
-(defcommand (ch "olc" "mset" "hitroll" hitroll) (:immortal)
-  (perform-set-number ch hitroll (olc-mob-of ch) "mobile hitroll"
-                      (vnum-of (olc-mob-of ch))
-                      +zone-mobs-approved+ -125 125
-                      #'(setf hitroll-of)))
-
-(defcommand (ch "olc" "mset" "damroll") (:immortal)
-  (send-to-char ch "Usage: olc mset damroll <damroll>~%"))
-
-(defcommand (ch "olc" "mset" "damroll" damroll) (:immortal)
-  (perform-set-number ch damroll (olc-mob-of ch) "mobile damroll"
-                      (vnum-of (olc-mob-of ch))
-                      +zone-mobs-approved+ -125 125
-                      #'(setf damroll-of)))
-
-(defcommand (ch "olc" "mset" "ac") (:immortal)
-  (send-to-char ch "Usage: olc mset ac <ac>~%"))
-
-(defcommand (ch "olc" "mset" "ac" ac) (:immortal)
-  (perform-set-number ch ac (olc-mob-of ch) "mobile armor class"
-                      (vnum-of (olc-mob-of ch))
-                      +zone-mobs-approved+ -500 100
-                      #'(setf armor-of)))
-
-(defcommand (ch "olc" "mset" "class") (:immortal)
-  (send-to-char ch "Usage: olc mset class <class>~%"))
-
-(defcommand (ch "olc" "mset" "class" class) (:immortal)
-  (perform-set-enumerated ch class (olc-mob-of ch) "mobile class"
-                      (vnum-of (olc-mob-of ch))
-                      +zone-mobs-approved+ +class-names+
-                      #'(setf char-class-of)))
-
-(defcommand (ch "olc" "mset" "race") (:immortal)
-  (send-to-char ch "Usage: olc mset race <race>~%"))
-
-(defcommand (ch "olc" "mset" "race" race) (:immortal)
-  (perform-set-enumerated ch race (olc-mob-of ch) "mobile race"
-                      (vnum-of (olc-mob-of ch))
-                      +zone-mobs-approved+ +player-races+
-                      #'(setf race-of)))
-
-(defcommand (ch "olc" "mset" "dpos") (:immortal)
-  (send-to-char ch "Usage: olc mset dpos <dpos>~%"))
-
-(defcommand (ch "olc" "mset" "dpos" dpos) (:immortal)
-  (perform-set-enumerated ch dpos (olc-mob-of ch) "mobile default position"
-                      (vnum-of (olc-mob-of ch))
-                      +zone-mobs-approved+ +position-types+
-                      (lambda (val mob)
-                        (setf (default-pos-of (shared-of mob)) val))))
-
-(defcommand (ch "olc" "mset" "height") (:immortal)
-  (send-to-char ch "Usage: olc mset height <height>~%"))
-
-(defcommand (ch "olc" "mset" "height" height) (:immortal)
-  (perform-set-number ch height (olc-mob-of ch) "mobile height"
-                      (vnum-of (olc-mob-of ch))
-                      +zone-mobs-approved+ 1 10000
-                      #'(setf height-of)))
-
-(defcommand (ch "olc" "mset" "weight") (:immortal)
-  (send-to-char ch "Usage: olc mset weight <weight>~%"))
-
-(defcommand (ch "olc" "mset" "weight" weight) (:immortal)
-  (perform-set-number ch weight (olc-mob-of ch) "mobile weight"
-                      (vnum-of (olc-mob-of ch))
-                      +zone-mobs-approved+ 1 50000
-                      #'(setf weight-of)))
+                             +zone-objs-approved+))
+    (perform-set ch (olc-mob-of ch) t +mset-params+ param value)))
 
 (defcommand (ch "olc" "mset" "special") (:immortal)
   (send-to-char ch "Usage: olc mset special <special>~%"))
@@ -906,72 +591,6 @@
          (setf (func-of (shared-of (olc-mob-of ch))) (gethash special *special-funcs*))
          (save-mobile-special-assignments)
          (send-to-char ch "Mobile special set, you trickster you.~%"))))))
-
-(defcommand (ch "olc" "mset" "morale") (:immortal)
-  (send-to-char ch "Usage: olc mset morale <morale>~%"))
-
-(defcommand (ch "olc" "mset" "morale" morale) (:immortal)
-  (perform-set-number ch morale (olc-mob-of ch) "mobile morale"
-                      (vnum-of (olc-mob-of ch))
-                      +zone-mobs-approved+ 1 125
-                      (lambda (val mob)
-                        (setf (morale-of (shared-of mob)) val))))
-
-(defcommand (ch "olc" "mset" "move_buf") (:immortal)
-  (send-to-char ch "Usage: olc mset move_buf <move_buf>~%"))
-
-(defcommand (ch "olc" "mset" "move_buf" move-buf) (:immortal)
-  (perform-set-string ch move-buf (olc-mob-of ch) "mobile move buffer"
-                      (vnum-of (olc-mob-of ch))
-                      +zone-mobs-approved+
-                      t
-                      (lambda (val mob)
-                        (setf (move-buf-of (shared-of mob)) val))))
-
-(defcommand (ch "olc" "mset" "lair") (:immortal)
-  (send-to-char ch "Usage: olc mset lair <lair>~%"))
-
-(defcommand (ch "olc" "mset" "lair" lair) (:immortal)
-  (perform-set-number ch lair (olc-mob-of ch) "mobile lair"
-                      (vnum-of (olc-mob-of ch))
-                      +zone-mobs-approved+ nil nil
-                      (lambda (val mob)
-                        (setf (lair-of (shared-of mob)) val))))
-
-(defcommand (ch "olc" "mset" "leader") (:immortal)
-  (send-to-char ch "Usage: olc mset leader <leader>~%"))
-
-(defcommand (ch "olc" "mset" "leader" leader) (:immortal)
-  (perform-set-number ch leader (olc-mob-of ch) "mobile leader vnum"
-                      (vnum-of (olc-mob-of ch))
-                      +zone-mobs-approved+ nil nil
-                      (lambda (val mob)
-                        (setf (leader-of (shared-of mob)) val))))
-
-(defcommand (ch "olc" "mset" "specparam") (:immortal)
-  (perform-set-text ch (olc-mob-of ch) "mobile specparam"
-                    (vnum-of (olc-mob-of ch))
-                    +zone-mobs-approved+
-                    (func-param-of (shared-of (olc-mob-of ch)))
-                    (lambda (val mob)
-                      (setf (func-param-of (shared-of mob)) val))))
-
-(defcommand (ch "olc" "mset" "generation") (:immortal)
-  (send-to-char ch "Usage: olc mset generation <generation>~%"))
-
-(defcommand (ch "olc" "mset" "generation" generation) (:immortal)
-  (perform-set-number ch generation (olc-mob-of ch) "mobile remort generation"
-                      (vnum-of (olc-mob-of ch))
-                      +zone-mobs-approved+ 0 10
-                      #'(setf remort-gen-of)))
-
-(defcommand (ch "olc" "mset" "loadparam") (:immortal)
-  (perform-set-text ch (olc-mob-of ch) "mobile loadparam"
-                    (vnum-of (olc-mob-of ch))
-                    +zone-mobs-approved+
-                    (load-param-of (shared-of (olc-mob-of ch)))
-                    (lambda (val mob)
-                      (setf (load-param-of (shared-of mob)) val))))
 
 (defcommand (ch "olc" "mset" "knownlanguage") (:immortal)
   (send-to-char ch "Usage: olc mset knownlanguage (+\-) <languages>~%"))
@@ -1012,14 +631,6 @@
       (if tongue-idx
           (setf (current-tongue-of (olc-mob-of ch)) tongue-idx)
           (send-to-char ch "That's not a language~%" language)))))
-
-(defcommand (ch "olc" "mset" "prog") (:immortal)
-  (perform-set-text ch (olc-mob-of ch) "mobile prog"
-                    (vnum-of (olc-mob-of ch))
-                    +zone-mobs-approved+
-                    (prog-text-of (shared-of (olc-mob-of ch)))
-                    (lambda (val mob)
-                      (setf (prog-text-of (shared-of mob)) val))))
 
 (defcommand (ch "mlist") (:immortal)
   (let ((zone (zone-of (in-room-of ch))))

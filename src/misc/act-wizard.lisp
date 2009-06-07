@@ -573,35 +573,36 @@
                     (mapcar 'keyword-of (ex-description-of obj))))
     (unless (line-desc-of obj)
       (send-to-char ch "**This object currently has no description**~%"))
-    (when (creation-time-of obj)
-      (case (creation-method-of obj)
-        (:zone
-         (send-to-char ch "Created by zone #~d on ~a~%"
-                       (creator-of obj)
-                       (creation-time-of obj)))
-        (:mob
-         (send-to-char ch "Loaded onto mob #~d on ~a~%"
-                       (creator-of obj)
-                       (creation-time-of obj)))
-        (:search
-         (send-to-char ch "Created by search in room #~d on ~a~%"
-                       (creator-of obj)
-                       (creation-time-of obj)))
-        (:imm
-         (send-to-char ch "Loaded by ~a on ~a~%"
-                       (retrieve-player-name (creator-of obj))
-                       (creation-time-of obj)))
-        (:prog
-         (send-to-char ch "Created by prog (mob or room #~d) on ~a~%"
-                       (creator-of obj)
-                       (creation-time-of obj)))
-        (:player
-         (send-to-char ch "Created by player ~a on ~a~%"
-                       (retrieve-player-name (creator-of obj))
-                       (creation-time-of obj)))
-        (t
-         (send-to-char ch "Created on ~a~%"
-                       (creation-time-of obj)))))
+    (unless (eql (proto-of (shared-of obj)) obj)
+      (when (creation-time-of obj)
+        (case (creation-method-of obj)
+          (:zone
+           (send-to-char ch "Created by zone #~d on ~a~%"
+                         (creator-of obj)
+                         (creation-time-of obj)))
+          (:mob
+           (send-to-char ch "Loaded onto mob #~d on ~a~%"
+                         (creator-of obj)
+                         (creation-time-of obj)))
+          (:search
+           (send-to-char ch "Created by search in room #~d on ~a~%"
+                         (creator-of obj)
+                         (creation-time-of obj)))
+          (:imm
+           (send-to-char ch "Loaded by ~a on ~a~%"
+                         (retrieve-player-name (creator-of obj))
+                         (creation-time-of obj)))
+          (:prog
+              (send-to-char ch "Created by prog (mob or room #~d) on ~a~%"
+               (creator-of obj)
+               (creation-time-of obj)))
+          (:player
+           (send-to-char ch "Created by player ~a on ~a~%"
+                         (retrieve-player-name (creator-of obj))
+                         (creation-time-of obj)))
+          (t
+           (send-to-char ch "Created on ~a~%"
+                         (creation-time-of obj))))))
     (when (plusp (unique-id-of obj))
       (send-to-char ch "Unique object id: ~d~%" (unique-id-of obj)))
     (when (plusp (owner-id-of (shared-of obj)))
@@ -2223,3 +2224,25 @@ You feel slightly different.")
        (send-to-char ch "That zone doesn't exist.~%"))
       (t
        (perform-zonepurge ch zone nil)))))
+
+(defcommand (ch "oset") (:immortal)
+  (with-pagination ((link-of ch))
+    (send-to-char ch "Valid oset commands:~%&y~a&n"
+                  (print-columns-to-string 5 15
+                                           (sort (loop
+                                                    for param in +oset-params+
+                                                    unless (getf (rest param) :shared)
+                                                    collect (first param))
+                                                 #'string<)))))
+
+(defcommand (ch "oset" object param value) (:immortal)
+  (let ((objects (resolve-alias ch object (append (carrying-of ch)
+                                                  (contents-of (in-room-of ch))))))
+    (cond
+      ((null objects)
+       (send-to-char ch "You don't see any '~a' to oset.~%" object))
+      ((null (find-set-param +oset-params+ param))
+       (send-to-char ch "~a is not a valid oset parameter.~%"))
+      (t
+       (dolist (object objects)
+         (perform-set ch object nil +oset-params+ param value))))))
