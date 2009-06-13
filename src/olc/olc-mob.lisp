@@ -1,7 +1,8 @@
 (in-package #:tempus)
 
 (defparameter +mset-params+
-  '(("alias" :type string :slot aliases :desc "mobile alias" :update-mobiles t)
+  '(;; NPC/PC/OLC slots
+    ("alias" :type string :slot aliases :desc "mobile alias" :update-mobiles t)
     ("name" :type string :slot name :desc "mobile name" :update-mobiles t)
     ("ldesc" :type string :slot ldesc :desc "mobile ldesc" :nil-allowed t :update-mobiles t)
     ("desc" :type text :slot desc :desc "mobile description")
@@ -28,14 +29,8 @@
      :min 1 :max 200)
     ("mana" :type number :slot max-mana :desc "mobile mana" :min 1 :max 32767)
     ("move" :type number :slot max-move :desc "mobile movement" :min 1 :max 32767)
-    ("baredam" :type number :slot damnodice :desc "mobile bare hand damage"
-     :shared t :min 1 :max 125)
-    ("baredsize" :type number :slot damsizedice :desc "mobile bare hand damage dice size"
-     :shared t :min 1 :max 125)
     ("gold" :type number :slot gold :desc "mobile gold" :min 0 :max 10000000)
     ("exp" :type number :slot exp :desc "mobile experience" :min 1 :max 200000000)
-    ("attacktype" :type enumerated :slot attack-type :desc "mobile attack type"
-     :shared t :table +attack-types+)
     ("position" :type enumerated :slot position :desc "mobile position"
      :table +position-types+)
     ("sex" :type enumerated :slot sex :desc "mobile sex" :table +sexes+)
@@ -48,10 +43,18 @@
     ("class" :type enumerated :slot char-class :desc "mobile class"
      :table +class-names+)
     ("race" :type enumerated :slot race :desc "mobile race" :table +player-races+)
-    ("dpos" :type enumerated :slot default-pos :desc "mobile default position"
-     :table +position-types+ :shared t)
     ("height" :type number :slot height :desc "mobile height" :min 1 :max 10000)
     ("weight" :type number :slot weight :desc "mobile weight" :min 1 :max 50000)
+
+    ;; OLC shared slots
+    ("baredam" :type number :slot damnodice :desc "mobile bare hand damage"
+     :shared t :min 1 :max 125)
+    ("baredsize" :type number :slot damsizedice :desc "mobile bare hand damage dice size"
+     :shared t :min 1 :max 125)
+    ("attacktype" :type enumerated :slot attack-type :desc "mobile attack type"
+     :shared t :table +attack-types+)
+    ("dpos" :type enumerated :slot default-pos :desc "mobile default position"
+     :table +position-types+ :shared t)
     ("morale" :type number :slot morale :desc "mobile morale"
      :shared t :min 1 :max 125)
     ("move_buf" :type string :slot move-buf :desc "mobile move buffer"
@@ -60,7 +63,8 @@
     ("leader" :type number :slot leader :desc "mobile leader vnum" :shared t)
     ("specparam" :type text :slot func-param :desc "mobile specparam" :shared t)
     ("loadparam" :type text :slot load-param :desc "mobile loadparam" :shared t)
-    ("prog" :type text :slot prog-text :desc "mobile prog" :shared t)))
+    ("prog" :type text :slot prog-text :desc "mobile prog" :shared t)
+    ))
 
 (defun update-moblist-full (vnum)
   (let ((proto (real-mobile-proto vnum)))
