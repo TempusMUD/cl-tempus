@@ -173,7 +173,8 @@
                             0 0)
         (declare (ignorable val))
 
-        (unless (zerop err)
+        (unless (or (zerop err)
+                    (= err SB-POSIX:EINTR))
           (error "select() returned error ~a!" err)))
 
       (values
