@@ -9,6 +9,9 @@
 (defun check-sight-self (ch)
   t)
 
+(defun can-see-room (ch room)
+  t)
+
 (defmethod is-visible-to ((obj obj-data) ch)
   t)
 

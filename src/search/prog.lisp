@@ -9,7 +9,7 @@
    (args :accessor args-of :initarg :args)
    (subject :accessor subject-of :initarg :subject)
    (object :accessor object-of :initarg :object)))
-   
+
 (defclass prog-env ()
   ((exec-pt :accessor exec-pt-of :initarg :exec-pt)
    (executed :accessor executed-of :initarg :executed)
@@ -27,3 +27,9 @@
   (dolist (prog *progs*)
     (when (eql (object-of (event-of prog)) obj)
       (setf (object-of (event-of prog)) nil))))
+
+(defun trigger-prog-dying (ch killer)
+  nil)
+
+(defun trigger-prog-death (victim prog-kind killer)
+  nil)

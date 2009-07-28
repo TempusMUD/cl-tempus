@@ -82,8 +82,10 @@
        (slog "Done.")
        (return-from main 0))
       (t
-       (slog "Running game on port ~d." port)
-       (init-game port))))
+       (sb-thread:make-thread (lambda ()
+                                (slog "Running game on port ~d." port)
+                                (init-game port))
+                              :name "TEMPUS"))))
   (values))
 
 (defun init-game (port)
@@ -101,12 +103,12 @@
   (slog "Signal trapping.")
 
   (slog "Entering game loop.")
-
-  (game-loop)
-
-  (slog "Closing all sockets.")
-  (close-all-cxns)
-  (postmodern:disconnect-toplevel)
+  (unwind-protect
+       (game-loop)
+    (progn
+      (slog "Closing all sockets.")
+      (close-all-cxns)
+      (postmodern:disconnect-toplevel)))
 
   (when *circle-reboot*
     (slog "Rebooting.")
