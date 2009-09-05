@@ -1072,6 +1072,7 @@
     (let ((obj (clone-object-proto proto)))
       (incf (number-of (shared-of proto)))
       (incf *top-unique-id*)
+      (setf (unique-id-of obj) *top-unique-id*)
       (setf *unique-id-changed* t)
 
       (push obj *object-list*)
