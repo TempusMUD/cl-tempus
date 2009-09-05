@@ -57,6 +57,13 @@
                                              "constants"
                                              "obj-data"
                                              "creature"))
+             (:file "act-offensive" :pathname "combat/act-offensive"
+                                :depends-on ("defs"
+                                             "utils"
+                                             "interpreter"
+                                             "constants"
+                                             "obj-data"
+                                             "creature"))
              (:file "act-other" :pathname "misc/act-other"
                                 :depends-on ("defs" "utils" "interpreter"))
              (:file "act-physic" :pathname "classes/act-physic"
@@ -107,6 +114,8 @@
                                   :depends-on ("defs" "utils"))
              (:file "limits" :pathname "misc/limits"
                             :depends-on ("defs" "creature"))
+             (:file "logging" :pathname "util/logging"
+                            :depends-on ("defs" "char-class"))
              (:file "login" :pathname "misc/login"
                             :depends-on ("defs" "char-class"))
              (:file "magic" :pathname "magic/magic"
@@ -165,7 +174,7 @@
              (:file "tongues" :pathname "social/tongues"
                               :depends-on ("defs" "utils"))
              (:file "utils" :pathname "util/utils"
-                            :depends-on ("defs" "network" "sight"))
+                            :depends-on ("defs" "logging" "network" "sight"))
              (:file "weather" :pathname "util/weather"
                               :depends-on ("zone-data"))
              (:file "zone-data" :pathname "structs/zone-data"

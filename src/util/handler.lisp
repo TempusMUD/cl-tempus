@@ -773,7 +773,8 @@
 
   (when (and (is-corpse obj)
              (plusp (corpse-idnum obj)))
-    (delete-file (corpse-pathname (corpse-idnum obj)))))
+    (when (probe-file (corpse-pathname (corpse-idnum obj)))
+      (delete-file (corpse-pathname (corpse-idnum obj))))))
 
 (defun get-number (name)
   (cl-ppcre:register-groups-bind (number-str name-str)
@@ -855,3 +856,94 @@
    ;; scan the entire object list
    (let ((objs (resolve-alias ch name *object-list*)))
      (first objs))))
+
+(defun money-name (amount currency)
+  (if (eql currency :gold)
+      (cond
+        ((= amount 1) "a gold coin")
+        ((<= amount 10) "a tiny pile of gold coins")
+        ((<= amount 20) "a handful of gold coins")
+        ((<= amount 75) "a little pile of gold coins")
+        ((<= amount 200) "a small pile of gold coins")
+        ((<= amount 1000) "a pile of gold coins")
+        ((<= amount 5000) "a big pile of gold coins")
+        ((<= amount 10000) "a large heap of gold coins")
+        ((<= amount 20000) "a huge mound of gold coins")
+        ((<= amount 75000) "an enormous mound of gold coins")
+        ((<= amount 150000) "a small mountain of gold coins")
+        ((<= amount 250000) "a mountain of gold coins")
+        ((<= amount 500000) "a huge mountain of gold coins")
+        ((<= amount 1000000) "an enormous mountain of gold coins")
+        (t "an absolutely colossal mountain of gold coins"))
+      (cond
+        ((= amount 1) "a one-credit note")
+        ((<= amount 10) "a small wad of cash")
+		((<= amount 20) "a handful of cash")
+		((<= amount 75) "a large wad of cash")
+		((<= amount 200) "a huge wad of cash")
+		((<= amount 1000) "a small pile of cash")
+		((<= amount 5000) "a big pile of cash")
+		((<= amount 10000) "a large heap of cash")
+		((<= amount 20000) "a huge mound of cash")
+		((<= amount 75000) "an enormous mound of cash")
+		((<= amount 150000) "a small mountain of cash money")
+		((<= amount 250000) "a mountain of cash money")
+        ((<= amount 500000) "a huge mountain of cash")
+		((<= amount 1000000) "an enormous mountain of cash")
+		(t "an absolutely colossal mountain of cash"))))
+
+(defun money-description (amount currency)
+  (cond
+    ((= amount 1)
+     (if (eql currency :gold)
+         "It's just one miserable little gold coin."
+         "It's one almighty credit!"))
+    ((< amount 10)
+     (format nil "There are ~d ~a." amount
+             (if (eql currency :gold) "coins" "credits")))
+    ((< amount 100)
+     (format nil "There are about ~d ~a."
+             (- amount (mod amount 10))
+             (if (eql currency :gold) "coins" "credits")))
+    ((< amount 1000)
+     (format nil "There are about ~d ~a."
+             (- amount (mod amount 100))
+             (if (eql currency :gold) "coins" "credits")))
+    ((< amount 100000)
+     (format nil "There are about ~d ~a."
+             (- amount (mod amount 1000))
+             (if (eql currency :gold) "coins" "credits")))
+    (t
+     (format nil "There are a LOT of ~a."
+             (if (eql currency :gold) "coins" "credits")))))
+
+(defun make-money-object (amount currency)
+  (assert (plusp amount) nil
+          "Attempt to create a negative amount of money")
+  (let* ((desc (money-name amount currency))
+         (obj (make-object :unknown 0
+                           :name desc
+                           :aliases (if (eql currency :gold)
+                                        (if (= amount 1)
+                                            "coin miserable gold"
+                                            "coins gold")
+                                        (if (= amount 1)
+                                            "credit money note one-credit"
+                                            "credits money cash"))
+                           :line-desc (format nil "~a is lying here."
+                                              desc)
+                           :kind +item-money+
+                           :value0 amount
+                           :value1 (if (eql currency :gold) 0 1)
+                           :material (if (eql currency :gold)
+                                         +mat-gold+
+                                         +mat-paper+)
+                           :wear-flags +item-wear-take+)))
+    (setf (ex-description-of obj)
+          (list
+           (make-instance 'extra-descr-data
+                          :keyword (if (eql currency :gold)
+                                       "coins gold"
+                                       "credits money cash")
+                          :description (money-description amount currency))))
+    obj))

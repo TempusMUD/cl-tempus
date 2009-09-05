@@ -71,13 +71,12 @@
     ("The run through ~a of ~a ~a lying here." "impaled" +skill-impale+)
     ("The waterlogged ~a of ~a ~a lying here." "drowned" +type-drowning+)))
 
-(defun generate-corpse-desc (ch killer attacktype)
+(defun generate-corpse-desc (ch attacktype)
   (let ((isare "is")
         (corpse-name "corpse")
         (adj nil)
-        (name "")
         (aliases "")
-        (ldesc ""))
+        (ldesc "The ~a of ~a ~a"))
 
     (when (or (is-robot ch)
               (is-plant ch)
@@ -91,68 +90,72 @@
       (setf aliases "bones"))
 
     (when (aff2-flagged ch +aff2-petrified+)
-      (setf namestr (concatenate 'string namestr " stone"))
-      (setf aliases (concatenate 'string "stone " typebuf)))
+      (setf aliases (concatenate 'string aliases " stone"))
+      (setf corpse-name (concatenate 'string "stone " corpse-name)))
 
-    (when (and (isname "headless" (name-of ch))
+    (when (and (search "headless" (name-of ch))
                (or (= attacktype +skill-behead+)
                    (= attacktype +skill-pele-kick+)
                    (= attacktype +skill-clothesline+)))
       (setf attacktype +type-hit+))
 
-    (cond
-      ((or (= attacktype +type-hit+)
-           (= attacktype +skill-bash+)
-           (= attacktype +skill-pistolwhip+))
-       (setf ldesc (format nil "The bruised up ~a of ~a ~a lying here."
-                           corpse-name (name-of ch) isare))
-       (setf adj "bruised"))
-      ((= attacktype +type-sting+)
-       (setf ldesc (format nil "The bloody, swollen ~a of ~a ~a lying here."
-                           corpse-name (name-of ch) isare))
-       (setf adj "stung"))
-      ((= attacktype +type-whip+)
-       (setf ldesc (format nil "The scarred ~a of ~a ~a lying here."
-                           corpse-name (name-of ch) isare))
-       (setf adj "scarred"))
-      ((or (= attacktype +type-slash+)
-           (= attacktype +type-chop+)
-           (= attacktype +spell-blade-barrier+))
-       (setf ldesc (format nil "The chopped up ~a of ~a ~a lying here."
-                           corpse-name (name-of ch) isare))
-       (setf adj "chopped up"))
-      ((= attacktype +song-wounding-whispers+)
-       (setf ldesc (format nil "The perforated ~a of ~a ~a lying here."
-                           corpse-name (name-of ch) isare))
-       (setf adj "perforated"))
-      ((= attacktype +skill-hamstring+)
-       (setf ldesc (format nil "The legless ~a of ~a ~a lying here."
-                           corpse-name (name-of ch) isare))
-       (setf adj "legless")))))
+    (let ((special-corpse (find-if (lambda (rec)
+                                     (member attacktype (mapcar #'symbol-value (cddr rec))))
+                                   +corpse-descs+)))
+      (when special-corpse
+         (setf ldesc (format nil (first special-corpse)
+                             corpse-name
+                             (name-of ch)
+                             isare))
+         (setf adj (second special-corpse))))
 
+    (values (format nil "the ~a ~a of ~a"
+                    adj
+                    corpse-name
+                    (name-of ch))
+            (format nil "~(~a ~a ~a~)" corpse-name adj (aliases-of ch))
+            ldesc)))
 
 (defun make-corpse (ch killer attacktype)
   (multiple-value-bind (name aliases ldesc)
-      (generate-corpse-desc ch killer attacktype)
-    (let ((corpse (make-instance 'obj-data
-                                 :name name
-                                 :aliases aliases
-                                 :ldesc ldesc
-                                 :material (cond
-                                             ((aff2-flagged ch +aff2-petrified+)
-                                              +mat-stone+)
-                                             ((is-robot ch)
-                                              +mat-metal+)
-                                             ((is-skeleton ch)
-                                              +mat-bone+)
-                                             ((is-pudding ch)
-                                              +mat-pudding+)
-                                             ((is-slime ch)
-                                              +mat-slime+)
-                                             ((is-plant ch)
-                                              +mat-vegetable+)
-                                             (t
-                                              +mat-flesh+))))))))
+      (generate-corpse-desc ch attacktype)
+    (let ((corpse (make-object :unknown 0
+                               :kind +item-container+
+                               :name name
+                               :aliases aliases
+                               :line-desc ldesc
+                               :wear-flags +item-wear-take+
+                               :extra-flags +item-nodonate+
+                               :weight (weight-of ch)
+                               :max-dam (if (is-npc ch) 100 -1)
+                               :damage (if (is-npc ch) 100 -1)
+                               :timer 5
+                               :value0 0
+                               :value1 2
+                               :value2 (if (is-npc ch)
+                                           (- (vnum-of ch))
+                                           (idnum-of ch))
+                               :value3 (if (is-npc killer)
+                                           (- (vnum-of killer))
+                                           (idnum-of killer))
+                               :material (cond
+                                           ((aff2-flagged ch +aff2-petrified+)
+                                            +mat-stone+)
+                                           ((is-robot ch)
+                                            +mat-metal+)
+                                           ((is-skeleton ch)
+                                            +mat-bone+)
+                                           ((is-pudding ch)
+                                            +mat-pudding+)
+                                           ((is-slime ch)
+                                            +mat-slime+)
+                                           ((is-plant ch)
+                                            +mat-vegetable+)
+                                           (t
+                                            +mat-flesh+)))))
+      (push corpse *object-list*)
+      (obj-to-room corpse (in-room-of ch))
+      corpse)))
 
 (defun update-pos (victim)
   (cond

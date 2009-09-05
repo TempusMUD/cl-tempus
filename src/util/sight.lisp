@@ -12,6 +12,9 @@
 (defun can-see-room (ch room)
   t)
 
+(defun can-see-object (ch obj)
+  t)
+
 (defmethod is-visible-to ((obj obj-data) ch)
   t)
 

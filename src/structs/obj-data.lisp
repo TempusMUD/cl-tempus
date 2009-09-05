@@ -305,6 +305,69 @@
    (sigil-idnum :accessor sigil-idnum-of :initarg :sigil-idnum :initform 0)
    (sigil-level :accessor sigil-level-of :initarg :sigil-level :initform 0)))
 
+(defun make-object (creation-method creator
+                    &key
+                    vnum
+                    (name "")
+                    (aliases "")
+                    (line-desc "")
+                    (action-desc "")
+                    (value0 0)
+                    (value1 0)
+                    (value2 0)
+                    (value3 0)
+                    (kind 0)
+                    (wear-flags 0)
+                    (extra-flags 0)
+                    (extra2-flags 0)
+                    (extra3-flags 0)
+                    (weight 0)
+                    (timer 0)
+                    (bitvector0 0)
+                    (bitvector1 0)
+                    (bitvector2 0)
+                    (material 0)
+                    (max-dam 0)
+                    (damage 0))
+  (let ((obj (make-instance 'obj-data
+                            :name name
+                            :aliases aliases
+                            :line-desc line-desc
+                            :action-desc action-desc
+                            :kind kind
+                            :wear-flags wear-flags
+                            :extra-flags extra-flags
+                            :extra2-flags extra2-flags
+                            :extra3-flags extra3-flags
+                            :weight weight
+                            :timer timer
+                            :material material
+                            :max-dam max-dam
+                            :damage damage
+                            :creation-time (now)
+                            :creation-method creation-method
+                            :creator creator
+                            :shared (if vnum
+                                        (shared-of (gethash vnum *object-prototypes*))
+                                        +null-obj-shared+))))
+    (dotimes (j +max-obj-affect+)
+      (setf (aref (affected-of obj) j)
+            (make-instance 'obj-affected-type
+                           :location +apply-none+
+                           :modifier 0)))
+    (setf (aref (value-of obj) 0) value0)
+    (setf (aref (value-of obj) 1) value1)
+    (setf (aref (value-of obj) 2) value2)
+    (setf (aref (value-of obj) 3) value3)
+    (setf (aref (bitvector-of obj) 0) bitvector0)
+    (setf (aref (bitvector-of obj) 1) bitvector1)
+    (setf (aref (bitvector-of obj) 2) bitvector2)
+
+    (incf *top-unique-id*)
+    (setf (unique-id-of obj) *top-unique-id*)
+
+    obj))
+
 (defun clone-object-proto (proto)
   (let ((obj (make-instance 'obj-data
                  :shared (shared-of proto)
@@ -396,9 +459,19 @@
   (or (= (vnum-of (shared-of obj)) +blood-vnum+)
       (= (vnum-of (shared-of obj)) +ice-vnum+)))
 (defun same-obj (obj-a obj-b)
-  (= (vnum-of (shared-of obj-a)) (vnum-of (shared-of obj-b))))
+  (and (= (vnum-of (shared-of obj-a)) (vnum-of (shared-of obj-b)))
+       (string= (name-of obj-a) (name-of obj-b))))
 (defun can-wear (obj pos)
   (logtest (wear-flags-of obj) pos))
+
+(defun unrentablep (obj)
+  (or (is-obj-stat obj +item-norent+)
+      (not (approvedp obj))
+      (minusp (vnum-of obj))
+      (and (is-obj-kind obj +item-key+)
+           (zerop (aref (value-of obj) 1)))
+      (and (is-obj-kind obj +item-cigarette+)
+           (plusp (aref (value-of obj) 3)))))
 
 (defun hidden-obj-prob (ch obj)
   (+ (level-of ch)

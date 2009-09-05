@@ -11,7 +11,8 @@
 
 (defun death-cry (ch)
   (cond
-    ((eql (func-of ch) 'fate)
+    ((and (is-npc ch)
+          (eql (func-of (shared-of ch)) 'fate))
      (act ch :all-emit "$n dissipates in a cloud of mystery, leaving you to your fate."))
     ((or (is-ghoul ch)
          (is-wight ch)
@@ -40,14 +41,15 @@
             (setf bloodlust t)
             (act tch :target ch :subject-emit "You feel a rising bloodlust as you hear $n's death cry."))
            (t
-            (act tch :target ch :subject-emit "Your blood freezes as you hear $n's death cry.")))))))
+            (act tch :target ch :subject-emit "Your blood freezes as you hear $N's death cry.")))))))
 
-  (dolist (dir +num-of-dirs+)
+  (dotimes (dir +num-of-dirs+)
     (when (and (can-go ch dir)
                (exit ch dir)
                (not (eql (exit ch dir) (in-room-of ch))))
-      (let ((adjoining-room (to-room-of (exit ch dir))))
-        (send-to-room adjoining-room "Your blood freezes are you hear someone's death cry from ~a."
+      (let ((adjoining-room (real-room (to-room-of (exit ch dir)))))
+        (send-to-room adjoining-room
+                      "Your blood freezes are you hear someone's death cry from ~a."
                       (aref +from-dirs+ dir))
         (when (eql (in-room-of ch) (abs-exit adjoining-room (aref +rev-dir+ dir)))
           (dolist (tch (copy-list (people-of adjoining-room)))

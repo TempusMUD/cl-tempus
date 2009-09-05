@@ -301,6 +301,39 @@
     (when sigil-found
       (explode-all-sigils ch))))
 
+(defun perform-autoloot (ch corpse)
+  ;; Only loot the corpse if the character can see it, and if the
+  ;; corpse isn't a player corpse in a NPK zone
+  (when (and corpse
+             (can-see-object ch corpse)
+             (eql (in-room-of ch) (in-room-of corpse))
+             (not (and (eql (pk-style-of (zone-of (in-room-of ch))) +zone-neutral-pk+)
+                       (not (is-npc ch))
+                       (not (immortalp ch))
+                       (is-corpse corpse)
+                       (/= (corpse-idnum corpse) (idnum-of ch))
+                       (plusp (corpse-idnum corpse)))))
+    (let ((money-found nil))
+      (loop
+         for obj-sublist on (contents-of corpse)
+         as obj = (first obj-sublist)
+         as next-obj = (second obj-sublist)
+         as counter from 1
+         do
+           (when (and (can-take-obj ch obj t t)
+                      (is-obj-kind obj +item-money+))
+             (obj-from-obj obj)
+             (obj-to-char obj ch)
+             (setf money-found t))
+           (when (or (null next-obj)
+                     (string/= (name-of next-obj) (name-of obj)))
+             (act ch :item obj
+                  :target-item corpse
+                  :all-emit (format nil "$n get$% $p from $P.~[~;~:;~:* (x~d)~]" counter))
+             (setf counter 0)))
+      (when money-found
+        (consolidate-char-money ch)))))
+
 (defun check-object-nodrop (ch obj mode)
   "Checks to see if OBJ can be dropped by CH.  May emit messages to CH.  Returns T if the object may be dropped, otherwise returns NIL."
   (cond
@@ -388,6 +421,32 @@
                   :all-emit (format nil "$n ~(~a~)$% $p.~[~;~:;~:* (x~d)~]" mode counter))
              (setf counter 0))
            (setf counter 0))))
+
+(defparameter +money-log-limit+ 50000000)
+
+(defun perform-drop-money (ch amount currency)
+  (let ((on-hand (if (eql currency :gold)
+                     (gold-of ch)
+                     (cash-of ch))))
+  (cond
+    ((minusp amount)
+     (send-to-char ch "Heh heh heh... We are jolly funny today, eh?~%"))
+    ((< on-hand amount)
+     (send-to-char ch "You don't have that many coins!~%"))
+    (t
+     (let ((obj (make-money-object amount currency)))
+       (obj-to-room obj (in-room-of ch))
+       (act ch :item obj :all-emit "$n drop$% $p."))
+     (if (eql currency :gold)
+         (decf (gold-of ch) amount)
+         (decf (cash-of ch) amount))
+     (when (>= amount +money-log-limit+)
+       (slog "MONEY: ~a has dropped ~a ~a in room #~d (~a)"
+             (name-of ch)
+             amount
+             (if (eql currency :gold) "coins" "credits")
+             (number-of (in-room-of ch))
+             (name-of (in-room-of ch))))))))
 
 (defun find-eq-pos (obj)
   (cdr
@@ -1127,6 +1186,42 @@
        (send-to-char ch "You don't seem to be carrying anything.~%"))
       (t
        (send-to-char ch "You don't seem to have any ~as.~%" thing)))))
+
+(defcommand (ch "drop" amount-str "gold") (:resting)
+  "Drop an amount of gold"
+  (let ((amount (parse-integer amount-str :junk-allowed t)))
+    (cond
+      ((null amount)
+       (send-to-char ch "That's not a proper amount of gold."))
+      (t
+       (perform-drop-money ch amount :gold)))))
+
+(defcommand (ch "drop" amount-str "coin") (:resting)
+  "Drop an amount of gold"
+  (let ((amount (parse-integer amount-str :junk-allowed t)))
+    (cond
+      ((null amount)
+       (send-to-char ch "That's not a proper amount of gold."))
+      (t
+       (perform-drop-money ch amount :gold)))))
+
+(defcommand (ch "drop" amount-str "coins") (:resting)
+  "Drop an amount of gold"
+  (let ((amount (parse-integer amount-str :junk-allowed t)))
+    (cond
+      ((null amount)
+       (send-to-char ch "That's not a proper amount of gold."))
+      (t
+       (perform-drop-money ch amount :gold)))))
+
+(defcommand (ch "drop" amount-str "credits") (:resting)
+  "Drop an amount of gold"
+  (let ((amount (parse-integer amount-str :junk-allowed t)))
+    (cond
+      ((null amount)
+       (send-to-char ch "That's not a proper amount of credits."))
+      (t
+       (perform-drop-money ch amount :cash)))))
 
 (defcommand (ch "wear") (:resting)
   (send-to-char ch "What do you want to wear?~%"))

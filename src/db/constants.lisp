@@ -2631,6 +2631,15 @@
     "ink"))
 
 (defconstant +mat-none+ 0)
+(defconstant +mat-paper+ 10)
+(defconstant +mat-flesh+ 50)
+(defconstant +mat-bone+ 51)
+(defconstant +mat-vegetable+ 60)
+(defconstant +mat-slime+ 68)
+(defconstant +mat-pudding+ 72)
+(defconstant +mat-metal+ 100)
+(defconstant +mat-gold+ 107)
+(defconstant +mat-stone+ 180)
 (defconstant +top-material+ 243)
 
 (defparameter +reputation-msg+

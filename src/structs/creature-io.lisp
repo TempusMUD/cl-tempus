@@ -24,6 +24,16 @@
 
 (defparameter +rent-codes+ #(undef crash rented cryo forced quit new-char creating remorting))
 
+(defparameter +rent-undef+ 0)
+(defparameter +rent-crash+ 1)
+(defparameter +rent-rented+ 2)
+(defparameter +rent-cryo+ 3)
+(defparameter +rent-forced+ 4)
+(defparameter +rent-quit+ 5)
+(defparameter +rent-new-char+ 6)
+(defparameter +rent-creating+ 7)
+(defparameter +rent-remorting+ 8)
+
 (defun unserialize-creature (xml)
   (let ((ch (make-instance 'player)))
     (assert (string= (first xml) "creature") nil 'invalid-creature-file)

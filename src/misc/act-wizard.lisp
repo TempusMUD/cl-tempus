@@ -645,15 +645,24 @@
                   (max-dam-of obj)
                   (damage-of obj))
     ;; TODO: Add object kind specific value displays
-    (send-to-char ch "Value 0-3: ~a:[~d] ~a:[~d] ~a:[~d] ~a:[~d]~%"
-                  (aref +item-kind-values+ (kind-of obj) 0)
-                  (aref (value-of obj) 0)
-                  (aref +item-kind-values+ (kind-of obj) 1)
-                  (aref (value-of obj) 1)
-                  (aref +item-kind-values+ (kind-of obj) 2)
-                  (aref (value-of obj) 2)
-                  (aref +item-kind-values+ (kind-of obj) 3)
-                  (aref (value-of obj) 3))
+    (cond
+      ((is-obj-kind obj +item-container+)
+       (send-to-char ch "Max-contains: ~d, Locktype: ~d, Key/Owner: ~a, Corpse: ~:[No~;Yes, killer: ~:*~d~]~%"
+                     (aref (value-of obj) 0)
+                     (aref (value-of obj) 1)
+                     (aref (value-of obj) 2)
+                     (aref (value-of obj) 3)))
+      (t
+       (send-to-char ch "Value 0-3: ~a:[~d] ~a:[~d] ~a:[~d] ~a:[~d]~%"
+                     (aref +item-kind-values+ (kind-of obj) 0)
+                     (aref (value-of obj) 0)
+                     (aref +item-kind-values+ (kind-of obj) 1)
+                     (aref (value-of obj) 1)
+                     (aref +item-kind-values+ (kind-of obj) 2)
+                     (aref (value-of obj) 2)
+                     (aref +item-kind-values+ (kind-of obj) 3)
+                     (aref (value-of obj) 3))))
+
     (when (and (eql (proto-of (shared-of obj)) obj)
                (func-param-of (shared-of obj)))
       (send-to-char ch "Spec_param:~%~a~%" (func-param-of (shared-of obj))))

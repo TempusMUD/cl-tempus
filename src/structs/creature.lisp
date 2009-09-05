@@ -730,3 +730,80 @@
     (setf (real-abils-of ch) (copy-abilities (aff-abils-of ch))))
 
   (update-pos ch))
+
+(defun arena-die (ch)
+  (remove-all-combat ch)
+  (unless (is-npc ch)
+    (setf (rentcode-of ch) +rent-rented+)
+    (setf (rent-per-day-of ch) (if (immortal-level-p ch)
+                                   0
+                                   (calc-daily-rent ch 1 nil nil)))
+    (setf (desc-mode-of ch) :unknown)
+    (setf (rent-currency-of ch) (time-frame-of (zone-of (in-room-of ch))))
+    (setf (load-room-of ch) (respawn-pt-of (zone-of (in-room-of ch))))
+    (setf (login-time-of ch) (now))
+    (save-player-objects ch)
+    (save-player-to-xml ch)
+    (unless (immortalp ch)
+      (mudlog 'info t "~a has died in arena (~d/day, ~d ~a)"
+              (name-of ch)
+              (rent-per-day-of ch)
+              (+ (gold-of ch)
+                 (cash-of ch)
+                 (past-bank-of (account-of ch))
+                 (future-bank-of (account-of ch)))
+              (if (eql (rent-currency-of ch) +time-electro+) "creds" "gold"))))
+
+  (extract-creature ch 'afterlife))
+
+(defun npk-die (ch)
+  (remove-all-combat ch)
+  (unless (is-npc ch)
+    (setf (rentcode-of ch) +rent-quit+)
+    (setf (rent-per-day-of ch) 0)
+    (setf (desc-mode-of ch) 'afterlife)
+    (setf (rent-currency-of ch) (time-frame-of (zone-of (in-room-of ch))))
+    (setf (load-room-of ch) (respawn-pt-of (zone-of (in-room-of ch))))
+    (setf (login-time-of ch) (now))
+    (save-player-objects ch)
+    (save-player-to-xml ch))
+
+  (extract-creature ch 'afterlife))
+
+(defun die (ch)
+  (remove-all-combat ch)
+
+  ;; If their stuff hasn't been moved out, they dt'd, so we need to
+  ;; dump their stuff to the room.
+  (loop
+     for obj across (equipment-of ch)
+     when obj do
+       (unequip-char ch (worn-on-of obj) :worn nil)
+       (obj-to-room obj (in-room-of ch)))
+  (loop
+     for obj across (implants-of ch)
+     when obj do
+       (unequip-char ch (worn-on-of obj) :worn nil)
+       (obj-to-room obj (in-room-of ch)))
+  (loop
+     for obj across (tattoos-of ch)
+     when obj do
+       (unequip-char ch (worn-on-of obj) :worn nil)
+       (extract-obj obj))
+
+  (dolist (obj (copy-list (carrying-of ch)))
+    (obj-from-char obj)
+    (obj-to-room obj (in-room-of ch)))
+
+
+  (unless (is-npc ch)
+    (setf (rentcode-of ch) +rent-quit+)
+    (setf (rent-per-day-of ch) 0)
+    (setf (desc-mode-of ch) 'afterlife)
+    (setf (rent-currency-of ch) (time-frame-of (zone-of (in-room-of ch))))
+    (setf (load-room-of ch) (respawn-pt-of (zone-of (in-room-of ch))))
+    (setf (login-time-of ch) (now))
+    (save-player-objects ch)
+    (save-player-to-xml ch))
+
+  (extract-creature ch 'afterlife))
