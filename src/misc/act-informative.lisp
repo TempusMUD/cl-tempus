@@ -1203,11 +1203,47 @@
                 (t
                  (send-to-char ch "There's no '~a' here.~%" arg)))))))))))
 
+(defun look-into-target (ch arg)
+  (let* ((objs (resolve-alias ch arg (append (carrying-of ch)
+                                             (contents-of (in-room-of ch))
+                                             (coerce (equipment-of ch) 'list))))
+         (obj (first objs)))
+    (cond
+      ((null objs)
+       (send-to-char ch "There doesn't seem to be ~a ~a here.~%"
+                     (a-or-an arg) arg))
+      ((rest objs)
+       (send-to-char ch "You can only look into one object at a time.~%"))
+      ((not (or (is-obj-kind obj +item-drinkcon+)
+                (is-obj-kind obj +item-fountain+)
+                (is-obj-kind obj +item-container+)
+                (is-obj-kind obj +item-pipe+)
+                (is-obj-kind obj +item-vehicle+)))
+       (send-to-char ch "There's nothing inside that!~%"))
+      ((and (logtest (aref (value-of obj) 1) +cont-closed+)
+            (not (immortalp ch)))
+       (send-to-char ch "It is closed.~%"))
+      ((is-obj-kind obj +item-container+)
+       (send-to-char ch "~a (~a):~%"
+                     (name-of obj)
+                     (cond
+                       ((carried-by-of obj) "carried")
+                       ((worn-by-of obj) "used")
+                       ((in-room-of obj) "here")))
+       (send-to-char ch "~a"
+                     (with-output-to-string (str)
+                       (list-obj-to-char str (contains-of obj) ch
+                                         :content t)))))))
+
+
 (defcommand (ch "look" thing) (:resting :important)
   (look-at-target ch thing :look))
 
 (defcommand (ch "look" "at" thing) (:resting :important)
   (look-at-target ch thing :look))
+
+(defcommand (ch "look" "into" thing) (:resting :important)
+  (look-into-target ch thing))
 
 (defcommand (ch "examine" thing) (:resting)
   (look-at-target ch thing :examine))
