@@ -15,7 +15,7 @@
                      raw-dam)))
        (act ch :item obj
             :all-emit "$p explodes when $n pick$% it up!!")
-       (damage nil ch dam +type-blast+ +wear-hands+)
+       (damage-creature nil ch dam +type-blast+ +wear-hands+)
 
        (setf (sigil-idnum-of obj) 0)
        (setf (sigil-level-of obj) 0)))))

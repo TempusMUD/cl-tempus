@@ -699,18 +699,18 @@
                :subject-emit "$p burns its way out through your flesh!"
                :place-emit "$n screams in horror as $p burns its way out through $s flesh!")
           (damage-eq nil implant (floor (damage-of obj) 2))
-          (damage ch ch (dice (floor
-                               (cond
-                                 ((= pos +wear-body+)
-                                  (* 2 (abs (alignment-of ch))))
-                                 ((= pos +wear-head+)
-                                  (* 2 (abs (alignment-of ch))))
-                                 (t
-                                  (abs (alignment-of ch))))
-                               8)
-                              3)
-                  +top-spell-define+
-                  pos))
+          (damage-creature ch ch (dice (floor
+                                        (cond
+                                          ((= pos +wear-body+)
+                                           (* 2 (abs (alignment-of ch))))
+                                          ((= pos +wear-head+)
+                                           (* 2 (abs (alignment-of ch))))
+                                          (t
+                                           (abs (alignment-of ch))))
+                                        8)
+                                       3)
+                           +top-spell-define+
+                           pos))
         (when (and obj
                    (or (and (is-good ch) (is-obj-stat obj +item-damned+))
                        (and (is-evil ch) (is-obj-stat obj +item-bless+))))
@@ -718,8 +718,8 @@
                :subject-emit "You are burned by $p and frantically take it off!"
                :place-emit "$n franctically takes off $p as $e screams in agony!")
           (obj-to-char (unequip-char ch pos :worn nil) ch)
-          (damage ch ch (dice (max (floor (abs (alignment-of ch)) 32) 1) 2)
-                  +top-spell-define+ pos))
+          (damage-creature ch ch (dice (max (floor (abs (alignment-of ch)) 32) 1) 2)
+                           +top-spell-define+ pos))
         (when (and obj
                    (or (and (is-evil ch) (is-obj-stat obj +item-anti-evil+))
                        (and (is-good ch) (is-obj-stat obj +item-anti-good+))

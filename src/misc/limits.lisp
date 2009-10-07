@@ -89,7 +89,7 @@
                    (aff-flagged ch +aff-charm+)))
     (if (is-npc ch)
         (setf (exp-of ch) (min 2000000000 (+ (exp-of ch) gain)))
-        (incf (exp-of ch) (min +max-exp-gain+ gain))
+        (incf (exp-of ch) (min +max-exp-gain+ gain)))
     (when (minusp (exp-of ch))
       (setf (exp-of ch) 0))
 
@@ -106,7 +106,7 @@
       ((= num-levels 1)
        (send-to-char ch "You rise a level!~%"))
       ((plusp num-levels)
-       (send-to-char ch "You rise ~d levels!~%" num-levels))))))))
+       (send-to-char ch "You rise ~d levels!~%" num-levels)))))))
 
 (defun gain-exp-regardless (ch gain)
   (incf (exp-of ch) gain)

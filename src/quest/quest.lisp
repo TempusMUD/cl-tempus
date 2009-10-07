@@ -29,3 +29,6 @@
 
 (defun remove-from-quest (idnum)
   nil)
+
+(defun tally-quest-death (ch)
+  nil)
