@@ -395,7 +395,7 @@
   (assert obj nil "NIL obj passed to obj-to-char")
   (assert ch nil "NIL ch passed to obj-to-char")
 
-  (push obj (carrying-of ch))
+  (setf (carrying-of ch) (append (carrying-of ch) (list obj)))
   (when sorted
     (setf (carrying-of ch) (sort (carrying-of ch) #'vnum-of)))
 
@@ -454,7 +454,7 @@
 
 (defun obj-to-room (obj room)
   (assert (null (in-room-of obj)) nil 'invalid-obj-to-room obj)
-  (push obj (contents-of room))
+  (setf (contents-of room) (append (contents-of room) (list obj)))
   (setf (in-room-of obj) room))
 
 (defun obj-from-room (obj)
@@ -470,7 +470,7 @@
   (assert obj-to nil "Illegal NIL target object")
   (assert (not (eql obj obj-to)) nil "object is eql to target object")
 
-  (push obj (contains-of obj-to))
+  (setf (contains-of obj-to) (append (contains-of obj-to) (list obj)))
   (setf (in-obj-of obj) obj-to)
 
   (when sorted

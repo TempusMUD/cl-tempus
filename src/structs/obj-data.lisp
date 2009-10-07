@@ -607,7 +607,7 @@
   (let* ((vnum (xml-attr object-node "vnum" :numeric t))
          (obj (if (plusp vnum)
                   (read-object vnum)
-                  (make-instance 'obj-data :shared +null-obj-shared+)))
+                  (make-object :shared +null-obj-shared+)))
          (placed nil))
     (dolist (node (cddr object-node))
       (when (consp node)

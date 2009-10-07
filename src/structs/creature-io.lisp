@@ -166,8 +166,8 @@
     (setf (command-aliases-of ch) (nreverse (command-aliases-of ch)))
     (setf (recently-killed-of ch) (nreverse (recently-killed-of ch)))
     (when (immortal-level-p ch)
-      (map-into (skills-of ch) (lambda () 100))
-      (map-into (tongues-of ch) (lambda () 100)))
+      (map-into (skills-of ch) (constantly 100))
+      (map-into (tongues-of ch) (constantly 100)))
     ch))
 
 (defun load-player-from-xml (idnum)
