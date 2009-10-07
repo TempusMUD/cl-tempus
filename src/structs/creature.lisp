@@ -157,7 +157,7 @@
    (last-tell-from :accessor last-tell-from-of :initarg :last-tell-from :initform nil)
    (last-tell-to :accessor last-tell-to-of :initarg :last-tell-to :initform nil)
    (imprint-rooms :accessor imprint-rooms-of :initarg :imprint-rooms :initform nil)
-   (recently-killed :accessor recently-killed-of :initarg :recently-killed :initform (make-hash-table))
+   (recently-killed :accessor recently-killed-of :initarg :recently-killed :initform nil)
    (olc-obj :accessor olc-obj-of :initarg :olc-obj :initform nil)
    (olc-mob :accessor olc-mob-of :initarg :olc-mob :initform nil)
    (olc-shop :accessor olc-shop-of :initarg :olc-shop :initform nil)
@@ -518,6 +518,7 @@
 (defun is-remort (ch) (plusp (remort-gen-of ch)))
 (defun is-npc (ch) (typep ch 'mobile))
 (defun is-undead (ch) (= (race-of ch) +race-undead+))
+(defun is-pet (ch) (mob-flagged ch +mob-pet+))
 
 (defun can-detect-disguise (ch vict level)
   (or (pref-flagged ch +pref-holylight+)

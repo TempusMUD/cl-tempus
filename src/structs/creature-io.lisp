@@ -157,14 +157,17 @@
           ("alias"
            (push (list (xml-attr node "alias")
                        (xml-attr node "replace"))
-                 (command-aliases-of ch))))))
+                 (command-aliases-of ch)))
+          ("recentkill"
+           (push (list (xml-attr node "vnum" :numeric t)
+                       (xml-attr node "times" :numeric t))
+                 (recently-killed-of ch))))))
 
     (setf (command-aliases-of ch) (nreverse (command-aliases-of ch)))
+    (setf (recently-killed-of ch) (nreverse (recently-killed-of ch)))
     (when (immortal-level-p ch)
-      (dotimes (idx +max-skills+)
-        (setf (aref (skills-of ch) idx) 100))
-      (dotimes (idx +max-tongues+)
-        (setf (aref (tongues-of ch) idx) 100)))
+      (map-into (skills-of ch) (lambda () 100))
+      (map-into (tongues-of ch) (lambda () 100)))
     ch))
 
 (defun load-player-from-xml (idnum)
@@ -366,10 +369,10 @@
               unless (zerop (aref (tongues-of ch) tongue))
               collect `("tongue" (("name" ,(tongue-name tongue))
                                   ("level" ,(aref (tongues-of ch) tongue)))))
-           (loop for vnum being the hash-keys of (recently-killed-of ch)
+           (loop for tuple in (recently-killed-of ch)
               collect `("recentkill"
-                        (("vnum" ,vnum)
-                         ("times" ,(gethash (recently-killed-of ch) vnum)))))
+                        (("vnum" ,(first tuple))
+                         ("times" ,(second tuple)))))
            (loop for griev in (grievances-of ch)
               collect `("grievance"
                         (("time" ,(timestamp-to-unix (time-of griev)))
