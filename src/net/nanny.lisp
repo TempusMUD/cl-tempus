@@ -289,7 +289,8 @@
       (setf (state-of cxn) 'new-account))
      ((account-exists line)
       (setf (account-of cxn) (load-account line))
-      (setf (state-of cxn) 'authenticate))
+
+      (setf (state-of cxn) (if *production-mode* 'authenticate 'main-menu)))
      (t
       (cxn-write cxn
                  "Sorry, that account does not exist.  Type 'new' to create another account.~%"))))
