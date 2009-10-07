@@ -25,6 +25,8 @@
 
 (defun spell-to-str (idnum)
   (name-of (aref *spell-info* idnum)))
+(defun str-to-spell (str)
+  (find str *spell-info* :test #'string-equal :key #'name-of))
 
 (defun apply-attribute-to-spell (spell child)
   (string-case (first child)

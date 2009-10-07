@@ -564,6 +564,45 @@
     (t
      "unknown")))
 
+;; Material predicates
+(defun is-paper (obj)
+  (and (>= (material-of obj) +mat-paper+) (< (material-of obj) +mat-cloth+)))
+(defun is-cloth (obj)
+  (and (>= (material-of obj) +mat-cloth+) (< (material-of obj) +mat-leather+)))
+(defun is-leather (obj)
+  (and (>= (material-of obj) +mat-leather+) (< (material-of obj) +mat-flesh+)))
+(defun is-flesh (obj)
+  (and (>= (material-of obj) +mat-flesh+) (< (material-of obj) +mat-vegetable+)))
+(defun is-vegetable (obj)
+  (and (>= (material-of obj) +mat-vegetable+) (< (material-of obj) +mat-wood+)))
+(defun is-wood (obj)
+  (and (>= (material-of obj) +mat-wood+) (< (material-of obj) +mat-metal+)))
+(defun is-metal (obj)
+  (and (>= (material-of obj) +mat-metal+) (< (material-of obj) +mat-plastic+)))
+(defun is-plastic (obj)
+  (and (>= (material-of obj) +mat-plastic+) (< (material-of obj) +mat-glass+)))
+(defun is-glass (obj)
+  (and (>= (material-of obj) +mat-glass+) (< (material-of obj) +mat-stone+)))
+(defun is-stone (obj)
+  (>= (material-of obj) +mat-stone+))
+
+(defun is-ferrous (obj)
+  (find (material-of obj) (list +mat-metal+
+                                +mat-iron+
+                                +mat-steel+
+                                +mat-bronze+
+                                +mat-mithril+
+                                +mat-adamantium+
+                                +mat-tin+)))
+(defun is-combustable (obj)
+  (or (is-paper obj)
+      (is-cloth obj)
+      (is-flesh obj)
+      (is-leather obj)
+      (is-vegetable obj)
+      (is-wood obj)))
+
+
 (defun unserialize-object (container victim room object-node)
   (let* ((vnum (xml-attr object-node "vnum" :numeric t))
          (obj (if (plusp vnum)

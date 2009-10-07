@@ -2255,3 +2255,15 @@ You feel slightly different.")
       (t
        (dolist (object objects)
          (perform-set ch object nil +oset-params+ param value))))))
+
+(defcommand (ch "damage" object amount kind) (:immortal)
+  (let ((objects (resolve-alias ch object (append (carrying-of ch)
+                                                  (contents-of (in-room-of ch))))))
+    (cond
+      ((null objects)
+       (send-to-char ch "You don't see any '~a' to damage.~%" object))
+      (t
+       (dolist (object objects)
+         (damage-eq ch object
+                    (parse-integer amount :junk-allowed t)
+                    (str-to-spell kind)))))))
