@@ -200,6 +200,10 @@
 (defun room-flagged (room flag)
   (logtest flag (flags-of room)))
 
+(defun room-is-outside (room)
+  (not (or (room-flagged room +room-indoors+)
+           (eql (terrain-of room) +sect-inside+))))
+
 (defun room-is-underwater (room)
   (let ((terrain (terrain-of room)))
     (or (= terrain +sect-underwater+)
