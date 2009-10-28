@@ -515,7 +515,18 @@
            (or (eql (plane-of (zone-of (in-room-of ch))) +plane-hell-5+)
                (eql (plane-of (zone-of (in-room-of ch))) +plane-hell-8+)))))
 
+(defun char-has-blood (ch)
+  (not (or (is-undead ch)
+           (is-elemental ch)
+           (is-golem ch)
+           (is-robot ch)
+           (is-plant ch)
+           (is-alien-1 ch)
+           (is-pudding ch)
+           (is-slime ch))))
+
 (defun is-remort (ch) (plusp (remort-gen-of ch)))
+(defun is-pc (ch) (typep ch 'player))
 (defun is-npc (ch) (typep ch 'mobile))
 (defun is-undead (ch) (= (race-of ch) +race-undead+))
 (defun is-pet (ch) (mob-flagged ch +mob-pet+))
