@@ -169,7 +169,6 @@
      (setf (position-of victim) +pos-stunned+))
     ((= (position-of victim) +pos-sleeping+)
      ;; wake them up from their nap
-     ;; TODO: check implementation of Creature::setPosition
      (setf (position-of victim) +pos-resting+))
     ((and (or (= (position-of victim) +pos-standing+)
               (= (position-of victim) +pos-flying+))
@@ -180,7 +179,7 @@
           (< (position-of victim) +pos-fighting+)
           (fighting-of victim))
      ;; if they're alive, not stunned, in a fight, and not +pos-fighting+
-     (when (and (is-npc victim) (zerop (wait-of victim)))
+     (when (and (is-npc victim) (zerop (wait-state-of victim)))
        (cond
          ((< (position-of victim) +pos-fighting+)
           (when (or (not (aff3-flagged victim +aff3-gravity-well+))
@@ -191,7 +190,7 @@
           (wait-state victim +pulse-violence+))
          (t
           (setf (position-of victim) +pos-fighting+)))))
-    ((or (not (is-npc victim)) (plusp (wait-of victim)))
+    ((and (link-of victim) (plusp (wait-of (link-of victim))))
      ;; handle players or waiting mobs
      (when (= (position-of victim) +pos-stunned+)
        ;; wear off being stunned
