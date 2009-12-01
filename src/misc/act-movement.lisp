@@ -15,7 +15,7 @@
   (find +item-boat+ (carrying-of ch) :key #'kind-of))
 
 (defun do-simple-move (ch dir mode need-specials-check)
-  (declare (ignore mode need-specials-check))
+  (declare (ignore need-specials-check))
 
   (when (plr-flagged ch +plr-afk+)
     (send-to-char ch "You are no longer afk.~%")
@@ -75,10 +75,30 @@
                     (is-fish ch)
                     (aff-flagged ch +aff-waterwalk+)
                     (is-carrying-boat ch))
-          (send-to-char ch "You need a boat to go there.~%"))
+          (send-to-char ch "You need a boat to go there.~%")
+          (return-from do-simple-move 1))
 
         (when (= (position-of ch) +pos-flying+)
           (send-to-char ch "You fly over the waters.~%")))
+
+      ;; If this room or the one we're going to needs wings, check for some
+      (when (and (room-is-open-air (in-room-of ch))
+                 (/= (position-of ch) +pos-flying+)
+                 (or (null (mounted-of ch))
+                     (/= (position-of (mounted-of ch)) +pos-flying+)))
+        (act ch
+             :all-emit "$n scramble$% wildly for a grasp of thin air!")
+        (return-from do-simple-move 1))
+      (when (and (room-is-open-air dest)
+                 (not (zone-is-nograv (zone-of (in-room-of ch))))
+                 (not (eql mode :jump))
+                 (/= (position-of ch) +pos-flying+)
+                 (or (not (mounted-of ch))
+                     (/= (position-of (mounted-of ch)) +pos-flying+)))
+        (send-to-char ch "You need to be flying to go there.~%")
+        (when (/= dir +up+)
+          (send-to-char ch "You can 'jump' in that direction however...~%"))
+        (return-from do-simple-move 1))
 
       (cond
         ((and (zerop (random-range 0 3))
@@ -220,6 +240,34 @@
         (act ch
              :subject-emit "You settle lightly to the ground."
              :place-emit "$n drifts downward and stands on the ground.")))
+     (setf (position-of ch) +pos-standing+))))
+
+(defcommand (ch "fly") (:sleeping)
+  (cond
+    ((and (aff3-flagged ch +aff3-gravity-well+)
+          (>= (random-range 1 20) (str-of ch)))
+     (act ch :subject-emit "The gravity well holds you fast to the ground!"))
+    ((or (= (position-of ch) +pos-standing+)
+         (= (position-of ch) +pos-sitting+)
+         (= (position-of ch) +pos-resting+))
+     (act ch
+          :subject-emit "Your feet lift from the ground."
+          :place-emit "$n begins to float above the ground.")
+     (setf (position-of ch) +pos-flying+))
+    ((= (position-of ch) +pos-sleeping+)
+     (act ch :subject-emit "You have to wake up first!"))
+    ((= (position-of ch) +pos-fighting+)
+     (act ch :subject-emit "You can't fly until you beat this fool off of you!"))
+    ((= (position-of ch) +pos-flying+)
+     (send-to-char ch "You are already in flight.~%"))
+    ((= (position-of ch) +pos-mounted+)
+     (when (mounted-of ch)
+       (act ch :target (mounted-of ch) :all-emit "$n rise$% off of $N.")
+       (setf (aff2-flags-of (mounted-of ch)) (logandc2 (aff2-flags-of (mounted-of ch)) +aff2-mounted+)))
+     (setf (mounted-of ch) nil)
+     (setf (position-of ch) +pos-flying+))
+    (t
+     (act ch :all-emit "$n stop$% floating around and puts $s feet on the ground.")
      (setf (position-of ch) +pos-standing+))))
 
 (defcommand (ch "rest") (:sleeping)
