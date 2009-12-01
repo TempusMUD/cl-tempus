@@ -414,11 +414,13 @@
 
 (defun remove-all-combat (ch)
   (setf (fighting-of ch) nil)
-  (setf (position-of ch) +pos-standing+)
+  (when (eql (position-of ch) +pos-fighting+)
+    (setf (position-of ch) +pos-standing+))
   (dolist (tch *characters*)
     (when (eql (fighting-of tch) ch)
       (setf (fighting-of tch) nil)
-      (setf (position-of tch) +pos-standing+))))
+      (when (eql (position-of tch) +pos-fighting+)
+        (setf (position-of tch) +pos-standing+)))))
 
 (defun char-from-room (ch check-specials-p)
   (assert (in-room-of ch) nil "NIL room in char-from-room")
