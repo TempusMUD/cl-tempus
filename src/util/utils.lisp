@@ -562,7 +562,8 @@ sequences in seq-list with the delimiter between each element"
      (act ch :target (master-of ch)
           :subject-emit "You stop following $N."
           :not-target-emit "$n stops following $N.")
-     (when (and (< (invis-level-of ch) (level-of (master-of ch)))
+     (when (and (or (is-npc ch)
+                    (< (invis-level-of ch) (level-of (master-of ch))))
                 (not (aff-flagged ch +aff-sneak+)))
        (act ch :target (master-of ch)
             :target-emit "$n stops following you."))))
