@@ -121,21 +121,23 @@
   (setf *shutdown* nil)
 
   (loop for pulse from 1
-        while (not *shutdown*) do
-        (when (> pulse 1000)
-          (setf pulse 0))
-        (sb-sys:ignore-interrupt sb-unix:sigpipe)
-        (let ((start-time (get-internal-real-time)))
-               (cxn-update-input)
-               (cxn-handle-commands)
-               (cxn-update-output)
-               (force-output)
-               (when (zerop (mod pulse (* +seconds-per-minute+ +passes-per-sec+)))
-                 (weather-and-time))
-               (let ((elapsed (/ (- (get-internal-real-time) start-time)
-                                 internal-time-units-per-second)))
-                 (when (< elapsed 0.1)
-                   (sleep (- 0.1 elapsed)))))))
+     while (not *shutdown*) do
+       (when (> pulse 1000)
+         (setf pulse 0))
+       (sb-sys:ignore-interrupt sb-unix:sigpipe)
+       (let ((start-time (get-internal-real-time)))
+         (cxn-update-input)
+         (cxn-handle-commands)
+         (cxn-update-output)
+         (force-output)
+         (when (zerop (mod pulse (* +seconds-per-minute+ +passes-per-sec+)))
+           (weather-and-time))
+         (when (zerop (mod pulse +passes-per-sec+))
+           (update-creatures))
+         (let ((elapsed (/ (- (get-internal-real-time) start-time)
+                           internal-time-units-per-second)))
+           (when (< elapsed 0.1)
+             (sleep (- 0.1 elapsed)))))))
 
 (defun get-first-printed-char (str)
   "Returns the position of the first character that isn't a terminal

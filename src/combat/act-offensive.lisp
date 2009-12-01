@@ -6,6 +6,9 @@
 (defun perform-hit (ch target)
   nil)
 
+(defun perform-flee (ch)
+  nil)
+
 (defcommand (ch "slay" target) (:immortal)
   (let* ((targets (resolve-alias ch target (people-of (in-room-of ch))))
          (tch (first targets)))

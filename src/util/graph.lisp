@@ -98,3 +98,6 @@
 
 (defun find-distance (start dest)
   (find-distance-recurse start dest 0))
+
+(defun hunt-victim (ch)
+  nil)

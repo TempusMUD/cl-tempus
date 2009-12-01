@@ -6,3 +6,6 @@
   (aref (value-of object) 1))
 (defun fuse-timer (object)
   (aref (value-of object) 2))
+
+(defun engage-self-destruct (ch)
+  nil)

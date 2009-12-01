@@ -122,6 +122,8 @@
                            :depends-on ("defs" "creature"))
              (:file "mail" :pathname "mobiles/mail"
                            :depends-on ("defs" "creature"))
+             (:file "mobact" :pathname "mobiles/mobact"
+                           :depends-on ("defs" "creature"))
              (:file "nanny" :pathname "net/nanny"
                             :depends-on ("defs" "utils" "config" "editor"
                                                 "network" "login" "mail"))
