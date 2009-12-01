@@ -138,7 +138,7 @@
   ((shared :accessor shared-of :initarg :shared :initform nil)
    (memory :accessor memory-of :initarg :memory :initform nil)
    (func-data :accessor func-data-of :initarg :func-data :initform nil)
-   (wait-state :accessor wait-state-of :initarg :wait-state :initform nil)
+   (wait-state :accessor wait-state-of :initarg :wait-state :initform 0)
    (last-direction :accessor last-direction-of :initarg :last-direction :initform nil)
    (mob-idnum :accessor mob-idnum-of :initarg :mob-idnum :initform nil)
    (prog-state :accessor prog-state-of :initarg :prog-state :initform nil)
@@ -500,6 +500,20 @@
                           (= (plane-of (zone-of (in-room-of ch)))
                              +plane-hell-6+)))))
 
+(defun char-withstands-heat (ch)
+  (or (immortalp ch)
+      (aff3-flagged ch +aff3-prot-heat+)
+      (is-undead ch)
+      (is-slaad ch)
+      (and (is-npc ch) (<= 16100 (vnum-of ch) 16699))
+      (= (char-class-of ch) +class-fire+)
+      (and (is-dragon ch) (= (char-class-of ch) +class-red+))
+      (and (is-devil ch) (or
+                          (= (plane-of (zone-of (in-room-of ch)))
+                             +plane-hell-4+)
+                          (= (plane-of (zone-of (in-room-of ch)))
+                             +plane-hell-6+)))))
+
 (defun char-withstands-cold (ch)
   (or (immortalp ch)
       (aff2-flagged ch +aff2-endure-cold+)
@@ -515,6 +529,11 @@
            (or (eql (plane-of (zone-of (in-room-of ch))) +plane-hell-5+)
                (eql (plane-of (zone-of (in-room-of ch))) +plane-hell-8+)))))
 
+(defun char-withstands-radiation (ch)
+  (or (immortalp ch)
+      (pref-flagged ch +pref-nohassle+)
+      (aff2-flagged ch +aff2-prot-rad+)))
+
 (defun char-has-blood (ch)
   (not (or (is-undead ch)
            (is-elemental ch)
@@ -525,6 +544,7 @@
            (is-pudding ch)
            (is-slime ch))))
 
+(defun is-dead (ch) (eql (position-of ch) +pos-dead+))
 (defun is-remort (ch) (plusp (remort-gen-of ch)))
 (defun is-pc (ch) (typep ch 'player))
 (defun is-npc (ch) (typep ch 'mobile))
