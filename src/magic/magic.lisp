@@ -159,9 +159,8 @@
       ((= type +saving-psi+)
        (incf save (- 15 (int-of ch))))
 
-      ((and (= type +saving-phy+)
-            (is-physic ch))
-       (decf save (+ (floor ch 8) (* (remort-gen-of ch) 2))))
+      ((= type +saving-phy+)
+       (decf save (+ (floor (level-of ch) 8) (* (remort-gen-of ch) 2))))
       (t
        (errlog "unknown savetype in calculate-saving-throw")))
     save))
