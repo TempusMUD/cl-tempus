@@ -46,10 +46,11 @@
   (dotimes (dir +num-of-dirs+)
     (when (and (can-go ch dir)
                (exit ch dir)
+               (plusp (to-room-of (exit ch dir)))
                (not (eql (exit ch dir) (in-room-of ch))))
       (let ((adjoining-room (real-room (to-room-of (exit ch dir)))))
         (send-to-room adjoining-room
-                      "Your blood freezes are you hear someone's death cry from ~a."
+                      "Your blood freezes as you hear someone's death cry from ~a."
                       (aref +from-dirs+ dir))
         (when (eql (in-room-of ch) (abs-exit adjoining-room (aref +rev-dir+ dir)))
           (dolist (tch (copy-list (people-of adjoining-room)))
