@@ -56,7 +56,7 @@
     (unless (zerop (gold-of ch))
       (obj-to-obj (make-money-object (gold-of ch) :gold) corpse))
     (unless (zerop (cash-of ch))
-      (obj-to-obj (make-money-object (gold-of ch) :cash) corpse))))
+      (obj-to-obj (make-money-object (cash-of ch) :cash) corpse))))
 
 (defun raw-kill (ch killer attacktype)
   (when (and (is-npc ch)
@@ -592,8 +592,9 @@
     ;; or righteous penetration
     (incf reduction
           (cond
-            ((or (not (is-affected-by-sanc ch attacker))
-                 (is-vampire ch))
+            ((and ch
+                  (or (not (is-affected-by-sanc ch attacker))
+                      (is-vampire ch)))
              0)
             ((and (not (is-neutral ch))
                   (or (is-cleric ch) (is-knight ch)))
@@ -680,10 +681,11 @@
     ;; Maximum damage reduction of 75%
     (/ (min reduction 75) 100)))
 
-(defun calculate-damage-cap (ch)
-  (if ch
-      (max (+ 20 (level-of ch) (* 2 (remort-gen-of ch)))
-           (+ (* 20 (level-of ch)) (* 2 (level-of ch) (remort-gen-of ch))))
+
+(defun calculate-damage-cap (attacker)
+  (if attacker
+      (max (+ 20 (level-of attacker) (* 2 (remort-gen-of attacker)))
+           (+ (* 20 (level-of attacker)) (* 2 (level-of attacker) (remort-gen-of attacker))))
       7000))
 
 (defun bad-attack-type (attack)
@@ -702,27 +704,30 @@
                      +type-rad-sickness+
                      +skill-holy-touch+)))
 
-(defun calculate-damage (ch victim amount kind)
-  ;; Quad damage affects PvE
-  (when (and (or (is-npc ch) (is-npc victim))
-             (affected-by-spell ch +spell-quad-damage+))
-    (setf amount (* amount 4)))
-  ;; Double damage
-  (when (aff3-flagged ch +aff3-double-damage+)
-    (setf amount (* amount 2)))
-  ;; Barbarian charge
-  (when (aff3-flagged ch +aff3-inst-aff+)
-    (let ((af (affected-by-spell ch +skill-charge+)))
-      (incf amount (* amount (floor (modifier-of af) 10)))))
-  ;; Sanctification
-  (let ((af (affected-by-spell ch +spell-sanctification+)))
-    (when af
-      (cond
-        ((and (is-evil victim) (not (is-soulless victim)))
-         (incf amount (floor (* amount (remort-gen-of ch)) 20)))
-        ((and (not (eql ch victim)) (is-good victim))
-         (send-to-char ch "You have been de-sanctified!~%")
-         (affect-remove ch af)))))
+(defun calculate-damage (attacker victim amount kind)
+  ;; These only apply when there's an attacker
+  (when attacker
+    ;; Quad damage affects PvE
+    (when (and (or (is-npc attacker) (is-npc victim))
+               (affected-by-spell attacker +spell-quad-damage+))
+      (setf amount (* amount 4)))
+    ;; Double damage
+    (when (aff3-flagged attacker +aff3-double-damage+)
+      (setf amount (* amount 2)))
+    ;; Barbarian charge
+    (when (aff3-flagged attacker +aff3-inst-aff+)
+      (let ((af (affected-by-spell attacker +skill-charge+)))
+        (incf amount (* amount (floor (modifier-of af) 10)))))
+    ;; Sanctification
+    (let ((af (affected-by-spell attacker +spell-sanctification+)))
+      (when af
+        (cond
+          ((and (is-evil victim) (not (is-soulless victim)))
+           (incf amount (floor (* amount (remort-gen-of attacker)) 20)))
+          ((and (not (eql attacker victim)) (is-good victim))
+           (send-to-char attacker "You have been de-sanctified!~%")
+           (affect-remove attacker af))))))
+
   ;; Damage modifier for not standing
   (when (< (position-of victim) +pos-fighting+)
     (incf amount
@@ -744,29 +749,29 @@
                             (mana-shield-low-of victim)))))
       (decf amount absorbed)
       (decf (mana-of victim)
-            (floor (* absorbed (- 1 (min (dam-reduction-of victim ch)) 0.5))))
+            (floor (* absorbed (- 1 (min (dam-reduction-of victim attacker)) 0.5))))
 
       (when (<= (mana-of victim) (mana-shield-low-of victim))
         (send-to-char victim "Your mana shield has expired.~%")
         (affect-from-char victim +spell-mana-shield+))))
   ;; Knights, clerics, and monks out of alignment
-  (when (and ch
-             (or (and (is-neutral ch)
-                      (or (is-knight ch) (is-cleric ch)))
-                 (and (not (is-neutral ch))
-                      (is-monk ch))))
+  (when (and attacker
+             (or (and (is-neutral attacker)
+                      (or (is-knight attacker) (is-cleric attacker)))
+                 (and (not (is-neutral attacker))
+                      (is-monk attacker))))
     (decf amount (floor amount 4)))
 
   ;; Lunar alignment damage bonuses and reduction
-  (when (and ch (is-class ch +class-cleric+) (is-evil ch))
+  (when (and attacker (is-class attacker +class-cleric+) (is-evil attacker))
     ;; evil clerics get an alignment-based damage bonus, up to 30% on
     ;; new moons, %10 otherwise.
-    (incf amount (floor (* amount (- (alignment-of ch)))
+    (incf amount (floor (* amount (- (alignment-of attacker)))
                         (if (eql (lunar-phase *lunar-day*) +moon-new+)
                             3000
                             10000))))
   ;; Damage reduction
-  (decf amount (* amount (dam-reduction-of victim ch)))
+  (decf amount (* amount (dam-reduction-of victim attacker)))
 
   ;; Very hard to damage mobs
   (when (or (is-pudding victim) (is-slime victim) (is-troll victim))
@@ -811,7 +816,7 @@
   (when (and (eql kind +spell-hailstorm+)
              (room-is-outside (in-room-of victim))
              (eql (sky-of (weather-of (zone-of (in-room-of victim))))
-                    :raining))
+                  :raining))
     (setf amount (* amount 2)))
 
   ;; Fire damage of all kinds
@@ -853,7 +858,7 @@
              (affected-by-spell victim +spell-chemical-stability+))
     (setf amount (floor amount 2)))
 
-  (floor (min (calculate-damage-cap ch) amount)))
+  (floor (min (calculate-damage-cap attacker) amount)))
 
 (defun remove-damage-sensitive-affects (ch)
   (when (aff-flagged ch +aff-sleep+)
@@ -901,7 +906,8 @@
       (decf (hitp-of victim) amount)
       (when (is-pc victim)
         (incf (total-dam-of victim) amount))
-      (gain-damage-exp ch victim amount)
+      (when ch
+        (gain-damage-exp ch victim amount))
       (remove-damage-sensitive-affects victim)
 
       (update-pos victim)
@@ -910,7 +916,7 @@
         ;; log death of victim
         (raw-kill victim ch kind))
 
-      (when (eql (master-of victim) ch)
+      (when (and ch (eql (master-of victim) ch))
         (stop-following victim))
 
       (plusp amount))))
