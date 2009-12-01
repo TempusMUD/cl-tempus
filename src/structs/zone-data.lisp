@@ -212,3 +212,11 @@
                                          :moonlight (moonlight-of (weather-of zone))
                                          :temp (temp-of (weather-of zone))
                                          :humid (humid-of (weather-of zone)))))
+
+
+
+(defun zone-is-nograv (zone)
+  (or (<= +plane-elem-water+ (plane-of zone) +plane-elem-neg+)
+      (= +plane-astral+ (plane-of zone))
+      (= +plane-pelem-magma+ (plane-of zone))
+      (= +plane-pelem-ooze+ (plane-of zone))))

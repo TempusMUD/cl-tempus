@@ -204,6 +204,25 @@
   (not (or (room-flagged room +room-indoors+)
            (eql (terrain-of room) +sect-inside+))))
 
+(defun room-in-prime-plane (room)
+  (<= (plane-of (zone-of room)) +max-prime-plane+))
+
+(defun room-is-sunny (room)
+  "Returns T if the room is outside and sunny, otherwise returns false"
+  (and (not (room-flagged room +room-dark+))
+       (not (room-in-prime-plane room))
+       (room-is-outside room)
+       (or (eql (sunlight-of (weather-of (zone-of room))) :rise)
+           (eql (sunlight-of (weather-of (zone-of room))) :light))))
+
+(defun room-is-watery (room)
+  (let ((terrain (terrain-of room)))
+    (or (= terrain +sect-water-noswim+)
+        (= terrain +sect-water-swim+)
+        (= terrain +sect-underwater+)
+        (= terrain +sect-elemental-water+)
+        (= terrain +sect-deep-ocean+))))
+
 (defun room-is-underwater (room)
   (let ((terrain (terrain-of room)))
     (or (= terrain +sect-underwater+)
@@ -217,6 +236,14 @@
         (= terrain +sect-elemental-radiance+)
         (= terrain +sect-elemental-lightning+)
         (= terrain +sect-elemental-vacuum+))))
+
+(defun room-has-air (room)
+  (let ((terrain (terrain-of room)))
+    (and (not (room-is-underwater room))
+         (not (or (= terrain +sect-pitch-sub+)
+                  (= terrain +sect-elemental-ooze+)
+                  (= terrain +sect-water-noswim+)
+                  (= terrain +sect-freespace+))))))
 
 (defun can-enter-room (ch room)
   t)
