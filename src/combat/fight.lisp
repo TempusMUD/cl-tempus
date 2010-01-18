@@ -34,18 +34,18 @@
     (loop
        for obj across (equipment-of ch)
        when (and obj (or lose-eq (unrentablep obj))) do
-         (unequip-char ch (worn-on-of obj) :worn nil)
+         (unequip-char ch (worn-on-of obj) :worn t)
          (obj-to-obj obj corpse))
     (loop
        for obj across (tattoos-of ch)
        when obj do
-         (unequip-char ch (worn-on-of obj) :worn nil)
+         (unequip-char ch (worn-on-of obj) :tattoo t)
          (extract-obj obj))
 
     (loop
        for obj across (implants-of ch)
        when (and obj (or lose-implants (unrentablep obj))) do
-         (unequip-char ch (worn-on-of obj) :worn nil)
+         (unequip-char ch (worn-on-of obj) :implant t)
          (obj-to-obj obj corpse))
 
     (dolist (obj (copy-list (carrying-of ch)))
