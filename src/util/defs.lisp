@@ -10,10 +10,10 @@
 
 (defparameter +level-ambassador+ 50)
 
-(defparameter +spec-file-mob+ "etc/spec_ass_mob")
-(defparameter +spec-file-obj+ "etc/spec_ass_obj")
-(defparameter +spec-file-rm+ "etc/spec_ass_room")
-(defparameter +timewarp-file+ "etc/timewarps")
+(defparameter +spec-file-mob+ "lib/etc/spec_ass_mob")
+(defparameter +spec-file-obj+ "lib/etc/spec_ass_obj")
+(defparameter +spec-file-rm+ "lib/etc/spec_ass_room")
+(defparameter +timewarp-file+ "lib/etc/timewarps")
 
 (defparameter +spec-mob+ 1)
 (defparameter +spec-obj+ 2)
