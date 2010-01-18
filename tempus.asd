@@ -105,7 +105,7 @@
              (:file "graph" :pathname "util/graph"
                              :depends-on ("creature" "room-data"))
              (:file "handler" :pathname "util/handler"
-                              :depends-on ("defs"))
+                              :depends-on ("defs" "creature" "obj-data" "room-data"))
              (:file "help" :pathname "help/help"
                            :depends-on ("defs" "utils" "interpreter"))
              (:file "house" :pathname "house/house"
@@ -177,6 +177,8 @@
                               :depends-on ("defs" "utils"))
              (:file "utils" :pathname "util/utils"
                             :depends-on ("defs" "logging" "network" "sight"))
+             (:file "vendor" :pathname "mobiles/vendor"
+                    :depends-on ("defs" "handler"))
              (:file "weather" :pathname "util/weather"
                               :depends-on ("zone-data"))
              (:file "zone-data" :pathname "structs/zone-data"

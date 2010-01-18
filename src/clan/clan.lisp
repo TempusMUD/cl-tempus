@@ -47,6 +47,9 @@
             :test #'string-abbrev
             :key 'name-of)))
 
+(defun clan-member-p (ch clan)
+  (find (idnum-of ch) (members-of clan)))
+
 (defun add-clan-member (ch clan)
   (setf (clan-of ch) (idnum-of clan))
   (setf (plr-bits-of ch) (logandc2 (plr-bits-of ch) +plr-clan-leader+))
