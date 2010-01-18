@@ -101,3 +101,23 @@
   (is (eql :find-all (tempus::find-all-dots "all")))
   (is (eql :find-alldot (tempus::find-all-dots "all.foo")))
   (is (eql :find-indiv (tempus::find-all-dots "foo"))))
+
+(deftest creature-matcher ()
+  (with-fixtures ((alice mock-player))
+    (let ((matcher (tempus::make-creature-matcher "allow mage
+deny elf
+deny lvl< 50
+foo
+allow all
+")))
+      (setf (tempus::char-class-of alice) tempus::+class-mage+)
+      (is (not (null (funcall matcher alice))))
+      (setf (tempus::char-class-of alice) tempus::+class-cleric+)
+      (is (null (funcall matcher alice)))
+      (setf (tempus::race-of alice) tempus::+race-elf+)
+      (is (null (funcall matcher alice))))))
+
+(deftest creature-matcher/allow-all ()
+  (with-fixtures ((alice mock-player))
+    (let ((matcher (tempus::make-creature-matcher "allow all")))
+      (is (not (null (funcall matcher alice)))))))

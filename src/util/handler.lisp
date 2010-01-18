@@ -949,3 +949,86 @@
                                        "credits money cash")
                           :description (money-description amount currency))))
     obj))
+
+(define-condition matcher-parse-error ()
+  ((msg :accessor msg-of :initarg msg)
+   (lineno :accessor lineno-of :initarg lineno)))
+
+(defun match-spec-to-predicate (tokens)
+  (let ((spec (first tokens))
+        (param (rest tokens)))
+    (let ((char-class (parse-player-class spec)))
+      (when char-class
+        (return-from match-spec-to-predicate
+          (lambda (ch) (is-class ch char-class)))))
+    (let ((race (parse-pc-race spec)))
+      (when race
+        (return-from match-spec-to-predicate
+          (lambda (ch) (is-race ch race)))))
+    (let ((clan (resolve-clan-alias spec)))
+      (when clan
+        (return-from match-spec-to-predicate
+          (lambda (ch) (clan-member-p ch clan)))))
+
+    (string-abbrev-case spec
+      ("all" (constantly t))
+      ("good" (lambda (ch) (is-good ch)))
+      ("evil" (lambda (ch) (is-evil ch)))
+      ("neutral" (lambda (ch) (is-neutral ch)))
+      ("criminal" (lambda (ch) (criminalp ch)))
+      ("player" (lambda (ch) (is-pc ch)))
+      ("lvl<" (let ((lvl (parse-integer (first param) :junk-allowed t)))
+                (if lvl
+                    (lambda (ch)
+                      (< (level-of ch) (parse-integer (first param))))
+                    (signal 'matcher-parse-error :msg (format nil "Invalid level '~a'"
+                                                              (first param))))))
+      ("lvl>" (let ((lvl (parse-integer (first param) :junk-allowed t)))
+                (if lvl
+                    (lambda (ch)
+                      (> (level-of ch) (parse-integer (first param))))
+                    (signal 'matcher-parse-error :msg (format nil "Invalid level '~a'"
+                                                              (first param))))))
+      ("clanleader" (lambda (ch) (plr-flagged ch +plr-clan-leader+)))
+      (t
+       (signal 'matcher-parse-error :msg (format nil "Invalid condition '~a'" spec))))))
+
+(defun match-clause-to-lambda (tokens prev)
+  (let* ((allow-or-deny (string-equal (first tokens) "allow"))
+         (complement (string-equal (second tokens) "not"))
+         (raw-predicate (match-spec-to-predicate (nthcdr (if complement 2 1) tokens)))
+         (predicate (if complement
+                        (complement raw-predicate)
+                        raw-predicate)))
+    (if prev
+        (lambda (ch)
+          (multiple-value-bind (result decided)
+              (funcall prev ch)
+            (cond
+              (decided
+               (values result t))
+              ((funcall predicate ch)
+               (values allow-or-deny t))
+              (t
+               nil))))
+        (lambda (ch)
+          (when (funcall predicate ch)
+            (values allow-or-deny t))))))
+
+(defun make-creature-matcher (text)
+  "Converts the text to a function which matches a creature with attributes described by the text.  Ignores lines which do not begin with 'allow' or 'deny'.  May signal a MATCHER-PARSE-ERROR if the text is invalid."
+  (with-input-from-string (str text)
+    (let ((result nil)
+          (lineno 1))
+      (handler-bind ((matcher-parse-error
+                      (lambda (err)
+                        (setf (lineno-of err) lineno)
+                        (signal err))))
+        (loop
+           for line = (read-line str nil)
+           while line do
+             (let ((tokens (split-sequence #\space line :remove-empty-subseqs t)))
+               (incf lineno)
+               (when (find (first tokens) '("allow" "deny") :test #'string-equal)
+                 (setf result (match-clause-to-lambda tokens result)))))
+        result))))
