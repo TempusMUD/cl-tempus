@@ -480,12 +480,12 @@ sequences in seq-list with the delimiter between each element"
      finally
      (cond
       (line-end
-       (cxn-write cxn "~a~a~%" (subseq buf 0 (1+ line-end))
+       (cxn-write cxn "~a~a~%" (string-replace "&" (subseq buf 0 (1+ line-end)) "&&")
                   (colorize cxn
                    "&r**** &nUse the 'more' command to continue. &r****&n"))
        (setf (page-buf-of cxn) (subseq buf (1+ line-end))))
       (t
-       (cxn-write cxn "~a" buf)
+       (cxn-write cxn "~a" (string-replace "&" buf "&&"))
        (setf (page-buf-of cxn) nil))))))
 
 (defun print-columns-to-string (cols width list)
