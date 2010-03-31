@@ -51,7 +51,7 @@
 
       (when (and (aff-flagged ch +aff-group+)
                  (pref-flagged ch +pref-autosplit+))
-        (perform-split ch gold :gold)))
+        (perform-split ch gold 'gold)))
     (when (plusp credits)
       (incf (cash-of ch) credits)
       (when (> credits +money-log-limit+)
@@ -425,7 +425,7 @@
 (defparameter +money-log-limit+ 50000000)
 
 (defun perform-drop-money (ch amount currency)
-  (let ((on-hand (if (eql currency :gold)
+  (let ((on-hand (if (eql currency 'gold)
                      (gold-of ch)
                      (cash-of ch))))
   (cond
@@ -437,14 +437,14 @@
      (let ((obj (make-money-object amount currency)))
        (obj-to-room obj (in-room-of ch))
        (act ch :item obj :all-emit "$n drop$% $p."))
-     (if (eql currency :gold)
+     (if (eql currency 'gold)
          (decf (gold-of ch) amount)
          (decf (cash-of ch) amount))
      (when (>= amount +money-log-limit+)
        (slog "MONEY: ~a has dropped ~a ~a in room #~d (~a)"
              (name-of ch)
              amount
-             (if (eql currency :gold) "coins" "credits")
+             (if (eql currency 'gold) "coins" "credits")
              (number-of (in-room-of ch))
              (name-of (in-room-of ch))))))))
 
@@ -591,12 +591,12 @@
              (title-of (in-room-of vict)))))))
 
 (defun perform-give-money (ch target amount kind)
-  (let ((money-desc (if (eql kind :gold) "coin" "credit")))
+  (let ((money-desc (if (eql kind 'gold) "coin" "credit")))
     (ecase kind
-      (:gold
+      (gold
        (decf (gold-of ch) amount)
        (incf (gold-of target) amount))
-      (:cash
+      (cash
        (decf (cash-of ch) amount)
        (incf (cash-of target) amount)))
 
@@ -1194,7 +1194,7 @@
       ((null amount)
        (send-to-char ch "That's not a proper amount of gold."))
       (t
-       (perform-drop-money ch amount :gold)))))
+       (perform-drop-money ch amount 'gold)))))
 
 (defcommand (ch "drop" amount-str "coin") (:resting)
   "Drop an amount of gold"
@@ -1203,7 +1203,7 @@
       ((null amount)
        (send-to-char ch "That's not a proper amount of gold."))
       (t
-       (perform-drop-money ch amount :gold)))))
+       (perform-drop-money ch amount 'gold)))))
 
 (defcommand (ch "drop" amount-str "coins") (:resting)
   "Drop an amount of gold"
@@ -1212,7 +1212,7 @@
       ((null amount)
        (send-to-char ch "That's not a proper amount of gold."))
       (t
-       (perform-drop-money ch amount :gold)))))
+       (perform-drop-money ch amount 'gold)))))
 
 (defcommand (ch "drop" amount-str "credits") (:resting)
   "Drop an amount of gold"
@@ -1221,7 +1221,7 @@
       ((null amount)
        (send-to-char ch "That's not a proper amount of credits."))
       (t
-       (perform-drop-money ch amount :cash)))))
+       (perform-drop-money ch amount 'cash)))))
 
 (defcommand (ch "wear") (:resting)
   (send-to-char ch "What do you want to wear?~%"))
@@ -1385,7 +1385,7 @@
       ((rest targets)
        (send-to-char ch "You can't give money to multiple people at once.~%"))
       (t
-       (perform-give-money ch (first targets) amount :gold)))))
+       (perform-give-money ch (first targets) amount 'gold)))))
 
 
 (defcommand (ch "give" amount-str "credits" "to" target) (:resting)
@@ -1401,7 +1401,7 @@
       ((rest targets)
        (send-to-char ch "You can't give money to multiple people at once.~%"))
       (t
-       (perform-give-money ch (first targets) amount :cash)))))
+       (perform-give-money ch (first targets) amount 'cash)))))
 
 (defcommand (ch "plant" thing) (:resting)
   (declare (ignore thing))
