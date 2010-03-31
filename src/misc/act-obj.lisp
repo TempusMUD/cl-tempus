@@ -1359,12 +1359,15 @@
           as next-obj = (second obj-sublist)
           as counter from 1
           do
-          (perform-give ch (first victs) obj)
-          (when (or (null next-obj)
-                    (string/= (name-of next-obj) (name-of obj)))
-            (act ch :target vict :item obj
-                 :all-emit (format nil "$n give$% $p to $N.~[~;~:;~:* (x~d)~]" counter))
-            (setf counter 0))))
+          (cond
+            ((perform-give ch (first victs) obj)
+             (when (or (null next-obj)
+                       (string/= (name-of next-obj) (name-of obj)))
+               (act ch :target vict :item obj
+                    :all-emit (format nil "$n give$% $p to $N.~[~;~:;~:* (x~d)~]" counter))
+               (setf counter 0)))
+            (t
+             (setf counter 0)))))
       ((eql mode :find-indiv)
        (send-to-char ch "You aren't carrying ~a ~a.~%" (a-or-an thing) thing))
       ((eql mode :find-all)
