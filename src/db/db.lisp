@@ -1355,7 +1355,7 @@
     (when (and (eql (zone-of (in-room-of ch)) zone)
                (mob-flagged ch +mob-spec+)
                (func-of (shared-of ch)))
-      (funcall (func-of (shared-of ch)) ch ch 0 "" +special-reset+)))
+      (funcall (func-of (shared-of ch)) +special-reset+ ch nil 0 "")))
 
   (let ((last-cmd 0)
         (last-mob nil)
