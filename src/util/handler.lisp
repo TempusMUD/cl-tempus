@@ -390,14 +390,37 @@
 (defun zone-number (vnum)
   (floor vnum 100))
 
-(defun obj-to-char (obj ch &optional sorted)
+
+(defun insert-into-list (obj list &key (test 'eql) (unsorted nil))
+  (cond
+    ((null list)
+     ;; Only element in list
+     (list obj))
+    (unsorted
+     ;; No sorting required - just stick on the end
+     (append list (list obj)))
+    (t
+     ;; Needs to be placed next to the same objs in the list
+     (let ((found nil))
+       (mapcon (lambda (o)
+                 (cond
+                   (found
+                    (list (car o)))
+                   ((null (cdr o))
+                    (list (car o) obj))
+                   ((funcall test (car o) obj)
+                    (setf found t)
+                    (list obj (car o)))
+                   (t
+                    (list (car o)))))
+               list)))))
+
+(defun obj-to-char (obj ch &optional unsorted)
   "give an object to a char"
   (assert obj nil "NIL obj passed to obj-to-char")
   (assert ch nil "NIL ch passed to obj-to-char")
 
-  (setf (carrying-of ch) (append (carrying-of ch) (list obj)))
-  (when sorted
-    (setf (carrying-of ch) (sort (carrying-of ch) #'vnum-of)))
+  (setf (carrying-of ch) (insert-into-list obj (carrying-of ch) :test 'same-obj :unsorted unsorted))
 
   (setf (carried-by-of obj) ch)
   (incf (carry-weight-of ch) (weight-of obj))
@@ -454,9 +477,9 @@
   (setf (people-of (in-room-of ch)) (delete ch (people-of (in-room-of ch))))
   (setf (in-room-of ch) nil))
 
-(defun obj-to-room (obj room)
+(defun obj-to-room (obj room &optional unsorted)
   (assert (null (in-room-of obj)) nil 'invalid-obj-to-room obj)
-  (setf (contents-of room) (append (contents-of room) (list obj)))
+  (setf (contents-of room) (insert-into-list obj (contents-of room) :test 'same-obj :unsorted unsorted))
   (setf (in-room-of obj) room))
 
 (defun obj-from-room (obj)
@@ -465,18 +488,15 @@
         (delete obj (contents-of (in-room-of obj))))
   (setf (in-room-of obj) nil))
 
-(defun obj-to-obj (obj obj-to &optional sorted)
+(defun obj-to-obj (obj obj-to &optional unsorted)
   "put an object in an object (quaint)"
 
   (assert obj nil "Illegal NIL object")
   (assert obj-to nil "Illegal NIL target object")
   (assert (not (eql obj obj-to)) nil "object is eql to target object")
 
-  (setf (contains-of obj-to) (append (contains-of obj-to) (list obj)))
+  (setf (contains-of obj-to) (insert-into-list obj (contains-of obj-to) :test 'same-obj :unsorted unsorted))
   (setf (in-obj-of obj) obj-to)
-
-  (when sorted
-    (setf (contains-of obj-to) (sort (contains-of obj-to) 'vnum-of)))
 
   ;; top level object. Subtract weight from inventory if necessary.
   (incf (weight-of obj-to) (weight-of obj))

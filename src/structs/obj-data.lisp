@@ -676,9 +676,9 @@
                ((string= (xml-attr node "type") "tattooed")
                 (equip-char victim obj position :tattoo))
                (container
-                (obj-to-obj obj container nil))
+                (obj-to-obj obj container t))
                (victim
-                (obj-to-char obj victim nil))
+                (obj-to-char obj victim t))
                (room
                 (obj-to-room obj room))
                (t
@@ -692,10 +692,9 @@
         (victim
          (obj-to-char obj victim nil))
         (room
-         (obj-to-room obj room))))
+         (obj-to-room obj room nil))))
 
     obj))
-
 
 (defun serialize-object (obj)
   ;; TODO: unapply temp affects from object
