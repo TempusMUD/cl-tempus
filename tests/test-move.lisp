@@ -1,6 +1,7 @@
 (in-package #:tempus.tests)
 
-(in-suite (defsuite (tempus.move :in test)))
+(defsuite (tempus.move :in test))
+(in-suite tempus.move)
 
 (deftest basic-movement ()
   (with-fixtures ((alice mock-player)

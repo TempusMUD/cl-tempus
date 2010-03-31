@@ -1,6 +1,7 @@
 (in-package #:tempus.tests)
 
-(in-suite (defsuite (tempus.io :in test)))
+(defsuite (tempus.io :in test))
+(in-suite tempus.io)
 
 (deftest apply-attribute-to-spell/granted-node/level-and-gen-set ()
   (let ((spell (make-instance 'tempus::spell-info)))

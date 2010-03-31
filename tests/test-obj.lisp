@@ -1,6 +1,7 @@
 (in-package #:tempus.tests)
 
-(in-suite (defsuite (tempus.obj :in test)))
+(defsuite (tempus.obj :in test))
+(in-suite tempus.obj)
 
 (deftest objs-containing-objs ()
   (with-fixtures ((obj-a mock-object :name "obj-a")

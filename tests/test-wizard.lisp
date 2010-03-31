@@ -1,6 +1,7 @@
 (in-package #:tempus.tests)
 
-(in-suite (defsuite (tempus.wizard :in test)))
+(defsuite (tempus.wizard :in test))
+(in-suite tempus.wizard)
 
 (deftest echo/normal/displays-to-room ()
   (with-fixtures ((alice mock-player)

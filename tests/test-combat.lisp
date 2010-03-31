@@ -1,6 +1,7 @@
 (in-package #:tempus.tests)
 
-(in-suite (defsuite (tempus.combat :in test)))
+(defsuite (tempus.combat :in test))
+(in-suite tempus.combat)
 
 (deftest update-pos/ch-at-negative-15-hitp/ch-is-dead ()
   (with-fixtures ((alice mock-player))

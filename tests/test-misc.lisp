@@ -1,6 +1,7 @@
 (in-package #:tempus.tests)
 
-(in-suite (defsuite (tempus.misc :in test)))
+(defsuite (tempus.misc :in test))
+(in-suite tempus.misc)
 
 (tempus::enable-regex-reader-syntax)
 
@@ -162,7 +163,7 @@
 
 (deftest do-alias/no-args-with-aliases/displays-all-aliases ()
   (with-fixtures ((alice mock-player))
-    (setf (tempus::command-aliases-of alice) (copy-list '(("foo" "bar") ("baz" "quux"))))
+    (setf (tempus::command-aliases-of alice) (copy-tree '(("foo" "bar") ("baz" "quux"))))
     (tempus::interpret-command alice "alias")
     (char-output-is alice "Currently defined aliases:~% &cfoo             &nbar~% &cbaz             &nquux~%")))
 
@@ -173,13 +174,13 @@
 
 (deftest do-alias/one-args-matching-aliases/displays-matching ()
   (with-fixtures ((alice mock-player))
-    (setf (tempus::command-aliases-of alice) (copy-list '(("foo" "bar") ("baz" "quux"))))
+    (setf (tempus::command-aliases-of alice) (copy-tree '(("foo" "bar") ("baz" "quux"))))
     (tempus::interpret-command alice "alias foo")
     (char-output-is alice "Aliases matching 'foo':~% &cfoo             &nbar~%")))
 
 (deftest do-alias/one-args-no-matching-aliases/displays-none ()
   (with-fixtures ((alice mock-player))
-    (setf (tempus::command-aliases-of alice) (copy-list '(("foo" "bar") ("baz" "quux"))))
+    (setf (tempus::command-aliases-of alice) (copy-tree '(("foo" "bar") ("baz" "quux"))))
     (tempus::interpret-command alice "alias bak")
     (char-output-is alice "Aliases matching 'bak':~% None.~%")))
 
@@ -191,20 +192,20 @@
 
 (deftest do-alias/existing-alias/modifies-alias ()
   (with-fixtures ((alice mock-player))
-    (setf (tempus::command-aliases-of alice) (copy-list '(("foo" "bar") ("baz" "quux"))))
+    (setf (tempus::command-aliases-of alice) (copy-tree '(("foo" "bar") ("baz" "quux"))))
     (tempus::interpret-command alice "alias foo bak")
     (is (equal '(("foo" "bak") ("baz" "quux")) (tempus::command-aliases-of alice)))
     (char-output-is alice "Alias 'foo' modified.~%")))
 
 (deftest do-unalias/existing-alias/removes-alias ()
   (with-fixtures ((alice mock-player))
-    (setf (tempus::command-aliases-of alice) (copy-list '(("foo" "bar") ("baz" "quux"))))
+    (setf (tempus::command-aliases-of alice) (copy-tree '(("foo" "bar") ("baz" "quux"))))
     (tempus::interpret-command alice "unalias foo")
     (is (equal '(("baz" "quux")) (tempus::command-aliases-of alice)))
     (char-output-is alice "Alias 'foo' removed.~%")))
 
 (deftest do-unalias/no-such-alias/emits-error ()
   (with-fixtures ((alice mock-player))
-    (setf (tempus::command-aliases-of alice) (copy-list '(("foo" "bar") ("baz" "quux"))))
+    (setf (tempus::command-aliases-of alice) (copy-tree '(("foo" "bar") ("baz" "quux"))))
     (tempus::interpret-command alice "unalias bar")
     (char-output-is alice "No such alias.~%")))

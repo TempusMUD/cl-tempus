@@ -1,6 +1,7 @@
 (in-package #:tempus.tests)
 
-(in-suite (defsuite (tempus.informative :in test)))
+(defsuite (tempus.informative :in test))
+(in-suite tempus.informative)
 
 (deftest look-command ()
   (with-fixtures ((alice mock-player))

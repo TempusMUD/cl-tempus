@@ -1,6 +1,7 @@
 (in-package #:tempus.tests)
 
-(in-suite (defsuite (tempus.comm :in test)))
+(defsuite (tempus.comm :in test))
+(in-suite tempus.comm)
 
 (deftest say ()
   (with-fixtures ((alice mock-player)

@@ -1,6 +1,7 @@
 (in-package #:tempus.tests)
 
-(in-suite (defsuite (tempus.parser :in test)))
+(defsuite (tempus.parser :in test))
+(in-suite tempus.parser)
 
 (deftest command-match ()
   (is (equal '(t nil)

@@ -1,6 +1,7 @@
 (in-package #:tempus.tests)
 
-(in-suite (defsuite (tempus.graph :in test)))
+(defsuite (tempus.graph :in test))
+(in-suite tempus.graph)
 
 (deftest mark/normal/marks-room ()
   (let ((room (tempus::real-room 3013)))

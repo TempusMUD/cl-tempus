@@ -1,6 +1,7 @@
 (in-package #:tempus.tests)
 
-(in-suite (defsuite (tempus.random :in test)))
+(defsuite (tempus.random :in test))
+(in-suite tempus.random)
 
 (deftest random-range ()
   (let ((a (random 100))

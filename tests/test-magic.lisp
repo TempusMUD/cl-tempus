@@ -1,6 +1,7 @@
 (in-package #:tempus.tests)
 
-(in-suite (defsuite (tempus.magic :in test)))
+(defsuite (tempus.magic :in test))
+(in-suite tempus.magic)
 
 (deftest mag-savingthrow/wizard/makes-save ()
   (with-fixtures ((alice mock-player))
@@ -42,7 +43,7 @@
     (setf (tempus::sigil-idnum-of tunic) 1)
     (setf (tempus::sigil-level-of tunic) 10)
     (tempus::obj-to-char tunic alice)
-    (function-trace-bind ((calls tempus::damage))
+    (function-trace-bind ((calls tempus::damage-creature))
         (tempus::explode-sigil alice tunic)
       (is (= 1 (length calls)))
       (is (equal "A leather tunic explodes when you pick it up!!~%"
@@ -58,7 +59,7 @@
     (setf (tempus::sigil-idnum-of tunic) 1)
     (setf (tempus::sigil-level-of tunic) 10)
     (tempus::obj-to-char tunic alice)
-    (function-trace-bind ((calls tempus::damage))
+    (function-trace-bind ((calls tempus::damage-creature))
         (tempus::explode-sigil alice tunic)
       (is (zerop (length calls)))
       (is (equal "A leather tunic feels rather warm to the touch and shudders violently.~%"

@@ -1,6 +1,7 @@
 (in-package #:tempus.tests)
 
-(in-suite (defsuite (tempus.clan :in test-full)))
+(defsuite (tempus.clan :in test-full))
+(in-suite tempus.clan)
 
 (deftest create-and-destroy-clan/normal/clan-created ()
   (let ((clan-id (+ 900 (random 100))))

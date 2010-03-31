@@ -1,6 +1,7 @@
 (in-package #:tempus.tests)
 
-(in-suite (defsuite (tempus.security :in test-full)))
+(defsuite (tempus.security :in test-full))
+(in-suite tempus.security)
 
 (deftest can-admin-group/is-level-72/returns-t ()
   (with-fixtures ((alice mock-player :fullp t))

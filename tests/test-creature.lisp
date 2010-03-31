@@ -1,6 +1,7 @@
 (in-package #:tempus.tests)
 
-(in-suite (defsuite (tempus.creature :in test)))
+(defsuite (tempus.creature :in test))
+(in-suite tempus.creature)
 
 (deftest gain-condition ()
   (with-fixtures ((alice mock-player))

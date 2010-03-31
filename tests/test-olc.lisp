@@ -1,6 +1,7 @@
 (in-package #:tempus.tests)
 
-(in-suite (defsuite (tempus.olc :in test)))
+(defsuite (tempus.olc :in test))
+(in-suite tempus.olc)
 
 (defmacro with-room-olc-fixture ((player room) &body body)
   `(with-fixtures ((,player mock-player :level 51 :override-security t)

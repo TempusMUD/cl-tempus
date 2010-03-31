@@ -1,6 +1,7 @@
 (in-package #:tempus.tests)
 
-(in-suite (defsuite (tempus.util :in test)))
+(defsuite (tempus.util :in test))
+(in-suite tempus.util)
 
 (deftest is-alias-of ()
   (is (tempus::is-alias-of "foo" "foo bar baz"))
