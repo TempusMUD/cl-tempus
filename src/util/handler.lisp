@@ -802,7 +802,8 @@
 (defun resolve-alias (ch arg list)
   "Returns a list of all objects and creatures in LIST visible to CH that match ARG"
   (cond
-    ((member arg '("me" "self") :test #'string-equal)
+    ((and (member arg '("me" "self") :test #'string-equal)
+          (find ch list))
      (list ch))
     (t
      (case (find-all-dots arg)
