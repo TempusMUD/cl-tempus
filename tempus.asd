@@ -12,6 +12,7 @@
                split-sequence
                asdf-system-connections
                local-time
+               cl-postgres+local-time
                cl-ppcre
                cffi
                xmls
