@@ -167,7 +167,7 @@
 (defun list-obj-to-char (stream obj-list ch mode show)
   (let ((corpse (and obj-list
                      (in-obj-of (first obj-list))
-                     (is-corpse (first obj-list))))
+                     (is-corpse (is-corpse (first obj-list)))))
         (found nil))
     (loop with o = obj-list
        for i = (car obj-list) then (car o)
@@ -198,9 +198,9 @@
           (setf o (cdr o))
           (show-obj-to-char stream i ch mode
                             (1+ (loop while (and o (same-obj (car o) i))
-                                   do (setf o (cdr o))
                                    when o
-                                   count (is-visible-to (car o) ch)))))))
+                                   count (is-visible-to (car o) ch)
+                                   do (setf o (cdr o))))))))
     (when (and (not found) show)
       (format stream " Nothing.~%"))))
 
