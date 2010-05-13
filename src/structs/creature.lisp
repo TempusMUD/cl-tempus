@@ -373,6 +373,7 @@
 (defun is-evil (ch) (<= (alignment-of ch) -350))
 (defun is-neutral (ch) (< -350 (alignment-of ch) 350))
 (defun is-sick (ch) (aff3-flagged ch +aff3-sickness+))
+(defun is-confused (ch) (aff-flagged ch +aff-confusion+))
 (defun is-hamstrung (ch) (aff3-flagged ch +aff3-hamstrung+))
 (defun has-poison-1 (ch) (aff-flagged ch +aff-poison+))
 (defun has-poison-2 (ch) (aff3-flagged ch +aff3-poison-2+))

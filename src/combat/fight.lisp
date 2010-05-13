@@ -414,9 +414,12 @@
                    ,flag))))
 
 (define-spell-predicate spell-is-psionic +mag-psionic+)
+(define-spell-predicate spell-is-physics +mag-physics+)
 (define-spell-predicate spell-is-bardic +mag-bard+)
 (define-spell-predicate spell-is-magic +mag-magic+)
 (define-spell-predicate spell-is-divine +mag-divine+)
+(define-spell-predicate spell-is-good +mag-good+)
+(define-spell-predicate spell-is-evil +mag-evil+)
 
 (defun can-damage-creature (ch victim weapon type)
   ;; Can't damage someone who is writing

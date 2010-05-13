@@ -17,6 +17,286 @@
    (lyrics :accessor lyrics-of :initarg :lyrics :initform nil)
    (instrumentalp :accessor instrumentalp :initarg :instrumentalp :initform nil)))
 
+(defun spell-mana-cost (ch spellnum)
+  (let* ((sinfo (aref *spell-info* spellnum))
+         (mana (max (mana-min-of sinfo)
+                    (- (mana-max-of sinfo)
+                       (* (mana-change-of sinfo)
+                          (aref (min-level-of sinfo) (char-class-of ch)))))))
+    (if (is-remort ch)
+        (min (max (mana-min-of sinfo)
+                    (- (mana-max-of sinfo)
+                       (* (mana-change-of sinfo)
+                          (aref (min-level-of sinfo) (remort-char-class-of ch)))))
+             mana)
+        mana)))
+
+(defun say-spell (ch spellnum tch tobj)
+  (let ((to-char nil) (to-vict nil) (to-room nil))
+    (cond
+      ((spell-is-psionic spellnum)
+       (cond
+         ((and tobj (eql (in-room-of tobj) (in-room-of ch)))
+          (setf to-char "You close your eyes and touch $p with a mental finger."
+                to-room "$n momentarily closes $s eyes and concentrates."))
+         ((or (null tch) (not (eql (in-room-of tch) (in-room-of ch))))
+          (setf to-char "You close your eyes and slip into a psychic world."
+                to-room "$n momentarily closes $s eyes and concentrates."))
+         ((eql ch tch)
+          (setf to-char "You close your eyes and concentrate."
+                to-room "$n momentarily closes $s eyes and concentrates."))
+         (t
+          (setf to-char "You close your eyes and touch $N with a mental finger."
+                to-vict "$n closes $s eyes and connects with your mind."
+                to-room "$n momentarily closes $s eyes and concentrates."))))
+      ((spell-is-physics spellnum)
+       (cond
+         ((and tobj (eql (in-room-of tobj) (in-room-of ch)))
+          (setf to-char "You look directly at $p and make a calculation."
+                to-room "$n looks directly at $p and makes a calculation."))
+         ((or (null tch) (not (eql (in-room-of tch) (in-room-of ch))))
+          (setf to-char "You close your eyes and slip into a deep calculation."
+                to-room "$n closes $s eyes and makes a deep calculation."))
+         ((eql ch tch)
+          (setf to-char "You close your eyes and make a calculation."
+                to-room "$n momentarily closes $s eyes and concentrates."))
+         (t
+          (setf to-char "You look at $N and make a calculation."
+                to-vict "$n closes $s eyes and alters the reality around you."
+                to-room "$n looks at $N and makes a calculation."))))
+      (t
+       (let ((spell-name (spell-to-str spellnum)))
+         (cond
+           ((and tobj (eql (in-room-of tobj) (in-room-of ch)))
+            (setf to-char (format nil "You stare at $p and utter the words, '~a'." spell-name)
+                  to-room (format nil "$n stares at $p and utters the words, '~a'." spell-name)))
+           ((or (null tch) (not (eql (in-room-of tch) (in-room-of ch))))
+            (setf to-char (format nil "You utter the words, '~a'." spell-name)
+                  to-room (format nil "$n utters the words, '~a'." spell-name)))
+           ((eql ch tch)
+            (setf to-char (format nil "You close your eyes and utter the words, '~a'." spell-name)
+                  to-room (format nil "$n closes $s eyes and utters the words, '~a'." spell-name)))
+           (t
+            (setf to-char (format nil "You stare at $N and utter, '~a'." spell-name)
+                  to-vict (format nil "$n stares at you and utters, '~a'." spell-name)
+                  to-room (format nil "$n stares at $N and utters, '~a'." spell-name)))))))
+    (act ch :target tch :item tobj
+         :subject-emit to-char
+         :target-emit to-vict
+         :not-target-emit to-room)))
+
+(defun parse-spell-name (args)
+  "Given the arguments to a casting command, returns the spellnum of
+  the spell to cast and the arguments to the spell as a string.
+  Returns NIL when no spell matches"
+  (let* ((quote-pos-1 (position #\' args))
+         (quote-pos-2 (and quote-pos-1 (position #\' args :start (1+ quote-pos-1)))))
+    (when quote-pos-1
+      (values
+       (position (subseq args (1+ quote-pos-1) quote-pos-2)
+                         *spell-info*
+                         :key 'name-of
+                         :test 'string-abbrev)
+       (if quote-pos-2 (string-trim " " (subseq args (1+ quote-pos-2))) "")))))
+
+(defun stats-can-learn-spell (level gen char-class remort-class spellnum)
+  (let ((info (aref *spell-info* spellnum)))
+    (or (and (>= level (aref (min-level-of info) char-class))
+             (>= gen (aref (min-gen-of info) char-class)))
+        (and (plusp gen)
+             (>= level (aref (min-level-of info) remort-class))
+             (zerop (aref (min-gen-of info) char-class))))))
+
+(defun can-learn-spell (ch spellnum)
+  (stats-can-learn-spell (level-of ch)
+                         (remort-gen-of ch)
+                         (char-class-of ch)
+                         (remort-char-class-of ch)
+                         spellnum))
+
+(defun spell-kind-desc (spellnum)
+  (let ((info (aref *spell-info* spellnum)))
+    (cond
+      ((logtest +mag-divine+ (routines-of info))
+       "spell")
+      ((logtest +mag-magic+ (routines-of info))
+       "spell")
+      ((logtest +mag-physics+ (routines-of info))
+       "alteration")
+      ((logtest +mag-psionic+ (routines-of info))
+       "trigger")
+      ((logtest +mag-bard+ (routines-of info))
+       "song")
+      (t
+       "ability"))))
+
+(defun find-door (room args spellnum)
+  nil)
+
+(defun find-spell-targets (ch args mode)
+  (multiple-value-bind (spellnum spell-args)
+      (parse-spell-name args)
+    (let ((target-flags (and spellnum (targets-of (aref *spell-info* spellnum)))))
+      (anaphora:acond
+        ((null spellnum)
+         (send-to-char ch "~a what?!?~%" mode)
+         nil)
+        ((and (can-learn-spell ch spellnum)
+              (< (check-skill ch spellnum) 30))
+         (send-to-char ch "You do not know that ~a!~%" (spell-kind-desc spellnum))
+         nil)
+        ((zerop (check-skill ch spellnum))
+         (send-to-char ch "You are unfamiliar with that ~a.~%" (spell-kind-desc spellnum))
+         nil)
+        ((logtest target-flags +tar-ignore+)
+         spellnum)
+        ((string= spell-args "")
+         (cond
+           ((logtest target-flags +tar-fight-self+)
+            (values t ch))
+           ((and (logtest target-flags +tar-fight-vict+)
+                 (fighting-of ch))
+            (values spellnum (random-elt (fighting-of ch))))
+           ((and (logtest target-flags +tar-char-room+)
+                 (not (violentp (aref *spell-info* spellnum)))
+                 (not (logtest target-flags +tar-unpleasant+)))
+            (values spellnum ch))
+           (t
+            (send-to-char ch "Upon ~a should the spell be cast?~%"
+                          (if (logtest target-flags
+                                       (logior +tar-obj-room+ +tar-obj-inv+ +tar-obj-world+))
+                              "what" "whom"))
+            nil)))
+        ((and (logtest target-flags +tar-dir+)
+              (position spell-args +dirs+ :test 'string-abbrev))
+         (values spellnum nil nil anaphora:it))
+        ((and (logtest target-flags +tar-char-room+)
+              (resolve-alias ch spell-args (people-of (in-room-of ch))))
+         (values spellnum anaphora:it))
+        ((and (logtest target-flags +tar-char-world+)
+              (resolve-alias ch spell-args *characters*))
+         (values spellnum anaphora:it))
+        ((and (logtest target-flags +tar-obj-inv+)
+              (resolve-alias ch spell-args (carrying-of ch)))
+         (values spellnum nil anaphora:it))
+        ((and (logtest target-flags +tar-obj-equip+)
+              (resolve-alias ch spell-args (remove nil (equipment-of ch))))
+         (values spellnum nil anaphora:it))
+        ((and (logtest target-flags +tar-obj-room+)
+              (resolve-alias ch spell-args (contents-of (in-room-of ch))))
+         (values spellnum nil anaphora:it))
+        ((and (logtest target-flags +tar-obj-world+)
+              (resolve-alias ch spell-args *object-list*))
+         (values spellnum nil anaphora:it))
+        ((logtest target-flags +tar-door+)
+         (find-door ch spell-args spellnum))))))
+
+(defun calc-failure-probability (ch spellnum)
+  (let ((failure-prob 0))
+    (when (and (or (is-cleric ch)
+                   (is-knight ch))
+               (spell-is-divine spellnum))
+      (decf failure-prob (+ (wis-of ch)
+                    (abs (floor (alignment-of ch)
+                                70))))
+      (when (is-neutral ch)
+        (incf failure-prob 30)))
+    (when (or (is-mage ch)
+              (is-ranger ch))
+      (decf failure-prob (+ (int-of ch)
+                            (dex-of ch))))
+
+    (when (is-sick ch)
+      (incf failure-prob 20))
+    (when (is-confused ch)
+      (incf failure-prob (- (random-range 35 55)
+                            (int-of ch))))
+    (when (and (not (immortalp ch))
+               (get-eq ch +wear-shield+))
+      (incf failure-prob (weight-of (get-eq ch +wear-shield+))))
+
+    (incf failure-prob (floor (* (+ (carry-weight-of ch) (worn-weight-of ch)) 8)
+                              (can-carry-weight ch)))
+
+    (let ((num-eq 0)
+          (metal-weight 0))
+      (loop for eq across (equipment-of ch)
+           for implant across (implants-of ch)
+           do
+           (when eq
+             (incf num-eq)
+             (when (is-metal eq)
+               (incf metal-weight (weight-of eq))))
+           (when (and implant (is-metal implant))
+             (incf metal-weight (weight-of implant))))
+      (incf failure-prob (- +num-wears+ num-eq))
+      (when (and (or (is-mage ch) (is-ranger ch))
+                 (spell-is-magic spellnum))
+        (incf failure-prob metal-weight)))
+
+    failure-prob))
+
+
+(defcommand (ch "cast") (:standing)
+  (send-to-char ch "You were going to cast something?~%"))
+(defcommand (ch "cast" args) (:standing)
+  (multiple-value-bind (spellnum target tch tobj tdir)
+      (find-spell-targets ch args "cast")
+    (when spellnum
+      (let ((mana-cost (spell-mana-cost ch spellnum)))
+        (cond
+          ((immortalp ch)
+           ;; Immorts can always cast
+           t)
+          ((not (or (is-mage ch)
+                    (is-cleric ch)
+                    (is-knight ch)
+                    (is-ranger ch)
+                    (immortalp ch)))
+           (send-to-char ch "You are not learned in the ways of magic.~%")
+           nil)
+          ((> (worn-weight-of ch) (* (can-carry-weight ch) 0.9))
+           (send-to-char ch "Your equipment is too heavy and bulky to cast anything useful!~%")
+           nil)
+          ((and (get-eq ch +wear-wield+)
+                (is-obj-stat2 (get-eq ch +wear-wield+) +item2-two-handed+))
+           (send-to-char ch "You can't cast spells while wielding a two handed weapon!~%")
+           nil)
+          ((and (room-flagged (in-room-of ch) +room-nomagic+)
+                (not (immortalp ch))
+                (or (spell-is-magic spellnum)
+                    (spell-is-divine spellnum)))
+           (act ch
+                :subject-emit "Your magic fizzles out and dies."
+                :place-emit "$n's magic fizzles out and dies."))
+          ((and (> (get-condition ch +drunk+) 5)
+                (> (random-range 1 35) (int-of ch)))
+           (send-to-char ch "Your mind is too clouded to cast any spells.~%"))
+          ((not (or (spell-is-magic spellnum) (spell-is-divine spellnum)))
+           (send-to-char ch "That is not a spell.~%"))
+          ((and (null target)
+                (not (logtest (targets-of (aref *spell-info* spellnum)) +tar-door+)))
+           (send-to-char ch "Cannot find the target of your spell!~%"))
+          ((and (plusp mana-cost)
+                (> mana-cost (mana-of ch))
+                (not (immortalp ch)))
+           (send-to-char ch "You haven't the energy to cast that spell!~%"))
+          ((and (not (immortalp ch))
+                (or (and (not (is-evil ch)) (spell-is-evil spellnum))
+                    (and (not (is-good ch)) (spell-is-good spellnum))))
+           (send-to-char ch "You cannot cast that spell.~%"))
+          ((> (+ (calc-failure-probability ch spellnum)
+                 (random-range 0 75))
+              (check-skill ch spellnum))
+           (spell-fumble ch tch tobj spellnum))
+          (t
+           (when (cast-spell ch tch tobj tdir spellnum)
+             (wait-state ch (min 0 (- (rl-sec 3) (if (is-mage ch) (remort-gen-of ch) 0))))
+             (when (plusp mana-cost)
+               (setf (mana-of ch) (pin (- (mana-of ch) mana-cost) 0 (max-mana-of ch))))
+             (gain-skill-proficiency ch spellnum))))))))
+
+
 (defun clear-spells ()
   (setf *spell-info* (make-array 1000))
   (dotimes (idx 1000)

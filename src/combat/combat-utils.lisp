@@ -191,7 +191,7 @@
           (wait-state victim +pulse-violence+))
          (t
           (setf (position-of victim) +pos-fighting+)))))
-    ((and (link-of victim) (plusp (wait-of (link-of victim))))
+    ((is-pc victim)
      ;; handle players or waiting mobs
      (when (= (position-of victim) +pos-stunned+)
        ;; wear off being stunned
