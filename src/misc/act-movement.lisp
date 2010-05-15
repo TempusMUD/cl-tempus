@@ -11,6 +11,34 @@
         (subseq str 0 space-pos)
         str)))
 
+(defun find-door (ch args action)
+  (destructuring-bind (type &optional dir)
+      (cl-ppcre:split "\\s+" args)
+    (if dir
+        (let ((door (position dir +dirs+ :test 'string-abbrev)))
+          (cond
+            ((null door)
+             (send-to-char ch "That's not a direction.~%")
+             nil)
+            ((null (exit ch door))
+             (send-to-char ch "I don't see how you can ~a anything there.~%" action)
+             nil)
+            ((null (keyword-of (exit ch door)))
+             door)
+            ((not (string-abbrev type (keyword-of (exit ch door))))
+             (send-to-char ch "I see no ~a there.~%" type)
+             nil)
+            (t
+             door)))
+        (loop for door from 0 upto (1- +num-of-dirs+) do
+             (when (and (exit ch door)
+                        (keyword-of (exit ch door))
+                        (string-abbrev type (keyword-of (exit ch door))))
+                 (return-from find-door door))
+             finally (progn
+                       (send-to-char ch "I see no ~a there.~%" type)
+                       nil)))))
+
 (defun is-carrying-boat (ch)
   (find +item-boat+ (carrying-of ch) :key #'kind-of))
 
