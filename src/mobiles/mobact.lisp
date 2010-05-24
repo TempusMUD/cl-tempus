@@ -644,9 +644,104 @@
 (defun update-creatures ()
   (dolist (ch (copy-list *characters*))
     (unless (eql (position-of ch) +pos-dead+)
-      (with-simple-restart (continue "Continue from signal in command handler")
+      (with-simple-restart (continue "Continue from signal in creature updates")
         (if *break-on-error*
             (update-creature ch)
             (handler-bind ((error (lambda (str)
                                     (errlog "System error: ~a" str))))
               (update-creature ch)))))))
+
+(defmacro while-alive ((ch-expr) &body body)
+  (let ((ch-sym (gensym "CH-")))
+    `(let ((,ch-sym ,ch-expr))
+       (block while-alive
+         ,@(loop for form in body
+              append (list form
+                           `(when (is-dead ch) (return-from while-alive))))))))
+
+(defun single-mobile-activity (ch)
+  ;; Utility mobs don't do anything
+  (when (and (is-npc ch) (mob-flagged ch +mob-utility+))
+    (return-from single-mobile-activity))
+
+  (let ((cur_class (if (and (is-remort ch) (zerop (random 3)))
+                       (remort-char-class-of ch)
+                       (char-class-of ch))))
+    (while-alive (ch)
+      ;; Second level of poisoning
+      (when (and (has-poison-2 ch)
+                 (not (immortalp ch)))
+        (let ((damager (let ((af (affected-by-spell ch +spell-poison+)))
+                         (when af
+                           (get-char-in-world-by-idnum (owner-of af))))))
+          (damage-creature ch damager (+ (dice 4 3)
+                                         (if (affected-by-spell ch +spell-metabolism+)
+                                             (dice 4 11) 0))
+                           +spell-poison+)))
+      ;; Bleed
+      (when (and (char-has-blood ch)
+                 (< (hitp-of ch) (+ (floor (max-hitp-of ch) 8)
+                                    (random (max 1 (floor (max-hitp-of ch) 16))))))
+        (add-blood-to-room (in-room-of ch) 1))
+      ;; Zen of Motion Effect
+      (when (and (is-neutral ch)
+                 (affected-by-spell ch +zen-motion+))
+        (setf (move-of ch) (min (max-move-of ch)
+                                (+ (move-of ch)
+                                   (random (max 1
+                                                (floor (check-skill ch +zen-motion+)
+                                                       8)))))))
+      ;; Deplete scuba tanks
+      (let* ((mask (aref (equipment-of ch) +wear-face+))
+             (tank (and mask (aux-obj-of obj))))
+        (when (and mask
+                   (is-obj-kind mask +item-scuba-mask+)
+                   (not (car-closed mask))
+                   tank
+                   (is-obj-kind tank +item-scuba-tank+)
+                   (plusp (obj-val-of tank 1))
+                   (plusp (obj-val-of tank 0)))
+          (decf (obj-val-of tank 1))
+          (cond
+            ((zerop (obj-val-of tank 1))
+             (act ch :item tank
+                  :subject-emit "A warning indicator reads: $p fully depleted."))
+            ((= (obj-val-of tank 1) 5)
+             (act ch :item tank
+                  :subject-emit "A warning indicator reads: $p air level low.")))))
+
+      ;; nothing below this affects fighting characters
+      (when (fighting-of ch)
+        (return-from single-mobile-activity))
+
+      ;; Meditate
+      (when (and (is-neutral ch)
+                 (eql (position-of ch) +pos-sitting+)
+                 (aff2-flagged ch +aff2-meditate+))
+        (perform-monk-meditate ch))
+
+      ;; Check if we've gotten knocked down
+      (when (and (is-npc ch)
+                 (not (mob2-flagged ch +mob2-mount+))
+                 (not (aff-flagged ch +aff-sleep+))
+                 (< (wait-of ch) 30)
+                 (>= (position-of ch) +pos-sleeping+)
+                 (< (position-of ch) (default-pos-of ch))
+                 (or (<= (default-pos-of ch) +pos-standing+)
+                     (< (position-of ch) +pos-standing+)))
+        (cond
+          ((= (default-pos ch) +pos-sitting+)
+           (act ch :all-emit "$n sit$% up.")
+           (setf (position-of ch) +pos-sitting+))
+          ((or (aff3-flagged ch +aff3-gravity-well+)
+               (< (number 1 20) (str-of ch)))
+           (act ch :all-emit "$n stand$% up.")
+           (setf (position-of ch) +pos-standing+))))
+
+      (when (or (not (awake ch))
+                (plusp (wait-of ch))
+                (check-wait ch))
+        (return-from single-mobile-activity))
+
+
+      )))
