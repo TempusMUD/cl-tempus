@@ -324,10 +324,10 @@
   (affect-total ch))
 
 (defmethod affected-by-spell ((ch creature) kind)
-  (find kind (affected-of ch) :key 'kind-of))
+  (find (the fixnum kind) (the list (affected-of ch)) :key 'kind-of))
 
 (defmethod affected-by-spell ((obj obj-data) kind)
-  (find kind (tmp-affects-of obj) :key 'kind-of))
+  (find kind (the list (tmp-affects-of obj)) :key 'kind-of))
 
 (defun affect-join (ch af
                     add-duration-p

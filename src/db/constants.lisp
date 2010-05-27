@@ -1225,20 +1225,20 @@
 (defparameter +sex-female+ 2)
 
 ;;; Positions
-(defparameter +bottom-pos+ 0)
-(defparameter +pos-dead+ 0) ; dead
-(defparameter +pos-mortallyw+ 1)    ; mortally wounded
-(defparameter +pos-incap+ 2)    ; incapacitated
-(defparameter +pos-stunned+ 3)  ; stunned
-(defparameter +pos-sleeping+ 4) ; sleeping
-(defparameter +pos-resting+ 5)  ; resting
-(defparameter +pos-sitting+ 6)  ; sitting
-(defparameter +pos-fighting+ 7) ; fighting
-(defparameter +pos-standing+ 8) ; standing
-(defparameter +pos-flying+ 9)   ; flying around
-(defparameter +pos-mounted+ 10)
-(defparameter +pos-swimming+ 11)
-(defparameter +top-pos+ 11)
+(defconstant +bottom-pos+ 0)
+(defconstant +pos-dead+ 0) ; dead
+(defconstant +pos-mortallyw+ 1)    ; mortally wounded
+(defconstant +pos-incap+ 2)    ; incapacitated
+(defconstant +pos-stunned+ 3)  ; stunned
+(defconstant +pos-sleeping+ 4) ; sleeping
+(defconstant +pos-resting+ 5)  ; resting
+(defconstant +pos-sitting+ 6)  ; sitting
+(defconstant +pos-fighting+ 7) ; fighting
+(defconstant +pos-standing+ 8) ; standing
+(defconstant +pos-flying+ 9)   ; flying around
+(defconstant +pos-mounted+ 10)
+(defconstant +pos-swimming+ 11)
+(defconstant +top-pos+ 11)
 
 (defparameter +position-types+
   #("dead" "mortally wounded" "incapacitated" "stunned" "sleeping" "resting" "sitting" "fighting" "standing" "flying" "mounted" "swimming"))
