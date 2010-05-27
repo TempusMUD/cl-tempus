@@ -20,7 +20,7 @@
   (clrhash *access-groups-idnum*)
   (clrhash *access-groups-name*)
   (clrhash *command-access-groups*)
-  (dolist (tuple (query (:select 'sgroups.idnum 'sgroups.name 'sgroups.descrip
+  (dolist (tuple (postmodern:query (:select 'sgroups.idnum 'sgroups.name 'sgroups.descrip
                                  'admin.name
                                  :from 'sgroups :outer-join (:as 'sgroups 'admiN)
                                  :on (:= 'admin.idnum 'sgroups.admin))
@@ -34,7 +34,7 @@
       (setf (gethash (first tuple) *access-groups-idnum*) new-group)
       (setf (gethash (second tuple) *access-groups-name*) new-group)))
 
-  (dolist (tuple (query (:select 'sgroup 'command :from 'sgroup_commands) :rows))
+  (dolist (tuple (postmodern:query (:select 'sgroup 'command :from 'sgroup_commands) :rows))
     (let ((group (gethash (first tuple) *access-groups-idnum*)))
       (if group
           (progn
@@ -42,7 +42,7 @@
             (push (second tuple) (commands-of group)))
           (slog "WARNING: group #~a not found while loading commands." (first tuple)))))
 
-  (dolist (tuple (query (:select 'sgroup 'player :from 'sgroup_members) :rows))
+  (dolist (tuple (postmodern:query (:select 'sgroup 'player :from 'sgroup_members) :rows))
     (let ((group (gethash (first tuple) *access-groups-idnum*)))
       (if group
           (push (second tuple) (members-of group))
@@ -74,7 +74,7 @@
   (let ((player-id (retrieve-player-idnum player-name)))
     (when (and player-id
                (not (find player-id (members-of group))))
-      (execute (:insert-into 'sgroup_members :set
+      (postmodern:execute (:insert-into 'sgroup_members :set
                              'sgroup (idnum-of group)
                              'player player-id))
       (setf (members-of group) (sort (cons player-id (members-of group)) #'<))
@@ -83,7 +83,7 @@
 (defun remove-group-member (group player-name)
   (let ((player-id (retrieve-player-idnum player-name)))
     (when (and player-id (find player-id (members-of group)))
-      (execute (:delete-from 'sgroup_members :where
+      (postmodern:execute (:delete-from 'sgroup_members :where
                              (:and (:= 'sgroup (idnum-of group))
                                    (:= 'player player-id))))
       (setf (members-of group) (delete player-id (members-of group)))
@@ -91,7 +91,7 @@
 
 (defun add-group-command (group command)
   (unless (find command (commands-of group) :test #'string=)
-    (execute (:insert-into 'sgroup_commands :set
+    (postmodern:execute (:insert-into 'sgroup_commands :set
                            'sgroup (idnum-of group)
                            'command command))
     (setf (commands-of group) (sort (cons command (commands-of group)) #'string<))
@@ -99,7 +99,7 @@
 
 (defun remove-group-command (group command)
   (when (find command (commands-of group) :test #'string=)
-    (execute (:delete-from 'sgroup_commands :where
+    (postmodern:execute (:delete-from 'sgroup_commands :where
                            (:and (:= 'sgroup (idnum-of group))
                                  (:= 'command command))))
     (setf (commands-of group) (delete command (commands-of group) :test #'string=))
@@ -107,13 +107,13 @@
 
 (defun create-group (name)
   (unless (gethash name *access-groups-name*)
-    (let ((new-idnum (1+ (query (:select (:max 'idnum) :from 'sgroups) :single))))
+    (let ((new-idnum (1+ (postmodern:query (:select (:max 'idnum) :from 'sgroups) :single))))
       (let ((new-group (make-instance 'access-group
                                       :idnum new-idnum
                                       :name name
                                       :description "No description"
                                       :admin-group nil)))
-        (execute (:insert-into 'sgroups :set
+        (postmodern:execute (:insert-into 'sgroups :set
                                'idnum new-idnum
                                'name name
                                'descrip "No description"))
@@ -124,10 +124,10 @@
 (defun remove-group (name)
   (let ((group (gethash name *access-groups-name*)))
     (when group
-      (execute (:update 'sgroups :set 'admin :null :where (:= 'admin (idnum-of group))))
-      (execute (:delete-from 'sgroup_members :where (:= 'sgroup (idnum-of group))))
-      (execute (:delete-from 'sgroup_commands :where (:= 'sgroup (idnum-of group))))
-      (execute (:delete-from 'sgroups :where (:= 'idnum (idnum-of group))))
+      (postmodern:execute (:update 'sgroups :set 'admin :null :where (:= 'admin (idnum-of group))))
+      (postmodern:execute (:delete-from 'sgroup_members :where (:= 'sgroup (idnum-of group))))
+      (postmodern:execute (:delete-from 'sgroup_commands :where (:= 'sgroup (idnum-of group))))
+      (postmodern:execute (:delete-from 'sgroups :where (:= 'idnum (idnum-of group))))
 
       (remhash name *access-groups-name*)
       (remhash (idnum-of group) *access-groups-idnum*)
@@ -184,7 +184,7 @@
       ((not (can-admin-group ch group-name))
        (send-to-char ch "You cannot alter this group.~%"))
       (t
-       (execute (:update 'sgroups :set 'admin :null :where (:= 'idnum (idnum-of group))))
+       (postmodern:execute (:update 'sgroups :set 'admin :null :where (:= 'idnum (idnum-of group))))
        (setf (admin-group-of group) nil)
        (send-to-char ch "Administrative group unset.~%")))))
 
@@ -199,7 +199,7 @@
       ((null admin-group)
        (send-to-char ch "'~a' is not a valid group.~%" admin-name))
       (t
-       (execute (:update 'sgroups
+       (postmodern:execute (:update 'sgroups
                          :set 'admin (idnum-of admin-group)
                          :where (:= 'idnum (idnum-of group))))
        (setf (admin-group-of group) admin-name)
@@ -245,7 +245,7 @@
        (send-to-char ch "'~a' is not a valid group.~%" group-name))
       (t
        (setf (description-of group) description)
-       (execute (:update 'sgroups :set 'descrip description :where (:= 'idnum (idnum-of group))))
+       (postmodern:execute (:update 'sgroups :set 'descrip description :where (:= 'idnum (idnum-of group))))
        (send-to-char ch "Description set.~%")
        (slog "Security: Group '~a' described by ~a." (name-of group) (name-of ch))))))
 

@@ -58,23 +58,23 @@ the password."
   (setf *account-max-idnum* (max-account-id))
 
   (slog "Getting character count")
-  (let ((player-count (query (:select (:count '*) :from 'players) :single)))
+  (let ((player-count (postmodern:query (:select (:count '*) :from 'players) :single)))
     (if (zerop player-count)
         (slog "WARNING: No characters loaded")
         (slog "... ~d character~p in db" player-count player-count))))
 
 (defun max-account-id ()
   "Returns the maximum account id in the database"
-  (or (query (:select (:max 'idnum) :from 'accounts) :single) 0))
+  (or (postmodern:query (:select (:max 'idnum) :from 'accounts) :single) 0))
 
 (defun max-player-id ()
   "Returns the maximum player id in the database"
-  (or (query (:select (:max 'idnum) :from 'players) :single) 0))
+  (or (postmodern:query (:select (:max 'idnum) :from 'players) :single) 0))
 
 (defun account-exists (name)
   "Returns true if the account with the given name exists.  The comparison
 is case-insensitive."
-  (= (query (:select (:count '*)
+  (= (postmodern:query (:select (:count '*)
              :from 'accounts
              :where (:= (:lower 'name) (string-downcase name)))
             :single)
@@ -84,7 +84,7 @@ is case-insensitive."
   (let ((new-account (make-instance 'account
                                     :idnum (1+ (max-account-id))
                                     :name name)))
-    (execute (:insert-into 'accounts :set
+    (postmodern:execute (:insert-into 'accounts :set
                            'idnum (idnum-of new-account)))
     (save-account new-account)
     new-account))
@@ -96,7 +96,7 @@ be loaded from the database or it may be retrieved from a cache."
          (cached (gethash canonical-name *account-name-cache* nil)))
     (if cached
         cached
-        (let ((result (query (:select '*
+        (let ((result (postmodern:query (:select '*
                                       :from 'accounts
                                       :where (:= (:lower 'name) canonical-name))
                              :alist))
@@ -119,12 +119,12 @@ be loaded from the database or it may be retrieved from a cache."
                                            :name (cdr (assoc :name info))
                                            :birth-time (if (eql (cdr (assoc :birth-time info)) :null) (now) (cdr (assoc :birth-time info)))
                                            :login-time (if (eql (cdr (assoc :login-time info)) :null) (now) (cdr (assoc :login-time info)))))
-                          (query (:order-by (:select 'idnum 'name 'birth-time 'login-time :from 'players :where (:= 'account (idnum-of account))) 'idnum) :alists)))
+                          (postmodern:query (:order-by (:select 'idnum 'name 'birth-time 'login-time :from 'players :where (:= 'account (idnum-of account))) 'idnum) :alists)))
             account)))))
 
 (defmethod save-account ((account account))
   "Saves the account information into the database."
-  (execute (:update 'accounts :set
+  (postmodern:execute (:update 'accounts :set
             'name (name-of account)
             'password (password-of account)
             'email (email-of account)
@@ -142,13 +142,13 @@ be loaded from the database or it may be retrieved from a cache."
 (defun account-login (account cxn)
   "Performs necessary tasks for an account upon a successful login."
   (setf (login-time-of account) (now))
-  (setf (login-addr-of account) (peer-addr cxn))
+  (setf (login-addr-of account) (peer-addr-of cxn))
   (save-account account)
   (syslog "~a logged in" (name-of account)))
 
 (defun account-logout (account cxn)
   (setf (login-time-of account) (now))
-  (setf (login-addr-of account) (peer-addr cxn))
+  (setf (login-addr-of account) (peer-addr-of cxn))
   (save-account account)
   (syslog "~a logged out" (name-of account)))
 
@@ -177,7 +177,7 @@ NIL if it is invalid in some way."
 
 (defun player-name-exists (name)
   "Returns T if a player exists with the given name."
-  (plusp (query (:select (:count '*)
+  (plusp (postmodern:query (:select (:count '*)
                  :from 'players
                  :where (:= (:lower 'name) (string-downcase name)))
                 :single)))
@@ -185,7 +185,7 @@ NIL if it is invalid in some way."
 (defun retrieve-player-idnum (name)
   "Retrieves the idnum of the player with the given name from the database.
 Returns NIL if the player did not exist."
-  (query (:select 'idnum
+  (postmodern:query (:select 'idnum
                   :from 'players
                   :where (:= (:lower 'name) (string-downcase name)))
          :single))
@@ -193,7 +193,7 @@ Returns NIL if the player did not exist."
 (defun retrieve-player-name (idnum)
   "Retrieves the name of the player with the given idnum from the database.
 Returns NIL if the player did not exist."
-  (query (:select 'name
+  (postmodern:query (:select 'name
                   :from 'players
                   :where (:= 'idnum idnum))
          :single))
@@ -201,7 +201,7 @@ Returns NIL if the player did not exist."
 (defun retrieve-player-account (idnum)
   "Retrieves the account id of the player with the given idnum from the database.
 Returns NIL if the player did not exist."
-  (query (:select 'account :from 'players :where (:= 'idnum idnum))
+  (postmodern:query (:select 'account :from 'players :where (:= 'idnum idnum))
          :single))
 
 (defun retrieve-account-name (idnum)
@@ -210,7 +210,7 @@ or the cache.  Returns NIL if the account does not exist."
   (let ((account (gethash idnum *account-idnum-cache*)))
     (if account
         (name-of account)
-        (query (:select 'name :from 'accounts :where (:= 'idnum idnum))
+        (postmodern:query (:select 'name :from 'accounts :where (:= 'idnum idnum))
                :single))))
 
 (defun create-new-player (actor account)
@@ -224,7 +224,7 @@ file."
                                        :name (name-of actor)
                                        :birth-time now
                                        :login-time now)))
-    (execute (:insert-into 'players :set
+    (postmodern:execute (:insert-into 'players :set
                            'idnum (idnum-of actor)
                            'account (idnum-of account)
                            'name (name-of actor)
@@ -246,7 +246,7 @@ file."
         (setf (owner-of clan) 0))))
 
   ;; Clear the owner of any clans this player might own on the db
-  (execute (:update 'clans
+  (postmodern:execute (:update 'clans
                     :set 'owner :null
                     :where (:= 'owner (idnum-of ch))))
 
@@ -254,12 +254,12 @@ file."
   (let ((clan (real-clan (clan-of ch))))
     (when clan
       (setf (members-of clan) (delete (idnum-of ch) (members-of clan)))))
-  (execute (:delete-from 'clan_members :where (:= 'player (idnum-of ch))))
+  (postmodern:execute (:delete-from 'clan_members :where (:= 'player (idnum-of ch))))
 
   ;; Remove character from any access groups
   (dolist (group (hash-values *access-groups-idnum*))
     (setf (members-of group) (delete (idnum-of ch) (members-of group))))
-  (execute (:delete-from 'sgroup_members :where (:= 'player (idnum-of ch))))
+  (postmodern:execute (:delete-from 'sgroup_members :where (:= 'player (idnum-of ch))))
 
   ;; Remove character from any quests they might have joined
   (unless (zerop (quest-id-of ch))
@@ -270,21 +270,21 @@ file."
   ;; Remove character from trusted lists - we have to take the accounts
   ;; in memory into consideration when we do this, so we have to go
   ;; through each account
-  (dolist (account-id (query (:select 'account
+  (dolist (account-id (postmodern:query (:select 'account
                                       :from 'trusted
                                       :where (:= 'player (idnum-of ch)))
                              :list))
     (let ((account (load-account account-id)))
       (setf (trust-of account) (delete (idnum-of ch) (trust-of account)))))
-  (execute (:delete-from 'trusted :where (:= 'player (idnum-of ch))))
+  (postmodern:execute (:delete-from 'trusted :where (:= 'player (idnum-of ch))))
 
   ;; TODO: Remove from the bounty list
   ;; (remove-bounties (idnum-of ch))
-  (execute (:delete-from 'bounty_hunters :where (:or (:= 'idnum (idnum-of ch))
+  (postmodern:execute (:delete-from 'bounty_hunters :where (:or (:= 'idnum (idnum-of ch))
                                                      (:= 'victim (idnum-of ch)))))
 
   ;; Disassociate author from board messages
-  (execute (:update 'board_messages
+  (postmodern:execute (:update 'board_messages
                     :set 'author :null
                     :where (:= 'author (idnum-of ch))))
 
@@ -292,7 +292,7 @@ file."
   (setf (players-of (account-of ch))
         (delete (idnum-of ch) (players-of (account-of ch))
                 :key 'idnum-of))
-  (execute (:delete-from 'players :where (:= 'idnum (idnum-of ch))))
+  (postmodern:execute (:delete-from 'players :where (:= 'idnum (idnum-of ch))))
 
   ;; Remove character from game
   (when (in-room-of ch)

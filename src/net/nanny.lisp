@@ -850,7 +850,7 @@ You may type 'help <race>' for information on any of the available races.
           ((null prev-actor)
            (setf (actor-of cxn) (load-player-from-xml (idnum-of player)))
            (setf (login-time-of player) (now))
-           (execute (:update 'players :set
+           (postmodern:execute (:update 'players :set
                              'login-time (login-time-of player)
                              :where (:= 'idnum (idnum-of player))))
            (setf (link-of (actor-of cxn)) cxn)

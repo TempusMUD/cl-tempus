@@ -168,20 +168,20 @@
   (slog "Resetting the game time:")
   (reset-time)
 
-  (unless (and *database*
-               (connected-p *database*))
+  (unless (and postmodern:*database*
+               (postmodern:connected-p postmodern:*database*))
     (set-local-time-cl-postgres-readers)
     (slog "Connecting to postgres.")
-    (apply 'connect-toplevel
+    (apply 'postmodern:connect-toplevel
            (if *production-mode*
                '("tempus" "realm" "" "localhost")
                '("devtempus" "realm" "" "localhost"))))
 
   (when *production-mode*
     (slog "Vacuuming old database transactions")
-    (execute (:vacuum :full :analyze)))
+    (postmodern:execute (:vacuum :full :analyze)))
 
-  (setf *top-unique-id*  (query (:select 'last-value :from 'unique-id) :single))
+  (setf *top-unique-id*  (postmodern:query (:select 'last-value :from 'unique-id) :single))
   (slog "Top unique object id = ~d" *top-unique-id*)
 
   (account-boot)

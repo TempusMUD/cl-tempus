@@ -55,7 +55,7 @@
   (setf (plr-bits-of ch) (logandc2 (plr-bits-of ch) +plr-clan-leader+))
   (push (make-instance 'clan-member :idnum (idnum-of ch))
         (members-of clan))
-  (execute (:insert-into 'clan_members :set
+  (postmodern:execute (:insert-into 'clan_members :set
                          'clan (clan-of ch)
                          'player (idnum-of ch)
                          'rank 0
@@ -68,20 +68,20 @@
                                   :key 'idnum-of))
   (when (eql (owner-of clan) (idnum-of ch))
     (setf (owner-of clan) 0))
-  (execute (:delete-from 'clan_members
+  (postmodern:execute (:delete-from 'clan_members
                          :where (:= 'player (idnum-of ch)))))
 
 (defun add-clan-room (room clan)
   (setf (flags-of room) (logior (flags-of room) +room-clan-house+))
   (push room (rooms-of clan))
-  (execute (:insert-into 'clan_rooms :set
+  (postmodern:execute (:insert-into 'clan_rooms :set
                          'clan (idnum-of clan)
                          'room (number-of room))))
 
 (defun remove-clan-room (room clan)
   (setf (flags-of room) (logandc2 (flags-of room) +room-clan-house+))
   (setf (rooms-of clan) (delete room (rooms-of clan)))
-  (execute (:delete-from 'clan_rooms :where (:= 'room (number-of room)))))
+  (postmodern:execute (:delete-from 'clan_rooms :where (:= 'room (number-of room)))))
 
 (defun send-to-clan (clan-id fmt &rest args)
   (let ((msg (format nil "~?" fmt args)))
@@ -275,7 +275,7 @@
 (defun boot-clans ()
   (slog "Reading clans")
   (clrhash *clans*)
-  (dolist (clan-record (query (:select 'idnum
+  (dolist (clan-record (postmodern:query (:select 'idnum
                                        'name
                                        'badge
                                        'bank
@@ -292,14 +292,14 @@
       (setf (gethash (idnum-of new-clan) *clans*) new-clan)))
 
   ;; Add the ranks to the clan
-  (dolist (rank-record (query (:select 'clan 'rank 'title :from 'clan_ranks)))
+  (dolist (rank-record (postmodern:query (:select 'clan 'rank 'title :from 'clan_ranks)))
     (let ((clan (real-clan (first rank-record)))
           (rank (second rank-record)))
       (setf (top-rank-of clan) (max (top-rank-of clan) rank))
       (setf (aref (rank-names-of clan) rank) (third rank-record))))
 
   ;; Now add all the members to the clans
-  (dolist (member-record (query (:order-by
+  (dolist (member-record (postmodern:query (:order-by
                                  (:select 'clan 'player 'rank 'no_mail
                                           :from 'clan_members)
                                  'rank)))
@@ -314,7 +314,7 @@
             (members-of clan))))
 
   ;; Add the rooms to the clans
-  (dolist (room-record (query (:select 'clan 'room :from 'clan_rooms)))
+  (dolist (room-record (postmodern:query (:select 'clan 'room :from 'clan_rooms)))
     (let ((clan (real-clan (first room-record)))
           (room (real-room (second room-record))))
       (when room
@@ -327,7 +327,7 @@
           "Attempt to create clan with existing id")
   (let ((clan (make-instance 'clan :idnum idnum)))
     (setf (gethash idnum *clans*) clan)
-    (execute (:insert-into 'clans :set
+    (postmodern:execute (:insert-into 'clans :set
                            'idnum idnum
                            'name (name-of clan)
                            'badge (badge-of clan)
@@ -338,10 +338,10 @@
   (assert (gethash idnum *clans*) nil
           "Attempt to delete non-existing clan")
   (let ((clan (real-clan idnum)))
-    (execute (:delete-from 'clan_rooms :where (:= 'clan idnum)))
-    (execute (:delete-from 'clan_members :where (:= 'clan idnum)))
-    (execute (:delete-from 'clan_ranks :where (:= 'clan idnum)))
-    (execute (:delete-from 'clans :where (:= 'idnum idnum)))
+    (postmodern:execute (:delete-from 'clan_rooms :where (:= 'clan idnum)))
+    (postmodern:execute (:delete-from 'clan_members :where (:= 'clan idnum)))
+    (postmodern:execute (:delete-from 'clan_ranks :where (:= 'clan idnum)))
+    (postmodern:execute (:delete-from 'clans :where (:= 'idnum idnum)))
 
     (dolist (member (members-of clan))
       (let ((ch (or (gethash (idnum-of member) *character-map*)
@@ -569,7 +569,7 @@
                (rank-of target-member))
 
        (incf (rank-of target-member))
-       (execute (:update 'clan_members :set 'rank (rank-of target-member)
+       (postmodern:execute (:update 'clan_members :set 'rank (rank-of target-member)
                          :where (:= 'player (idnum-of target))))))))
 
 (defcommand (ch "demote") ()
@@ -607,7 +607,7 @@
                (rank-of target-member))
 
        (decf (rank-of target-member))
-       (execute (:update 'clan_members :set 'rank (rank-of target-member)
+       (postmodern:execute (:update 'clan_members :set 'rank (rank-of target-member)
                          :where (:= 'player (idnum-of target))))))))
 
 (defcommand (ch "clanmail") ()
@@ -622,7 +622,7 @@
        (if (no-mail-of member)
            (send-to-char ch "You are not receiving any mail addressed to your clan.~%")
            (send-to-char ch "You now receive clan mailings.~%"))
-       (execute (:update 'clan_members :set 'no_mail (no-mail-of member)
+       (postmodern:execute (:update 'clan_members :set 'no_mail (no-mail-of member)
                          :where (:= 'player (idnum-of ch))))))))
 
 (defcommand (ch "clanlist") ()
@@ -714,7 +714,7 @@
       (t
        (let ((old-name (name-of clan)))
          (setf (name-of clan) new-name)
-         (execute (:update 'clans :set 'name new-name :where (:= 'idnum (idnum-of clan))))
+         (postmodern:execute (:update 'clans :set 'name new-name :where (:= 'idnum (idnum-of clan))))
          (send-to-char ch "You got it.~%")
          (slog "(cedit) ~a set clan ~a[~d] name to '~a'"
                (name-of ch)
@@ -735,7 +735,7 @@
        (send-to-char ch "Clan badges can't be more than ~d characters.~%" +max-clan-badge+))
       (t
        (setf (badge-of clan) new-badge)
-       (execute (:update 'clans :set 'badge new-badge :where (:= 'idnum (idnum-of clan))))
+       (postmodern:execute (:update 'clans :set 'badge new-badge :where (:= 'idnum (idnum-of clan))))
        (send-to-char ch "You got it.~%")
        (slog "(cedit) ~a set clan ~a[~d] badge to '~a'"
              (name-of ch)
@@ -758,9 +758,9 @@
        (send-to-char ch "The new top rank must be a number between 0 and ~a.~%" +num-clan-ranks+))
       (t
        (setf (top-rank-of clan) rank)
-       (execute (:update 'clan_members :set 'rank rank :where (:and (:= 'clan (idnum-of clan))
+       (postmodern:execute (:update 'clan_members :set 'rank rank :where (:and (:= 'clan (idnum-of clan))
                                                                     (:> 'rank (top-rank-of clan)))))
-       (execute (:delete-from 'clan_ranks :where (:and (:= 'clan (idnum-of clan))
+       (postmodern:execute (:delete-from 'clan_ranks :where (:and (:= 'clan (idnum-of clan))
                                                        (:> 'rank (top-rank-of clan)))))
        (send-to-char ch "You got it.~%")
        (slog "(cedit) ~a set clan ~a[~d] top rank to '~a'"
@@ -784,7 +784,7 @@
        (send-to-char ch "The bank account must be a positive number.~%"))
       (t
        (setf (bank-of clan) bank)
-       (execute (:update 'clan :set 'bank bank :where (:= 'clan (idnum-of clan))))
+       (postmodern:execute (:update 'clan :set 'bank bank :where (:= 'clan (idnum-of clan))))
        (send-to-char ch "You got it.~%")
        (slog "(cedit) ~a set clan ~a[~d] bank to '~a'"
              (name-of ch)
@@ -807,7 +807,7 @@
        (send-to-char ch "There is no such player as '~a'~%" owner-str))
       (t
        (setf (owner-of clan) owner-id)
-       (execute (:update 'clan :set 'owner owner-id :where (:= 'clan (idnum-of clan))))
+       (postmodern:execute (:update 'clan :set 'owner owner-id :where (:= 'clan (idnum-of clan))))
        (send-to-char ch "You got it.~%")
        (slog "(cedit) ~a set clan ~a[~d] owner to ~a[~d]"
              (name-of ch)
@@ -843,7 +843,7 @@
        (send-to-char ch "The clan rank must be a number from 0 to ~d.~%" (top-rank-of clan)))
       (t
        (setf (rank-of member-rec) rank)
-       (execute (:update 'clan_members :set 'rank rank :where (:= 'player member-id)))
+       (postmodern:execute (:update 'clan_members :set 'rank rank :where (:= 'player member-id)))
        (send-to-char ch "You got it.~%")
        (slog "(cedit) ~a set clan ~a[~d] member ~a[~d] to rank ~d"
              (name-of ch)
