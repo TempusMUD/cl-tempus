@@ -1526,12 +1526,12 @@
 
 (defcommand (ch "shutdown") (:immortal)
   (send-to-char ch "Shutting down...~%")
-  (setf *shutdown* t))
+  (iolib:exit-event-loop *event-base*))
 
 (defcommand (ch "shutdown" mode) (:immortal)
   (declare (ignore mode))
   (send-to-char ch "Shutting down...~%")
-  (setf *shutdown* t))
+  (iolib:exit-event-loop *event-base*))
 
 (defcommand (ch "eval" expr) (:wizard)
   "Command function to evaluate an arbitrary lisp expression."
@@ -2021,7 +2021,7 @@ You feel slightly different.")
         (when (typep cxn 'tempus-cxn)
           (incf displayed-count)
           (send-to-char ch " ~3d ~12a ~a ~(~15a~) ~2d ~8a &g~a&n~%"
-                        (cxn-fd cxn)
+                        (socket-os-fd (socket-of cxn))
                         (if (account-of cxn)
                             (name-of (account-of cxn))
                             "   -   ")
@@ -2042,7 +2042,7 @@ You feel slightly different.")
                                            :format '((:hour 2 #\0) #\:
                                                      (:min 2 #\0) #\:
                                                      (:sec 2 #\0)))
-                        (peer-addr cxn))))
+                        (peer-addr-of cxn))))
       (send-to-char ch "~d visible socket~:p connected.~%" displayed-count))))
 
 (defcommand (ch "badge") (:immortal)

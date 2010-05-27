@@ -98,6 +98,7 @@
   #+nil (verify-tempus-integrity)
 
   (slog "Opening mother connection.")
+  (setf *event-base* (make-instance 'event-base))
   (cxn-listen port 'tempus-cxn)
 
   (slog "Signal trapping.")
@@ -117,27 +118,14 @@
   (slog "Normal termination of game."))
 
 (defun game-loop ()
-  "The main loop of the program, it iterates here until *shutdown* is non-NIL."
-  (setf *shutdown* nil)
+  "The main loop of the program."
 
-  (loop for pulse from 1
-     while (not *shutdown*) do
-       (when (> pulse 1000)
-         (setf pulse 0))
-       (sb-sys:ignore-interrupt sb-unix:sigpipe)
-       (let ((start-time (get-internal-real-time)))
-         (cxn-update-input)
-         (cxn-handle-commands)
-         (cxn-update-output)
-         (force-output)
-         (when (zerop (mod pulse (* +seconds-per-minute+ +passes-per-sec+)))
-           (weather-and-time))
-         (when (zerop (mod pulse +passes-per-sec+))
-           (update-creatures))
-         (let ((elapsed (/ (- (get-internal-real-time) start-time)
-                           internal-time-units-per-second)))
-           (when (< elapsed 0.1)
-             (sleep (- 0.1 elapsed)))))))
+  (sb-sys:ignore-interrupt sb-unix:sigpipe)
+
+  (add-timer *event-base* (lambda () (weather-and-time)) 60)
+  (add-timer *event-base* (lambda () (update-creatures)) 1)
+
+  (event-dispatch *event-base*))
 
 (defun get-first-printed-char (str)
   "Returns the position of the first character that isn't a terminal

@@ -96,10 +96,6 @@
     (t
      (mudlog 'warning t "attempt to set cxn to state ~a" state)))
 
-  ;; Disconnect connection when state is disconnecting
-  (when (eql (state-of cxn) 'disconnecting)
-    (setf (cxn-connected cxn) nil))
-
   ;; send telnet DONT ECHO when the new state is a password state
   (when (password-state-p (state-of cxn))
     (cxn-write cxn "~c~c~c"
@@ -129,7 +125,7 @@
                        (colorize cxn (format nil "~?" fmt args))))))
 
 (defmethod handle-accept ((cxn tempus-cxn))
-  (mudlog 'info t "New connection received from ~a" (peer-addr cxn))
+  (mudlog 'info t "New connection received from ~a" (peer-addr-of cxn))
   (cxn-write cxn "~a" +greetings+)
   (setf (state-of cxn) 'login))
 
@@ -144,7 +140,7 @@
       (cxn-write cxn "~%"))
     (setf (need-prompt-p cxn) nil)))
 
-(defmethod handle-close :before ((cxn tempus-cxn))
+(defmethod cxn-close :before ((cxn tempus-cxn))
   (cond
     ((null (account-of cxn))
      (mudlog 'info t "Closing connection without account"))
@@ -181,9 +177,9 @@
       ;; push each alias expansion into the command queue of the actor
       ;; (in reverse for proper ordering)
       (push (expand-single-alias cmd-line args split-args)
-            (cxn-commands (link-of actor))))
+            (commands-of (link-of actor))))
     ;; return the first command string
-    (string-left-trim '(#\\) (pop (cxn-commands (link-of actor))))))
+    (string-left-trim '(#\\) (pop (commands-of (link-of actor))))))
 
 (defun expand-aliases (actor str)
   (cond
@@ -283,8 +279,7 @@
   (input (cxn line)
    (cond
      ((string= line "")
-      (setf (cxn-connected cxn) nil)
-      (setf (state-of cxn) 'disconnecting))
+      (cxn-close cxn))
      ((string-equal line "new")
       (setf (state-of cxn) 'new-account))
      ((account-exists line)
@@ -809,8 +804,9 @@ You may type 'help <race>' for information on any of the available races.
       (send-state-menu cxn 'main-menu))
      ((or (char-equal (char line 0) #\l) (eql (char line 0) #\0))
       (cxn-write cxn "Goodbye!~%")
-      (setf (cxn-connected cxn) nil)
-      (setf (state-of cxn) 'disconnecting))
+      (setf (connectedp cxn) nil)
+      (setf (state-of cxn) 'disconnecting)
+      (cxn-close cxn))
      ((char-equal (char line 0) #\c)
       (setf (state-of cxn) 'new-player-name))
      ((char-equal (char line 0) #\p)
@@ -860,7 +856,7 @@ You may type 'help <race>' for information on any of the available races.
            (send-to-char prev-actor "You have logged on from another location!~%")
            (setf (actor-of (link-of prev-actor)) nil)
            (setf (state-of (link-of prev-actor)) 'disconnecting)
-           (setf (cxn-connected (link-of prev-actor)) nil)
+           (setf (connectedp (link-of prev-actor)) nil)
            (setf (link-of prev-actor) cxn)
            (setf (actor-of cxn) prev-actor)
            (setf (state-of cxn) 'playing)
@@ -1079,11 +1075,23 @@ else is noticable about your character?
 
 (defvar *break-on-error* t)
 
+(defun handle-command (cxn)
+  (when (commands-of cxn)
+    (setf (need-prompt-p cxn) t)
+    (let ((cmd (pop (commands-of cxn))))
+      (if *break-on-error*
+          (cxn-do-command cxn cmd)
+          (handler-bind ((error (lambda (str)
+                                  (cxn-write cxn "You become mildly queasy as reality distorts momentarily.~%")
+                                  (errlog "System error: ~a" str)
+                                  (invoke-restart 'continue))))
+            (cxn-do-command cxn cmd))))))
+
 (defun cxn-handle-commands ()
   (dolist (cxn *cxns*)
-    (when (cxn-commands cxn)
+    (when (commands-of cxn)
       (setf (need-prompt-p cxn) t)
-      (let ((cmd (pop (cxn-commands cxn))))
+      (let ((cmd (pop (commands-of cxn))))
         (if *break-on-error*
             (cxn-do-command cxn cmd)
             (handler-bind ((error (lambda (str)

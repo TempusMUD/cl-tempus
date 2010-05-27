@@ -2,9 +2,7 @@
     (:use :common-lisp
           :split-sequence
           :local-time
-          :postmodern
-        #+cmu :extensions
-        #+sbcl :sb-bsd-sockets)
+          :iolib)
     (:export main))
 
 (shadowing-import
