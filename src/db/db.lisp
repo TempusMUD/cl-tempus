@@ -548,12 +548,6 @@
                                                    :start (aref reg-starts 2)
                                                    :end (aref reg-ends 2)))))))
 
-(defun compile-all-progs ()
-  "Compiles all the progs on the mud."
-  ;; Compile all room progs
-  ;; Compile all mob progs
-  nil)
-
 (defun set-physical-attribs (ch)
   (assert ch)
   (assert (level-of ch))

@@ -2,6 +2,29 @@
 
 (defvar *spell-info* (make-array 1000))
 
+(defun spell-to-str (idnum)
+  (name-of (aref *spell-info* idnum)))
+(defun str-to-spell (str)
+  (find str *spell-info* :test #'string-equal :key #'name-of))
+
+(defun spell-flagged (spellnum flag)
+  (logtest (routines-of (aref *spell-info* spellnum)) flag))
+
+(defmacro define-spell-predicate (name flag)
+  `(defun ,name (spell)
+     (and (<= spell +top-spell-define+)
+          (logtest (routines-of (aref *spell-info* spell))
+                   ,flag))))
+
+(define-spell-predicate spell-is-psionic +mag-psionic+)
+(define-spell-predicate spell-is-physics +mag-physics+)
+(define-spell-predicate spell-is-bardic +mag-bard+)
+(define-spell-predicate spell-is-magic +mag-magic+)
+(define-spell-predicate spell-is-mercenary +mag-merc+)
+(define-spell-predicate spell-is-divine +mag-divine+)
+(define-spell-predicate spell-is-good +mag-good+)
+(define-spell-predicate spell-is-evil +mag-evil+)
+
 (defun spell-gen (spell class)
   (aref (min-gen-of (aref *spell-info* spell)) class))
 

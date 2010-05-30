@@ -8,9 +8,10 @@
   :version "1.0.0d"
   :author "Daniel Lowe <dlowe@bitmuse.com>"
   :description "Tempus MUD Codebase"
-  :depends-on (split-sequence
+  :depends-on (postmodern
                anaphora
-               postmodern
+               split-sequence
+               asdf-system-connections
                local-time
                cl-postgres+local-time
                cl-ppcre
@@ -111,7 +112,7 @@
              (:file "house" :pathname "house/house"
                             :depends-on ("defs" "utils"))
              (:file "interpreter" :pathname "interpreter/interpreter"
-                                  :depends-on ("defs" "utils"))
+                                  :depends-on ("defs" "utils" "comm"))
              (:file "limits" :pathname "misc/limits"
                             :depends-on ("defs" "creature"))
              (:file "logging" :pathname "util/logging"
@@ -170,7 +171,7 @@
              (:file "spells" :pathname "magic/spells"
                                    :depends-on ("defs" "utils"))
              (:file "spell-parser" :pathname "magic/spell-parser"
-                                   :depends-on ("defs" "utils" "interpreter"))
+                                   :depends-on ("defs" "utils" "interpreter" "spells"))
              (:file "structs" :pathname "structs/structs"
                               :depends-on ("defs"))
              (:file "tongues" :pathname "social/tongues"
