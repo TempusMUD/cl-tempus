@@ -652,6 +652,8 @@
        (dotimes (bit 32)
          (when (logtest num-arg bit)
            (setf (aref (tongues-of mobile) (1+ bit)) 100))))
+      ("Voice"
+       (setf (voice-of mobile) (pin num-arg 0 1000000)))
       (t
        (errlog "WARNING: Unrecognized espec keyword ~a in mobile #~d"
                (regref result 1)

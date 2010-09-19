@@ -133,6 +133,7 @@
    (weapon-proficiency :accessor weapon-proficiency-of :initarg :weapon-proficiency :initform nil)
    (mood :accessor mood-of :initarg :mood :initform nil)
    (saved :accessor saved-of :initarg :saved :initform nil)
+   (voice :accessor voice-of :initarg :voice :initform nil)
 
    ;; Originally from char_language_data
    (tongues :accessor tongues-of :initarg :tongues
@@ -315,7 +316,8 @@
                  :position (position-of proto)
                  :weapon-proficiency (weapon-proficiency-of proto)
                  :tongues (tongues-of proto)
-                 :current-tongue (current-tongue-of proto))))
+                 :current-tongue (current-tongue-of proto)
+                 :voice (voice-of proto))))
 
 (defmethod modify-weight ((ch creature) mod-weight)
   (incf (weight-of ch) mod-weight))
