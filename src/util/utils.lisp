@@ -458,7 +458,9 @@ sequences in seq-list with the delimiter between each element"
 
 (eval-when (:load-toplevel :execute)
   (defparameter *tempus-root-pathname*
-    (asdf:component-pathname (asdf:find-system "tempus"))))
+    (make-pathname :name nil :type nil :version nil
+                   :defaults (asdf:component-pathname
+                              (asdf:find-system "tempus")))))
 
 (defun tempus-path (fmt &rest args)
   "Returns the local pathname merged with the root tempus path."
