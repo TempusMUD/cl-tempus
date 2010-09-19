@@ -690,7 +690,6 @@
         (parse-espec line mobile nr)))))
 
 (defun parse-mobile (inf nr)
-  (declare (ignorable inf nr))
   (let ((mobile (make-instance 'mobile
                                :shared (make-instance 'mob-shared-data)))
         (mob-type nil))
