@@ -23,8 +23,8 @@
       val
       (let ((variance-min (- val variance))
             (variance-max (+ val variance)))
-        (random-range (if min (max min variance-min) variance-min)
-                      (if max (min max variance-max) variance-max)))))
+        (random-range (floor (if min (max min variance-min) variance-min))
+                      (floor (if max (min max variance-max) variance-max))))))
 
 (defun random-elt (seq)
   "Returns a random element of a sequence."
