@@ -518,8 +518,20 @@
                      (string= (first node) "skill")))
         (load-spell node)))))
 
+(defun spell-armor (ch vict ovict dvict level)
+  (declare (ignore ovict dvict))
+  (affect-to-char vict (make-instance 'affected-type
+                                      :kind +spell-armor+
+                                      :owner (idnum-of ch)
+                                      :duration 24
+                                      :level level
+                                      :modifier (+ (floor level 4) 20)
+                                      :location +apply-ac+))
+  (send-to-char vict "You feel someone protecting you.~%"))
+
+
 (defun call-magic (ch vict ovict dvict spellnum level casttype)
-  (send-to-char ch "Yay, call-magic called:~%~@{~s~%~}" vict ovict dvict spellnum level casttype))
+  (spell-armor ch vict ovict dvict level))
 
 (defun mag-objectmagic (ch object arg)
   nil)
