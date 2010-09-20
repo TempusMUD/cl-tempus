@@ -3,11 +3,15 @@
 (declaim (ftype (function (fixnum fixnum) fixnum)
                 random-range dice))
 
-(defun random-range (min max)
+(defun random-range (a b)
   "Creates a random number in interval [from,to]"
-  (if (= min max)
-      min
-      (+ min (random (- max min)))))
+  (cond
+    ((> a b)
+     (+ b (random (- a b))))
+    ((< a b)
+     (+ a (random (- b a))))
+    (t
+     a)))
 
 (defun dice (num size)
   "Simulates dice roll"
