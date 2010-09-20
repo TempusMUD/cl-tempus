@@ -71,3 +71,27 @@
       ((< fluency 80)     "(good)")
       ((< fluency 90)     "(very good)")
       (t                  "(fluent)"))))
+
+(defun translate-word (wordlist letter-map word)
+  (let ((word-match (assoc word wordlist :test #'string-equal)))
+    (if word-match
+        (second word-match)
+        (map 'string (lambda (c)
+                       (gethash c letter-map c))
+             word))))
+
+(defun translate-with-tongue (tongue phrase amount)
+  (when (or (string= "" phrase)
+            (null (syllables-of tongue))
+            (= amount 100))
+    (return-from translate-with-tongue phrase))
+
+  (format nil "~{~a~^ ~}"
+          (loop
+             for word in (cl-ppcre:split "\\s+" phrase)
+             if (> (random-range 1 100) amount)
+             collect (translate-word (syllables-of tongue)
+                                     (letters-of tongue)
+                                     word)
+             else
+             collect word)))
