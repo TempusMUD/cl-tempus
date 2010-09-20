@@ -13,6 +13,7 @@
                split-sequence
                asdf-system-connections
                local-time
+               cl-interpol
                cl-postgres+local-time
                cl-ppcre
                cffi

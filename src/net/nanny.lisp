@@ -140,7 +140,8 @@
       (cxn-write cxn "~%"))
     (setf (need-prompt-p cxn) nil)))
 
-(defmethod cxn-close :before ((cxn tempus-cxn))
+(defmethod cxn-close :before ((cxn tempus-cxn) &key abort)
+  (declare (ignore abort))
   (cond
     ((null (account-of cxn))
      (mudlog 'info t "Closing connection without account"))
