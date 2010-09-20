@@ -45,8 +45,8 @@
    (location :accessor location-of :initarg :location :initform nil)
    (level :accessor level-of :initarg :level :initform nil)
    (is-instant :accessor is-instant-of :initarg :is-instant :initform nil :type boolean)
-   (bitvector :accessor bitvector-of :initarg :bitvector :initform nil :type (unsigned-byte 32))
-   (aff-index :accessor aff-index-of :initarg :aff-index :initform nil :type (integer 1 3))
+   (bitvector :accessor bitvector-of :initarg :bitvector :initform 0 :type (unsigned-byte 32))
+   (aff-index :accessor aff-index-of :initarg :aff-index :initform 0 :type (integer 1 3))
    (owner :accessor owner-of :initarg :owner :initform nil)))
 
 (defclass grievance ()
