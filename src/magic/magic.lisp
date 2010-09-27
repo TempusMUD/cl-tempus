@@ -176,3 +176,71 @@
     (t
      (< (max 1 (calculate-saving-throw ch level type))
         (random-range 0 99)))))
+
+(defun update-iaffects (ch)
+  "For every instant affect, decrement the duration.  Removes any
+instant affect that has a zero or less duration."
+  (setf (affected-of ch)
+        (delete-if (lambda (af)
+                     (when (is-instant-of af)
+                       (decf (duration-of af))
+                       (not (plusp (duration-of af)))))
+                   (affected-of ch))))
+
+(defmacro define-spell (name () &body body)
+  (let ((func-name (intern (concatenate 'string "SPELL-" (string name))))
+        (id-name (intern (format nil "+SPELL-~a+" name))))
+    `(defun ,func-name (caster level target)
+       (flet ((affect (&key duration modifier location status wearoff)
+                (affect-to-char target
+                                (make-instance 'affected-type
+                                               :kind ,id-name
+                                               :owner (idnum-of caster)
+                                               :duration duration
+                                               :level level
+                                               :modifier modifier
+                                               :location location
+                                               :status-msg status
+                                               :wearoff-msg wearoff)))
+              (emit (str)
+                (send-to-char target "~a~%" str)))
+         (declare (ignorable #'emit #'affect)
+                  (dynamic-extent #'affect #'emit))
+         ,@body))))
+
+(define-spell armor ()
+  (affect :duration 24
+          :modifier (+ (floor level 4) 20)
+          :location +apply-ac+
+          :status "You feel protected."
+          :wearoff "You feel less protected.")
+  (emit "You feel someone protecting you.~%"))
+
+(define-spell chill-touch ()
+  (affect :duration 4 :modifier (- (1+ (floor level 16)))
+          :location +apply-str+
+          :status "You feel weakened by the cold."
+          :wearoff "Your strength returns as your limbs regain their warmth.")
+  (emit "You feel your strength wither!"))
+
+(define-spell barkskin ()
+  (when (affected-by-spell target +spell-stoneskin+)
+    (affect-from-char target +spell-stoneskin+))
+  (when (affected-by-spell target +spell-thorn-skin+)
+    (affect-from-char target +spell-thorn-skin+))
+  (affect :duration (dice 4 (1+ (floor level 8)))
+          :modifier -10
+          :status "Your skin is hard like bark."
+          :wearoff "Your skin is no longer hard like bark.")
+  (emit "Your skin tightens up and hardens."))
+
+(define-spell thorn-skin ()
+  (when (affected-by-spell target +spell-barkskin+)
+    (affect-from-char target +spell-barkskin+))
+  (when (affected-by-spell target +spell-thorn-skin+)
+    (affect-from-char target +spell-thorn-skin+))
+  (affect :duration (dice 3 (1+ (floor level 4)))
+          :modifier (- (+ 5 (floor (get-skill-bonus caster +spell-thorn-skin+) 10)))
+          :location +apply-ac+
+          :status "Your skin is hard like bark."
+          :wearoff "Your skin is no longer hard like bark."))

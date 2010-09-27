@@ -1,5 +1,11 @@
 (in-package #:tempus)
 
+(defmethod affected-by-spell ((ch creature) kind)
+  (find (the fixnum kind) (the list (affected-of ch)) :key 'kind-of))
+
+(defmethod affected-by-spell ((obj obj-data) kind)
+  (find kind (the list (tmp-affects-of obj)) :key 'kind-of))
+
 (defun apply-object-affects (ch obj addp)
   (when (and obj
              (or (eql (worn-by-of obj) ch)
@@ -323,12 +329,6 @@
                  t)
   (affect-total ch))
 
-(defmethod affected-by-spell ((ch creature) kind)
-  (find (the fixnum kind) (the list (affected-of ch)) :key 'kind-of))
-
-(defmethod affected-by-spell ((obj obj-data) kind)
-  (find kind (the list (tmp-affects-of obj)) :key 'kind-of))
-
 (defun affect-join (ch af
                     add-duration-p
                     average-duration-p
@@ -389,7 +389,6 @@
 
 (defun zone-number (vnum)
   (floor vnum 100))
-
 
 (defun insert-into-list (obj list &key (test 'eql) (unsorted nil))
   (cond
