@@ -15,7 +15,9 @@
    (targets :accessor targets-of :initarg :targets :initform 0)
    (song-kind :accessor song-kind-of :initarg :song-kind :initform nil)
    (lyrics :accessor lyrics-of :initarg :lyrics :initform nil)
-   (instrumentalp :accessor instrumentalp :initarg :instrumentalp :initform nil)))
+   (instrumentalp :accessor instrumentalp :initarg :instrumentalp :initform nil)
+   (wearoff-msg :accessor wearoff-msg-of :initarg :wearoff-msg :initform nil)
+   (func :accessor func-of :initarg :func :initform nil)))
 
 (defun spell-mana-cost (ch spellnum)
   (let* ((sinfo (aref *spell-info* spellnum))
@@ -518,20 +520,19 @@
                      (string= (first node) "skill")))
         (load-spell node)))))
 
-(defun spell-armor (ch vict ovict dvict level)
-  (declare (ignore ovict dvict))
-  (affect-to-char vict (make-instance 'affected-type
-                                      :kind +spell-armor+
-                                      :owner (idnum-of ch)
-                                      :duration 24
-                                      :level level
-                                      :modifier (+ (floor level 4) 20)
-                                      :location +apply-ac+))
-  (send-to-char vict "You feel someone protecting you.~%"))
-
 
 (defun call-magic (ch vict ovict dvict spellnum level casttype)
-  (spell-armor ch vict ovict dvict level))
+  (let* ((info (aref *spell-info* spellnum))
+         (func (and info (func-of info))))
+    (cond
+      ((null info)
+       (when ch
+         (send-to-char ch "Oops, that spell doesn't exist.~%")))
+      ((null func)
+       (when ch
+         (send-to-char ch "Oops, that spell isn't implemented.~%")))
+      (t
+       (funcall func ch level (or vict ovict dvict))))))
 
 (defun mag-objectmagic (ch object arg)
   nil)

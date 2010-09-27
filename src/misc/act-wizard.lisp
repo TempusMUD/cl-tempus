@@ -1072,13 +1072,13 @@
 
     (when (affected-of k)
       (dolist (aff (affected-of k))
-        (send-to-char ch "SPL: (~3d~a) [~2d] ~a(~d) &y~24a&n "
+        (send-to-char ch "SPL: (~3d~a) [~2d] &y(~d) &c~24a&n "
                       (1+ (duration-of aff))
                       (if (is-instant-of aff) "sec" "hr")
                       (level-of aff)
                       (owner-of aff)
                       (spell-to-str (kind-of aff)))
-        (when (plusp (modifier-of aff))
+        (unless (zerop (modifier-of aff))
           (send-to-char ch "~d to ~a"
                         (modifier-of aff)
                         (aref +apply-types+ (location-of aff)))

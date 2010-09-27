@@ -190,37 +190,30 @@ instant affect that has a zero or less duration."
 (defmacro define-spell (name () &body body)
   (let ((func-name (intern (concatenate 'string "SPELL-" (string name))))
         (id-name (intern (format nil "+SPELL-~a+" name))))
-    `(defun ,func-name (caster level target)
-       (flet ((affect (&key duration modifier location status wearoff)
-                (affect-to-char target
-                                (make-instance 'affected-type
-                                               :kind ,id-name
-                                               :owner (idnum-of caster)
-                                               :duration duration
-                                               :level level
-                                               :modifier modifier
-                                               :location location
-                                               :status-msg status
-                                               :wearoff-msg wearoff)))
-              (emit (str)
-                (send-to-char target "~a~%" str)))
-         (declare (ignorable #'emit #'affect)
-                  (dynamic-extent #'affect #'emit))
-         ,@body))))
+    `(progn
+       (defun ,func-name (caster level target)
+         (flet ((affect (&key duration modifier location)
+                  (affect-to-char target
+                                  (make-instance 'affected-type
+                                                 :kind ,id-name
+                                                 :owner (idnum-of caster)
+                                                 :duration duration
+                                                 :level level
+                                                 :modifier modifier
+                                                 :location location)))
+                (emit (str)
+                  (send-to-char target "~a~%" str)))
+           (declare (ignorable #'emit #'affect)
+                    (dynamic-extent #'affect #'emit))
+           ,@body))
+       (setf (func-of (aref *spell-info* ,id-name)) (function ,func-name)))))
 
 (define-spell armor ()
-  (affect :duration 24
-          :modifier (+ (floor level 4) 20)
-          :location +apply-ac+
-          :status "You feel protected."
-          :wearoff "You feel less protected.")
-  (emit "You feel someone protecting you.~%"))
+  (affect :duration 24 :modifier (+ (floor level 4) 20) :location +apply-ac+)
+  (emit "You feel someone protecting you."))
 
 (define-spell chill-touch ()
-  (affect :duration 4 :modifier (- (1+ (floor level 16)))
-          :location +apply-str+
-          :status "You feel weakened by the cold."
-          :wearoff "Your strength returns as your limbs regain their warmth.")
+  (affect :duration 4 :modifier (- (1+ (floor level 16))) :location +apply-str+)
   (emit "You feel your strength wither!"))
 
 (define-spell barkskin ()
@@ -228,10 +221,7 @@ instant affect that has a zero or less duration."
     (affect-from-char target +spell-stoneskin+))
   (when (affected-by-spell target +spell-thorn-skin+)
     (affect-from-char target +spell-thorn-skin+))
-  (affect :duration (dice 4 (1+ (floor level 8)))
-          :modifier -10
-          :status "Your skin is hard like bark."
-          :wearoff "Your skin is no longer hard like bark.")
+  (affect :duration (dice 4 (1+ (floor level 8))) :modifier -10 :location +apply-ac+)
   (emit "Your skin tightens up and hardens."))
 
 (define-spell thorn-skin ()
@@ -241,6 +231,5 @@ instant affect that has a zero or less duration."
     (affect-from-char target +spell-thorn-skin+))
   (affect :duration (dice 3 (1+ (floor level 4)))
           :modifier (- (+ 5 (floor (get-skill-bonus caster +spell-thorn-skin+) 10)))
-          :location +apply-ac+
-          :status "Your skin is hard like bark."
-          :wearoff "Your skin is no longer hard like bark."))
+          :location +apply-ac+)
+  (emit "Large thorns erupt from your skin!"))

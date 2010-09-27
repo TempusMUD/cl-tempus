@@ -47,9 +47,7 @@
    (is-instant :accessor is-instant-of :initarg :is-instant :initform nil :type boolean)
    (bitvector :accessor bitvector-of :initarg :bitvector :initform 0 :type (unsigned-byte 32))
    (aff-index :accessor aff-index-of :initarg :aff-index :initform 0 :type (integer 1 3))
-   (owner :accessor owner-of :initarg :owner :initform nil)
-   (status-msg :accessor status-msg-of :initarg :status-msg :initform nil)
-   (wearoff-msg :accessor wearoff-msg-of :initarg :wearoff-msg :initform nil)))
+   (owner :accessor owner-of :initarg :owner :initform nil)))
 
 
 (defclass grievance ()
@@ -638,12 +636,12 @@
 
 (defun affect-from-char (ch spell)
   "Removes all the affects from CH that come from the SPELL."
-  (let ((sent-wearoff-msgs nil))
-    (dolist (af (remove spell (affected-of ch) :test-not #'= :key 'kind-of))
-      (unless (find (wearoff-msg-of af) sent-wearoff-msgs :test #'string=)
-        (send-to-char ch "~a~%" (wearoff-msg-of af))
-        (push (wearoff-msg-of af) sent-wearoff-msgs))
-      (affect-remove ch af))))
+  (let ((doomed-afs (remove spell (affected-of ch) :test-not #'= :key 'kind-of)))
+    (when doomed-afs
+      (dolist (af doomed-afs)
+        (affect-remove ch af))
+      (when (wearoff-msg-of (aref *spell-info* spell))
+        (send-to-char ch "~a~%" (wearoff-msg-of (aref *spell-info* spell)))))))
 
 (defun perform-dismount (ch)
   (setf (mounted-of ch) nil))
