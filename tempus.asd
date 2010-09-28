@@ -28,7 +28,7 @@
              (:file "config" :pathname "misc/config"
                              :depends-on ("defpackage"))
              (:file "db" :pathname "db/db"
-                         :depends-on ("defs" "constants" "creature" "obj-data" "zone-data" "room-data" "search" "artisan" "account" "spec-assign" "clan" "help" "act-social" "tongues" "act-physic" "dyntext" "spell-parser" "combat-messages" "quest" "artisan" "utils"))
+                         :depends-on ("defs" "constants" "creature" "obj-data" "zone-data" "room-data" "search" "artisan" "account" "spec-assign" "clan" "help" "act-social" "tongues" "act-physic" "dyntext" "spell-parser" "combat-messages" "quest" "artisan" "utils" "weather"))
              (:file "account" :pathname "db/account"
                               :depends-on ("defs" "utils"))
              (:file "act-comm" :pathname "misc/act-comm"
@@ -46,7 +46,8 @@
                                                    "utils"
                                                    "interpreter"
                                                    "constants"
-                                                   "creature"))
+                                                   "creature"
+                                                   "weather"))
              (:file "act-movement" :pathname "misc/act-movement"
                                    :depends-on ("defs"
                                                 "utils"
@@ -73,7 +74,8 @@
              (:file "act-social" :pathname "social/act-social"
                                  :depends-on ("defs" "utils" "interpreter"))
              (:file "act-wizard" :pathname "misc/act-wizard"
-                                 :depends-on ("defs" "utils" "interpreter"))
+                                 :depends-on ("defs" "utils" "interpreter"
+                                                     "weather"))
              (:file "artisan" :pathname "mobiles/artisan"
                               :depends-on ("creature"))
              (:file "ban" :pathname "net/ban"
@@ -101,7 +103,7 @@
              (:file "editor" :pathname "editor/editor"
                              :depends-on ("network" "creature"))
              (:file "fight" :pathname "combat/fight"
-                             :depends-on ("defs" "utils"))
+                             :depends-on ("defs" "utils" "weather"))
              (:file "groups" :pathname "interpreter/groups"
                              :depends-on ("defs" "utils"))
              (:file "graph" :pathname "util/graph"
