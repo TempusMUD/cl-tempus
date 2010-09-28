@@ -201,20 +201,36 @@ instant affect that has a zero or less duration."
                                                  :level level
                                                  :modifier modifier
                                                  :location location)))
-                (emit (str)
-                  (send-to-char target "~a~%" str)))
-           (declare (ignorable #'emit #'affect)
-                    (dynamic-extent #'affect #'emit))
+                (set-affbit (idx bit &key duration)
+                  (affect-to-char target
+                                  (make-instance 'affected-type
+                                                 :kind ,id-name
+                                                 :owner (idnum-of caster)
+                                                 :duration duration
+                                                 :level level
+                                                 :aff-index idx
+                                                 :bitvector bit)))
+                (to-caster (str)
+                  (send-to-char caster "~a~%" str))
+                (to-target (str)
+                  (send-to-char target "~a~%" str))
+                (to-room (str)
+                  (act target :place-emit str)))
+           (declare (ignorable #'affect #'to-target #'to-room #'to-caster #'set-affbit)
+                    (dynamic-extent #'affect #'to-target #'to-room #'to-caster
+                                    #'set-affbit))
            ,@body))
+       (when (null (aref *spell-info* ,id-name))
+         (setf (aref *spell-info* ,id-name) (make-instance 'spell-info)))
        (setf (func-of (aref *spell-info* ,id-name)) (function ,func-name)))))
 
 (define-spell armor ()
   (affect :duration 24 :modifier (+ (floor level 4) 20) :location +apply-ac+)
-  (emit "You feel someone protecting you."))
+  (to-target "You feel someone protecting you."))
 
 (define-spell chill-touch ()
   (affect :duration 4 :modifier (- (1+ (floor level 16))) :location +apply-str+)
-  (emit "You feel your strength wither!"))
+  (to-target "You feel your strength wither!"))
 
 (define-spell barkskin ()
   (when (affected-by-spell target +spell-stoneskin+)
@@ -222,7 +238,16 @@ instant affect that has a zero or less duration."
   (when (affected-by-spell target +spell-thorn-skin+)
     (affect-from-char target +spell-thorn-skin+))
   (affect :duration (dice 4 (1+ (floor level 8))) :modifier -10 :location +apply-ac+)
-  (emit "Your skin tightens up and hardens."))
+  (to-target "Your skin tightens up and hardens."))
+
+(define-spell stoneskin ()
+  (when (affected-by-spell target +spell-barkskin+)
+    (affect-from-char target +spell-stoneskin+))
+  (when (affected-by-spell target +spell-thorn-skin+)
+    (affect-from-char target +spell-thorn-skin+))
+  (affect :duration (dice 4 (1+ (floor level 8))) :modifier -10 :location +apply-ac+)
+  (to-target "Your skin hardens to a rock-like shell.")
+  (to-room "$n's skin turns a pale, rough grey."))
 
 (define-spell thorn-skin ()
   (when (affected-by-spell target +spell-barkskin+)
@@ -232,4 +257,48 @@ instant affect that has a zero or less duration."
   (affect :duration (dice 3 (1+ (floor level 4)))
           :modifier (- (+ 5 (floor (get-skill-bonus caster +spell-thorn-skin+) 10)))
           :location +apply-ac+)
-  (emit "Large thorns erupt from your skin!"))
+  (to-target "Large thorns erupt from your skin!")
+  (to-room "Large thorns erupt from $n's skin!"))
+
+(define-spell pray ()
+  (affect :location +apply-hitroll+
+          :modifier (+ 3 (floor level 8))
+          :duration (+ 4 (floor level 16)))
+  (affect :location +apply-saving-spell+
+          :modifier (- (+ 3 (floor level 16)))
+          :duration (+ 4 (floor level 16)))
+  (if (is-good target)
+    (to-target "You feel extremely righteous")
+    (to-target "You feel a dark power enter your soul.")))
+
+(define-spell blindness ()
+  (cond
+    ((mob-flagged target +mob-noblind+)
+     (to-caster "You fail.~%"))
+    (t
+     (affect :location +apply-hitroll+ :modifier -4 :duration 2)
+     (affect :location +apply-ac+ :modifier 40 :duration 2)
+     (set-affbit 0 +aff-blind+ :duration 2)
+     (if (is-good target)
+         (to-target "You feel extremely righteous")
+         (to-target "You feel a dark power enter your soul.")))))
+
+(define-spell breathe-water ()
+  (set-affbit 0 +aff-waterbreath+ :duration (+ 10 level))
+  (to-target "You are now able to breathe underwater."))
+
+(define-spell spirit-track ()
+  (affect :duration level)
+  (to-target "You can now sense trails to other creatures."))
+
+(define-spell word-stun ()
+  (cond
+    ((mob2-flagged target +mob2-nostun+)
+     (to-caster "You fail the stun.~%"))
+    (t
+     (remove-all-combat target)
+     (setf (position-of target) +pos-stunned+)
+     (wait-state target (* 2 +pulse-violence+))
+     (affect :location +apply-int+ :modifier -1 :duration 1)
+     (to-target "You have been stunned!")
+     (to-room "$n suddenly looks stunned!"))))
