@@ -1,6 +1,6 @@
 (in-package #:tempus)
 
-(defvar *spell-info* (make-array 1000))
+(defvar *spell-info* (make-array 1000 :initial-element nil))
 
 (defun spell-to-str (idnum)
   (name-of (aref *spell-info* idnum)))

@@ -407,9 +407,11 @@
       (cast-spell ch tch tobj tdir spellnum))))
 
 (defun clear-spells ()
-  (setf *spell-info* (make-array 1000))
   (dotimes (idx 1000)
-    (setf (aref *spell-info* idx) (make-instance 'spell-info)))
+    (if (aref *spell-info* idx)
+        (reinitialize-instance (aref *spell-info* idx)
+                               :func (func-of (aref *spell-info* idx)))
+        (setf (aref *spell-info* idx) (make-instance 'spell-info))))
   (setf (name-of (aref *spell-info* 0)) "!RESERVED!"))
 
 (defun apply-attribute-to-spell (spell child)
