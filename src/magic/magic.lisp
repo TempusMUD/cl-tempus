@@ -263,7 +263,7 @@ instant affect that has a zero or less duration."
     (affect-from-char target +spell-thorn-skin+))
   (duration (dice 3 (1+ (floor level 4))))
   (affect :location +apply-ac+
-          :modifier (- (+ 5 (floor (get-skill-bonus caster +spell-thorn-skin+) 10))))
+          :modifier (- (+ 5 (floor level 10))))
   (to-target "Large thorns erupt from your skin!")
   (to-room "Large thorns erupt from $n's skin!"))
 
@@ -761,3 +761,118 @@ instant affect that has a zero or less duration."
                (dice 1 (+ 1 (floor level 8)))))
   (affect)
   (to-target "You well now send psychic feedback to anyone who attacks you."))
+
+(define-spell gamma-ray ()
+  (duration (floor level 4))
+  (affect :location +apply-hit+
+          :modifier (* (- level)
+                       (if (eql (char-class-of caster)
+                                +class-physic+)
+                           (floor (+ 2 (remort-gen-of caster) 2))
+                           1)))
+  (affect :location +apply-move+
+          :modifier (- (floor level 2)))
+  (to-target "You feel irradiated... how irritating.")
+  (to-room "$n appears slightly irradiated."))
+
+(define-spell gravity-well ()
+  (duration (floor level 8))
+  (affect :location +apply-str+
+          :modifier (if (eql (char-class-of caster)
+                             +class-physic+)
+                        (- (floor level 5))
+                        (- (floor level 8))))
+  (to-target "The gravity well seems to take hold on your body."))
+
+(define-spell capacitance-boost ()
+  (duration (+ 1 (floor level 4)))
+  (affect :location +apply-move+ :modifier (+ 10 (* level 2)))
+  (to-target "You feel your energy capacity rise."))
+
+(define-spell vacuum-shroud ()
+  (duration (max 15 (floor level 4)))
+  (set-affbit 3 +aff3-nobreathe+)
+  (set-affbit 2 +aff2-prot-fire+)
+  (to-target "A total vacuum springs into existence around your body."))
+
+(define-spell albedo-shield ()
+  (duration level)
+  (set-affbit 3 +aff3-emp-shield+)
+  (to-target "You feel protected from electromagnetic attacks."))
+
+(define-spell gauss-shield ()
+  (duration (floor level 4))
+  (affect)
+  (to-target "You feel protected from metal."))
+
+(define-spell chemical-stability ()
+  (duration (floor level 4))
+  (affect)
+  (to-target "You feel more chemically inert.")
+  (to-room "$n begins looking more chemically inert."))
+
+(define-spell acidity ()
+  (let ((af (affected-by-spell target +spell-chemical-stability+)))
+    (cond
+      (af
+       (to-target "Your chemical stability prevents acidification from occurring!")
+       (to-room "$n's chemical stability prevents acidification! from occurring")
+       (decf (duration-of af) (floor level 8))
+       (unless (plusp (duration-of af))
+         (affect-remove target af)))
+
+      (t
+       (duration (floor level 8))
+       (set-affbit 3 +aff3-acidity+)))))
+
+(define-spell halflife ()
+  (duration (floor level 4))
+  (set-affbit 3 +aff3-radioactive+)
+  (affect :location +apply-con+ :modifier (- (random-range 1 (+ (floor level 16)))))
+  (to-target "You suddenly begin to feel radioactive.")
+  (to-room "$n becomes radioactive."))
+
+(define-spell electrostatic-field ()
+  (duration (+ 2 (floor level 4)))
+  (to-target "An electrostatic field cracles into being around you.")
+  (to-room "An electrostatic field cracles into being around $n."))
+
+(define-spell radioimmunity ()
+  (duration (floor level 2))
+  (set-affbit 2 +aff2-prot-rad+)
+  (to-target "You feel more resistant to radiation."))
+
+(define-spell attraction-field ()
+  (duration (+ 1 (floor level 4)))
+  (affect :location +apply-ac+ :modifier (+ 10 level))
+  (to-target "You feel very attractive -- to weapons.")
+  (to-room "$n suddenly becomes attractive like a magnet!"))
+
+(define-spell repulsion-field ()
+  (duration (max 12 (floor level 4)))
+  (affect :location +apply-ac+ :modifier (- (+ 20 (floor level 4))))
+  (to-target "The space around you begins repelling matter."))
+
+(define-spell fluoresce ()
+  (duration (+ 8 level))
+  (set-affbit 2 +aff2-fluorescent+)
+  (to-target "The area around you is illuminated with fluorescent atoms.")
+  (to-room "The light of fluorescent atoms surrounds $n."))
+
+(define-spell temporal-compression ()
+  (duration (floor level 2))
+  (set-affbit 2 +aff2-haste+)
+  (to-target "Time seems to slow down around you."))
+
+(define-spell temporal-dilation ()
+  (duration (+ 1 (floor level 4)))
+  (set-affbit 2 +aff2-slow+)
+  (affect :location +apply-dex+
+          :modifier (- (random-range 0 (floor level 25))))
+  (to-target "Time seems to speed up around you as your movements slow to a crawl."))
+
+(define-spell dimensional-shift ()
+  (duration (random-range (+ 1 (floor level 15))
+                          (+ 1 (floor level 9))))
+  (affect)
+  (to-target "You step into an infinitesimally different plane of the multiverse."))
