@@ -730,11 +730,11 @@
                  (or (<= (default-pos-of ch) +pos-standing+)
                      (< (position-of ch) +pos-standing+)))
         (cond
-          ((= (default-pos ch) +pos-sitting+)
+          ((= (default-pos-of ch) +pos-sitting+)
            (act ch :all-emit "$n sit$% up.")
            (setf (position-of ch) +pos-sitting+))
           ((or (aff3-flagged ch +aff3-gravity-well+)
-               (< (number 1 20) (str-of ch)))
+               (< (random-range 1 20) (str-of ch)))
            (act ch :all-emit "$n stand$% up.")
            (setf (position-of ch) +pos-standing+))))
 
