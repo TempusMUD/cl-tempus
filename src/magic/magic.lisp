@@ -195,7 +195,7 @@ instant affect that has a zero or less duration."
          (let ((duration (floor level 4)))
            (flet ((duration (new-duration)
                     (setf duration new-duration))
-                  (affect (&key (modifier 0) (location +apply-none+))
+                  (affect (&optional (location +apply-none+) (modifier 0))
                     (affect-to-char target
                                     (make-instance 'affected-type
                                                    :kind ,id-name
@@ -214,7 +214,8 @@ instant affect that has a zero or less duration."
                                                    :aff-index idx
                                                    :bitvector bit)))
                   (to-caster (str)
-                    (send-to-char caster "~a~%" str))
+                    (when caster
+                      (send-to-char caster "~a~%" str)))
                   (to-target (str)
                     (send-to-char target "~a~%" str))
                   (to-room (str)
@@ -229,12 +230,12 @@ instant affect that has a zero or less duration."
 
 (define-spell armor ()
   (duration 24)
-  (affect :location +apply-ac+ :modifier (+ (floor level 4) 20))
+  (affect +apply-ac+ (+ (floor level 4) 20))
   (to-target "You feel someone protecting you."))
 
 (define-spell chill-touch ()
   (duration 4)
-  (affect :location +apply-str+ :modifier (- (1+ (floor level 16))))
+  (affect +apply-str+ (- (1+ (floor level 16))))
   (to-target "You feel your strength wither!"))
 
 (define-spell barkskin ()
@@ -243,7 +244,7 @@ instant affect that has a zero or less duration."
     (affect-from-char target +spell-stoneskin+))
   (when (affected-by-spell target +spell-thorn-skin+)
     (affect-from-char target +spell-thorn-skin+))
-  (affect :location +apply-ac+ :modifier -10)
+  (affect +apply-ac+ -10)
   (to-target "Your skin tightens up and hardens."))
 
 (define-spell stoneskin ()
@@ -252,7 +253,7 @@ instant affect that has a zero or less duration."
     (affect-from-char target +spell-stoneskin+))
   (when (affected-by-spell target +spell-thorn-skin+)
     (affect-from-char target +spell-thorn-skin+))
-  (affect :location +apply-ac+ :modifier -10)
+  (affect +apply-ac+ -10)
   (to-target "Your skin hardens to a rock-like shell.")
   (to-room "$n's skin turns a pale, rough grey."))
 
@@ -262,15 +263,17 @@ instant affect that has a zero or less duration."
   (when (affected-by-spell target +spell-thorn-skin+)
     (affect-from-char target +spell-thorn-skin+))
   (duration (dice 3 (1+ (floor level 4))))
-  (affect :location +apply-ac+
-          :modifier (- (+ 5 (floor level 10))))
+  (affect +apply-ac+
+          (- (+ 5 (floor level 10))))
   (to-target "Large thorns erupt from your skin!")
-  (to-room "Large thorns erupt from $n's skin!"))
+  (to-room "Large thorns erupt from $n's skin!")
+  (damage-creature caster target (- 150 (floor level 2)) nil
+                   +spell-thorn-skin+ +wear-random+))
 
 (define-spell pray ()
   (duration (+ 4 (floor level 16)))
-  (affect :location +apply-hitroll+ :modifier (+ 3 (floor level 8)))
-  (affect :location +apply-saving-spell+ :modifier (- (+ 3 (floor level 16))))
+  (affect +apply-hitroll+ (+ 3 (floor level 8)))
+  (affect +apply-saving-spell+ (- (+ 3 (floor level 16))))
   (if (is-good target)
     (to-target "You feel extremely righteous")
     (to-target "You feel a dark power enter your soul.")))
@@ -281,8 +284,8 @@ instant affect that has a zero or less duration."
      (to-caster "You fail.~%"))
     (t
      (duration 2)
-     (affect :location +apply-hitroll+ :modifier -4)
-     (affect :location +apply-ac+ :modifier 40)
+     (affect +apply-hitroll+ -4)
+     (affect +apply-ac+ 40)
      (set-affbit 1 +aff-blind+)
      (if (is-good target)
          (to-target "You feel extremely righteous")
@@ -307,21 +310,21 @@ instant affect that has a zero or less duration."
      (setf (position-of target) +pos-stunned+)
      (wait-state target (* 2 +pulse-violence+))
      (duration 1)
-     (affect :location +apply-int+ :modifier -1)
+     (affect +apply-int+ -1)
      (to-target "You have been stunned!")
      (to-room "$n suddenly looks stunned!"))))
 
 (define-spell blur ()
   (duration (+ 2 (floor level 4)))
-  (affect :location +apply-ac+ :modifier -10)
+  (affect +apply-ac+ -10)
   (set-affbit 1 +aff-blur+)
   (to-target "Your image suddenly starts to blur and shift.")
   (to-room "The image of $n suddenly starts to blur and shift."))
 
 (define-spell curse ()
   (duration (+ 1 (floor level 2)))
-  (affect :location +apply-hitroll+ :modifier (- (+ 1 (floor level 8))))
-  (affect :location +apply-damroll+ :modifier (- (+ 1 (floor level 8))))
+  (affect +apply-hitroll+ (- (+ 1 (floor level 8))))
+  (affect +apply-damroll+ (- (+ 1 (floor level 8))))
   (set-affbit 1 +aff-curse+)
   (to-target "You feel very uncomfortable.")
   (to-room "$n briefly glows with a sick red light!"))
@@ -363,7 +366,7 @@ instant affect that has a zero or less duration."
 
 (define-spell fire-shield ()
   (duration (+ 6 (floor level 8)))
-  (affect :location +apply-ac+ :modifier -8)
+  (affect +apply-ac+ -8)
   (set-affbit 2 +aff2-fire-shield+)
   (to-target "A sheet of flame appears before your body.")
   (to-room "A sheet of flame appears before $n!"))
@@ -401,7 +404,7 @@ instant affect that has a zero or less duration."
 
 (define-spell invisible ()
   (duration (+ 12 (floor level 4)))
-  (affect :location +apply-ac+ :modifier -20)
+  (affect +apply-ac+ -20)
   (set-affbit 1 +aff-invisible+)
   (to-target "You vanish.")
   (to-room "$n slowly fades out of existence."))
@@ -409,8 +412,8 @@ instant affect that has a zero or less duration."
 (define-spell greater-invis ()
   (duration (+ 3 (floor level 8)))
   (if (aff-flagged target +aff-invisible+)
-      (affect :location +apply-ac+ :modifier -20)
-      (affect :location +apply-ac+ :modifier -4))
+      (affect +apply-ac+ -20)
+      (affect +apply-ac+ -4))
   (set-affbit 1 +aff-invisible+)
   (to-target "You vanish.")
   (to-room "$n slowly fades out of existence."))
@@ -427,7 +430,7 @@ instant affect that has a zero or less duration."
 
 (define-spell magical-prot ()
   (duration (+ 3 (floor level 4)))
-  (affect :location +apply-saving-spell+ :modifier (+ (- (floor level 8)) 1))
+  (affect +apply-saving-spell+ (+ (- (floor level 8)) 1))
   (to-target "You are now protected somewhat against the forces of magic.")
   (to-room "A shimmering aura appears around $n's body, then dissipates."))
 
@@ -440,7 +443,7 @@ instant affect that has a zero or less duration."
 (define-spell gas-breath ()
   (when (needs-to-breathe target)
     (duration level)
-    (affect :location +apply-str+ :modifier -2)
+    (affect +apply-str+ -2)
     (cond
       ((> level (+ 40 (random-range 0 8)))
        (set-affbit 3 +aff3-poison-3+))
@@ -454,7 +457,7 @@ instant affect that has a zero or less duration."
 (define-spell poison ()
   (unless (is-undead target)
     (duration level)
-    (affect :location +apply-str+ :modifier -2)
+    (affect +apply-str+ -2)
     (cond
       ((> level (+ 40 (random-range 0 8)))
        (set-affbit 3 +aff3-poison-3+))
@@ -474,8 +477,8 @@ instant affect that has a zero or less duration."
 (define-spell sickness ()
   (unless (is-sick target)
     (duration (- (dice level 8) (* (con-of target) 2)))
-    (affect :location +apply-hitroll+ :modifier (- (floor level 5)))
-    (affect :location +apply-damroll+ :modifier (- (floor level 5)))
+    (affect +apply-hitroll+ (- (floor level 5)))
+    (affect +apply-damroll+ (- (floor level 5)))
     (set-affbit 3 +aff3-sickness+)))
 
 (define-spell shroud-obscurement ()
@@ -486,7 +489,7 @@ instant affect that has a zero or less duration."
 
 (define-spell slow ()
   (duration (+ 1 (floor level 4)))
-  (affect :location +apply-dex+ :modifier (- (random-range 0 (floor level 16))))
+  (affect +apply-dex+ (- (random-range 0 (floor level 16))))
   (set-affbit 2 +aff2-slow+)
   (to-target "Your movements slow to a tortured crawl."))
 
@@ -494,13 +497,13 @@ instant affect that has a zero or less duration."
   (duration 12)
   (cond
     ((is-evil target)
-     (affect :location (random-elt (list +apply-str+
+     (affect (random-elt (list +apply-str+
                                          +apply-int+
                                          +apply-con+
                                          +apply-cha+
                                          +apply-hitroll+
                                          +apply-damroll+))
-             :modifier (- (floor level 8)))
+             (- (floor level 8)))
      (to-target "You feel terrible!"))
     (t
      (set-affbit 1 +aff-protect-evil+)
@@ -510,13 +513,13 @@ instant affect that has a zero or less duration."
   (duration 12)
   (cond
     ((is-good target)
-     (affect :location (random-elt (list +apply-str+
+     (affect (random-elt (list +apply-str+
                                          +apply-int+
                                          +apply-con+
                                          +apply-cha+
                                          +apply-hitroll+
                                          +apply-damroll+))
-             :modifier (- (floor level 8)))
+             (- (floor level 8)))
      (to-target "You feel terrible!"))
     (t
      (set-affbit 1 +aff-protect-good+)
@@ -578,12 +581,12 @@ instant affect that has a zero or less duration."
 
 (define-spell strength ()
   (duration (+ 4 (floor level 2)))
-  (affect :location +apply-str+ :modifier (+ 1 (random-range 0 (floor level 8))))
+  (affect +apply-str+ (+ 1 (random-range 0 (floor level 8))))
   (to-target "You feel stronger!"))
 
 (define-spell word-of-intellect ()
   (duration (if (> level 18) 2 1))
-  (affect :location +apply-int+ :modifier (+ 4 (floor level 2)))
+  (affect +apply-int+ (+ 4 (floor level 2)))
   (setf (aff-flags-of target) (logandc2 (aff-flags-of target) +aff-confusion+))
   (to-target "Your mental faculties improve!"))
 
@@ -615,27 +618,27 @@ instant affect that has a zero or less duration."
 
 (define-spell power ()
   (duration (+ 4 (floor level 4)))
-  (affect :location +apply-str+ :modifier (+ 1 (dice 1 (floor level 16))))
+  (affect +apply-str+ (+ 1 (dice 1 (floor level 16))))
   (to-target "A psychic finger on your brain makes you feel stronger!"))
 
 (define-spell weakness ()
   (duration (+ 4 (floor level 4)))
-  (affect :location +apply-str+ :modifier (- (+ 1 (dice 1 (floor level 16)))))
+  (affect +apply-str+ (- (+ 1 (dice 1 (floor level 16)))))
   (to-target "A psychic finger on your brain makes you feel weaker!"))
 
 (define-spell clumsiness ()
   (duration (+ 4 (floor level 4)))
-  (affect :location +apply-str+ :modifier (- (+ 1 (dice 1 (floor level 8)))))
+  (affect +apply-str+ (- (+ 1 (dice 1 (floor level 8)))))
   (to-target "A psychic finger on your brain makes you feel less agile!"))
 
 (define-spell intellect ()
   (duration (+ 4 (floor level 4)))
-  (affect :location +apply-int+ :modifier (+ 1 (dice 1 (floor level 16))))
+  (affect +apply-int+ (+ 1 (dice 1 (floor level 16))))
   (to-target "Your mental faculties improve!"))
 
 (define-spell confusion ()
   (duration (+ 1 (floor level 4)))
-  (affect :location +apply-hitroll+ :modifier (- (+ 1 (floor level 7))))
+  (affect +apply-hitroll+ (- (+ 1 (floor level 7))))
   (set-affbit 1 +aff-confusion+)
   (to-target "You suddenly feel very confused!")
   (wait-state target (* 2 +pulse-violence+))
@@ -645,7 +648,7 @@ instant affect that has a zero or less duration."
 
 (define-spell endurance ()
   (duration (+ 1 (floor level 4)))
-  (affect :location +apply-move+ :modifier (+ 10 (* level 2)))
+  (affect +apply-move+ (+ 10 (* level 2)))
   (to-target "You feel your energy capacity rise."))
 
 (define-spell fear ()
@@ -661,7 +664,10 @@ instant affect that has a zero or less duration."
      (duration (+ 1 (floor level 16)))
      (affect)
      (to-target "You suddenly feel very afraid!")
-     (to-room "$n looks very afraid!"))))
+     (to-room "$n looks very afraid!")
+     (unless (and (> (position-of target) +pos-sitting+)
+                  (mag-savingthrow target level +saving-psi+))
+       (perform-flee target)))))
 
 (define-spell telepathy ()
   (duration (+ 1 (floor level 16)))
@@ -670,8 +676,8 @@ instant affect that has a zero or less duration."
 
 (define-spell confidence ()
   (duration (+ 3 (floor level 4)))
-  (affect :location +apply-hitroll+ :modifier (dice 2 (+ 1 (floor level 8))))
-  (affect :location +apply-saving-spell+ :modifier (- (dice 1 (+ 1 (floor level 8)))))
+  (affect +apply-hitroll+ (dice 2 (+ 1 (floor level 8))))
+  (affect +apply-saving-spell+ (- (dice 1 (+ 1 (floor level 8)))))
   (set-affbit 1 +aff-confidence+)
   (to-target "You suddenly feel very confident!"))
 
@@ -689,19 +695,19 @@ instant affect that has a zero or less duration."
 
 (define-spell adrenaline ()
   (duration (+ 3 (floor level 8)))
-  (affect :location +apply-hitroll+ :modifier (dice 1 (+ 1 (floor level 8))))
+  (affect +apply-hitroll+ (dice 1 (+ 1 (floor level 8))))
   (set-affbit 1 +aff-adrenaline+)
   (to-target "A rush of adrenaline hits your brain!"))
 
 (define-spell dermal-hardening ()
   (duration (dice 4 (+ 1 (floor level 8))))
-  (affect :location +apply-ac+ :modifier -10)
+  (affect +apply-ac+ -10)
   (to-target "You feel your skin tighten up and thicken."))
 
 (define-spell vertigo ()
   (duration 6)
-  (affect :location +apply-hitroll+ :modifier (- (+ 2 (floor level 10))))
-  (affect :location +apply-dex+ :modifier (- (+ 1 (floor level 16))))
+  (affect +apply-hitroll+ (- (+ 2 (floor level 10))))
+  (affect +apply-dex+ (- (+ 1 (floor level 16))))
   (set-affbit 2 +aff2-vertigo+)
   (to-target "You feel a wave of vertigo rush over you!")
   (to-room "$n staggers in a dazed way."))
@@ -709,26 +715,26 @@ instant affect that has a zero or less duration."
 (define-spell breathing-stasis ()
   (duration (* (dice 1 (+ 1 (floor level 8)))
                (floor level 16)))
-  (affect :location +apply-move+ :modifier (- (floor level 2) 50))
+  (affect +apply-move+ (- (floor level 2) 50))
   (set-affbit 3 +aff3-nobreathe+)
   (to-target "Your breathing rate drops into a static state"))
 
 (define-spell metabolism ()
   (duration (dice 2 (+ 2 (floor level 8))))
-  (affect :location +apply-saving-chem+ :modifier (floor level 4))
+  (affect +apply-saving-chem+ (floor level 4))
   (set-affbit 3 +aff3-nobreathe+)
   (to-target "Your metabolism speeds up."))
 
 (define-spell relaxation ()
   (duration (dice 2 (+ 2 (floor level 8))))
-  (affect :location +apply-move+ :modifier (- (floor level 2) 35))
-  (affect :location +apply-str+ :modifier -1)
+  (affect +apply-move+ (- (floor level 2) 35))
+  (affect +apply-str+ -1)
   (set-affbit 3 +aff3-mana-tap+)
   (to-target "Your body and mind relax."))
 
 (define-spell cell-regen ()
   (duration (dice 1 (+ 1 (floor level 8))))
-  (affect :location +apply-con+ :modifier 1)
+  (affect +apply-con+ 1)
   (to-target "Your cell regeneration rate increases.")
 
   (when (affected-by-spell target +skill-hamstring+)
@@ -743,17 +749,17 @@ instant affect that has a zero or less duration."
 
 (define-spell motor-spasm ()
   (duration (+ 1 (random-range 0 (floor level 16))))
-  (affect :location +apply-dex+ :modifier (- (random-range 0 (floor level 8))))
+  (affect +apply-dex+ (- (random-range 0 (floor level 8))))
   (to-target "Your muscles begin spasming uncontrollably."))
 
 (define-spell psychic-resistance ()
   (duration (+ 3 (dice 1 (+ 1 (floor level 8)))))
-  (affect :location +apply-saving-psi+ :modifier (- (+ 5 (floor level 8))))
+  (affect +apply-saving-psi+ (- (+ 5 (floor level 8))))
   (to-target "The psychic conduits of your mind become resistant to external energies."))
 
 (define-spell psychic-crush ()
   (duration (+ 2 (dice 1 (+ 1 (floor level 16)))))
-  (affect :location +apply-mana+ :modifier (- (+ 5 (floor level 8))))
+  (affect +apply-mana+ (- (+ 5 (floor level 8))))
   (set-affbit 3 +aff3-psychic-crush+))
 
 (define-spell psychic-feedback ()
@@ -764,21 +770,21 @@ instant affect that has a zero or less duration."
 
 (define-spell gamma-ray ()
   (duration (floor level 4))
-  (affect :location +apply-hit+
-          :modifier (* (- level)
+  (affect +apply-hit+
+          (* (- level)
                        (if (eql (char-class-of caster)
                                 +class-physic+)
                            (floor (+ 2 (remort-gen-of caster) 2))
                            1)))
-  (affect :location +apply-move+
-          :modifier (- (floor level 2)))
+  (affect +apply-move+
+          (- (floor level 2)))
   (to-target "You feel irradiated... how irritating.")
   (to-room "$n appears slightly irradiated."))
 
 (define-spell gravity-well ()
   (duration (floor level 8))
-  (affect :location +apply-str+
-          :modifier (if (eql (char-class-of caster)
+  (affect +apply-str+
+          (if (eql (char-class-of caster)
                              +class-physic+)
                         (- (floor level 5))
                         (- (floor level 8))))
@@ -786,7 +792,7 @@ instant affect that has a zero or less duration."
 
 (define-spell capacitance-boost ()
   (duration (+ 1 (floor level 4)))
-  (affect :location +apply-move+ :modifier (+ 10 (* level 2)))
+  (affect +apply-move+ (+ 10 (* level 2)))
   (to-target "You feel your energy capacity rise."))
 
 (define-spell vacuum-shroud ()
@@ -828,7 +834,7 @@ instant affect that has a zero or less duration."
 (define-spell halflife ()
   (duration (floor level 4))
   (set-affbit 3 +aff3-radioactive+)
-  (affect :location +apply-con+ :modifier (- (random-range 1 (+ (floor level 16)))))
+  (affect +apply-con+ (- (random-range 1 (+ (floor level 16)))))
   (to-target "You suddenly begin to feel radioactive.")
   (to-room "$n becomes radioactive."))
 
@@ -844,13 +850,13 @@ instant affect that has a zero or less duration."
 
 (define-spell attraction-field ()
   (duration (+ 1 (floor level 4)))
-  (affect :location +apply-ac+ :modifier (+ 10 level))
+  (affect +apply-ac+ (+ 10 level))
   (to-target "You feel very attractive -- to weapons.")
   (to-room "$n suddenly becomes attractive like a magnet!"))
 
 (define-spell repulsion-field ()
   (duration (max 12 (floor level 4)))
-  (affect :location +apply-ac+ :modifier (- (+ 20 (floor level 4))))
+  (affect +apply-ac+ (- (+ 20 (floor level 4))))
   (to-target "The space around you begins repelling matter."))
 
 (define-spell fluoresce ()
@@ -867,8 +873,8 @@ instant affect that has a zero or less duration."
 (define-spell temporal-dilation ()
   (duration (+ 1 (floor level 4)))
   (set-affbit 2 +aff2-slow+)
-  (affect :location +apply-dex+
-          :modifier (- (random-range 0 (floor level 25))))
+  (affect +apply-dex+
+          (- (random-range 0 (floor level 25))))
   (to-target "Time seems to speed up around you as your movements slow to a crawl."))
 
 (define-spell dimensional-shift ()
@@ -876,3 +882,189 @@ instant affect that has a zero or less duration."
                           (+ 1 (floor level 9))))
   (affect)
   (to-target "You step into an infinitesimally different plane of the multiverse."))
+
+(define-spell taint ()
+  (cond
+    ((has-symbol target)
+     (to-caster "Your rune of taint fails to form."))
+    (t
+     (duration (dice level 6))
+     (set-affbit 3 +aff3-tainted+)
+     (to-target "The mark of the tainted begins to burn brightly on your forehead!")
+     (to-room "The mark of the tainted begins to burn brightly on $n's forehead!"))))
+
+(define-spell symbol-of-pain ()
+  (cond
+    ((has-symbol target)
+     (to-caster "Your symbol of pain fails.")
+     (to-target "$N's symbol of pain fails to mark you!"))
+    (t
+     (duration (random-range 1 3))
+     (set-affbit 3 +aff3-symbol-of-pain+)
+     (affect +apply-dex+ (- (floor level 7)))
+     (affect +apply-hitroll+ (- (+ 1 (floor level 4))))
+     (to-target "You shudder and shake as your mind burns!")
+     (to-room "$n shudders and shakes in pain!"))))
+
+(define-spell time-warp ()
+  (duration (+ 3 level))
+  (set-affbit 1 +aff-time-warp+)
+  (to-target "You are now able to move freely through time."))
+
+(define-spell transmittance ()
+  (duration (+ 8 (floor level 4)))
+  (affect +apply-ac+ -16)
+  (set-affbit 2 +aff2-transparent+)
+  (to-target "You become transparent.")
+  (to-room "$n's body slowly becomes completely transparent."))
+
+(define-spell tidal-spacewarp ()
+  (duration (+ 6 level))
+  (set-affbit 1 +aff-inflight+)
+  (setf (position-of target) +pos-flying+)
+  (to-target "Your feet lift lightly from the ground.")
+  (to-room "$n begins to hover above the ground."))
+
+(define-spell quad-damage ()
+  (duration 6)
+  (affect)
+  (to-target "There is a screaming roar and you begin to glow brightly!")
+  (to-room "There is a screaming roar as $n begins to glow brightly!"))
+
+(define-spell densify ()
+  (duration (+ 1 (floor level 2)))
+  (affect +apply-char-weight+ (+ level (int-of caster)))
+  (to-target "You feel denser."))
+
+(define-spell lattice-hardening ()
+  (duration (+ 1 (floor level 2)))
+  (affect)
+  (to-target "Your molecular bonds seem strengthened."))
+
+(define-spell refraction ()
+  (duration (+ 1 (floor level 2)))
+  (affect +apply-ac+ (- (int-of caster)))
+  (set-affbit 2 +aff2-displacement+)
+  (to-target "Your body becomes irregularly refractive.")
+  (to-room "$n's body becomes irregularly refractive."))
+
+(define-spell shield-of-righteousness ()
+  (when (is-good target)
+    (duration (floor level 4))
+    (affect +apply-caster+ (idnum-of caster))
+    (affect +apply-ac+ -10)
+    (cond
+      ((eql caster target)
+       (to-target "A shield of righteousness appears around you.")
+       (to-room "A shield of righteousness expands around $N."))
+      (t
+       (to-target "You feel enveloped in $N's shield of righteousness.")))))
+
+(define-spell blackmantle ()
+  (duration (floor level 4))
+  (affect +apply-hit+ (max (- level) (- (- (max-hitp-of target)) 1)))
+  (to-target "An evil black mantle of magic surrounds you.")
+  (to-room "A mantle of darkness briefly surrounds $n."))
+
+(define-spell sanctification ()
+  (duration (floor level 8))
+  (affect +apply-move+ (floor level 2))
+  (to-target "You have been sanctified!")
+  (to-room "An aura of sanctification glows about $n."))
+
+(define-spell stigmata ()
+  (cond
+    ((is-good target)
+     (to-caster "You cannot stigmatize the good."))
+    ((has-symbol target)
+     (to-caster "Your stigmata fails."))
+    (t
+     (duration (floor level 4))
+     (affect)
+     (to-target "A bloody stigmatic mark appears on your forehead.")
+     (to-room "A bloody stigmatic mark appears on $n's forehead."))))
+
+(define-spell entangle ()
+  (cond
+    ((notany (terrain-of (in-room-of target))
+             (list +sect-field+ +sect-forest+ +sect-hills+ +sect-mountain+
+                   +sect-farmland+ +sect-rock+ +sect-swamp+ +sect-city+
+                   +sect-catacombs+ +sect-jungle+ +sect-road+))
+     (to-caster "There is not enough vegetation here for that."))
+    ((or (= (terrain-of (in-room-of target)) +sect-city+)
+         (= (terrain-of (in-room-of target)) +sect-cracked-road+))
+     (duration (floor level 16))
+     (affect +apply-hitroll+ (- (floor level 4)))
+     (affect +apply-dex+ (- (floor level 16)))
+     (to-target "Nearby grass and weeds come alive, entangling you where you stand!")
+     (to-room "Nearby grass and weeds come alive, entangling $n where $e stands!"))
+    ((or (not (room-is-outside (in-room-of target)))
+         (= (terrain-of (in-room-of target))
+            +sect-road+))
+     (duration (floor level 8))
+     (affect +apply-hitroll+ (- (floor level 4)))
+     (affect +apply-dex+ (- (floor level 16)))
+     (to-target "Vines and vegetation come alive, entangling you where you stand!")
+     (to-room "Vines and vegetation come alive, entangling $n where $e stands!"))
+    (t
+     (duration (floor level 4))
+     (affect +apply-hitroll+ (- (floor level 2)))
+     (affect +apply-dex+ (- (floor level 8)))
+     (to-target "Vines and vegetation come alive, entangling you where you stand!")
+     (to-room "Vines and vegetation come alive, entangling $n where $e stands!"))))
+
+(define-spell amnesia ()
+  (duration (max 10 (- level 20)))
+  (affect +apply-int+ (- (floor level 8)))
+  (to-target "A wave of amnesia washes over your mind.")
+  (to-room "A cloud of forgetfulness passes over $n's face."))
+
+(define-spell anti-magic-shell ()
+  (duration level)
+  (affect)
+  (to-target "A dark and glittering translucent shell appears around you.")
+  (to-room "A dark and glittering translucent shell appears around $n."))
+
+(define-spell sphere-of-desecration ()
+  (duration level)
+  (affect)
+  (to-target "A shimmering dark translucent sphere appears around you.")
+  (to-room "A shimmering dark translucent sphere appears around $n."))
+
+(define-spell divine-intervention ()
+  (duration level)
+  (affect)
+  (to-target "A shimmering pearly translucent sphere appears around you.")
+  (to-room "A shimmering pearly translucent sphere appears around $n."))
+
+(define-spell malefic-violation ()
+  (duration level)
+  (affect)
+  (to-target "You feel wickedly potent."))
+
+(define-spell righteous-penetration ()
+  (duration level)
+  (affect)
+  (to-target "You have been granted terrible potency against the forces of evil!"))
+
+(define-spell entropy-field ()
+  (duration level)
+  (affect)
+  (to-target "You suddenly feel like you're falling apart!"))
+
+(define-spell divine-power ()
+  (duration (+ 8 (floor level 10)))
+  (affect +apply-str+ (floor level 15))
+  (affect +apply-hit+ (* level 3))
+  (set-affbit 3 +aff3-divine-power+)
+  (to-target "Your veins course with the power of Guiharia!"))
+
+(define-spell fire-breathing ()
+  (duration (+ 10 (floor level 4)))
+  (to-target "A warm tingling begins in the back of your throat.")
+  (to-room "$n's eyes begin to glow a deep red."))
+
+(define-spell frost-breathing ()
+  (duration (+ 10 (floor level 4)))
+  (to-target "A cool tingling begins in the back of your throat.")
+  (to-room "$n's eyes begin to glow a deep blue."))

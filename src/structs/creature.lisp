@@ -561,6 +561,11 @@
 (defun is-npc (ch) (typep ch 'mobile))
 (defun is-undead (ch) (= (race-of ch) +race-undead+))
 (defun is-pet (ch) (mob-flagged ch +mob-pet+))
+(defun has-symbol (ch)
+  (or (is-soulless ch)
+      (affected-by-spell ch +spell-stigmata+)
+      (aff3-flagged ch +aff3-symbol-of-pain+)
+      (aff3-flagged ch +aff3-tainted+)))
 
 (defun can-detect-disguise (ch vict level)
   (or (pref-flagged ch +pref-holylight+)
