@@ -164,7 +164,7 @@
              (:file "search" :pathname "structs/search"
                              :depends-on ("defs"))
              (:file "sight" :pathname "util/sight"
-                            :depends-on ("defs" "obj-data" "creature"))
+                            :depends-on ("defs" "obj-data" "room-data" "creature"))
              (:file "smokes" :pathname "objects/smokes"
                              :depends-on ("defs"))
              (:file "spec-assign" :pathname "specials/spec-assign"

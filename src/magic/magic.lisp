@@ -186,47 +186,47 @@ instant affect that has a zero or less duration."
                        (decf (duration-of af))
                        (not (plusp (duration-of af)))))
                    (affected-of ch))))
-
-(defun build-ability-macro (kind name body)
-  (let ((func-name (intern (format nil "~a-~a" kind name)))
-        (id-name (intern (format nil "+~a-~a+" kind name))))
-    `(progn
-       (defun ,func-name (caster level target)
-         (let ((duration (floor level 4)))
-           (flet ((duration (new-duration)
-                    (setf duration new-duration))
-                  (affect (&optional (location +apply-none+) (modifier 0))
-                    (affect-to-char target
-                                    (make-instance 'affected-type
-                                                   :kind ,id-name
-                                                   :owner (idnum-of caster)
-                                                   :duration duration
-                                                   :level level
-                                                   :modifier modifier
-                                                   :location location)))
-                  (set-affbit (idx bit)
-                    (affect-to-char target
-                                    (make-instance 'affected-type
-                                                   :kind ,id-name
-                                                   :owner (idnum-of caster)
-                                                   :duration duration
-                                                   :level level
-                                                   :aff-index idx
-                                                   :bitvector bit)))
-                  (to-caster (str)
-                    (when caster
-                      (act target :target caster :target-emit str)))
-                  (to-target (str)
-                    (act target :target caster :subject-emit str))
-                  (to-room (str)
-                    (act target :target caster :place-emit str)))
-             (declare (ignorable #'affect #'to-target #'to-room #'to-caster #'set-affbit)
-                      (dynamic-extent #'affect #'to-target #'to-room #'to-caster
-                                      #'set-affbit))
-             ,@body)))
-       (when (null (aref *spell-info* ,id-name))
-         (setf (aref *spell-info* ,id-name) (make-instance 'spell-info)))
-       (setf (func-of (aref *spell-info* ,id-name)) (function ,func-name)))))
+(eval-when (:load-toplevel :compile-toplevel :execute)
+  (defun build-ability-macro (kind name body)
+    (let ((func-name (intern (format nil "~a-~a" kind name)))
+          (id-name (intern (format nil "+~a-~a+" kind name))))
+      `(progn
+         (defun ,func-name (caster level target)
+           (let ((duration (floor level 4)))
+             (flet ((duration (new-duration)
+                      (setf duration new-duration))
+                    (affect (&optional (location +apply-none+) (modifier 0))
+                      (affect-to-char target
+                                      (make-instance 'affected-type
+                                                     :kind ,id-name
+                                                     :owner (idnum-of caster)
+                                                     :duration duration
+                                                     :level level
+                                                     :modifier modifier
+                                                     :location location)))
+                    (set-affbit (idx bit)
+                      (affect-to-char target
+                                      (make-instance 'affected-type
+                                                     :kind ,id-name
+                                                     :owner (idnum-of caster)
+                                                     :duration duration
+                                                     :level level
+                                                     :aff-index idx
+                                                     :bitvector bit)))
+                    (to-caster (str)
+                      (when caster
+                        (act target :target caster :target-emit str)))
+                    (to-target (str)
+                      (act target :target caster :subject-emit str))
+                    (to-room (str)
+                      (act target :target caster :place-emit str)))
+               (declare (ignorable #'affect #'to-target #'to-room #'to-caster #'set-affbit)
+                        (dynamic-extent #'affect #'to-target #'to-room #'to-caster
+                                        #'set-affbit))
+               ,@body)))
+         (when (null (aref *spell-info* ,id-name))
+           (setf (aref *spell-info* ,id-name) (make-instance 'spell-info)))
+         (setf (func-of (aref *spell-info* ,id-name)) (function ,func-name))))))
 
 (defmacro define-spell (name () &body body)
   (build-ability-macro "SPELL" name body))
