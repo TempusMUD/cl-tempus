@@ -134,7 +134,6 @@
    (weapon-proficiency :accessor weapon-proficiency-of :initarg :weapon-proficiency :initform nil)
    (mood :accessor mood-of :initarg :mood :initform nil)
    (saved :accessor saved-of :initarg :saved :initform nil)
-   (voice :accessor voice-of :initarg :voice :initform nil)
 
    ;; Originally from char_language_data
    (tongues :accessor tongues-of :initarg :tongues
@@ -145,6 +144,7 @@
 
 (defclass mobile (creature)
   ((shared :accessor shared-of :initarg :shared :initform nil)
+   (voice :accessor voice-of :initarg :voice :initform nil)
    (memory :accessor memory-of :initarg :memory :initform nil)
    (func-data :accessor func-data-of :initarg :func-data :initform nil)
    (wait-state :accessor wait-state-of :initarg :wait-state :initform 0)
