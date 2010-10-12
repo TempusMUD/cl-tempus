@@ -344,6 +344,9 @@
 (defun awakep (ch)
   (> (position-of ch) +pos-sleeping+))
 
+(defun alivep (ch)
+  (/= (position-of ch) +pos-dead+))
+
 (defun deadp (ch)
   (= (position-of ch) +pos-dead+))
 

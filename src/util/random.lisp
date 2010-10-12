@@ -33,3 +33,6 @@
 (defun random-elt (seq)
   "Returns a random element of a sequence."
   (elt seq (random (length seq))))
+
+(defun randomly-true (&optional (odds 2))
+  (zerop (random odds)))
