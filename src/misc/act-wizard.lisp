@@ -2267,3 +2267,20 @@ You feel slightly different.")
          (damage-eq ch object
                     (parse-integer amount :junk-allowed t)
                     (str-to-spell kind)))))))
+
+(defcommand (ch "damage" victim-name amount-str) (:immortal)
+  (let ((targets (resolve-alias ch victim-name
+                                (people-of (in-room-of ch))))
+        (amount (parse-integer amount-str :junk-allowed t)))
+    (cond
+      ((null targets)
+       (send-to-char ch "You don't see any ~a here.~%" victim-name))
+      ((null amount)
+       (send-to-char ch "Usage: damage <name> <amount>~%"))
+      (t
+       (dolist (tch targets)
+         (handler-case
+             (damage-creature ch tch amount nil +type-hit+ +wear-body+)
+           (creature-died ()
+             ;; If the creature died, we really don't care right now
+             nil)))))))

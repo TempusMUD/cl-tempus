@@ -230,7 +230,9 @@
         (gain-kill-experience ch victim 1))))
 
 (defun destroyed-object-properties (obj type)
-  "Returns properties of the object created when OBJ is destroyed by the TYPE spell.  The properties returned are the message emitted, the object name, the object aliases, and the new object linedesc."
+  "Returns properties of the object created when OBJ is destroyed by
+the TYPE spell.  The properties returned are the message emitted, the
+object name, the object aliases, and the new object linedesc."
   (let ((obj-material-name (aref +material-names+ (material-of obj))))
     (cond
       ((and (eql type +spell-oxidize+) (is-ferrous obj))
@@ -412,7 +414,10 @@
       (= skill +skill-proj-weapons+)
       (< +type-egun-laser+ skill +type-egun-top+)))
 
-(defun can-damage-creature (ch victim weapon type)
+(defun can-attack (ch victim)
+  "Returns T if the creature CH can even attempt to damage VICTIM.
+Returns NIL if that would violate the First Amendment, the Mann Act,
+and/or the structure of spacetime as we know it."
   ;; Can't damage someone who is writing
   (when (and ch
              (plr-flagged victim (logior +plr-mailing+ +plr-writing+ +plr-olc+))
@@ -422,11 +427,56 @@
             (name-of victim)
             (number-of (in-room-of ch)))
     (send-to-char ch "NO!  Do you want to be ANNIHILATED by the gods?!")
-    (return-from can-damage-creature nil))
+    (return-from can-attack nil))
 
   ;; High enough level immortals can do (almost) anything
   (when (and ch (> (level-of ch) +lvl-creator+))
-    (return-from can-damage-creature t))
+    (return-from can-attack t))
+
+  ;; Can't damage utility mobs
+  (when (mob-flagged victim +mob-utility+)
+    (return-from can-attack nil))
+  (when (and ch
+             (or (and (mob2-flagged ch +mob2-unapproved+)
+                      (not (testerp victim)))
+                 (and (testerp ch)
+                      (is-npc victim)
+                      (not (testerp victim)))
+                 (and (is-npc victim)
+                      (immortal-level-p ch)
+                      (< (level-of ch) +lvl-timegod+))))
+    (return-from can-attack nil))
+
+  ;; Newbie protection and NOPK check
+  (when (and ch
+             (not (eql ch victim))
+             (is-npc victim)
+             (or (is-pc ch))
+                 (and (master-of ch) (is-pc (master-of ch))))
+    (unless (arena-combat-p ch victim)
+      (when (plr-flagged ch +plr-nopk+)
+        (send-to-char ch "A small dark shape flies in from the future and sticks to your eyebrow.~%")
+        (return-from can-attack nil))
+      (when (plr-flagged victim +plr-nopk+)
+        (send-to-char ch "A small dark shape flies in from the future and sticks to your nose.~%")
+        (return-from can-attack nil))))
+
+
+  (when (and (< +lvl-ambassador+ (level-of ch) +lvl-god+)
+             (is-npc victim)
+             (not *mini-mud*))
+    (send-to-char ch "You are not allowed to attack mobiles!~%")
+    (return-from can-attack nil))
+
+  ;; Passed all the tests - attacking possible
+  t)
+
+(defun can-damage-creature (ch victim weapon type)
+  "Returns T if the creature CH can damage VICTIM.  If not, the result
+is simply no damage."
+
+  (unless (can-attack ch victim)
+    (return-from can-damage-creature nil))
 
   ;; Can't damage an immortal who isn't mortalized
   (when (immortalp victim)
@@ -452,34 +502,6 @@
                 ;; energy weapons can hit them
                 (and weapon (is-obj-kind weapon +item-energy-gun+)))
       (return-from can-damage-creature nil)))
-
-  ;; Can't damage utility mobs
-  (when (mob-flagged victim +mob-utility+)
-    (return-from can-damage-creature nil))
-  (when (and ch
-             (or (and (mob2-flagged ch +mob2-unapproved+)
-                      (not (testerp victim)))
-                 (and (testerp ch)
-                      (is-npc victim)
-                      (not (testerp victim)))
-                 (and (is-npc victim)
-                      (immortal-level-p ch)
-                      (< (level-of ch) +lvl-timegod+))))
-    (return-from can-damage-creature nil))
-
-  ;; Newbie protection and NOPK check
-  (when (and ch
-             (not (eql ch victim))
-             (is-npc victim)
-             (or (is-pc ch))
-                 (and (master-of ch) (is-pc (master-of ch))))
-    (unless (arena-combat-p ch victim)
-      (when (plr-flagged ch +plr-nopk+)
-        (send-to-char ch "A small dark shape flies in from the future and sticks to your eyebrow.~%")
-        (return-from can-damage-creature nil))
-      (when (plr-flagged victim +plr-nopk+)
-        (send-to-char ch "A small dark shape flies in from the future and sticks to your nose.~%")
-        (return-from can-damage-creature nil))))
 
   ;; Shield mastery
   (when (and ch
@@ -922,6 +944,66 @@ it isn't or if OBJ is NIL."
        (or (is-obj-kind obj +item-weapon+)
            (is-obj-kind obj +item-energy-gun+))))
 
+
+(defparameter +limb-probs+
+  #(0							;#define WEAR_LIGHT      0
+    3							;#define WEAR_FINGER_R   1
+    3							;#define WEAR_FINGER_L   2
+    4							;#define WEAR_NECK_1     3
+    4							;#define WEAR_NECK_2     4
+    35							;#define WEAR_BODY       5
+    12							;#define WEAR_HEAD       6
+    20							;#define WEAR_LEGS       7
+    5							;#define WEAR_FEET       8
+    10							;#define WEAR_HANDS      9
+    25							;#define WEAR_ARMS      10
+    50							;#define WEAR_SHIELD    11
+    0							;#define WEAR_ABOUT     12
+    10							;#define WEAR_WAIST     13
+    5							;#define WEAR_WRIST_R   14
+    5							;#define WEAR_WRIST_L   15
+    0							;#define WEAR_WIELD     16
+    0							;#define WEAR_HOLD      17
+    15							;#define WEAR_CROTCH    18
+    5							;#define WEAR_EYES      19
+    5							;#define WEAR_BACK      20
+    0							;#define WEAR_BELT      21
+    10							;#define WEAR_FACE      22
+    4							;#define WEAR_EAR_L     23
+    4							;#define WEAR_EAR_R     24
+    0							;#define WEAR_WIELD_2   25
+    0							;#define WEAR_ASS       26
+    ))
+(defparameter *cumulative-limb-probs* (loop for num across +limb-probs+
+                                         summing num into sum
+                                         collect (+ num sum)))
+(defparameter *max-limb-prob* (car (last *cumulative-limb-probs*)))
+
+(defun choose-random-limb (ch)
+  (let ((limb (position (random-range 0 *max-limb-prob*)
+                        *cumulative-limb-probs*
+                        :test #'<)))
+    (cond
+      ((or (/= limb +wear-shield+)
+           (get-eq ch +wear-shield+))
+       limb)
+      ((randomly-true 3)
+       +wear-arms+)
+      (t
+       +wear-body+))))
+
+(defun get-random-uncovered-implant (ch kind)
+  "Return a random uncovered implant worn by CH of the given KIND,
+which may be NIL."
+  (random-elt
+   (loop
+      for implant across (implants-of ch)
+      as equip across (equipment-of ch)
+      when (and implant
+                (or (null kind) (is-obj-kind implant kind))
+                (null equip))
+      collect implant)))
+
 (defun get-next-weapon (ch type)
   "Pick the next weapon that the creature will strike with"
   (let* ((wielded (get-eq ch +wear-wield-2+))
@@ -969,178 +1051,406 @@ it isn't or if OBJ is NIL."
       (t
        (get-eq ch +wear-hands+)))))
 
+(defun check-reputations (ch vict)
+  "Return T if innocence protections should be enforced.  Return NIL
+if the players' reputations allow it."
+  (when (arena-combat-p ch vict)
+    (return-from check-reputations nil))
+  (when (immortal-level-p ch)
+    (return-from check-reputations nil))
+  (when (is-npc vict)
+    (return-from check-reputations nil))
+  (let ((ch-master (loop for tch = ch then (master-of tch)
+                        while (master-of tch)
+                        finally (return tch)))
+        (vict-master (loop for tch = vict then (master-of tch)
+                        while (master-of tch)
+                        finally (return tch))))
+    (when (zerop (reputation-of ch-master))
+      (send-to-char ch "You are currently an innocent.  If you wish to be a player killer, type PK on yes.~%")
+      (return-from check-reputations t))
+    (when (zerop (reputation-of vict-master))
+      (send-to-char ch "~a is an innocent and is immune to player violence.~%" (name-of vict))
+      (send-to-char vict "~a has just tried to attack you but was prevented by your innocence.~%" (name-of ch))
+      (return-from check-reputations t))
+    nil))
+
+(defun backstab-multiplier (ch)
+  (+ 2
+     (floor (1+ (level-of ch)) 10)
+     (floor (* 6 (max 0 (- (get-skill-bonus ch +skill-backstab+) 50))) 50)))
+
+(defun do-casting-weapon (ch weapon)
+  nil)
+
 (defun hit (ch victim type)
-  (unless (eql (in-room-of ch)
-               (in-room-of victim))
-    (remove-combat ch victim)
-    (remove-combat victim ch)
-    (return-from hit +dam-attack-failed+))
+  (let ((w-type type)
+        (damage 0))
+    (unless (eql (in-room-of ch)
+                 (in-room-of victim))
+      (remove-combat ch victim)
+      (remove-combat victim ch)
+      (return-from hit))
 
-  (when (and ch victim (not (is-ok-to-attack ch victim t)))
-    (return-from hit +dam-attack-failed+))
+    (when (and ch victim (not (can-attack ch victim)))
+      (return-from hit))
 
-  (when (and (< +lvl-ambassador+ (level-of ch) +lvl-god+)
-             (is-npc victim)
-             (not *mini-mud*))
-    (send-to-char ch "You are not allowed to attack mobiles!~%")
-    (return-from hit +dam-attack-failed+))
+    (when (and (aff2-flagged ch +aff2-petrified+)
+               (< (level-of ch)
+                  +lvl-element+))
+      (act ch :target victim
+           :subject-emit (random-elt '("You want to fight back against $N's attack, but cannot!"
+                                       "You have been turned to stone and cannot fight!"
+                                       "You cannot fight back!  You are petrified!")))
+      (return-from hit))
 
-  (when (and (aff2-flagged ch +aff2-petrified+)
-             (< (level-of ch)
-                +lvl-element+))
-    (act ch :target victim
-         :subject-emit (random-elt '("You want to fight back against $N's attack, but cannot!"
-                                     "You have been turned to stone and cannot fight!"
-                                     "You cannot fight back!  You are petrified!")))
-    (return-from hit +dam-attack-failed+))
+    (when (and (is-newbie victim)
+               (is-pc ch)
+               (< (level-of ch)
+                  +lvl-god+)
+               (is-npc victim)
+               (not *mini-mud*))
+      (act ch :target victim
+           :subject-emit "$N is currently under new character protection."
+           :target-emit "You are protected by the gods against $n's attack!")
+      (slog "~a protected against ~a ( hit ) at ~a" (name-of victim)
+            (name-of ch)
+            (number-of (in-room-of victim)))
+      (remove-combat ch victim)
+      (remove-combat victim ch)
+      (return-from hit))
 
-  (when (and (is-newbie victim)
-             (is-pc ch)
-             (< (level-of ch)
-                +lvl-god+)
-             (is-npc victim)
-             (not *mini-mud*))
-    (act ch :target victim
-         :subject-emit "$N is currently under new character protection."
-         :target-emit "You are protected by the gods against $n's attack!")
-    (slog "~a protected against ~a ( hit ) at ~a" (name-of victim)
-          (name-of ch)
-          (number-of (in-room-of victim)))
-    (remove-combat ch victim)
-    (remove-combat victim ch)
-    (return-from hit +dam-attack-failed+))
+    (when (check-reputations ch victim)
+      (remove-combat ch victim)
+      (remove-combat victim ch)
+      (return-from hit))
 
-  (when (check-reputations ch victim)
-    (remove-combat ch victim)
-    (remove-combat victim ch)
-    (return-from hit +dam-attack-failed+))
+    (when (mounted-of ch)
+      (send-to-char ch "You had better dismount first.~%")
+      (return-from hit))
 
-  (when (mounted-of ch)
-    (send-to-char ch "You had better dismount first.~%")
-    (return-from hit +dam-attack-failed+))
+    (when (mounted-of victim)
+      (perform-dismount victim)
+      (act victim :target ch
+           :subject-emit "You are knocked from your mount by $N's attack!"))
 
-  (when (mounted-of victim)
-    (dismount victim)
-    (act victim :target ch
-         :subject-emit "You are knocked from your mount by $N's attack!"))
-
-  (let ((weapon (get-next-weapon ch type)))
-    (when weapon
-      (cond
-        ((and (is-energy-gun weapon)
-              (contains-of weapon)
-              (plusp (cur-energy (first (contains-of weapon)))))
-         (setf w-type (+ (gun-type weapon) +type-egun-laser+))
-         (let ((cost (min (cur-energy (first (contains-of weapon)))
-                          (gun-discharge weapon))))
-           (decf (cur-energy (first (contains-of weapon)))
-                 cost)
-           (when (zerop (cur-energy (first (contains-of weapon))))
-             (act ch
-                  :item weapon
-                  :subject-emit "$p has been depleted of fuel.  Replace cell before further use."))))
-        ((or (is-energy-gun weapon)
-             (is-gun weapon))
-         (setf w-type +type-bludgeon+))
-        ((is-obj-type weapon +item-weapon+)
-         (setf w-type (+ +type-hit+ (aref (values-of weapon) 3))))))
-
-    (when (null weapon)
-      (cond
-        ((and (is-npc ch)
-              (plusp (attack-type-of ch)))
-         (setf w-type (+ +type-hit+ (attack-type-of ch))))
-        ((and (is-tabaxi ch) (randomly-true))
-         (setf w-type +type-claw+))
-        (t
-         (setf w-type +type-hit+))))
-
-    (let ((thaco (calculate-thaco ch victim weapon))
-          (victim-ac (max (ac-of victim)
-                          (- (floor (* (level-of ch)
-                                       4)
-                                    15))))
-          (diceroll (random-range 1 20)))
-      (when (pref-flagged ch +pref-debug+)
-        (send-to-char ch "&c[HIT] thac0:~a   roll:~a  AC:~a&n~%" thaco diceroll victim-ac))
-      (when (and (= diceroll 1)
-                 (>= (position-of victim)
-                     +pos-fighting+)
-                 (> (skill-of victim +skill-counter-attack+)
-                    70))
-        (send-to-char victim "You launch a counter attack!~%")
-        (return-from hit (hit victim ch +type-undefined+)))
-
-      ;; Decide whether this is a hit or a miss
-      (when (and (< diceroll 20)
-                 (awake victim)
-                 (or (= diceroll 1)
-                     (> (- thaco diceroll)
-                        victim-ac)))
-        (if (member type (list +skill-backstab+
-                               +skill-circle+
-                               +skill-second-weapon+
-                               +skill-cleave+))
-            ;; Miss - deal 0 damage to emit miss message
-            (damage-creature ch victim 0 type -1)
-            (damage-creature ch victim 0 w-type -1)))
-
-      ;; It's a HIT
-
-      (when (> (skill-of ch +skill-dbl-attack+) 60)
-        (gain-skill-prof ch +skill-dbl-attack+))
-      (when (> (skill-of ch +skill-triple-attack+) 60)
-        (gain-skill-prof ch +skill-triple-attack+))
-      (when (> (skill-of ch +skill-neural-bridging+) 60)
-        (gain-skill-prof ch +skill-neural-bridging+))
-
-      ;; okay, it's a hit.  calculate limb
-      (let ((limb (cond
-                    ((or (= type +skill-backstab+)
-                         (= type +skill-circle+))
-                     +wear-back+)
-                    ((or (= type +skill-impale+)
-                         (= type +skill-lunge-punch+))
-                     +wear-body+)
-                    ((= type +skill-behead+)
-                     +wear-neck-1+)
-                    (t
-                     (choose-random-limb victim)))))
-
-        ;; Calculate damage from weapon
+    (let ((weapon (get-next-weapon ch type)))
+      (when weapon
         (cond
-          ((and weapon
-                (<= +type-egun-laser+ w-type +type-egun-top+))
-           ;; ranged, dex base damage
-           (setf damage (+ (to-dam-of (aref +dex-app+ (dex-of ch)))
-                           (hitroll-of ch))))
+          ((and (is-energy-gun weapon)
+                (contains-of weapon)
+                (plusp (cur-energy (first (contains-of weapon)))))
+           (setf w-type (+ (gun-type weapon) +type-egun-laser+))
+           (let ((cost (min (cur-energy (first (contains-of weapon)))
+                            (gun-discharge weapon))))
+             (decf (cur-energy (first (contains-of weapon)))
+                   cost)
+             (when (zerop (cur-energy (first (contains-of weapon))))
+               (act ch
+                    :item weapon
+                    :subject-emit "$p has been depleted of fuel.  Replace cell before further use."))))
+          ((or (is-energy-gun weapon)
+               (is-gun weapon))
+           (setf w-type +type-bludgeon+))
+          ((is-obj-kind weapon +item-weapon+)
+           (setf w-type (+ +type-hit+ (aref (value-of weapon) 3))))))
+
+      (when (null weapon)
+        (cond
+          ((and (is-npc ch)
+                (plusp (attack-type-of ch)))
+           (setf w-type (+ +type-hit+ (attack-type-of ch))))
+          ((and (is-tabaxi ch) (randomly-true))
+           (setf w-type +type-claw+))
           (t
-           ;; melee, str base damage
-           (setf damage (+ (to-dam-of (strength-apply-index ch))
-                           (damroll-of ch)))))
+           (setf w-type +type-hit+))))
 
-        (when weapon
-          (when (and (is-evil victim)
-                     (is-obj-stat weapon +item-bless+))
-            (incf damage 5))
-          (when (and (is-good victim)
-                     (is-obj-stat weapon +item-damned+))
-            (incf damage 5)))))))
+      (let ((thaco (calculate-thaco ch victim weapon))
+            (victim-ac (max (armor-of victim)
+                            (- (floor (* (level-of ch)
+                                         4)
+                                      15))))
+            (diceroll (random-range 1 20)))
+        (when (pref-flagged ch +pref-debug+)
+          (send-to-char ch "&c[HIT] thac0:~a   roll:~a  AC:~a&n~%" thaco diceroll victim-ac))
+        (when (and (= diceroll 1)
+                   (>= (position-of victim)
+                       +pos-fighting+)
+                   (> (skill-of victim +skill-counter-attack+)
+                      70))
+          (send-to-char victim "You launch a counter attack!~%")
+          (return-from hit (hit victim ch +type-undefined+)))
 
-(defcommand (ch "damage" victim-name amount-str) (:immortal)
-  (let ((targets (resolve-alias ch victim-name
-                                (people-of (in-room-of ch))))
-        (amount (parse-integer amount-str :junk-allowed t)))
-    (cond
-      ((null targets)
-       (send-to-char ch "You don't see any ~a here.~%" victim-name))
-      ((null amount)
-       (send-to-char ch "Usage: damage <name> <amount>~%"))
-      (t
-       (dolist (tch targets)
-         (handler-case
-             (damage-creature ch tch amount nil +type-hit+ +wear-body+)
-           (creature-died ()
-             ;; If the creature died, we really don't care right now
-             nil)))))))
+        ;; Decide whether this is a hit or a miss
+        (when (and (< diceroll 20)
+                   (awakep victim)
+                   (or (= diceroll 1)
+                       (> (- thaco diceroll)
+                          victim-ac)))
+          (if (member type (list +skill-backstab+
+                                 +skill-circle+
+                                 +skill-second-weapon+
+                                 +skill-cleave+))
+              ;; Miss - deal 0 damage to emit miss message
+              (damage-creature ch victim 0 weapon type -1)
+              (damage-creature ch victim 0 weapon w-type -1)))
+
+        ;; It's a HIT
+
+        (when (> (skill-of ch +skill-dbl-attack+) 60)
+          (gain-skill-proficiency ch +skill-dbl-attack+))
+        (when (> (skill-of ch +skill-triple-attack+) 60)
+          (gain-skill-proficiency ch +skill-triple-attack+))
+        (when (> (skill-of ch +skill-neural-bridging+) 60)
+          (gain-skill-proficiency ch +skill-neural-bridging+))
+
+        ;; okay, it's a hit.  calculate limb
+        (let ((limb (cond
+                      ((or (= type +skill-backstab+)
+                           (= type +skill-circle+))
+                       +wear-back+)
+                      ((or (= type +skill-impale+)
+                           (= type +skill-lunge-punch+))
+                       +wear-body+)
+                      ((= type +skill-behead+)
+                       +wear-neck-1+)
+                      (t
+                       (choose-random-limb victim)))))
+
+          ;; Calculate damage
+          (cond
+            ((and weapon
+                  (<= +type-egun-laser+ w-type +type-egun-top+))
+             ;; ranged, dex base damage
+             (setf damage (+ (getf (aref +dex-app+ (dex-of ch)) :todam)
+                             (hitroll-of ch))))
+            (t
+             ;; melee, str base damage
+             (setf damage (+ (getf (aref +str-app+ (str-of ch)) :todam)
+                             (damroll-of ch)))))
+
+          (cond
+            (weapon
+             ;; Calculate weapon damage
+             (when (and (is-evil victim)
+                        (is-obj-stat weapon +item-bless+))
+               (incf damage 5))
+             (when (and (is-good victim)
+                        (is-obj-stat weapon +item-damned+))
+               (incf damage 5))
+
+             (cond
+               ((or (is-obj-kind weapon +item-weapon+)
+                    (is-energy-gun weapon))
+                (incf damage (dice (aref (value-of weapon) 1)
+                                (aref (value-of weapon) 2)))
+                (let ((tmp-dam damage))
+                  (when (invalid-char-class ch weapon)
+                    (setf damage (floor damage 2)))
+                  (when (is-npc ch)
+                    (incf tmp-dam (dice (damnodice-of ch)
+                                        (damsizedice-of ch)))
+                    (setf damage (max tmp-dam damage)))
+                  (when (plusp (vnum-of weapon))
+                    (let ((spec (assoc (vnum-of weapon) (weap-spec-of ch))))
+                      (when spec
+                        (incf damage (second spec)))))
+                  (when (and (is-two-hand weapon)
+                             (is-barb ch)
+                             (not (is-energy-gun weapon))
+                             (eql (worn-on-of weapon)
+                                  +wear-wield+))
+                    (let ((dam-add (floor (weight-of weapon)
+                                          4)))
+                      (when (> (skill-of ch +skill-discipline-of-steel+) 60)
+                        (let ((bonus (get-skill-bonus ch +skill-discipline-of-steel+))
+                              (weight (weight-of weapon)))
+                          (incf dam-add (floor (* bonus weight)
+                                               100)))
+                        (incf damage dam-add))))))
+               ((is-obj-kind weapon +item-armor+)
+                (incf damage (floor (aref (value-of weapon) 0) 3)))
+               (t
+                (incf damage (+ (dice 1 4) (random-range 0 (weight-of weapon)))))))
+            (t
+             ;; Bare hand damage
+             (incf damage (random-range 0 3))
+             (when (is-monk ch)
+               (incf damage (random-range (floor (level-of ch)
+                                              4)
+                                       (level-of ch))))
+             (when (is-barb ch)
+               (incf damage (random-range 0 (floor (level-of ch) 2))))))
+
+          (when (and weapon
+                     (is-energy-gun weapon)
+                     (not (>= +type-egun-laser+ w-type +type-egun-top+)))
+            ;; Bludgeoning with the gun
+            (setf damage (floor damage 10)))
+
+          ;; Enforce level limit and minimum 1 pt damage
+          (setf damage (pin damage 1 (+ 30 (* (level-of ch) 8))))
+          (cond
+            ((eql type +skill-cleave+)
+             (setf damage (* damage
+                          (if (> (skill-of ch +skill-great-cleave+)
+                                 50)
+                              (+ 5 (floor (remort-gen-of ch) 5))
+                              4))))
+
+            ((eql type +skill-backstab+)
+             (gain-skill-proficiency ch type)
+             (when (is-thief ch)
+               (setf damage (* damage (backstab-multiplier ch)))
+               (incf damage (random-range 0 (floor (- (skill-of ch +skill-backstab+)
+                                                   (learned ch)) 2))))
+
+             (damage-creature ch victim damage weapon +skill-backstab+ +wear-back+)
+             (return-from hit 0))
+            ((eql type +skill-circle+)
+             (gain-skill-proficiency ch type)
+             (when (is-thief ch)
+               (setf damage (* damage (max 2 (floor (backstab-multiplier ch) 2))))
+               (incf damage (random-range 0 (floor (- (skill-of ch +skill-circle+)
+                                                   (learned ch)) 2))))
+
+             (damage-creature ch victim damage weapon +skill-circle+ +wear-back+)
+             (return-from hit 0))
+
+            (t
+             ;; Normal hit damage
+             (let ((ablaze-level 0))
+               (when (and weapon
+                          (is-obj-kind weapon +item-weapon+)
+                          (not (is-energy-gun weapon)))
+                 (when (and (>= (aref (value-of weapon) 3) 0)
+                            (< (aref (value-of weapon) 3) (- +top-attacktype+ +type-hit+))
+                            (is-barb ch))
+                   (let ((skill (aref +weapon-proficiencies+ (aref (value-of weapon) 3))))
+                     (when (plusp skill)
+                       (gain-skill-proficiency ch skill))))
+                 (when (is-obj-stat2 weapon +item2-ablaze+)
+                   (let ((af (affected-by-spell weapon +spell-flame-of-faith+)))
+                     (when af
+                       (incf damage (random-range 1 10))
+                       (setf ablaze-level (level-of af))))))
+               (when (and (>= +type-egun-laser+ w-type +type-egun-top+)
+                          (> (skill-of ch +skill-energy-weapons+)
+                             60))
+                 (gain-skill-proficiency ch +skill-energy-weapons+))
+
+               ;; Finally deal the damage
+               (damage-creature ch victim damage weapon w-type limb)
+
+               ;; Ignite the victim if applicable
+               (when (and (plusp ablaze-level)
+                          (not (aff2-flagged victim +aff2-ablaze+))
+                          (not (mag-savingthrow victim 10 +saving-spell+))
+                          (not (char-withstands-fire victim)))
+                 (act victim :all-emit "$y body suddenly ignites into flame!")
+                 (ignite victim))
+
+               ;; Hitting a rust monster with something metal
+               (when (and weapon
+                          (is-ferrous weapon)
+                          (is-npc victim)
+                          (eql (func-of victim) 'rust-monster)
+                          (or (not (is-obj-stat weapon +item-magic+))
+                              (not (mag-savingthrow ch (level-of victim) +saving-rod+)))
+                          (or (not (is-obj-stat weapon +item-magic-nodispel+))
+                              (not (mag-savingthrow ch (level-of victim) +saving-rod+))))
+                 (act ch :target victim :item weapon
+                      :subject-emit "$p spontaneously oxidizes and crumbles into a pile of dust!"
+                      :place-emit "$p crumbles into rust on contact with $N!")
+                 (extract-obj weapon)
+                 (let ((weapon (read-object +rustpile-vnum+)))
+                   (when weapon
+                     (obj-to-room weapon (in-room-of ch)))))
+
+               ;; Casting weapons
+               (when (and weapon (is-obj-kind weapon +item-weapon+))
+                 (cond
+                   ((func-of (shared-of weapon))
+                    (funcall (func-of (shared-of weapon)) ch weapon 0 nil +special-combat+))
+                   ((is-obj-stat2 weapon +item2-cast-weapon+)
+                    (do-casting-weapon ch weapon))))))))))
+
+    ;; Deduct move points for the effort
+    (when (and (is-pc ch) (> (move-of ch) 20))
+      (decf (move-of ch))
+      (when (and (is-drow ch) (room-is-sunny (in-room-of ch)))
+        (decf (move-of ch)))
+      (when (and (is-cyborg ch) (plusp (broken-component-of ch)))
+        (decf (move-of ch))))))
+
+(defun perform-creature-violence (ch)
+  (let ((prob (calculate-attack-probability ch))
+        (die-roll (random-range 0 300)))
+    (dolist (tch (cons ch (fighting-of ch)))
+      (when (pref-flagged tch +pref-debug+)
+        (send-to-char tch "&c[COMBAT] ~a   prob:~a   roll:~a   wait:~a&n~%"
+                      (name-of ch) prob die-roll (wait-of ch))))
+
+    ;; Handle regular hits
+    (when (>= (min 100 (+ prob 15)) die-roll)
+      (handler-case
+          (loop
+             for time from 1 upto (min 4 (floor (level-of ch) 8)) do
+               (cond
+                 ((< (position-of ch) +pos-fighting+)
+                  (when (< (wait-of ch) 10)
+                    (send-to-char ch "You can't fight while sitting!!~%")))
+                 ((>= prob (random-range (* time 24) (* time 40)))
+                  (hit ch (random-elt (fighting-of ch)) +type-undefined+))))
+        (creature-died (death)
+          (when (eql (creature-of death) ch)
+            (return-from perform-creature-violence)))))
+
+    ;; Handle cyborg normal implant hits
+    (when (and (is-cyborg ch) (fighting-of ch))
+      (unless (fighting-of ch)
+        (when (< (random-range 1 100) (skill-of ch +skill-implant-w+))
+          (let ((implant-prob 25))
+            (when (> (skill-of ch +skill-implant-w+) 100)
+              (incf implant-prob (+ (remort-gen-of ch)
+                                    (floor (- (skill-of ch +skill-implant-w+) 100) 2))))
+            (when (< (random-range 0 100) implant-prob)
+              (handler-case
+                  (hit ch (random-elt (fighting-of ch)) +skill-implant-w+)
+                (creature-died (death)
+                  (when (eql (creature-of death) ch)
+                    (return-from perform-creature-violence)))))))))
+
+    ;; Handle cyborg advanced implant hits
+    (when (and (is-cyborg ch) (fighting-of ch))
+      (when (< (position-of ch) +pos-fighting+)
+        (when (< (wait-of ch) 10)
+          (send-to-char ch "You can't fight while sitting!!~%"))
+        (return-from perform-creature-violence))
+
+      (when (< (random-range 1 100) (skill-of ch +skill-adv-implant-w+))
+        (let ((implant-prob 25))
+          (when (> (skill-of ch +skill-adv-implant-w+) 100)
+            (incf implant-prob (+ (remort-gen-of ch)
+                                  (floor (- (skill-of ch +skill-adv-implant-w+) 100) 2))))
+          (when (< (random-range 0 100) implant-prob)
+            (handler-case
+                (hit ch (random-elt (fighting-of ch)) +skill-adv-implant-w+)
+              (creature-died (death)
+                (when (eql (creature-of death) ch)
+                  (return-from perform-creature-violence))))))))
+
+    (when (and (fighting-of ch)
+               (is-npc ch)
+               (eql (position-of ch) +pos-fighting+)
+               (zerop (wait-of ch))
+               (>= (min 100 prob) (random-range 0 300)))
+      (mobile-battle-activity ch nil))))
+
+(defun perform-violence ()
+  "Control every fight in the game"
+  (dolist (ch *characters*)
+    (unless (or (eql (position-of ch) +pos-dead+)
+                (fighting-of ch))
+      (perform-creature-violence ch))))
 

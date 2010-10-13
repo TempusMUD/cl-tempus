@@ -434,6 +434,13 @@
       (setf (timer-of obj)
             (if zone (max 2 (floor (lifespan-of zone) 2)) 15)))))
 
+(defun remove-combat (ch victim)
+  (when (member victim (fighting-of ch))
+    (setf (fighting-of ch) (delete victim (fighting-of ch)))
+    (when (and (null (fighting-of ch))
+               (eql (position-of ch) +pos-fighting+))
+      (setf (position-of ch) +pos-standing+))))
+
 (defun remove-all-combat (ch)
   (setf (fighting-of ch) nil)
   (when (eql (position-of ch) +pos-fighting+)
@@ -616,6 +623,20 @@
           (t
            (aref (value-of obj) 0)))
         0)))
+
+(defun weapon-proficiency (ch weapon)
+  (cond
+    ((not (is-obj-kind weapon +item-weapon+))
+     0)
+    ((not (>= 0 (aref (value-of weapon) 3)
+              (- +top-attacktype+ +type-hit+)))
+     0)
+    ((zerop (aref +weapon-proficiencies+ (aref (value-of weapon)
+                                               3)))
+     0)
+    (t
+     (skill-of ch (aref +weapon-proficiencies+ (aref (value-of weapon)
+                                                     3))))))
 
 
 (defun equip-char (ch obj pos mode)

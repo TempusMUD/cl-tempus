@@ -1244,8 +1244,8 @@
   #("dead" "mortally wounded" "incapacitated" "stunned" "sleeping" "resting" "sitting" "fighting" "standing" "flying" "mounted" "swimming"))
 
 ;;; Player flags: used by Creature.char_specials.act
-(defparameter +plr-killer+ (ash 1 0))   ; Player is a player-killer
-(defparameter +plr-thief+ (ash 1 1))    ; Player is a player-thief
+(defparameter +plr-hardcore+ (ash 1 0))   ; Player is a hardcore character
+(defparameter +plr-unused1+ (ash 1 1))
 (defparameter +plr-frozen+ (ash 1 2))   ; Player is frozen
 (defparameter +plr-dontset+ (ash 1 3))  ; Don't EVER set (ISNPC bit)
 (defparameter +plr-writing+ (ash 1 4))  ; Player writing (board/mail/olc)
@@ -1254,26 +1254,26 @@
 (defparameter +plr-siteok+ (ash 1 7))   ; Player has been site-cleared
 (defparameter +plr-noshout+ (ash 1 8))  ; Player not allowed to shout/goss
 (defparameter +plr-notitle+ (ash 1 9))  ; Player not allowed to set title
-(defparameter +plr-deleted+ (ash 1 10)) ; Player deleted - space reusable
-(defparameter +plr-loadroom+ (ash 1 11))    ; Player uses nonstandard loadroom
+(defparameter +plr-unused2+ (ash 1 10))
+(defparameter +plr-unused3+ (ash 1 11))
 (defparameter +plr-noclanmail+ (ash 1 12))  ; Player doesn't get clanmail
 (defparameter +plr-nodelete+ (ash 1 13))    ; Player shouldn't be deleted
 (defparameter +plr-invstart+ (ash 1 14))    ; Player should enter game wizinvis
 (defparameter +plr-cryo+ (ash 1 15))    ; Player is cryo-saved (purge prog)
 (defparameter +plr-afk+ (ash 1 16)) ; Player is away from keyboard
 (defparameter +plr-clan-leader+ (ash 1 17)) ; The head of the respective clan
-(defparameter +plr-unused2+ (ash 1 18))
+(defparameter +plr-unused4+ (ash 1 18))
 (defparameter +plr-olc+ (ash 1 19)) ; Player is descripting olc
 (defparameter +plr-halt+ (ash 1 20))    ; Player is halted
 (defparameter +plr-olcgod+ (ash 1 21))  ; Player can edit at will
 (defparameter +plr-tester+ (ash 1 22))  ; Player is a tester
-(defparameter +plr-unused3+ (ash 1 23)) ; Quest god
+(defparameter +plr-unused5+ (ash 1 23)) ; Quest god
 (defparameter +plr-mortalized+ (ash 1 24))  ; God can be killed
-(defparameter +plr-unused4+ (ash 1 25))
-(defparameter +plr-unused6+ (ash 1 26))
+(defparameter +plr-unused6+ (ash 1 25))
+(defparameter +plr-unused7+ (ash 1 26))
 (defparameter +plr-nopost+ (ash 1 27))
 (defparameter +plr-log+ (ash 1 28)) ; log all cmds
-(defparameter +plr-unused5+ (ash 1 29)) ; player approved for port olc
+(defparameter +plr-unused8+ (ash 1 29)) ; player approved for port olc
 (defparameter +plr-nopk+ (ash 1 30))    ; player cannot pk
 
 ;; Player Flags Mark II
@@ -1864,6 +1864,34 @@
     (:hitp 12 :shock 99)
     (:hitp 13 :shock 99)
     (:hitp 14 :shock 100)))
+
+(defparameter +dex-app+
+  #((:reaction -7 :miss-att -7 :defensive 6 :tohit -5 :todam -4)
+    (:reaction -6 :miss-att -6 :defensive 5 :tohit -5 :todam -4)
+    (:reaction -4 :miss-att -4 :defensive 5 :tohit -3 :todam -2)
+    (:reaction -3 :miss-att -3 :defensive 4 :tohit -3 :todam -1)
+    (:reaction -2 :miss-att -2 :defensive 3 :tohit -2 :todam -1)
+    (:reaction -1 :miss-att -1 :defensive 2 :tohit -1 :todam 0)
+    (:reaction 0 :miss-att 0 :defensive 1 :tohit -1 :todam 0)
+    (:reaction 0 :miss-att 0 :defensive 0 :tohit 0 :todam 1)
+    (:reaction 0 :miss-att 0 :defensive 0 :tohit 0 :todam 1)
+    (:reaction 0 :miss-att 0 :defensive 0 :tohit 0 :todam 3)
+    (:reaction 0 :miss-att 0 :defensive 0 :tohit 0 :todam 3)
+    (:reaction 0 :miss-att 0 :defensive 0 :tohit 0 :todam 4)
+    (:reaction 0 :miss-att 0 :defensive 0 :tohit 1 :todam 5)
+    (:reaction 0 :miss-att 0 :defensive 0 :tohit 1 :todam 6)
+    (:reaction 0 :miss-att 0 :defensive 0 :tohit 1 :todam 7)
+    (:reaction 1 :miss-att 0 :defensive -1 :tohit 1 :todam 8)
+    (:reaction 1 :miss-att 1 :defensive -2 :tohit 2 :todam 9)
+    (:reaction 2 :miss-att 2 :defensive -3 :tohit 2 :todam 10)
+    (:reaction 2 :miss-att 2 :defensive -4 :tohit 3 :todam 13)
+    (:reaction 3 :miss-att 3 :defensive -5 :tohit 3 :todam 14)
+    (:reaction 3 :miss-att 3 :defensive -5 :tohit 4 :todam 15)
+    (:reaction 4 :miss-att 4 :defensive -6 :tohit 4 :todam 16)
+    (:reaction 4 :miss-att 4 :defensive -6 :tohit 5 :todam 17)
+    (:reaction 5 :miss-att 5 :defensive -7 :tohit 6 :todam 18)
+    (:reaction 6 :miss-att 6 :defensive -7 :tohit 7 :todam 19)
+    (:reaction 7 :miss-att 7 :defensive -8 :tohit 8 :todam 20)))
 
 (defparameter +trail-flags+ #("BLOODPRINTS" "BLOOD_DROPS"))
 
@@ -2659,6 +2687,27 @@
     "basalt"
     "ash"
     "ink"))
+
+(defparameter +weapon-proficiencies+
+  #(0
+    #.+skill-prof-whip+
+    #.+skill-prof-whip+
+    #.+skill-prof-slash+
+    0
+    #.+skill-prof-pound+
+    #.+skill-prof-crush+
+    #.+skill-prof-pound+
+    #.+skill-prof-slash+
+    #.+skill-prof-crush+
+    #.+skill-prof-whip+
+    #.+skill-prof-pierce+
+    #.+skill-prof-blast+
+    0
+    #.+skill-prof-pierce+
+    #.+skill-energy-weapons+
+    #.+skill-prof-slash+
+    #.+skill-prof-slash+
+    0 0 0))
 
 (defconstant +mat-none+ 0)
 (defconstant +mat-paper+ 10)

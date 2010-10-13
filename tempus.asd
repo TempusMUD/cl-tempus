@@ -93,7 +93,7 @@
              (:file "combat-utils" :pathname "combat/combat-utils"
                                       :depends-on ("defs" "utils"))
              (:file "comm" :pathname "net/comm"
-                           :depends-on ("defs" "utils" "network" "nanny"))
+                           :depends-on ("defs" "utils" "network" "nanny" "fight"))
              (:file "creature" :pathname "structs/creature"
                                :depends-on ("defs" "random" "constants"))
              (:file "creature-io" :pathname "structs/creature-io"
@@ -103,7 +103,7 @@
              (:file "editor" :pathname "editor/editor"
                              :depends-on ("network" "creature"))
              (:file "fight" :pathname "combat/fight"
-                             :depends-on ("defs" "utils" "weather"))
+                             :depends-on ("defs" "utils" "combat-utils" "handler" "weather"))
              (:file "groups" :pathname "interpreter/groups"
                              :depends-on ("defs" "utils"))
              (:file "graph" :pathname "util/graph"

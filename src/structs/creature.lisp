@@ -564,6 +564,15 @@
 (defun is-npc (ch) (typep ch 'mobile))
 (defun is-undead (ch) (= (race-of ch) +race-undead+))
 (defun is-pet (ch) (mob-flagged ch +mob-pet+))
+(defun is-newbie (ch)
+  (not (or (is-npc ch)
+           (plr-flagged ch +plr-hardcore+)
+           (plusp (remort-gen-of ch))
+           (> (level-of ch) 24))))
+(defun outsidep (ch)
+  (and (not (room-flagged (in-room-of ch) +room-indoors+))
+       (not (eql (terrain-of (in-room-of ch)) +sect-inside+))))
+
 (defun has-symbol (ch)
   (or (is-soulless ch)
       (affected-by-spell ch +spell-stigmata+)
@@ -590,7 +599,7 @@
       (t
        (name-of mob)))))
 (defun testerp (ch)
-  nil)
+  (security-is-member ch "Testers"))
 
 (defun get-level-bonus (ch)
   100)
@@ -862,3 +871,37 @@
     (save-player-to-xml ch))
 
   (extract-creature ch 'afterlife))
+
+
+(defun get-first-printed-char (str)
+  "Returns the position of the first character that isn't a terminal
+control code."
+  (loop for idx = 0 then (+ 2 idx)
+        while (and (< idx (length str))
+                   (eql (char str idx) #\&))
+        finally (when (< idx (length str)) (return idx))))
+
+(defun send-to-char (ch fmt &rest args)
+  (when (link-of ch)
+    (let* ((str (format nil "~?" fmt args))
+           (first-char-pos (get-first-printed-char str)))
+      (cxn-write (link-of ch) "~a"
+                 (if first-char-pos
+                     (string-upcase str
+                                    :start first-char-pos
+                                    :end (1+ first-char-pos))
+                     str)))))
+
+(defun ignite (ch &optional igniter)
+  (affect-to-char ch
+                  (make-instance 'affected-data
+                                 :kind +spell-ablaze+
+                                 :duration -1
+                                 :bitvector +aff2-ablaze+
+                                 :aff-index 2
+                                 :owner (if igniter
+                                            (idnum-of igniter)
+                                            0))))
+
+(defun extinguish (ch)
+  (affect-from-char ch +spell-ablaze+))

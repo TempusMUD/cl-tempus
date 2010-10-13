@@ -124,27 +124,9 @@
 
   (add-timer *event-base* (lambda () (weather-and-time)) 60)
   (add-timer *event-base* (lambda () (update-creatures)) 1)
+  (add-timer *event-base* (lambda () (perform-violence)) 7/10)
 
   (event-dispatch *event-base*))
-
-(defun get-first-printed-char (str)
-  "Returns the position of the first character that isn't a terminal
-control code."
-  (loop for idx = 0 then (+ 2 idx)
-        while (and (< idx (length str))
-                   (eql (char str idx) #\&))
-        finally (when (< idx (length str)) (return idx))))
-
-(defun send-to-char (ch fmt &rest args)
-  (when (link-of ch)
-    (let* ((str (format nil "~?" fmt args))
-           (first-char-pos (get-first-printed-char str)))
-      (cxn-write (link-of ch) "~a"
-                 (if first-char-pos
-                     (string-upcase str
-                                    :start first-char-pos
-                                    :end (1+ first-char-pos))
-                     str)))))
 
 (defun send-to-room (room fmt &rest args)
   (dolist (ch (people-of room))
