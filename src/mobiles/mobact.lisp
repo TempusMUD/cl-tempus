@@ -741,7 +741,7 @@
       (when (or (not (awake ch))
                 (plusp (wait-of ch))
                 (check-wait ch))
-        (return-from single-mobile-activity))
+        (return-from single-mobile-activity)))))
 
-
-      )))
+(defun mobile-battle-activity (ch)
+  nil)

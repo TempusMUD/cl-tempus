@@ -368,3 +368,84 @@
       (decf thaco (char-class-race-hit-bonus ch victim))
 
       thaco)))
+
+(defun calculate-weapon-probability (ch prob weapon)
+  prob)
+
+(defun calculate-attack-probability (ch)
+  (let ((prob (+ 1 (floor (level-of ch) 7) (* (dex-of ch) 2))))
+    (when (and (is-ranger ch)
+               (or (null (get-eq ch +wear-body+))
+                   (not (is-obj-kind (get-eq ch +wear-body+) +item-armor+))
+                   (not (is-metal (get-eq ch +wear-body+)))))
+      (decf prob (floor (level-of ch) 4)))
+
+    (when (get-eq ch +wear-wield-2+)
+      (setf prob (calculate-weapon-probability ch prob (get-eq ch +wear-wield-2+))))
+    (when (get-eq ch +wear-wield+)
+      (setf prob (calculate-weapon-probability ch prob (get-eq ch +wear-wield+))))
+    (when (get-eq ch +wear-hands+)
+      (setf prob (calculate-weapon-probability ch prob (get-eq ch +wear-hands+))))
+
+    (incf prob (* (- +pos-fighting+ (position-of (random-elt (fighting-of ch)))) 2))
+
+    (when (plusp (skill-of ch +skill-dbl-attack+))
+      (incf prob (floor (+ (* (skill-of ch +skill-dbl-attack+) 15/100)
+                           (* (skill-of ch +skill-triple-attack+) 17/100)))))
+    (when (and (plusp (skill-of ch +skill-melee-combat-tac+))
+               (affected-by-spell ch +skill-melee-combat-tac+))
+      (incf prob (floor (* (skill-of ch +skill-melee-combat-tac+) 1/10))))
+
+    (when (affected-by-spell ch +skill-offensive-pos+)
+      (incf prob (floor (* (skill-of ch +skill-offensive-pos+) 1/10))))
+    (when (affected-by-spell ch +skill-defensive-pos+)
+      (incf prob (floor (* (skill-of ch +skill-defensive-pos+) 1/20))))
+
+    (when (and (is-merc ch)
+               (> (skill-of ch +skill-shoot+) 50)
+               (or (and (get-eq ch +wear-wield+) (is-gun (get-eq ch +wear-wield+)))
+                   (and (get-eq ch +wear-wield-2+) (is-gun (get-eq ch +wear-wield-2+)))))
+      (incf prob (floor (* (skill-of ch +skill-shoot+) 18/100))))
+
+    (when (aff-flagged ch +aff-adrenaline+)
+      (setf prob (floor (* prob 11/10))))
+
+    (when (aff2-flagged ch +aff2-haste+)
+      (setf prob (floor (* prob 13/10))))
+
+    (when (plusp (speed-of ch))
+      (incf prob (floor (* prob (speed-of ch)) 100)))
+
+    (when (aff2-flagged ch +aff2-slow+)
+      (setf prob (floor (* prob 7/10))))
+
+    (when (eql (terrain-of (in-room-of ch))
+               +sect-elemental-ooze+)
+      (setf prob (floor (* prob 7/10))))
+
+    (when (aff2-flagged ch +aff2-berserk+)
+      (incf prob (floor (+ (level-of ch) (* (remort-gen-of ch) 4)) 2)))
+
+    (when (is-monk ch)
+      (incf prob (floor (level-of ch) 4)))
+
+    (when (aff3-flagged ch +aff3-divine-power+)
+      (incf prob (floor (get-skill-bonus ch +spell-divine-power+) 3)))
+
+    (if (link-of ch)
+        (decf prob (floor (* (max 0 (floor (wait-of (link-of ch)) 2))
+                             prob)
+                          100))
+        (decf prob (floor (* (max 0 (floor (wait-state-of ch) 2))
+                             prob)
+                          100)))
+
+    (decf prob (floor (* prob 32 (+ (carry-weight-of ch) (worn-weight-of ch)))
+                      (* (can-carry-weight ch) 85)))
+
+    (when (> (get-condition ch +drunk+)
+             5)
+      (decf prob (floor (+ (* prob 15/100)
+                           (* prob (/ (get-condition ch +drunk+) 100))))))
+
+    prob))

@@ -1445,7 +1445,7 @@ if the players' reputations allow it."
                (eql (position-of ch) +pos-fighting+)
                (zerop (wait-of ch))
                (>= (min 100 prob) (random-range 0 300)))
-      (mobile-battle-activity ch nil))))
+      (mobile-battle-activity ch))))
 
 (defun perform-violence ()
   "Control every fight in the game"
