@@ -629,7 +629,7 @@
   (unless (link-of ch)
     (return-from look-at-room))
 
-  (when (and (room-is-dark ch) (not (has-dark-sight ch)))
+  (when (and (room-is-dark (in-room-of ch)) (not (has-dark-sight ch)))
     (send-to-char ch "It is pitch black...~%")
     (return-from look-at-room))
 
