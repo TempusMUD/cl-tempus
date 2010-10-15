@@ -943,7 +943,7 @@ environment."
       (plusp amount))))
 
 (defun obj-is-weapon (obj)
-  "Returns non-NIL if OBJ ir a weapon or energy gun.  Returns NIL if
+  "Returns non-NIL if OBJ is a weapon or energy gun.  Returns NIL if
 it isn't or if OBJ is NIL."
   (and obj
        (or (is-obj-kind obj +item-weapon+)
@@ -1027,7 +1027,6 @@ which may be NIL."
                                            +skill-neural-bridging+
                                            +skill-second-weapon+))) 3) dual-prob)
                (random-range 50 150)))
-
        dual-wielded)
       ;; Normal wield
       ((and wielded (randomly-true))
@@ -1088,7 +1087,63 @@ if the players' reputations allow it."
      (floor (* 6 (max 0 (- (get-skill-bonus ch +skill-backstab+) 50))) 50)))
 
 (defun do-casting-weapon (ch weapon)
-  nil)
+  (let ((spellnum (aref (value-of weapon) 0))
+        (room (in-room-of ch))
+        (wielded (or (eql (worn-on-of weapon) +wear-wield+)
+                     (eql (worn-on-of weapon) +wear-wield-2+))))
+    (unless (< 0 spellnum +top-spell-define+)
+      (slog "Invalid spell number detected on weapon ~d~%" (vnum-of weapon))
+      (return-from do-casting-weapon))
+
+    (unless (or (and (or (spell-is-magic spellnum)
+                         (is-obj-stat weapon +item-magic+))
+                     (room-flagged room +room-nomagic+))
+                (and (spell-is-physics spellnum)
+                     (room-flagged room +room-noscience+))
+                (and (spell-is-psionic spellnum)
+                     (room-flagged room +room-nopsionics+))
+                (not (randomly-true (max 2 (- 100 (level-of ch)
+                                              (int-of ch)
+                                              (floor (check-skill ch spellnum) 8))))))
+      (let ((action-msg (or (action-desc-of weapon)
+                            (format nil "$p begins to hum and shake~@[ in your hand~]!" wielded)))
+            (room-emit (format nil "$p begins to hum and shake~@[ in $n's hand~]!" wielded)))
+        (send-to-char ch "&c")
+        (act ch :item weapon :subject-emit action-msg :place-emit room-emit)
+        (send-to-char ch "&n")
+
+        (cond
+          ((and (not (immortalp ch))
+                (or (is-dwarf ch)
+                    (is-cyborg ch)
+                    (and (or (is-obj-stat weapon +item-magic+)
+                             (spell-is-magic spellnum))
+                         (randomly-true (+ (int-of ch) 3)))))
+           ;; Drop the weapon if wielded
+           (cond
+             (wielded
+              (act ch :item weapon
+                   :subject-emit "$p shocks you!  You are forced to drop it!"
+                   :place-emit "$n cries out as $p shocks $m!")
+              (if (> (random-range 0 20)
+                     (dex-of ch))
+                  (obj-to-room (unequip-char ch (worn-on-of weapon) :worn nil) room)
+                  (obj-to-char (unequip-char ch (worn-on-of weapon) :worn nil) ch)))
+             (t
+              (act ch :item weapon
+                   :subject-emit "$p blasts the hell out of you!  OUCH!"
+                   :place-emit "$n cries out as $p shocks $m!")
+              (damage-creature nil ch (dice 3 4) nil +spell-shocking-grasp+ (worn-on-of weapon)))))
+          ((or (spell-flagged spellnum +mag-damage+)
+               (violentp (aref *spell-info* spellnum))
+               (logtest (targets-of (aref *spell-info* spellnum)) +tar-unpleasant+))
+           ;; casting it at an opponent
+           (when (fighting-of ch)
+             (call-magic ch (random-elt (fighting-of ch)) nil 0 spellnum
+                         (level-of ch) +cast-wand+)))
+          (t
+           ;; casting it on self
+           (call-magic ch ch nil 0 spellnum (level-of ch) +cast-wand+)))))))
 
 (defun hit (ch victim type)
   (let ((w-type type)
@@ -1197,11 +1252,11 @@ if the players' reputations allow it."
                    (awakep victim)
                    (or (= diceroll 1)
                        (> (- thaco diceroll) victim-ac)))
+          ;; Miss - deal 0 damage to emit miss message
           (if (member type (list +skill-backstab+
                                  +skill-circle+
                                  +skill-second-weapon+
                                  +skill-cleave+))
-              ;; Miss - deal 0 damage to emit miss message
               (damage-creature ch victim 0 weapon type -1)
               (damage-creature ch victim 0 weapon w-type -1))
 
