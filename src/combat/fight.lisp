@@ -473,13 +473,24 @@ and/or the structure of spacetime as we know it."
 
 (defun can-damage-creature (ch victim weapon type)
   "Returns T if the creature CH can damage VICTIM.  If not, the result
-is simply no damage."
+is simply no damage.  CH may be NIL for damage caused by the
+environment."
 
-  (unless (can-attack ch victim)
+  (when (and (is-undead victim) (eql type +spell-poison+))
+    (return-from can-damage-creature nil))
+
+  (when (and (not (char-has-blood victim)) (eql type +type-bleed+))
     (return-from can-damage-creature nil))
 
   ;; Can't damage an immortal who isn't mortalized
   (when (immortalp victim)
+    (return-from can-damage-creature nil))
+
+  ;; Damage from the environment is fully checked out
+  (when (null ch)
+    (return-from can-damage-creature t))
+
+  (unless (can-attack ch victim)
     (return-from can-damage-creature nil))
 
   ;; Can only damage some creatures with magical attacks
@@ -558,12 +569,6 @@ is simply no damage."
   ;; TODO: Prismatic sphere
   ;; TODO: Electrostatic field
   ;; TODO: Thorn skin
-
-  (when (and (is-undead victim) (eql type +spell-poison+))
-    (return-from can-damage-creature nil))
-
-  (when (and (not (char-has-blood victim)) (eql type +type-bleed+))
-    (return-from can-damage-creature nil))
 
   ;; Passed all the tests - damaging is actually possible
   t)
@@ -1066,6 +1071,8 @@ if the players' reputations allow it."
         (vict-master (loop for tch = vict then (master-of tch)
                         while (master-of tch)
                         finally (return tch))))
+    (when (is-npc ch-master)
+      (return-from check-reputations nil))
     (when (zerop (reputation-of ch-master))
       (send-to-char ch "You are currently an innocent.  If you wish to be a player killer, type PK on yes.~%")
       (return-from check-reputations t))
@@ -1134,6 +1141,14 @@ if the players' reputations allow it."
       (act victim :target ch
            :subject-emit "You are knocked from your mount by $N's attack!"))
 
+    ;; Deduct move points for the effort
+    (when (and (is-pc ch) (> (move-of ch) 20))
+      (decf (move-of ch))
+      (when (and (is-drow ch) (room-is-sunny (in-room-of ch)))
+        (decf (move-of ch)))
+      (when (and (is-cyborg ch) (plusp (broken-component-of ch)))
+        (decf (move-of ch))))
+
     (let ((weapon (get-next-weapon ch type)))
       (when weapon
         (cond
@@ -1158,8 +1173,8 @@ if the players' reputations allow it."
       (when (null weapon)
         (cond
           ((and (is-npc ch)
-                (plusp (attack-type-of ch)))
-           (setf w-type (+ +type-hit+ (attack-type-of ch))))
+                (plusp (attack-type-of (shared-of ch))))
+           (setf w-type (+ +type-hit+ (attack-type-of (shared-of ch)))))
           ((and (is-tabaxi ch) (randomly-true))
            (setf w-type +type-claw+))
           (t
@@ -1167,17 +1182,13 @@ if the players' reputations allow it."
 
       (let ((thaco (calculate-thaco ch victim weapon))
             (victim-ac (max (armor-of victim)
-                            (- (floor (* (level-of ch)
-                                         4)
-                                      15))))
+                            (- (floor (* (level-of ch) 4) 15))))
             (diceroll (random-range 1 20)))
         (when (pref-flagged ch +pref-debug+)
           (send-to-char ch "&c[HIT] thac0:~a   roll:~a  AC:~a&n~%" thaco diceroll victim-ac))
         (when (and (= diceroll 1)
-                   (>= (position-of victim)
-                       +pos-fighting+)
-                   (> (skill-of victim +skill-counter-attack+)
-                      70))
+                   (>= (position-of victim) +pos-fighting+)
+                   (> (skill-of victim +skill-counter-attack+) 70))
           (send-to-char victim "You launch a counter attack!~%")
           (return-from hit (hit victim ch +type-undefined+)))
 
@@ -1185,18 +1196,20 @@ if the players' reputations allow it."
         (when (and (< diceroll 20)
                    (awakep victim)
                    (or (= diceroll 1)
-                       (> (- thaco diceroll)
-                          victim-ac)))
+                       (> (- thaco diceroll) victim-ac)))
           (if (member type (list +skill-backstab+
                                  +skill-circle+
                                  +skill-second-weapon+
                                  +skill-cleave+))
               ;; Miss - deal 0 damage to emit miss message
               (damage-creature ch victim 0 weapon type -1)
-              (damage-creature ch victim 0 weapon w-type -1)))
+              (damage-creature ch victim 0 weapon w-type -1))
+
+          ;; Start the fight!
+          (pushnew ch (fighting-of victim))
+          (pushnew victim (fighting-of ch)))
 
         ;; It's a HIT
-
         (when (> (skill-of ch +skill-dbl-attack+) 60)
           (gain-skill-proficiency ch +skill-dbl-attack+))
         (when (> (skill-of ch +skill-triple-attack+) 60)
@@ -1222,11 +1235,11 @@ if the players' reputations allow it."
             ((and weapon
                   (<= +type-egun-laser+ w-type +type-egun-top+))
              ;; ranged, dex base damage
-             (setf damage (+ (getf (aref +dex-app+ (dex-of ch)) :todam)
+             (setf damage (+ (getf (aref +dex-app+ (dex-of ch)) :to-dam)
                              (hitroll-of ch))))
             (t
              ;; melee, str base damage
-             (setf damage (+ (getf (aref +str-app+ (str-of ch)) :todam)
+             (setf damage (+ (getf (aref +str-app+ (str-of ch)) :to-dam)
                              (damroll-of ch)))))
 
           (cond
@@ -1276,9 +1289,8 @@ if the players' reputations allow it."
              ;; Bare hand damage
              (incf damage (random-range 0 3))
              (when (is-monk ch)
-               (incf damage (random-range (floor (level-of ch)
-                                              4)
-                                       (level-of ch))))
+               (incf damage (random-range (floor (level-of ch) 4)
+                                          (level-of ch))))
              (when (is-barb ch)
                (incf damage (random-range 0 (floor (level-of ch) 2))))))
 
@@ -1335,8 +1347,7 @@ if the players' reputations allow it."
                        (incf damage (random-range 1 10))
                        (setf ablaze-level (level-of af))))))
                (when (and (>= +type-egun-laser+ w-type +type-egun-top+)
-                          (> (skill-of ch +skill-energy-weapons+)
-                             60))
+                          (> (skill-of ch +skill-energy-weapons+) 60))
                  (gain-skill-proficiency ch +skill-energy-weapons+))
 
                ;; Finally deal the damage
@@ -1375,13 +1386,9 @@ if the players' reputations allow it."
                    ((is-obj-stat2 weapon +item2-cast-weapon+)
                     (do-casting-weapon ch weapon))))))))))
 
-    ;; Deduct move points for the effort
-    (when (and (is-pc ch) (> (move-of ch) 20))
-      (decf (move-of ch))
-      (when (and (is-drow ch) (room-is-sunny (in-room-of ch)))
-        (decf (move-of ch)))
-      (when (and (is-cyborg ch) (plusp (broken-component-of ch)))
-        (decf (move-of ch))))))
+    ;; Start the fight!
+    (pushnew ch (fighting-of victim))
+    (pushnew victim (fighting-of ch))))
 
 (defun perform-creature-violence (ch)
   (let ((prob (calculate-attack-probability ch))
@@ -1451,6 +1458,11 @@ if the players' reputations allow it."
   "Control every fight in the game"
   (dolist (ch *characters*)
     (unless (or (eql (position-of ch) +pos-dead+)
-                (fighting-of ch))
-      (perform-creature-violence ch))))
+                (null (fighting-of ch)))
+      (with-simple-restart (continue "Continue from signal in combat update")
+        (if *break-on-error*
+            (perform-creature-violence ch)
+            (handler-bind ((error (lambda (str)
+                                    (errlog "System error: ~a" str))))
+              (perform-creature-violence ch)))))))
 

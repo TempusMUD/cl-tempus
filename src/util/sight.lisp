@@ -74,9 +74,9 @@
      nil)
     ;; Mortals can't see unapproved mobs
     ((and (not (approvedp tch))
-                  (approvedp ch)
-                  (not (immortalp ch))
-                  (not (testerp ch)))
+          (approvedp ch)
+          (not (immortalp ch))
+          (not (testerp ch)))
      nil)
     ;; Non-tester mortal players can't see testers
     ((and (not (immortalp ch))

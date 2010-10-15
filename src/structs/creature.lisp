@@ -352,9 +352,13 @@
 
 (defun immortalp (ch)
   (>= (level-of ch) 50))
-
 (defun immortal-level-p (ch)
   (>= (level-of ch) 50))
+
+(defmethod approvedp ((ch mobile))
+  (not (mob2-flagged ch +mob2-unapproved+)))
+(defmethod approvedp ((ch player))
+  t)
 
 (defun check-skill (ch skill)
   (if (is-npc ch)
@@ -362,10 +366,13 @@
       (aref (skills-of ch) skill)))
 
 (defun skill-of (ch skill)
-  (aref (skills-of ch) skill))
+  (if (is-npc ch)
+      50
+      (aref (skills-of ch) skill)))
 
 (defun (setf skill-of) (val ch skill)
-  (setf (aref (skills-of ch) skill) val))
+  (when (is-pc ch)
+    (setf (aref (skills-of ch) skill) val)))
 
 (defun check-tongue (ch tongue-id)
   (aref (tongues-of ch) tongue-id))
@@ -634,6 +641,14 @@
 (defun wait-state (ch pulses)
   (when (link-of ch)
     (incf (wait-of (link-of ch)) pulses)))
+
+(defmethod wait-of ((ch mobile))
+  (wait-state-of ch))
+
+(defmethod wait-of ((ch player))
+  (if (link-of ch)
+      (wait-of (link-of ch))
+      0))
 
 (defun affect-remove (ch af)
   "Given a creature affect AF, removes the effect of AF on the creature CH."
