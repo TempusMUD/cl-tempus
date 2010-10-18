@@ -898,11 +898,33 @@ environment."
     (gain-exp ch (min (expt (level-of ch) 3)
                       (* (level-of ch) amount)))))
 
-(defun damage-creature (ch victim base-amount weapon kind pos)
-  "Causes the creature VICTIM to be damaged by an amount based on BASE-AMOUNT.  CH is the dealer of the damage or NIL if a creature was not responsible, KIND is the skill, spell or type of the damage, and POS is the hit location.  Returns T if damage was dealt, and NIL if the attack failed."
+(defun pick-damage-location (victim kind hit-location)
+  (let  ((location +wear-body+))
+    (when (eql kind +spell-psychic-crush+)
+      (setf location +wear-head+))
+    (when (eql hit-location +wear-random+)
+      (setf location (choose-random-limb victim)))
+    (when (and (or (eql location +wear-finger-r+)
+                   (eql location +wear-finger-l+))
+               (get-eq victim +wear-hands+))
+      (setf location +wear-hands+))
+    (when (and (or (eql location +wear-ear-r+)
+                   (eql location +wear-ear-l+))
+               (get-eq victim +wear-head+))
+      (setf location +wear-head+))
+
+    location))
+
+(defun damage-creature (ch victim base-amount weapon kind hit-location)
+  "Causes the creature VICTIM to be damaged by an amount based on
+BASE-AMOUNT.  CH is the dealer of the damage or NIL if a creature was
+not responsible, KIND is the skill, spell or type of the damage, and
+POS is the hit location.  Returns T if damage was dealt, and NIL if
+the attack failed."
   (when (can-damage-creature ch victim weapon kind)
     (let ((amount (calculate-damage ch victim base-amount kind))
-          (damage-cap (calculate-damage-cap ch)))
+          (damage-cap (calculate-damage-cap ch))
+          (location (pick-damage-location victim kind hit-location)))
       (when (and ch (pref-flagged ch +pref-debug+))
         (send-to-char ch "&c[DAMAGE] ~a   dam: ~d  cap: ~d   wait: ~d   pos: ~d&n~%"
                       (name-of victim)
@@ -911,7 +933,7 @@ environment."
                       (if (link-of victim)
                           (wait-of (link-of victim))
                           (wait-state-of victim))
-                      (position-of victim)))
+                      location))
       (when (pref-flagged victim +pref-debug+)
         (send-to-char ch "&c[DAMAGE] ~a   dam: ~d  cap: ~d   wait: ~d   pos: ~d&n~%"
                       (name-of victim)
@@ -920,9 +942,9 @@ environment."
                       (if (link-of victim)
                           (wait-of (link-of victim))
                           (wait-state-of victim))
-                      (position-of victim)))
+                      location))
       (when ch
-        (damage-counterattack ch victim kind pos))
+        (damage-counterattack ch victim kind location))
 
       (decf (hitp-of victim) amount)
       (when (is-pc victim)
@@ -933,12 +955,32 @@ environment."
 
       (update-pos victim)
 
+
       (when (and ch (eql (master-of victim) ch))
         (stop-following victim))
 
-      (when (eql (position-of victim) +pos-dead+)
-        ;; log death of victim
-        (raw-kill victim ch kind))
+      (cond
+        ((eql (position-of victim) +pos-mortallyw+)
+         (act victim :subject-emit "You are badly wounded, but will recover very slowly."
+              :place-emit "$n is badly wounded, but will recover very slowly."))
+        ((eql (position-of victim) +pos-incap+)
+         (act victim :subject-emit "You are incapacitated but will probably recover."
+              :place-emit "$n is incapacitated but will probably recover."))
+        ((eql (position-of victim) +pos-stunned+)
+         (act victim :subject-emit "You're stunned, but will probably regain consciousness again."
+              :place-emit "$n is stunned, but will probably regain consciousness again."))
+        ((eql (position-of victim) +pos-dead+)
+         (act victim :subject-emit "You are dead!  Sorry..."
+              :place-emit "$n is dead!  R.I.P.")
+         ;; log death of victim
+         (raw-kill victim ch kind))
+        (t
+         (when (> amount (floor (max-hitp-of victim) 4))
+           (send-to-char victim "That really did HURT!~%"))
+         (when (and (< (hitp-of victim)
+                       (floor (max-hitp-of victim) 4))
+                    (< (hitp-of victim) 200))
+           (send-to-char victim "&rYou wish that you wounds would stop &RBLEEDING&r so much!&n~%"))))
 
       (plusp amount))))
 
@@ -1262,7 +1304,8 @@ if the players' reputations allow it."
 
           ;; Start the fight!
           (pushnew ch (fighting-of victim))
-          (pushnew victim (fighting-of ch)))
+          (pushnew victim (fighting-of ch))
+          (return-from hit))
 
         ;; It's a HIT
         (when (> (skill-of ch +skill-dbl-attack+) 60)
