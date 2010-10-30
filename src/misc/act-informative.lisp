@@ -1019,7 +1019,7 @@
        (format str "You are very agile."))
       ((<= (dex-of ch) 18)
        (format str "You are exceptionally agile."))
-      ((<= (dex-of ch) 20)
+      (t
        (format str "You have the agility of a god!")))
     (format str "~%")
 
@@ -1811,3 +1811,6 @@
                       year)
         (send-to-char ch "The moon is currently ~a.~%"
                       (aref +lunar-phases+ (lunar-phase *lunar-day*))))))
+
+(defcommand (ch "attributes") ()
+  (send-to-char ch "~a" (describe-attributes ch)))
