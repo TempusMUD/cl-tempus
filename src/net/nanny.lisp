@@ -686,8 +686,7 @@ You may type 'help <race>' for information on any of the available races.
              (cxn-write cxn "&R------ BAD PROBLEMS ------  PLEASE REPORT ------[~d]&n~%"
                         (idnum-of player)))
             ((and (not immort)
-                  (or (plr-flagged tmp-ch +plr-deleted+)
-                      (plr2-flagged tmp-ch +plr2-buried+)))
+                  (plr2-flagged tmp-ch +plr2-buried+))
              nil)
             (t
              (let* ((+immort-time-format+ '(:short-weekday #\, #\space
