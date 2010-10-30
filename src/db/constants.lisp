@@ -830,17 +830,18 @@
 (defparameter +skill-energy-conversion+ 679) ; physic's energy conversion
 
                                         ;*****************  PROFICENCIES  ******************
-(defparameter +skill-prof-pound+ 681)
-(defparameter +skill-prof-whip+ 682)
-(defparameter +skill-prof-pierce+ 683)
-(defparameter +skill-prof-slash+ 684)
-(defparameter +skill-prof-crush+ 685)
-(defparameter +skill-prof-blast+ 686)
-(defparameter +skill-break-door+ 687)
-(defparameter +skill-archery+ 688)
-(defparameter +skill-bow-fletch+ 689)
-(defparameter +skill-read-scrolls+ 690)
-(defparameter +skill-use-wands+ 691)
+(eval-when (:load-toplevel :compile-toplevel :execute)
+  (defparameter +skill-prof-pound+ 681)
+  (defparameter +skill-prof-whip+ 682)
+  (defparameter +skill-prof-pierce+ 683)
+  (defparameter +skill-prof-slash+ 684)
+  (defparameter +skill-prof-crush+ 685)
+  (defparameter +skill-prof-blast+ 686)
+  (defparameter +skill-break-door+ 687)
+  (defparameter +skill-archery+ 688)
+  (defparameter +skill-bow-fletch+ 689)
+  (defparameter +skill-read-scrolls+ 690)
+  (defparameter +skill-use-wands+ 691))
 
 
 ;;; New skills may be added here up to MAX_SKILLS (700)
@@ -2689,25 +2690,26 @@
     "ink"))
 
 (defparameter +weapon-proficiencies+
-  #(0
-    #.+skill-prof-whip+
-    #.+skill-prof-whip+
-    #.+skill-prof-slash+
-    0
-    #.+skill-prof-pound+
-    #.+skill-prof-crush+
-    #.+skill-prof-pound+
-    #.+skill-prof-slash+
-    #.+skill-prof-crush+
-    #.+skill-prof-whip+
-    #.+skill-prof-pierce+
-    #.+skill-prof-blast+
-    0
-    #.+skill-prof-pierce+
-    #.+skill-energy-weapons+
-    #.+skill-prof-slash+
-    #.+skill-prof-slash+
-    0 0 0))
+  (coerce (list 0
+                +skill-prof-whip+
+                +skill-prof-whip+
+                +skill-prof-slash+
+                0
+                +skill-prof-pound+
+                +skill-prof-crush+
+                +skill-prof-pound+
+                +skill-prof-slash+
+                +skill-prof-crush+
+                +skill-prof-whip+
+                +skill-prof-pierce+
+                +skill-prof-blast+
+                0
+                +skill-prof-pierce+
+                +skill-energy-weapons+
+                +skill-prof-slash+
+                +skill-prof-slash+
+                0 0 0)
+          'simple-vector))
 
 (defconstant +mat-none+ 0)
 (defconstant +mat-paper+ 10)
