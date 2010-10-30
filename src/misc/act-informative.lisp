@@ -853,24 +853,35 @@
         (send-who-line ch player options))
 
       ;; Send counts of the various kinds of players
-      (let* ((immortals-displayed (length (remove-if-not #'immortal-level-p displayed)))
-             (immortals-playing (length (remove-if-not #'immortal-level-p players)))
-             (testers-displayed (length (remove-if-not #'testerp displayed)))
-             (testers-playing (length (remove-if-not #'testerp players)))
-             (players-displayed (- (length displayed) immortals-displayed testers-displayed))
-             (players-playing (- (length players) immortals-playing testers-playing)))
-        (if (immortalp ch)
-            (send-to-char ch "&n~d of ~d immortal~:p, ~d tester~:p, and ~d player~:p displayed.~%"
-                          immortals-displayed
-                          immortals-playing
-                          testers-displayed
-                          players-displayed)
-            (send-to-char ch "&n~d of ~d immortal~:p and ~d of ~d player~:p displayed.~%"
-
-                          immortals-displayed
-                          immortals-playing
-                          players-displayed
-                          players-playing))))))
+      (loop
+         for dch in displayed
+         for pch in players
+         if (immortal-level-p dch)
+         count t into immortals-displayed
+         else if (testerp dch)
+         count t into testers-displayed
+         else
+         count t into players-displayed
+         end
+         if (immortal-level-p pch)
+         count t into immortals-playing
+         else if (testerp pch)
+         count t into testers-playing
+         else
+         count t into players-playing
+         end
+         finally
+           (if (immortalp ch)
+               (send-to-char ch "&n~d of ~d immortal~:p, ~d tester~:p, and ~d player~:p displayed.~%"
+                             immortals-displayed
+                             immortals-playing
+                             testers-displayed
+                             players-displayed)
+               (send-to-char ch "&n~d of ~d immortal~:p and ~d of ~d player~:p displayed.~%"
+                             immortals-displayed
+                             immortals-playing
+                             players-displayed
+                             players-playing))))))
 
 (defun show-mud-date-to-char (ch)
   (unless (in-room-of ch)
