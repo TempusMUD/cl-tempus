@@ -611,6 +611,13 @@ sequences in seq-list with the delimiter between each element"
 (defun is-are (str)
   (if (eql (char str (1- (length str))) #\s) "are" "is"))
 
+(defun it-they (str)
+  (if (eql (char str (1- (length str))) #\s) "they" "it"))
+
+(defun it-them (str)
+  (if (eql (char str (1- (length str))) #\s) "them" "it"))
+
+
 (defun copy-extra-descs (src)
   (mapcar (lambda (exd)
             (make-instance 'extra-descr-data
