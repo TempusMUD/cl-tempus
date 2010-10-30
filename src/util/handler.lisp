@@ -374,7 +374,7 @@
   (let ((light-eq (get-eq ch +wear-light+)))
     (when (and light-eq
                (eql (kind-of light-eq) +item-light+)
-               (plusp (aref (val-of light-eq) 2)))
+               (plusp (aref (value-of light-eq) 2)))
       (incf (light-of room))))
 
   (when (or (aff-flagged ch +aff-glowlight+)
