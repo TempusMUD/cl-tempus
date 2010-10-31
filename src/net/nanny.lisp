@@ -117,7 +117,7 @@
                       (not (pref-flagged (actor-of cxn) +pref-autoprompt+))))
        (when (or (null (account-of cxn))
                  (oddp (compact-level-of (account-of cxn))))
-         (cxn-queue-output cxn (coerce '(#\return #\newline) 'string)))
+         (cxn-write-string cxn (coerce '(#\return #\newline) 'string)))
        (when (or (null (actor-of cxn))
                  (pref-flagged (actor-of cxn) +pref-autoprompt+))
          (setf (need-prompt-p cxn) t)))
