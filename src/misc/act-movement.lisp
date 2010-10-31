@@ -176,16 +176,16 @@
                 (not (immortalp ch))
                 (not (noncorporealp ch))))
        (send-to-char ch "~a~%"
-                     (case (random-range 0 5)
-                       (0 "Alas, you cannot go that way...")
-                       (1 "You don't seem to be able to go that way.")
-                       (2 "Sorry, you can't go in that direction!")
-                       (3 "There is no way to move in that direction.")
-                       (4 "You can't go that way, slick...")
-                       (t "You'll have to choose another direction."))))
+                     (random-elt
+                      '("Alas, you cannot go that way..."
+                        "You don't seem to be able to go that way."
+                        "Sorry, you can't go in that direction!"
+                        "There is no way to move in that direction."
+                        "You can't go that way, slick..."
+                        "You'll have to choose another direction."))))
       ((and (logtest (exit-info-of exit) +ex-closed+)
             (not (noncorporealp ch))
-            (immortalp ch))
+            (not (immortalp ch)))
        (if (keyword-of exit)
            (let ((exit-name (first-word (keyword-of exit))))
              (send-to-char ch "The ~a seem~a to be closed.~%"
@@ -385,3 +385,204 @@
   (perform-move ch 6 nil t))
 (defcommand (ch "past") (:direction :standing)
   (perform-move ch 7 nil t))
+
+(defun obj-is-openable (obj)
+  (and (logtest (aref (value-of obj) 1) +cont-closeable+)
+          (or (and (is-obj-kind obj +item-container+)
+                   (zerop (aref (value-of obj) 3)))
+              (and (is-obj-kind obj +item-v-window+)
+                   (car-openable obj))
+              (is-obj-kind obj +item-vehicle+)
+              (is-obj-kind obj +item-portal+)
+              (is-obj-kind obj +item-scuba-mask+)
+              (is-obj-kind obj +item-window+))))
+
+(defun perform-object-open (ch obj)
+  (cond
+    ((not (obj-is-openable obj))
+     (send-to-char ch "You can't open that!~%"))
+    ((not (logtest (aref (value-of obj) 1) +cont-closed+))
+     (send-to-char ch "But it's currently open!~%"))
+    ((logtest (aref (value-of obj) 1) +cont-locked+)
+     (send-to-char ch "It seems to be locked.~%"))
+    (t
+     (setf (aref (value-of obj) 1)
+           (logandc2 (aref (value-of obj) 1) +cont-closed+))
+     (act ch :item obj
+          :subject-emit "Okay, opened."
+          :place-emit "$n opens $p.")
+     (when (is-vehicle obj)
+       (let ((other-room (real-room (room-number obj))))
+         (when (people-of other-room)
+           (send-to-room other-room "The door of the ~a is opened from the outside.~%"
+                         (first-word (aliases-of obj))))))
+     (wait-state ch 7))))
+
+(defun perform-object-close (ch obj)
+  (cond
+    ((not (obj-is-openable obj))
+     (send-to-char ch "You can't close that!~%"))
+    ((logtest (aref (value-of obj) 1) +cont-closed+)
+     (send-to-char ch "But it's currently closed!~%"))
+    (t
+     (setf (aref (value-of obj) 1)
+           (logior (aref (value-of obj) 1) +cont-closed+))
+     (act ch :item obj
+          :subject-emit "Okay, closed."
+          :place-emit "$n closes $p.")
+     (when (is-vehicle obj)
+       (let ((other-room (real-room (room-number obj))))
+         (when (people-of other-room)
+           (send-to-room other-room "The door of the ~a is closed from the outside.~%"
+                         (first-word (aliases-of obj))))))
+     (wait-state ch 7))))
+
+(defun perform-door-open (ch door)
+  (let* ((exit (exit ch door))
+         (doorname (if (keyword-of exit)
+                       (first-word (keyword-of exit))
+                       "door")))
+    (cond
+      ((not (logtest (exit-info-of exit) +ex-isdoor+))
+       (send-to-char ch "You can't open that!~%"))
+      ((not (logtest (exit-info-of exit) +ex-closed+))
+       (send-to-char ch "But it's currently open!~%"))
+      ((logtest (exit-info-of exit) +ex-locked+)
+       (send-to-char ch "It seems to be locked.~%"))
+      ((and (logtest (exit-info-of exit) +ex-heavy-door+)
+            (< (move-of ch)
+               10))
+       (send-to-char ch "You are too exhausted.~%"))
+      ((and (logtest (exit-info-of exit) +ex-heavy-door+)
+            (< (+ (dice 2 7)
+                  (str-app-type-to-dam (aref +str-app+ (str-of ch))))
+               12))
+       (case (random-range 0 3)
+         (0
+          (send-to-char ch "The ~a ~a too heavy for you to open!~%"
+                        doorname (is-are doorname))
+          (act ch :place-emit (format nil "$n attempts to open the ~a" doorname)))
+         (1
+          (send-to-char ch "You push against the ~a, but ~a barely budge~a.~%"
+                        doorname (it-they doorname) (if (pluralp doorname)
+                                                        "" "s"))
+          (act ch :place-emit (format nil "$n pushes against the ~a, but ~a barely budge~a."
+                                      doorname (it-they doorname) (if (pluralp doorname)
+                                                                      "" "s"))))
+         (2
+          (send-to-char ch "You strain against the ~a, to no avail.~%"
+                        doorname)
+          (act ch :place-emit (format nil "$n strains against the ~a, to no avail." doorname)))
+         (t
+          (send-to-char ch "You throw yourself against the heavy ~a in an attempt to open the ~a.~%"
+                        doorname (it-them doorname))
+          (act ch :place-emit (format nil "$n throws $mself against the heavy ~a in an attempt to open ~a."
+                                      doorname (it-them doorname)))))
+       (wait-state ch +pulse-violence+)
+       (decf (move-of ch) 10))
+      (t
+       (let* ((other-room (real-room (to-room-of exit)))
+              (return-exit (abs-exit other-room (aref +rev-dir+ door)))
+              (back (and other-room
+                         (when (eql (to-room-of return-exit) (in-room-of ch))
+                           other-room))))
+         (setf (exit-info-of exit) (logandc2 (exit-info-of exit) +ex-closed+))
+         (when back
+           (setf (exit-info-of return-exit) (logandc2 (exit-info-of exit) +ex-closed+))
+           (send-to-room other-room "The ~a is opened from the other side.~%" doorname))
+         (act ch
+              :subject-emit "Okay, opened."
+              :place-emit (format nil "$n opens the ~a." doorname))
+         (wait-state ch (if (logtest (exit-info-of exit) +ex-heavy-door+)
+                            30 15)))))))
+
+(defun perform-door-close (ch door)
+  (let* ((exit (exit ch door))
+         (doorname (if (keyword-of exit)
+                       (first-word (keyword-of exit))
+                       "door")))
+    (cond
+      ((not (logtest (exit-info-of exit) +ex-isdoor+))
+       (send-to-char ch "You can't close that!~%"))
+      ((logtest (exit-info-of exit) +ex-closed+)
+       (send-to-char ch "But it's currently closed!~%"))
+      ((and (logtest (exit-info-of exit) +ex-heavy-door+)
+            (< (move-of ch)
+               10))
+       (send-to-char ch "You are too exhausted.~%"))
+      ((and (logtest (exit-info-of exit) +ex-heavy-door+)
+            (< (+ (dice 2 7)
+                  (str-app-type-to-dam (aref +str-app+ (str-of ch))))
+               12))
+       (case (random-range 0 3)
+         (0
+          (send-to-char ch "The ~a ~a too heavy for you to close!~%"
+                        doorname (is-are doorname))
+          (act ch :place-emit (format nil "$n attempts to close the ~a" doorname)))
+         (1
+          (send-to-char ch "You push against the ~a, but ~a barely budge~a.~%"
+                        doorname (it-they doorname) (if (pluralp doorname)
+                                                        "" "s"))
+          (act ch :place-emit (format nil "$n pushes against the ~a, but ~a barely budge~a."
+                                      doorname (it-they doorname) (if (pluralp doorname)
+                                                                      "" "s"))))
+         (2
+          (send-to-char ch "You strain against the ~a, to no avail.~%"
+                        doorname)
+          (act ch :place-emit (format nil "$n strains against the ~a, to no avail." doorname)))
+         (t
+          (send-to-char ch "You throw yourself against the heavy ~a in an attempt to close the ~a.~%"
+                        doorname (it-them doorname))
+          (act ch :place-emit (format nil "$n throws $mself against the heavy ~a in an attempt to close ~a."
+                                      doorname (it-them doorname)))))
+       (wait-state ch +pulse-violence+)
+       (decf (move-of ch) 10))
+      (t
+       (let* ((other-room (real-room (to-room-of exit)))
+              (return-exit (abs-exit other-room (aref +rev-dir+ door)))
+              (back (and other-room
+                         (when (eql (to-room-of return-exit) (in-room-of ch))
+                           other-room))))
+         (setf (exit-info-of exit) (logior (exit-info-of exit) +ex-closed+))
+         (when back
+           (setf (exit-info-of return-exit) (logandc2 (exit-info-of exit) +ex-closed+))
+           (send-to-room other-room "The ~a is closed from the other side.~%" doorname))
+         (act ch
+              :subject-emit "Okay, closed."
+              :place-emit (format nil "$n closes the ~a." doorname))
+         (wait-state ch (if (logtest (exit-info-of exit) +ex-heavy-door+)
+                            30 15)))))))
+
+(defcommand (ch "open") (:standing)
+  (send-to-char ch "Open what?~%"))
+
+(defcommand (ch "open" target) (:standing)
+  (let ((objs (resolve-alias ch target
+                             (append (carrying-of ch)
+                                     (contents-of (in-room-of ch))))))
+    (cond
+      ((cdr objs)
+       (send-to-char ch "You can only open one thing at a time.~%"))
+      (objs
+       (perform-object-open ch (first objs)))
+      (t
+       (let ((door (find-door ch target "open")))
+         (when door
+           (perform-door-open ch door)))))))
+
+(defcommand (ch "close") (:standing)
+  (send-to-char ch "Close what?~%"))
+
+(defcommand (ch "close" target) (:standing)
+  (let ((objs (resolve-alias ch target
+                             (append (carrying-of ch)
+                                     (contents-of (in-room-of ch))))))
+    (cond
+      ((cdr objs)
+       (send-to-char ch "You can only close one thing at a time.~%"))
+      (objs
+       (perform-object-close ch (first objs)))
+      (t
+       (let ((door (find-door ch target "open")))
+         (when door
+           (perform-door-close ch door)))))))
