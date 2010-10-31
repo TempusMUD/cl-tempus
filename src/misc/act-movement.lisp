@@ -484,7 +484,7 @@
        (let* ((other-room (real-room (to-room-of exit)))
               (return-exit (abs-exit other-room (aref +rev-dir+ door)))
               (back (and other-room
-                         (when (eql (to-room-of return-exit) (in-room-of ch))
+                         (when (eql (to-room-of return-exit) (number-of (in-room-of ch)))
                            other-room))))
          (setf (exit-info-of exit) (logandc2 (exit-info-of exit) +ex-closed+))
          (when back
@@ -541,11 +541,11 @@
        (let* ((other-room (real-room (to-room-of exit)))
               (return-exit (abs-exit other-room (aref +rev-dir+ door)))
               (back (and other-room
-                         (when (eql (to-room-of return-exit) (in-room-of ch))
+                         (when (eql (to-room-of return-exit) (number-of (in-room-of ch)))
                            other-room))))
          (setf (exit-info-of exit) (logior (exit-info-of exit) +ex-closed+))
          (when back
-           (setf (exit-info-of return-exit) (logandc2 (exit-info-of exit) +ex-closed+))
+           (setf (exit-info-of return-exit) (logior (exit-info-of exit) +ex-closed+))
            (send-to-room other-room "The ~a is closed from the other side.~%" doorname))
          (act ch
               :subject-emit "Okay, closed."
