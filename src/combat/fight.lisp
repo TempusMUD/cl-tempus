@@ -1187,17 +1187,17 @@ if the players' reputations allow it."
            ;; casting it on self
            (call-magic ch ch nil 0 spellnum (level-of ch) +cast-wand+)))))))
 
-(defun hit (ch victim type)
+(defun attack (ch victim type)
   (let ((w-type type)
         (damage 0))
     (unless (eql (in-room-of ch)
                  (in-room-of victim))
       (remove-combat ch victim)
       (remove-combat victim ch)
-      (return-from hit))
+      (return-from attack))
 
     (when (and ch victim (not (can-attack ch victim)))
-      (return-from hit))
+      (return-from attack))
 
     (when (and (aff2-flagged ch +aff2-petrified+)
                (< (level-of ch)
@@ -1206,7 +1206,7 @@ if the players' reputations allow it."
            :subject-emit (random-elt '("You want to fight back against $N's attack, but cannot!"
                                        "You have been turned to stone and cannot fight!"
                                        "You cannot fight back!  You are petrified!")))
-      (return-from hit))
+      (return-from attack))
 
     (when (and (is-newbie victim)
                (is-pc ch)
@@ -1222,16 +1222,16 @@ if the players' reputations allow it."
             (number-of (in-room-of victim)))
       (remove-combat ch victim)
       (remove-combat victim ch)
-      (return-from hit))
+      (return-from attack))
 
     (when (check-reputations ch victim)
       (remove-combat ch victim)
       (remove-combat victim ch)
-      (return-from hit))
+      (return-from attack))
 
     (when (mounted-of ch)
       (send-to-char ch "You had better dismount first.~%")
-      (return-from hit))
+      (return-from attack))
 
     (when (mounted-of victim)
       (perform-dismount victim)
@@ -1287,7 +1287,8 @@ if the players' reputations allow it."
                    (>= (position-of victim) +pos-fighting+)
                    (> (skill-of victim +skill-counter-attack+) 70))
           (send-to-char victim "You launch a counter attack!~%")
-          (return-from hit (hit victim ch +type-undefined+)))
+          (attack victim ch +type-undefined+)
+          (return-from attack))
 
         ;; Decide whether this is a hit or a miss
         (when (and (< diceroll 20)
@@ -1305,7 +1306,7 @@ if the players' reputations allow it."
           ;; Start the fight!
           (pushnew ch (fighting-of victim))
           (pushnew victim (fighting-of ch))
-          (return-from hit))
+          (return-from attack))
 
         ;; It's a HIT
         (when (> (skill-of ch +skill-dbl-attack+) 60)
@@ -1416,7 +1417,7 @@ if the players' reputations allow it."
                                                    (learned ch)) 2))))
 
              (damage-creature ch victim damage weapon +skill-backstab+ +wear-back+)
-             (return-from hit 0))
+             (return-from attack))
             ((eql type +skill-circle+)
              (gain-skill-proficiency ch type)
              (when (is-thief ch)
@@ -1425,7 +1426,7 @@ if the players' reputations allow it."
                                                    (learned ch)) 2))))
 
              (damage-creature ch victim damage weapon +skill-circle+ +wear-back+)
-             (return-from hit 0))
+             (return-from attack))
 
             (t
              ;; Normal hit damage
@@ -1506,7 +1507,7 @@ if the players' reputations allow it."
                   (when (< (wait-of ch) 10)
                     (send-to-char ch "You can't fight while sitting!!~%")))
                  ((>= prob (random-range (* time 24) (* time 40)))
-                  (hit ch (random-elt (fighting-of ch)) +type-undefined+))))
+                  (attack ch (random-elt (fighting-of ch)) +type-undefined+))))
         (creature-died (death)
           (when (eql (creature-of death) ch)
             (return-from perform-creature-violence)))))
@@ -1521,7 +1522,7 @@ if the players' reputations allow it."
                                     (floor (- (skill-of ch +skill-implant-w+) 100) 2))))
             (when (< (random-range 0 100) implant-prob)
               (handler-case
-                  (hit ch (random-elt (fighting-of ch)) +skill-implant-w+)
+                  (attack ch (random-elt (fighting-of ch)) +skill-implant-w+)
                 (creature-died (death)
                   (when (eql (creature-of death) ch)
                     (return-from perform-creature-violence)))))))))
@@ -1540,7 +1541,7 @@ if the players' reputations allow it."
                                   (floor (- (skill-of ch +skill-adv-implant-w+) 100) 2))))
           (when (< (random-range 0 100) implant-prob)
             (handler-case
-                (hit ch (random-elt (fighting-of ch)) +skill-adv-implant-w+)
+                (attack ch (random-elt (fighting-of ch)) +skill-adv-implant-w+)
               (creature-died (death)
                 (when (eql (creature-of death) ch)
                   (return-from perform-creature-violence))))))))

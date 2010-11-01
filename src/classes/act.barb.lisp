@@ -13,5 +13,5 @@ the person attacked, or NIL if no one was selected."
                                    (not (is-visible-to tch ch))))
                              (people-of (in-room-of ch))))))
     (when target
-      ; (hit ch target)
+      (attack ch target +type-undefined+)
       target)))

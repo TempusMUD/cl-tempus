@@ -21,7 +21,7 @@
            (cons tch (delete tch (fighting-of ch)))))
     (t
      (setf (move-of ch) (max 0 (- (move-of ch) 5)))
-     (hit ch tch +type-undefined+)
+     (attack ch tch +type-undefined+)
      (wait-state ch +pulse-violence+))))
 
 (defun perform-flee (ch)
