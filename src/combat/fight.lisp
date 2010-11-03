@@ -955,6 +955,9 @@ the attack failed."
 
       (update-pos victim)
 
+      (if (is-weapon kind)
+          (damage-message ch victim base-amount weapon kind hit-location)
+          (skill-message ch victim base-amount weapon kind hit-location))
 
       (when (and ch (eql (master-of victim) ch))
         (stop-following victim))
