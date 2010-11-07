@@ -407,7 +407,7 @@ object name, the object aliases, and the new object linedesc."
            (is-class ch +class-duke+))))
 
 (defun is-weapon (skill)
-  (or (< +type-hit+ skill +top-attacktype+)
+  (or (< (1- +type-hit+) skill +top-attacktype+)
       (= skill +skill-second-weapon+)
       (= skill +skill-energy-weapons+)
       (= skill +skill-archery+)
@@ -926,19 +926,21 @@ the attack failed."
           (damage-cap (calculate-damage-cap ch))
           (location (pick-damage-location victim kind hit-location)))
       (when (and ch (pref-flagged ch +pref-debug+))
-        (send-to-char ch "&c[DAMAGE] ~a   dam: ~d  cap: ~d   wait: ~d   pos: ~d&n~%"
+        (send-to-char ch "&c[DAMAGE] ~a   dam: ~d  cap: ~d   type: ~d   wait: ~d   pos: ~d&n~%"
                       (name-of victim)
                       amount
                       damage-cap
+                      kind
                       (if (link-of victim)
                           (wait-of (link-of victim))
                           (wait-state-of victim))
                       location))
       (when (pref-flagged victim +pref-debug+)
-        (send-to-char ch "&c[DAMAGE] ~a   dam: ~d  cap: ~d   wait: ~d   pos: ~d&n~%"
+        (send-to-char ch "&c[DAMAGE] ~a   dam: ~d  cap: ~d   type: ~d   wait: ~d   pos: ~d&n~%"
                       (name-of victim)
                       amount
                       damage-cap
+                      kind
                       (if (link-of victim)
                           (wait-of (link-of victim))
                           (wait-state-of victim))
@@ -1303,8 +1305,8 @@ if the players' reputations allow it."
                                  +skill-circle+
                                  +skill-second-weapon+
                                  +skill-cleave+))
-              (damage-creature ch victim 0 weapon type -1)
-              (damage-creature ch victim 0 weapon w-type -1))
+              (damage-creature ch victim 0 weapon type (choose-random-limb victim))
+              (damage-creature ch victim 0 weapon w-type (choose-random-limb victim)))
 
           ;; Start the fight!
           (pushnew ch (fighting-of victim))

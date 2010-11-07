@@ -464,7 +464,7 @@
      "#s **ANNIHILATES** $N as you #w $p!!"
      "#s **ANNIHILATES** you as $n #W $p!!")))
 
-(defparameter +dam-energyguns3+
+(defparameter +dam-energy-guns3+
   '((0
      "$n misses $N with $p's #S."
      "You miss $N with $p's #S."
@@ -530,8 +530,98 @@
      "You **ANNIHILATE** $N with $p's #S!!"
      "$n **ANNIHILATES** you with $p's #S!!")))
 
-(defun damage-message (ch victim base-amount weapon kind hit-location)
-  nil)
+(defun generic-template (str escape-char codes &rest replacements)
+  "Returns a string where the characters in CODES preceded by
+  ESCAPE-CHAR are replaced in STR by their corresponding REPLACEMENTS.
+  If ESCAPE-CHAR appears in STR twice, it is replaced by a single
+  instance of the ESCAPE-CHAR."
+  (with-input-from-string (in str)
+    (with-output-to-string (result)
+      (loop
+           with escaped = nil
+         for c across str do
+           (cond
+             ((and (not escaped) (char= c escape-char))
+              (setf escaped t))
+             ((not escaped)
+              (princ c result))
+             ((char= c escape-char)
+              (princ c result)
+              (setf escaped nil))
+             (t
+              (let ((code-pos (position c codes)))
+                (if code-pos
+                    (write-string (elt replacements code-pos)
+                                  result)
+                    (format result "<ILLEGAL CODE ~a>" c))
+                (setf escaped nil))))))))
+
+(defun build-damage-messages (templates singular plural location substance)
+  (loop for template in templates
+       collect (generic-template template #\# "wWsSp"
+                    singular
+                    plural
+                    (a-or-an substance)
+                    substance
+                    location)))
+
+(defun pos-damage-ok (location)
+  (not (member location
+               (list +wear-light+
+                     +wear-about+
+                     +wear-hold+
+                     +wear-belt+
+                     +wear-wield+
+                     +wear-wield-2+
+                     +wear-ass+))))
+
+(defun select-damage-message (weapon hit-location)
+  (cond
+    ((and weapon (is-energy-gun weapon))
+     (random-elt
+      (list +dam-energy-guns+ +dam-energy-guns2+ +dam-energy-guns3+)))
+    ((and weapon (is-gun weapon))
+     +dam-guns+)
+    ((and (plusp hit-location)
+          (pos-damage-ok hit-location)
+          (randomly-true 3)
+          (or (null weapon)
+              (eql (worn-on-of weapon)
+                   +wear-wield+)))
+     +dam-weapons-location+)
+    ((and weapon
+          (or (randomly-true 3)
+              (not (eql (worn-on-of weapon)
+                        +wear-wield+))))
+     +dam-weapons-2+)
+    (t
+     +dam-weapons+)))
+
+(defvar *search-nomessage* nil)
+
+(defun damage-message (ch victim amount weapon kind hit-location)
+  (unless *search-nomessage*
+    (let* ((gun-type (if (and weapon (is-gun weapon))
+                         (gun-type weapon)
+                         0))
+           (messages (build-damage-messages
+                      (rest (assoc amount (select-damage-message weapon hit-location) :test '<=))
+                      (aref +attack-hit-text+ (- kind +type-hit+) 0)
+                      (aref +attack-hit-text+ (- kind +type-hit+) 1)
+                      (aref +wear-keywords+ (aref +wear-translator+ hit-location))
+                      (aref +gun-hit-text+ gun-type 2))))
+
+      (act ch :target victim :item weapon :not-target-emit (first messages))
+      (unless (and (zerop amount) (pref-flagged ch +pref-gagmiss+))
+        (act ch :target victim :item weapon
+             :subject-emit (format nil "~a~a&n"
+                                   (if (= hit-location +wear-mshield+)
+                                       "&m" "&y")
+                                   (second messages))))
+      (unless (and (zerop amount) (pref-flagged victim +pref-gagmiss+))
+        (act ch :target victim :item weapon
+             :target-emit (format nil "&r~a&n"(third messages)))))))
+
 
 (defun skill-message (ch victim base-amount weapon kind hit-location)
   nil)

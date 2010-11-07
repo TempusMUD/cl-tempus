@@ -2092,6 +2092,35 @@
     "WIELD 2"
     "ass"))
 
+(defparameter +wear-translator+
+  (vector +wear-light+
+          +wear-finger-r+
+          +wear-finger-r+
+          +wear-neck-1+
+          +wear-neck-1+
+          +wear-body+
+          +wear-head+
+          +wear-legs+
+          +wear-feet+
+          +wear-hands+
+          +wear-arms+
+          +wear-shield+
+          +wear-back+
+          +wear-waist+
+          +wear-wrist-r+
+          +wear-wrist-r+
+          +wear-wield+
+          +wear-hold+
+          +wear-crotch+
+          +wear-eyes+
+          +wear-back+
+          +wear-waist+
+          +wear-face+
+          +wear-ear-l+
+          +wear-ear-l+
+          +wear-wield-2+
+          +wear-ass+))
+
 (defparameter +eq-pos-descs+
   #("<as light>       "
     "<on finger>      "
@@ -2889,6 +2918,17 @@
       ("rip" "rips")
       ("chop" "chops")
       ("shoot" "shoots")))
+
+(defparameter +gun-hit-text+
+  #2A(("fire" "fires" "laser beam")
+      ("ignite" "ignites" "plasma eruption")
+      ("discharge" "discharges" "ionic pulse")
+      ("energize" "energizes" "photon burst")
+      ("trigger" "triggers" "sonic shock wave")
+      ("fire" "fires" "particle stream")
+      ("activate" "activates" "gamma ray")
+      ("discharge" "discharges" "lightning bolt")
+      ("shoot" "shoots" "unknown force")))
 
 (defparameter +attack-types+
   #("hit"                                ; 0
