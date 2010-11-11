@@ -139,7 +139,7 @@
           ("affects"
            (setf (aff-flags-of ch) (xml-attr node "flag1" :hex t))
            (setf (aff2-flags-of ch) (xml-attr node "flag2" :hex t))
-           (setf (aff3-flags-of ch) (xml-attr node "flag2" :hex t)))
+           (setf (aff3-flags-of ch) (xml-attr node "flag3" :hex t)))
           ("immort"
            (setf (badge-of ch) (xml-attr node "badge"))
            (setf (qlog-level-of ch) (xml-attr node "qlog" :numeric t))
