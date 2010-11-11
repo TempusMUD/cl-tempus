@@ -137,36 +137,32 @@
 
 
 (defmethod is-visible-to ((obj obj-data) ch)
-  (let ((outer-obj (loop
-                      for outer-obj = obj then (in-obj-of obj)
-                      while (in-obj-of obj)
-                      finally (return outer-obj))))
-    (cond
-      ;; If they can't see the object itself, none of the rest of it is
-      ;; going to matter much
-      ((not (can-see-object ch obj))
-       nil)
-      ;; If the object is in a container, it inherits visibility of
-      ;; the container
-      ((not (can-see-object ch outer-obj))
-       nil)
-      ;; If the object is being carried by someone, it
-      ;; also inherits visibility
-      ((carried-by-of outer-obj)
-       (or (eql (carried-by-of outer-obj) ch)
-           (is-visible-to (carried-by-of outer-obj) ch)))
-      ;; Ditto if the object is being worn by someone
-      ((worn-by-of outer-obj)
-       (or (eql (worn-by-of outer-obj) ch)
-           (is-visible-to (worn-by-of outer-obj) ch)))
-      ;; If they are carrying or wearing the item, they can see it
-      ;; even if blind
-      ((not (check-sight-self ch))
-       nil)
-      ((not (can-see-room ch (in-room-of obj)))
-       nil)
-      (t
-       t))))
+  (cond
+    ;; If they can't see the object itself, none of the rest of it is
+    ;; going to matter much
+    ((not (can-see-object ch obj))
+     nil)
+    ;; If the object is in a container, it inherits visibility of
+    ;; the container
+    ((in-obj-of obj)
+     (is-visible-to (in-obj-of obj) ch))
+    ;; If the object is being carried by someone, it
+    ;; also inherits visibility
+    ((carried-by-of obj)
+     (or (eql (carried-by-of obj) ch)
+         (is-visible-to (carried-by-of obj) ch)))
+    ;; Ditto if the object is being worn by someone
+    ((worn-by-of obj)
+     (or (eql (worn-by-of obj) ch)
+         (is-visible-to (worn-by-of obj) ch)))
+    ;; If they are carrying or wearing the item, they can see it
+    ;; even if blind
+    ((not (check-sight-self ch))
+     nil)
+    ((not (can-see-room ch (in-room-of obj)))
+     nil)
+    (t
+     t)))
 
 (defmethod is-visible-to ((room room-data) ch)
   (and (check-sight-self ch)
