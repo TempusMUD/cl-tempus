@@ -167,7 +167,7 @@
 (defun list-obj-to-char (stream obj-list ch mode show)
   (let ((corpse (and obj-list
                      (in-obj-of (first obj-list))
-                     (is-corpse (is-corpse (first obj-list)))))
+                     (is-corpse (in-obj-of (first obj-list)))))
         (found nil))
     (loop with o = obj-list
        for i = (car obj-list) then (car o)
@@ -394,11 +394,11 @@
            (cond
              ((null (fighting-of i))
               (format stream "~a is here, fighting thin air!" name))
-             ((eql (fighting-of i) ch)
+             ((eql (first (fighting-of i)) ch)
               (format stream "~a is here, fighting YOU!" name))
-             ((eql (in-room-of (fighting-of i)) (in-room-of i))
+             ((eql (in-room-of (first (fighting-of i))) (in-room-of i))
               (format stream "~a is here, fighting ~a!"
-                      name (describe-char ch (fighting-of i))))
+                      name (describe-char ch (first (fighting-of i)))))
              (t
               (format stream "~a is here, fighting someone who already left!" name))))
           ((= (position-of i) +pos-mounted+)
