@@ -624,8 +624,6 @@
 (defun gun-type (obj)
   (aref (value-of obj) 3))
 
-
-
 (defun get-worn-type (obj)
   (cond
     ((or (= (worn-on-of obj) -1)
@@ -683,7 +681,7 @@
   (let* ((vnum (xml-attr object-node "vnum" :numeric t))
          (obj (if (plusp vnum)
                   (read-object vnum)
-                  (make-object :shared +null-obj-shared+)))
+                  (make-object :unknown nil)))
          (placed nil))
     (dolist (node (cddr object-node))
       (when (consp node)
