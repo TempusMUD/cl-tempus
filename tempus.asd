@@ -119,7 +119,7 @@
              (:file "limits" :pathname "misc/limits"
                             :depends-on ("defs" "creature"))
              (:file "logging" :pathname "util/logging"
-                            :depends-on ("defs" "char-class"))
+                            :depends-on ("defs" "char-class" "constants" "network"))
              (:file "login" :pathname "misc/login"
                             :depends-on ("defs" "char-class"))
              (:file "magic" :pathname "magic/magic"
