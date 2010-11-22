@@ -589,7 +589,8 @@
              (if (zerop (aref (value-of obj) 1)) "gold" "credits")
              (name-of vict)
              (number-of (in-room-of vict))
-             (title-of (in-room-of vict)))))))
+             (title-of (in-room-of vict))))
+     t)))
 
 (defun perform-give-money (ch target amount kind)
   (let ((money-desc (if (eql kind 'gold) "coin" "credit")))
