@@ -151,15 +151,15 @@
 
 (deftest get-all-command ()
   (with-fixtures ((alice mock-player)
+                  (chest mock-object :name "a treasure chest")
                   (armor-1 mock-object :name "some plate armor")
-                  (armor-2 mock-object :name "some plate armor")
-                  (chest mock-object :name "a treasure chest"))
+                  (armor-2 mock-object :name "some plate armor"))
     (setf (tempus::wear-flags-of armor-1) tempus::+item-wear-take+)
     (setf (tempus::wear-flags-of armor-2) tempus::+item-wear-take+)
     (setf (tempus::wear-flags-of chest) tempus::+item-wear-take+)
+    (tempus::obj-to-room chest (tempus::in-room-of alice))
     (tempus::obj-to-room armor-1 (tempus::in-room-of alice))
     (tempus::obj-to-room armor-2 (tempus::in-room-of alice))
-    (tempus::obj-to-room chest (tempus::in-room-of alice))
     (tempus::interpret-command alice "get all")
     (char-output-has alice "You get a treasure chest.~%You get some plate armor. (x2)~%")
     (is (eql alice (tempus::carried-by-of armor-1)))
@@ -289,8 +289,8 @@
 
 (deftest put-command ()
   (object-command-test
-    (tempus::obj-to-char armor-2 alice)
     (tempus::obj-to-char armor-1 alice)
+    (tempus::obj-to-char armor-2 alice)
     (tempus::obj-to-room chest (tempus::in-room-of alice))
     (do-cmd "put armor into chest")
     (self-emit-is "You put some plate armor into a treasure chest.~%")
@@ -307,8 +307,8 @@
 
 (deftest put-command-numbered ()
   (object-command-test
-    (tempus::obj-to-char armor-2 alice)
     (tempus::obj-to-char armor-1 alice)
+    (tempus::obj-to-char armor-2 alice)
     (tempus::obj-to-room chest (tempus::in-room-of alice))
     (do-cmd "put 2.armor into chest")
     (self-emit-is "You put some plate armor into a treasure chest.~%")
@@ -328,7 +328,6 @@
 
 (deftest drop-command ()
   (object-command-test
-    (tempus::obj-to-char armor-2 alice)
     (tempus::obj-to-char armor-1 alice)
     (do-cmd "drop armor")
     (self-emit-is "You drop some plate armor.~%")
@@ -346,8 +345,9 @@
 
 (deftest drop-command-cursed ()
   (object-command-test
-    (tempus::obj-to-char armor-2 alice)
+    (setf (tempus::level-of alice) 49)
     (tempus::obj-to-char armor-1 alice)
+    (tempus::obj-to-char armor-2 alice)
     (setf (tempus::extra-flags-of armor-1)
           (logior (tempus::extra-flags-of armor-1) tempus::+item-nodrop+))
     (do-cmd "drop armor")
@@ -362,8 +362,8 @@
 
 (deftest wear-command ()
   (object-command-test
-    (tempus::obj-to-char armor-2 alice)
     (tempus::obj-to-char armor-1 alice)
+    (tempus::obj-to-char armor-2 alice)
     (do-cmd "wear armor")
     (self-emit-is "You wear some plate armor on your body.~%")
     (other-emit-is "Alice wears some plate armor on her body.~%")
@@ -385,8 +385,8 @@
 
 (deftest wear-command-on-pos ()
   (object-command-test
-    (tempus::obj-to-char armor-2 alice)
     (tempus::obj-to-char armor-1 alice)
+    (tempus::obj-to-char armor-2 alice)
     (do-cmd "wear armor on body")
     (self-emit-is "You wear some plate armor on your body.~%")
     (other-emit-is "Alice wears some plate armor on her body.~%")
@@ -401,8 +401,8 @@
 
 (deftest wear-command-on-pos-failure ()
   (object-command-test
-    (tempus::obj-to-char armor-2 alice)
     (tempus::obj-to-char armor-1 alice)
+    (tempus::obj-to-char armor-2 alice)
     (do-cmd "wear all.armor on body")
     (self-emit-is "You can't wear more than one item on a position.~%")
     (clear-mock-buffers alice)
@@ -436,8 +436,8 @@
 
 (deftest give-command ()
   (object-command-test
-    (tempus::obj-to-char armor-2 alice)
     (tempus::obj-to-char armor-1 alice)
+    (tempus::obj-to-char armor-2 alice)
     (do-cmd "give armor to bob")
     (self-emit-is "You give some plate armor to Bob.~%")
     (other-emit-is "Alice gives some plate armor to you.~%")
@@ -472,8 +472,8 @@
 
 (deftest plant-command ()
   (object-command-test
-    (tempus::obj-to-char armor-2 alice)
     (tempus::obj-to-char armor-1 alice)
+    (tempus::obj-to-char armor-2 alice)
     (do-cmd "plant armor on bob")
     (self-emit-is "You plant some plate armor on Bob.~%")
     (is (or (equal "" (char-output bob))
@@ -857,8 +857,8 @@
 
 (deftest perform-empty/normal/success ()
   (object-command-test
-    (tempus::obj-to-obj armor-2 chest)
     (tempus::obj-to-obj armor-1 chest)
+    (tempus::obj-to-obj armor-2 chest)
     (tempus::obj-to-char chest alice)
     (tempus::perform-empty alice chest)
     (self-emit-is "You carefully empty the contents of a treasure chest.~%")
@@ -870,8 +870,8 @@
   (object-command-test
     (with-fixtures ((bag mock-object :name "a leather bag"))
       (setf (tempus::kind-of bag) tempus::+item-container+)
-      (tempus::obj-to-obj armor-2 chest)
       (tempus::obj-to-obj armor-1 chest)
+      (tempus::obj-to-obj armor-2 chest)
       (tempus::obj-to-char chest alice)
       (tempus::obj-to-char bag alice)
       (tempus::perform-empty-into alice chest bag)
@@ -883,8 +883,8 @@
 (deftest perform-empty-into/into-non-container/failure ()
   (object-command-test
     (with-fixtures ((bag mock-object :name "a leather bag"))
-      (tempus::obj-to-obj armor-2 chest)
       (tempus::obj-to-obj armor-1 chest)
+      (tempus::obj-to-obj armor-2 chest)
       (tempus::obj-to-char chest alice)
       (tempus::obj-to-char bag alice)
       (tempus::perform-empty-into alice chest bag)

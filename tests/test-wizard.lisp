@@ -446,6 +446,7 @@
     (setf (tempus::level-of alice) 72)
     (setf (tempus::invis-level-of alice) 72)
     (tempus::perform-vis alice)
+    (is (equal 0 (tempus::invis-level-of alice)))
     (char-output-is alice "You are now fully visible.~%")
     (char-output-is bob "You suddenly realize that Alice is standing beside you.~%")))
 
@@ -576,11 +577,12 @@
     (setf (tempus::level-of alice) 50)
     (with-captured-log log
         (tempus::interpret-command alice (format nil "dc ~d"
-                                                 (tempus::cxn-fd
-                                                  (tempus::link-of bob))))
+                                                 (tempus::fd-of (tempus::socket-of
+                                                                 (tempus::link-of bob)))))
       (is (search "(GC) Connection closed by Alice" log)))
     (is (equal (format nil "Connection #~d closed.~~%"
-                       (tempus::cxn-fd (tempus::link-of bob)))
+                       (tempus::fd-of (tempus::socket-of
+                                       (tempus::link-of bob))))
                (char-output alice)))
     (is (eql 'tempus::disconnecting (tempus::state-of (tempus::link-of bob))))))
 
