@@ -1862,7 +1862,10 @@ You feel slightly different.")
 
 (defcommand (ch "dc" num-str) (:coder)
   (let* ((num (when (every #'digit-char-p num-str) (parse-integer num-str)))
-         (cxn (when num (find num *cxns* :key 'cxn-fd))))
+         (cxn (when num (cdr (find num (mapcar (lambda (c)
+                                                 (cons (fd-of (socket-of c)) c))
+                                               *cxns*)
+                                   :key 'car)))))
     (cond
       ((null num)
        (send-to-char ch "You must specify a connection number to disconnect.~%"))
