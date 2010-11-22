@@ -33,10 +33,19 @@
              (char str idx)))
           result))))
 
-(defmethod tempus::cxn-queue-output ((cxn mock-cxn) str)
+(defmethod tempus::schedule-cxn-output ((cxn mock-cxn))
+  nil)
+
+(defmethod tempus::cxn-write-string ((cxn mock-cxn) raw-str)
   "Escapes the color codes before sending them to the tempus-cxn writing routines"
-  (call-next-method cxn
-                    (cl-ppcre:regex-replace-all #/\r\n/ str "~%")))
+  (let ((saved-str (cl-ppcre:regex-replace-all #/\r\n/ raw-str "~%")))
+    (cond
+      ((tempus::output-buf-of cxn)
+       (setf (cdr (tempus::output-tail-of cxn)) (cons saved-str nil))
+       (setf (tempus::output-tail-of cxn) (cdr (tempus::output-tail-of cxn))))
+      (t
+       (setf (tempus::output-buf-of cxn) (list saved-str))
+       (setf (tempus::output-tail-of cxn) (tempus::output-buf-of cxn))))))
 
 (defmethod tempus::cxn-write ((cxn mock-cxn) fmt &rest args)
   "Escapes the color codes before sending them to the tempus-cxn writing routines"
@@ -69,30 +78,27 @@
   (:teardown (clan)
     (tempus::delete-clan (tempus::idnum-of clan))))
 
-(defvar *mock-fd* 0)
-
 (defun make-mock-cxn ()
-  (incf *mock-fd*)
   (let ((cxn (make-instance 'mock-cxn
-                            :fd *mock-fd*
+                            :socket (iolib:make-socket)
                             :peer-addr "127.0.0.1")))
     (setf (tempus::state-of cxn) 'tempus::playing)
     cxn))
 
 (defun mock-cxn-input (cxn fmt &rest args)
   (let ((msg (format nil "~?" fmt args)))
-    (setf (tempus::cxn-input-buf cxn)
-          (concatenate 'string (tempus::cxn-input-buf cxn) msg))
-    (incf (tempus::cxn-input-len cxn) (length msg))))
+    (setf (tempus::input-buf-of cxn)
+          (concatenate 'string (tempus::input-buf-of cxn) msg))
+    (incf (tempus::input-len-of cxn) (length msg))))
 
 (defun clear-mock-buffers (&rest chars)
   (dolist (ch chars)
-    (setf (tempus::cxn-input-buf (tempus::link-of ch)) nil)
-    (setf (tempus::cxn-output-buf (tempus::link-of ch)) nil)
-    (setf (tempus::cxn-input-len (tempus::link-of ch)) 0)))
+    (setf (tempus::input-buf-of (tempus::link-of ch)) nil)
+    (setf (tempus::output-buf-of (tempus::link-of ch)) nil)
+    (setf (tempus::input-len-of (tempus::link-of ch)) 0)))
 
 (defun char-output (ch)
-  (format nil "~{~a~}" (tempus::cxn-output-buf (tempus::link-of ch))))
+  (format nil "~{~a~}" (tempus::output-buf-of (tempus::link-of ch))))
 
 (defmacro char-output-is (ch fmt &rest args)
   (if (null args)
@@ -136,7 +142,7 @@
          (tempus::create-new-player player account)
          (let ((tempus::*log-output* (make-broadcast-stream)))
            (tempus::player-to-game player))
-         (setf (tempus::cxn-output-buf link) nil))
+         (setf (tempus::output-buf-of link) nil))
         (t
          (push player tempus::*characters*)
          (setf (gethash (tempus::idnum-of player) tempus::*character-map*) player)
