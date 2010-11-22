@@ -35,7 +35,7 @@
                      kind kind vnum))
              (cond
                ((null func)
-                (slog "Error in ~a spec file: special <~a> does not exist."
+                #+nil (slog "Error in ~a spec file: special <~a> does not exist."
                       kind (regref result 2)))
                ((not (logtest flags flag))
                 (slog "Attempt to assign special <~a> to a ~a."
