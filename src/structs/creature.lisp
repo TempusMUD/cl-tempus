@@ -639,8 +639,11 @@
   (logtest (char-soilage ch pos) (ash 1 soil)))
 
 (defun wait-state (ch pulses)
-  (when (link-of ch)
-    (incf (wait-of (link-of ch)) pulses)))
+  (cond
+    ((is-npc ch)
+     (incf (wait-state-of ch)))
+    ((link-of ch)
+     (incf (wait-of (link-of ch)) pulses))))
 
 (defmethod wait-of ((ch mobile))
   (wait-state-of ch))
