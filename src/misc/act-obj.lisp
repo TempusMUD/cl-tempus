@@ -13,9 +13,10 @@
             (dam (if (mag-savingthrow ch (sigil-level-of obj) +saving-spell+)
                      (floor raw-dam 2)
                      raw-dam)))
-       (act ch :item obj
-            :all-emit "$p explodes when $n pick$% it up!!")
-       (damage-creature nil ch dam nil +type-blast+ +wear-hands+)
+       (act ch :item obj :all-emit "$p explodes when $n pick$% it up!!")
+       (let ((killer (or (get-char-in-world-by-idnum (sigil-idnum-of obj))
+                         (load-player-from-xml (sigil-idnum-of obj)))))
+         (damage-creature killer ch dam nil +spell-warding-sigil+ +wear-hands+))
 
        (setf (sigil-idnum-of obj) 0)
        (setf (sigil-level-of obj) 0)))))
