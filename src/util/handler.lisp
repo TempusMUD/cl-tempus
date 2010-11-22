@@ -870,6 +870,9 @@
                                 (people-of (in-room-of ch))
                                 (contents-of (in-room-of ch))))))
 
+(defun get-char-in-world-by-idnum (idnum)
+  (gethash idnum *character-map*))
+
 (defun get-char-room-vis (ch name)
   (first (resolve-alias ch name (people-of (in-room-of ch)))))
 
