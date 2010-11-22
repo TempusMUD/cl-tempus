@@ -168,7 +168,7 @@ closing the socket if it was being shutdown."
     (shutdown (socket-of cxn) :read t :write t)
     (close (socket-of cxn))))
 
-(defun schedule-cxn-output (cxn)
+(defmethod schedule-cxn-output ((cxn data-cxn))
   "Adds a write event IO handler which flushes the output buffer of
 the connection."
   (unless (iolib.multiplex::fd-monitored-p *event-base*
@@ -181,7 +181,7 @@ the connection."
                       (declare (ignore fd event exception))
                       (handle-flush cxn)))))
 
-(defun cxn-write-octets (cxn octets)
+(defmethod cxn-write-octets ((cxn data-cxn) octets)
   "Appends a vector of octets to the output queue, and schedules a
 write operation when the socket is ready"
   (when (connectedp cxn)
@@ -196,7 +196,7 @@ write operation when the socket is ready"
 
     (schedule-cxn-output cxn)))
 
-(defun cxn-write-string (cxn str)
+(defmethod cxn-write-string ((cxn data-cxn) str)
   "Writes a string to the given connection.  Newlines are converted to
 CRLF sequences on the fly."
   (cxn-write-octets cxn
