@@ -606,7 +606,7 @@
       (t
        (name-of mob)))))
 (defun testerp (ch)
-  (security-is-member ch "Testers"))
+  (security-is-really-member ch "Testers"))
 
 (defun get-level-bonus (ch)
   100)

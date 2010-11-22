@@ -62,6 +62,17 @@
     (or (= (level-of ch) 72)
         (find (idnum-of ch) (members-of group)))))
 
+(defmethod security-is-really-member ((ch mobile) group-name)
+  (declare (ignore ch group-name))
+  nil)
+
+(defmethod security-is-really-member ((ch player) group-name)
+  (let ((group (gethash group-name *access-groups-name*)))
+    (assert group nil
+            "Unknown group ~s passed to security-is-member"
+            group-name)
+    (find (idnum-of ch) (members-of group))))
+
 (defun can-admin-group (ch group-name)
   (let ((group (gethash group-name *access-groups-name*)))
     (and group
