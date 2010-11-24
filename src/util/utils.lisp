@@ -325,9 +325,9 @@ sequences in seq-list with the delimiter between each element"
         result))))
 
 (defun send-act-str (viewer emit subject target item target-item pov)
-  (when (or (is-visible-to subject viewer)
+  (when (or (and subject (is-visible-to subject viewer))
             (null target)
-            (is-visible-to target viewer))
+            (and target (is-visible-to target viewer)))
     (send-to-char viewer "~a~%" (act-str viewer emit subject target item target-item pov))))
 
 (defun act (subject &key (target nil) (item nil) (target-item nil) (subject-emit nil) (target-emit nil) (not-target-emit nil) (place-emit nil) (all-emit nil))
@@ -336,19 +336,19 @@ sequences in seq-list with the delimiter between each element"
     (send-act-str subject all-emit subject target item target-item :self)
     (when (and target (not (eql subject target)))
       (send-act-str target all-emit subject target item target-item :target))
-    (dolist (other (people-of (in-room-of subject)))
+    (dolist (other (people-of (in-room-of (or subject target item target-item))))
       (unless (or (eql other subject) (eql other target))
         (send-act-str other all-emit subject target item target-item :other))))
-  (when subject-emit
+  (when (and subject subject-emit)
     (send-act-str subject subject-emit subject target item target-item :self))
   (when (and target-emit target)
     (send-act-str target target-emit subject target item target-item :target))
   (when not-target-emit
-    (dolist (other (people-of (in-room-of subject)))
+    (dolist (other (people-of (in-room-of (or subject target item target-item))))
       (unless (or (eql other subject) (eql other target))
         (send-act-str other not-target-emit subject target item target-item :other))))
   (when place-emit
-    (dolist (other (people-of (in-room-of subject)))
+    (dolist (other (people-of (in-room-of (or subject target item target-item))))
       (unless (eql other subject)
         (send-act-str other place-emit subject target item target-item
                       (if (eql other target) :target :other))))))
