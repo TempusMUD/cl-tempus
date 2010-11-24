@@ -213,6 +213,8 @@ instant affect that has a zero or less duration."
                                                      :level level
                                                      :aff-index idx
                                                      :bitvector bit)))
+                    (damage (amt)
+                      (damage-creature caster target amt nil ,id-name nil))
                     (to-caster (str)
                       (when caster
                         (act target :target caster :target-emit str)))
@@ -220,7 +222,8 @@ instant affect that has a zero or less duration."
                       (act target :target caster :subject-emit str))
                     (to-room (str)
                       (act target :target caster :place-emit str)))
-               (declare (ignorable #'affect #'to-target #'to-room #'to-caster #'set-affbit)
+               (declare (ignorable #'duration #'affect #'to-target
+                                   #'to-room #'to-caster #'set-affbit #'damage)
                         (dynamic-extent #'affect #'to-target #'to-room #'to-caster
                                         #'set-affbit))
                ,@body)))
@@ -233,6 +236,12 @@ instant affect that has a zero or less duration."
 
 (defmacro define-song (name () &body body)
   (build-ability-macro "SONG" name body))
+
+(define-spell magic-missile ()
+  (damage (+ 1 (floor level 4)
+             (if (> level 5) 1 0)
+             (if (> level 10) 1 0)
+             (if (> level 15) 1 0))))
 
 (define-spell armor ()
   (duration 24)
@@ -293,9 +302,8 @@ instant affect that has a zero or less duration."
      (affect +apply-hitroll+ -4)
      (affect +apply-ac+ 40)
      (set-affbit 1 +aff-blind+)
-     (if (is-good target)
-         (to-target "You feel extremely righteous")
-         (to-target "You feel a dark power enter your soul.")))))
+     (to-target "You have been blinded!")
+     (to-room "$n seems to be blinded!"))))
 
 (define-spell breathe-water ()
   (duration (+ 10 level))

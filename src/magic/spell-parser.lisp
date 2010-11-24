@@ -534,7 +534,9 @@
        (when ch
          (send-to-char ch "Oops, that spell isn't implemented.~%")))
       (t
-       (funcall func ch level (or vict ovict dvict))))))
+       (funcall func ch level (or vict ovict dvict))
+       (when (and (violentp info) vict)
+         (pushnew vict (fighting-of ch)))))))
 
 (defun mag-objectmagic (ch object arg)
   nil)
