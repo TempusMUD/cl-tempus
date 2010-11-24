@@ -1,7 +1,73 @@
 (in-package :tempus)
 
+(defclass combat-message ()
+  ((idnum :accessor idnum-of :initarg idnum)
+   (attacker-die-emit :accessor attacker-die-emit-of :initarg :attacker-die-emit)
+   (victim-die-emit :accessor victim-die-emit-of :initarg :victim-die-emit)
+   (room-die-emit :accessor room-die-emit-of :initarg :room-die-emit)
+   (attacker-miss-emit :accessor attacker-miss-emit-of :initarg :attacker-miss-emit)
+   (victim-miss-emit :accessor victim-miss-emit-of :initarg :victim-miss-emit)
+   (room-miss-emit :accessor room-miss-emit-of :initarg :room-miss-emit)
+   (attacker-hit-emit :accessor attacker-hit-emit-of :initarg :attacker-hit-emit)
+   (victim-hit-emit :accessor victim-hit-emit-of :initarg :victim-hit-emit)
+   (room-hit-emit :accessor room-hit-emit-of :initarg :room-hit-emit)
+   (attacker-god-emit :accessor attacker-god-emit-of :initarg :attacker-god-emit)
+   (victim-god-emit :accessor victim-god-emit-of :initarg :victim-god-emit)
+   (room-god-emit :accessor room-god-emit-of :initarg :room-god-emit)))
+
+(defvar *combat-messages* (make-hash-table))
+
 (defun load-messages ()
-  nil)
+  (let ((path (tempus-path "lib/misc/messages")))
+    (clrhash *combat-messages*)
+    (with-open-file (inf path :direction :input)
+      (let ((linenum 0)
+            (message nil)
+            (emits-left nil))
+        (labels ((expect-m (line)
+                   (unless (string= line "$")
+                     (assert (string= line "M") nil
+                             "~a:~d M expected, got ~s" path linenum line)
+                     (setf message (make-instance 'combat-message))
+                     #'expect-idnum))
+                 (expect-idnum (line)
+                   (let ((idnum (parse-integer line :junk-allowed t)))
+                     (assert idnum nil
+                             "~a:~d Integer expected, got ~s" path linenum line)
+                     (setf (idnum-of message) idnum)
+                     (setf emits-left '(attacker-die-emit
+                                        victim-die-emit
+                                        room-die-emit
+                                        attacker-miss-emit
+                                        victim-miss-emit
+                                        room-miss-emit
+                                        attacker-hit-emit
+                                        victim-hit-emit
+                                        room-hit-emit
+                                        attacker-god-emit
+                                        victim-god-emit
+                                        room-god-emit))
+                     #'expect-emit))
+                 (expect-emit (line)
+                   (setf (slot-value message (pop emits-left))
+                         (unless (string= line "#")
+                           line))
+                   (cond
+                     (emits-left
+                      #'expect-emit)
+                     (t
+                      (push message (gethash (idnum-of message) *combat-messages*))
+                      #'expect-m))))
+          (loop
+             with state = #'expect-m
+             while state
+             for line = (read-line inf)
+             do
+               (incf linenum)
+               (unless (or (string= line "")
+                           (string= line "*" :end1 1))
+                 (setf state (funcall state line)))))))))
+
 
 (defun can-go (ch dir)
   (let ((exit (exit ch dir)))
