@@ -351,7 +351,8 @@
   (= (position-of ch) +pos-dead+))
 
 (defun immortalp (ch)
-  (>= (level-of ch) 50))
+  (and (>= (level-of ch) 50)
+       (not (plr-flagged ch +plr-mortalized+))))
 (defun immortal-level-p (ch)
   (>= (level-of ch) 50))
 
