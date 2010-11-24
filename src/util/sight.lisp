@@ -80,9 +80,9 @@
      nil)
     ;; Non-tester mortal players can't see testers
     ((and (not (immortalp ch))
-                  (is-pc ch)
-                  (not (testerp ch))
-                  (testerp tch))
+          (is-pc ch)
+          (not (testerp ch))
+          (testerp tch))
      nil)
     ;; Holy is the light that shines on the chosen
     ((pref-flagged ch +pref-holylight+)

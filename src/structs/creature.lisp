@@ -367,8 +367,9 @@
       (aref (skills-of ch) skill)))
 
 (defun skill-of (ch skill)
+  ;; DEBUG: This maybe should be 50
   (if (is-npc ch)
-      50
+      0
       (aref (skills-of ch) skill)))
 
 (defun (setf skill-of) (val ch skill)

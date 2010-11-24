@@ -311,9 +311,7 @@
     ;;; First, count the records in the file so we can cons
     (with-open-file (index path
                            :direction :input
-                           :if-does-not-exist nil
-
-)
+                           :if-does-not-exist nil)
       (unless index
         (error "Error opening index file '~a'~%" path))
 
