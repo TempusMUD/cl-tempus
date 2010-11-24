@@ -688,6 +688,66 @@
         (act ch :target victim :item weapon
              :target-emit (format nil "&r~a&n"(third messages)))))))
 
-
-(defun skill-message (ch victim base-amount weapon kind hit-location)
+(defun bloodlet (damage kind)
   nil)
+
+(defun blood-spray (ch victim kind)
+  nil)
+
+(defun skill-message (ch victim damage weapon kind)
+  (unless *search-nomessage*
+    (let ((msg (random-elt (gethash kind *combat-messages*))))
+      (cond
+        ((null msg)
+         nil)
+        ((and (is-pc victim)
+              (immortalp victim)
+              (plusp damage))
+         (act ch :target victim :item weapon
+              :subject-emit (attacker-god-emit-of msg)
+              :target-emit (victim-god-emit-of msg)
+              :not-target-emit (room-god-emit-of msg)))
+        ((= damage 0)
+         (when (and ch (or (not (is-weapon kind))
+                           (not (pref-flagged ch +pref-gagmiss+))))
+           (send-to-char ch "&y")
+           (act ch :target victim :item weapon
+                :subject-emit (attacker-miss-emit-of msg))
+           (send-to-char ch "&n"))
+         (when (and (not (eql ch victim))
+                    (or (not (is-weapon kind))
+                        (not (pref-flagged victim +pref-gagmiss+))))
+           (send-to-char victim "&r")
+           (act ch :target victim :item weapon
+                :target-emit (victim-miss-emit-of msg))
+           (send-to-char victim "&n"))
+         (act ch :target victim :item weapon
+              :not-target-emit (room-miss-emit-of msg)))
+        ((eql (position-of victim) +pos-dead+)
+         (when ch
+           (send-to-char ch "&y")
+           (act ch :target victim :item weapon
+                :subject-emit (attacker-die-emit-of msg))
+           (send-to-char ch "&n"))
+         (when (not (eql ch victim))
+           (send-to-char victim "&r")
+           (act ch :target victim :item weapon
+                :target-emit (victim-die-emit-of msg))
+           (send-to-char victim "&n"))
+         (act ch :target victim :item weapon
+              :not-target-emit (room-die-emit-of msg)))
+        (t
+         (when ch
+           (send-to-char ch "&y")
+           (act ch :target victim :item weapon
+                :subject-emit (attacker-hit-emit-of msg))
+           (send-to-char ch "&n"))
+         (when (not (eql ch victim))
+           (send-to-char victim "&r")
+           (act ch :target victim :item weapon
+                :target-emit (victim-hit-emit-of msg))
+           (send-to-char victim "&n"))
+         (act ch :target victim :item weapon
+              :not-target-emit (room-hit-emit-of msg)))))
+    (when (bloodlet damage kind)
+      (blood-spray ch victim kind))))

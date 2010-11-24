@@ -474,7 +474,8 @@ and/or the structure of spacetime as we know it."
 (defun can-damage-creature (ch victim weapon type)
   "Returns T if the creature CH can damage VICTIM.  If not, the result
 is simply no damage.  CH may be NIL for damage caused by the
-environment."
+environment.  The second value returned is T if a message has already
+been displayed."
 
   (when (and (is-undead victim) (eql type +spell-poison+))
     (return-from can-damage-creature nil))
@@ -512,26 +513,26 @@ environment."
                 (and weapon (is-obj-stat weapon +item-magic+))
                 ;; energy weapons can hit them
                 (and weapon (is-obj-kind weapon +item-energy-gun+)))
-      (return-from can-damage-creature nil)))
+      (return-from can-damage-creature (values nil t))))
 
   ;; Shield mastery
-  (when (and ch
+  (when (and victim
              (is-weapon type)
-             (aref (equipment-of ch) +wear-shield+)
+             (aref (equipment-of victim) +wear-shield+)
              (> (skill-of victim +skill-shield-mastery+) 20)
              (> (skill-of victim +skill-shield-mastery+)
                 (random-range 0 600))
              (>= (position-of victim) +pos-fighting+))
     (act victim
          :target ch
-         :item (aref (equipment-of ch) +wear-shield+)
+         :item (aref (equipment-of victim) +wear-shield+)
          :subject-emit "You deflect $N's attack with $p!"
          :target-emit "$n deflects your attack with $s shield!"
          :not-target-emit "$n deflects $N's attack with $S shield!")
-    (return-from can-damage-creature nil))
+    (return-from can-damage-creature (values nil t)))
 
   ;; Uncanny dodge
-  (when (and ch
+  (when (and victim
              (is-weapon type)
              (not (spell-is-psionic type))
              (not (spell-is-bardic type))
@@ -541,14 +542,14 @@ environment."
              (>= (position-of victim) +pos-fighting+))
     (act victim
          :target ch
-         :item (aref (equipment-of ch) +wear-shield+)
+         :item (aref (equipment-of victim) +wear-shield+)
          :subject-emit "You smirk as you easily sidestep $N's attack!"
          :target-emit "$n smirks as $e easily sidesteps your attack!"
          :not-target-emit "$n smirks as $e easily sidesteps $N's attack!")
-    (return-from can-damage-creature nil))
+    (return-from can-damage-creature (values nil t)))
 
   ;; Tumbling
-  (when (and ch
+  (when (and victim
              (is-weapon type)
              (not (spell-is-psionic type))
              (not (spell-is-bardic type))
@@ -558,11 +559,11 @@ environment."
              (>= (position-of victim) +pos-fighting+))
     (act victim
          :target ch
-         :item (aref (equipment-of ch) +wear-shield+)
+         :item (aref (equipment-of victim) +wear-shield+)
          :subject-emit "You dexterously roll away from $N's attack!"
          :target-emit "$n dexterously rolls away from your attack!"
          :not-target-emit "$n dexterously rolls away from $N's attack!")
-    (return-from can-damage-creature nil))
+    (return-from can-damage-creature (values nil t)))
 
   ;; TODO: Mirror image melody
   ;; TODO: Dimensional shift
@@ -921,73 +922,77 @@ BASE-AMOUNT.  CH is the dealer of the damage or NIL if a creature was
 not responsible, KIND is the skill, spell or type of the damage, and
 POS is the hit location.  Returns T if damage was dealt, and NIL if
 the attack failed."
-  (when (can-damage-creature ch victim weapon kind)
-    (let ((amount (calculate-damage ch victim base-amount kind))
-          (damage-cap (calculate-damage-cap ch))
-          (location (pick-damage-location victim kind hit-location)))
-      (when (and ch (pref-flagged ch +pref-debug+))
-        (send-to-char ch "&c[DAMAGE] ~a   dam: ~d  cap: ~d   type: ~d   wait: ~d   pos: ~d&n~%"
-                      (name-of victim)
-                      amount
-                      damage-cap
-                      kind
-                      (if (link-of victim)
-                          (wait-of (link-of victim))
-                          (wait-state-of victim))
-                      location))
-      (when (pref-flagged victim +pref-debug+)
-        (send-to-char ch "&c[DAMAGE] ~a   dam: ~d  cap: ~d   type: ~d   wait: ~d   pos: ~d&n~%"
-                      (name-of victim)
-                      amount
-                      damage-cap
-                      kind
-                      (if (link-of victim)
-                          (wait-of (link-of victim))
-                          (wait-state-of victim))
-                      location))
-      (when ch
-        (damage-counterattack ch victim kind location))
+  (multiple-value-bind (can-damage sent-message)
+      (can-damage-creature ch victim weapon kind)
+    (when (or can-damage (not sent-message))
+      (let ((amount (if can-damage (calculate-damage ch victim base-amount kind) 0))
+            (damage-cap (calculate-damage-cap ch))
+            (location (pick-damage-location victim kind hit-location)))
+        (when (and ch (pref-flagged ch +pref-debug+))
+          (send-to-char ch "&c[DAMAGE] ~a   dam: ~d  cap: ~d   type: ~d   wait: ~d   pos: ~d&n~%"
+                        (name-of victim)
+                        amount
+                        damage-cap
+                        kind
+                        (if (link-of victim)
+                            (wait-of (link-of victim))
+                            (wait-state-of victim))
+                        location))
+        (when (pref-flagged victim +pref-debug+)
+          (send-to-char ch "&c[DAMAGE] ~a   dam: ~d  cap: ~d   type: ~d   wait: ~d   pos: ~d&n~%"
+                        (name-of victim)
+                        amount
+                        damage-cap
+                        kind
+                        (if (link-of victim)
+                            (wait-of (link-of victim))
+                            (wait-state-of victim))
+                        location))
+        (when ch
+          (damage-counterattack ch victim kind location))
 
-      (decf (hitp-of victim) amount)
-      (when (is-pc victim)
-        (incf (total-dam-of victim) amount))
-      (when ch
-        (gain-damage-exp ch victim amount))
-      (remove-damage-sensitive-affects victim)
+        (decf (hitp-of victim) amount)
+        (when (is-pc victim)
+          (incf (total-dam-of victim) amount))
+        (when ch
+          (gain-damage-exp ch victim amount))
+        (remove-damage-sensitive-affects victim)
 
-      (update-pos victim)
+        (update-pos victim)
 
-      (if (is-weapon kind)
-          (damage-message ch victim base-amount weapon kind hit-location)
-          (skill-message ch victim base-amount weapon kind hit-location))
+        (if (or (not (is-weapon kind))
+                (zerop amount)
+                (eql (position-of victim) +pos-dead+))
+            (skill-message ch victim base-amount weapon kind)
+            (damage-message ch victim base-amount weapon kind hit-location))
 
-      (when (and ch (eql (master-of victim) ch))
-        (stop-following victim))
+        (when (and ch (eql (master-of victim) ch))
+          (stop-following victim))
 
-      (cond
-        ((eql (position-of victim) +pos-mortallyw+)
-         (act victim :subject-emit "You are badly wounded, but will recover very slowly."
-              :place-emit "$n is badly wounded, but will recover very slowly."))
-        ((eql (position-of victim) +pos-incap+)
-         (act victim :subject-emit "You are incapacitated but will probably recover."
-              :place-emit "$n is incapacitated but will probably recover."))
-        ((eql (position-of victim) +pos-stunned+)
-         (act victim :subject-emit "You're stunned, but will probably regain consciousness again."
-              :place-emit "$n is stunned, but will probably regain consciousness again."))
-        ((eql (position-of victim) +pos-dead+)
-         (act victim :subject-emit "You are dead!  Sorry..."
-              :place-emit "$n is dead!  R.I.P.")
-         ;; log death of victim
-         (raw-kill victim ch kind))
-        (t
-         (when (> amount (floor (max-hitp-of victim) 4))
-           (send-to-char victim "That really did HURT!~%"))
-         (when (and (< (hitp-of victim)
-                       (floor (max-hitp-of victim) 4))
-                    (< (hitp-of victim) 200))
-           (send-to-char victim "&rYou wish that you wounds would stop &RBLEEDING&r so much!&n~%"))))
+        (cond
+          ((eql (position-of victim) +pos-mortallyw+)
+           (act victim :subject-emit "You are badly wounded, but will recover very slowly."
+                :place-emit "$n is badly wounded, but will recover very slowly."))
+          ((eql (position-of victim) +pos-incap+)
+           (act victim :subject-emit "You are incapacitated but will probably recover."
+                :place-emit "$n is incapacitated but will probably recover."))
+          ((eql (position-of victim) +pos-stunned+)
+           (act victim :subject-emit "You're stunned, but will probably regain consciousness again."
+                :place-emit "$n is stunned, but will probably regain consciousness again."))
+          ((eql (position-of victim) +pos-dead+)
+           (act victim :subject-emit "You are dead!  Sorry..."
+                :place-emit "$n is dead!  R.I.P.")
+           ;; log death of victim
+           (raw-kill victim ch kind))
+          (t
+           (when (> amount (floor (max-hitp-of victim) 4))
+             (send-to-char victim "That really did HURT!~%"))
+           (when (and (< (hitp-of victim)
+                         (floor (max-hitp-of victim) 4))
+                      (< (hitp-of victim) 200))
+             (send-to-char victim "&rYou wish that you wounds would stop &RBLEEDING&r so much!&n~%"))))
 
-      (plusp amount))))
+        (plusp amount)))))
 
 (defun obj-is-weapon (obj)
   "Returns non-NIL if OBJ is a weapon or energy gun.  Returns NIL if
@@ -1369,7 +1374,7 @@ if the players' reputations allow it."
                                         (damsizedice-of ch)))
                     (setf damage (max tmp-dam damage)))
                   (when (plusp (vnum-of weapon))
-                    (let ((spec (assoc (vnum-of weapon) (weap-spec-of ch))))
+                    (let ((spec (find (vnum-of weapon) (remove-if-not #'identity (weap-spec-of ch)) :key 'vnum-of)))
                       (when spec
                         (incf damage (second spec)))))
                   (when (and (is-two-hand weapon)
@@ -1558,9 +1563,15 @@ if the players' reputations allow it."
                (>= (min 100 prob) (random-range 0 300)))
       (mobile-battle-activity ch))))
 
+(defun stop-separated-fights (ch)
+  (dolist (tch (copy-list (fighting-of ch)))
+    (unless (eql (in-room-of ch) (in-room-of tch))
+      (remove-combat ch tch))))
+
 (defun perform-violence ()
   "Control every fight in the game"
   (dolist (ch *characters*)
+    (stop-separated-fights ch)
     (unless (or (eql (position-of ch) +pos-dead+)
                 (null (fighting-of ch)))
       (with-simple-restart (continue "Continue from signal in combat update")

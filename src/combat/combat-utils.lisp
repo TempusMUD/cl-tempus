@@ -276,7 +276,7 @@
         (decf thaco 5)))
 
     (when weapon
-      (let ((spec (assoc (vnum-of weapon) (weap-spec-of ch))))
+      (let ((spec (find (vnum-of weapon) (remove-if-not #'identity (weap-spec-of ch)) :key 'vnum-of)))
         (when spec
           (decf (second spec))))
 
