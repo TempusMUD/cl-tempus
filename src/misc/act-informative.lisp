@@ -686,49 +686,140 @@
                 (with-output-to-string (s)
                   (list-char-to-char s (people-of room) ch))))
 
-(defun list-equipment (stream ch mode show-empty-p)
-    (when show-empty-p
-      (format stream "You are using:~%"))
-    (loop
-       with found = nil
-       with pos-array = (case mode
-                         (:equipment (equipment-of ch))
-                         (:tattoos (tattoos-of ch)))
-       with pos-descs = (case mode
-                         (:equipment +eq-pos-descs+)
-                         (:tattoos +tattoo-pos-descs+))
-       for idx from 0 upto +num-wears+
-       as pos = (aref +eq-pos-order+ idx)
-       as obj = (aref pos-array pos)
-       do
-         (cond
-           ((null obj)
-            (when (and show-empty-p (/= pos +wear-ass+))
-              (format stream "~aNothing!~%" (aref pos-descs pos))))
-           ((is-visible-to obj ch)
-            (unless (or found show-empty-p)
-              (format stream "You are using:~%"))
-            (setf found t)
-            (format stream "&g~a&n" (aref pos-descs pos))
-            (show-obj-to-char stream obj ch :inv 0))
-           (t
-            (unless (or found show-empty-p)
-              (format stream "You are using:~%"))
-            (setf found t)
-            (format stream "~aSomething" (aref pos-descs pos))))
-       finally
-         (unless (or found show-empty-p)
-           (format stream "You're totally naked!~%"))))
+(defun list-worn (stream ch header-msg none-msg worn order pos-descs &key show-empty-p)
+  (if (or show-empty-p (find-if #'identity worn))
+      (loop
+         initially (format stream "~a~%" header-msg)
+         as pos in order
+         as obj = (aref worn pos)
+         do
+           (cond
+             ((null obj)
+              (when (and show-empty-p (/= pos +wear-ass+))
+                (format stream "~aNothing!~%" (aref pos-descs pos))))
+             ((is-visible-to obj ch)
+              (format stream "~a" (aref pos-descs pos))
+              (show-obj-to-char stream obj ch :inv 0))
+             (t
+              (format stream "~aSomething" (aref pos-descs pos)))))
+      (format stream "~a~%" none-msg)))
+
+(defun obj-condition-desc (obj)
+  (cond
+    ((or (= (damage-of obj) -1)
+         (= (max-dam-of obj) -1))
+     "&gunbreakable&n")
+    ((is-obj-stat2 obj +item2-broken+)
+     "<broken>")
+    ((zerop (max-dam-of obj))
+     "frail")
+    (t
+     (let ((descs '((0 "perfect")
+                    (10 "excellent")
+                    (30 "&cgood&n")
+                    (50 "&cfair&n")
+                    (60 "&yworn&n")
+                    (70 "&yshabby&n")
+                    (90 "&ybad&n")
+                    (100 "&rterrible&n"))))
+       (second
+        (assoc (floor (* (- (max-dam-of obj) (damage-of obj)) 100)
+                      (max-dam-of obj))
+               descs
+               :test #'<=))))))
+
+(defun list-worn-status (stream ch header-msg none-msg worn order)
+  (if (find-if #'identity worn)
+      (loop
+         initially (format stream "~a~%" header-msg)
+         as pos in order
+         as obj = (aref worn pos)
+         when (and obj (is-visible-to obj ch))
+         do (format stream "-~a- is in ~a condition~%"
+                    (name-of obj)
+                    (obj-condition-desc obj)))
+      (format stream "~a~%" none-msg)))
 
 (defcommand (ch "equipment") (:sleeping)
   (send-to-char ch "~a"
                 (with-output-to-string (s)
-                  (list-equipment s ch :equipment nil))))
+                  (list-worn s ch
+                             "You are using:"
+                             "You're totally naked!"
+                             (equipment-of ch)
+                             +eq-pos-order+
+                             +eq-pos-descs+))))
 
 (defcommand (ch "equipment" "all") (:sleeping)
   (send-to-char ch "~a"
                 (with-output-to-string (s)
-                  (list-equipment s ch :equipment t))))
+                  (list-worn s ch
+                             "You are using:"
+                             "You're totally naked!"
+                             (equipment-of ch)
+                             +eq-pos-order+
+                             +eq-pos-descs+
+                             :show-empty-p t))))
+
+(defcommand (ch "equipment" "status") (:sleeping)
+  (send-to-char ch "~a"
+                (with-output-to-string (s)
+                  (list-worn-status s ch
+                                    "Equipment status:"
+                                    "You're totally naked!"
+                                    (equipment-of ch)
+                                    +eq-pos-order+))))
+
+(defcommand (ch "implants") (:sleeping)
+  (send-to-char ch "~a"
+                (with-output-to-string (s)
+                  (list-worn s ch
+                             "You are implanted with:"
+                             "You don't have any implants!"
+                             (implants-of ch)
+                             +implant-pos-order+
+                             +implant-pos-descs+))))
+
+(defcommand (ch "implants" "all") (:sleeping)
+  (send-to-char ch "~a"
+                (with-output-to-string (s)
+                  (list-worn s ch
+                             "You are implanted with:"
+                             "You don't have any implants!"
+                             (implants-of ch)
+                             +implant-pos-order+
+                             +implant-pos-descs+
+                             :show-empty-p t))))
+
+(defcommand (ch "implants" "status") (:sleeping)
+  (send-to-char ch "~a"
+                (with-output-to-string (s)
+                  (list-worn-status s ch
+                                    "Implant status:"
+                                    "You don't have any implants!"
+                                    (implants-of ch)
+                                    +implant-pos-order+))))
+
+(defcommand (ch "tattoos") (:sleeping)
+  (send-to-char ch "~a"
+                (with-output-to-string (s)
+                  (list-worn s ch
+                             "You have the following tattoos:"
+                             "You're a tattoo virgin!"
+                             (tattoos-of ch)
+                             +tattoo-pos-order+
+                             +tattoo-pos-descs+))))
+
+(defcommand (ch "tattoos" "all") (:sleeping)
+  (send-to-char ch "~a"
+                (with-output-to-string (s)
+                  (list-worn s ch
+                             "You have the following tattoos:"
+                             "You're a tattoo virgin!"
+                             (tattoos-of ch)
+                             +tattoo-pos-order+
+                             +tattoo-pos-descs+
+                             :show-empty-p t))))
 
 (defun parse-who-args (args)
   (let ((options nil))

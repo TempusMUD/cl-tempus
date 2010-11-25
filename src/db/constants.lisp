@@ -1647,16 +1647,6 @@
 
 (defparameter +daylight-modifiers+ #(-1 -1 0 0 0 0 1 1 1 1 0 0 0 0 -1 -1))
 
-(defparameter +eq-pos-order+
-  (coerce (list +wear-head+ +wear-face+ +wear-eyes+ +wear-ear-l+
-                +wear-ear-r+ +wear-neck-1+ +wear-neck-2+ +wear-about+
-                +wear-body+ +wear-back+ +wear-arms+ +wear-shield+
-                +wear-wrist-r+ +wear-wrist-l+ +wear-light+ +wear-hold+
-                +wear-wield+ +wear-wield-2+ +wear-waist+ +wear-belt+
-                +wear-crotch+ +wear-legs+ +wear-feet+ +wear-ass+
-                0 0 0 0 0 0)
-          'vector))
-
 (defparameter +soilage-bits+
   #("wet" "bloody" "muddy" "covered with feces"
     "dripping with urine" "smeared with mucus"
@@ -2121,34 +2111,86 @@
           +wear-wield-2+
           +wear-ass+))
 
+(defparameter +eq-pos-order+
+  (list +wear-head+ +wear-face+ +wear-eyes+ +wear-ear-l+ +wear-ear-r+
+        +wear-neck-1+ +wear-neck-2+ +wear-about+ +wear-body+
+        +wear-back+ +wear-arms+ +wear-shield+ +wear-wrist-r+
+        +wear-wrist-l+ +wear-hands+ +wear-finger-r+ +wear-finger-l+
+        +wear-light+ +wear-hold+ +wear-wield+ +wear-wield-2+
+        +wear-waist+ +wear-belt+ +wear-crotch+ +wear-legs+ +wear-feet+
+        +wear-ass+))
+
+(defparameter +implant-pos-order+
+  (list +wear-head+ +wear-face+ +wear-eyes+ +wear-ear-l+ +wear-ear-r+
+        +wear-neck-1+ +wear-neck-2+ +wear-about+ +wear-body+
+        +wear-back+ +wear-arms+ +wear-shield+ +wear-wrist-r+
+        +wear-wrist-l+ +wear-hands+ +wear-light+ +wear-waist+
+        +wear-crotch+ +wear-legs+ +wear-feet+))
+
+(defparameter +tattoo-pos-order+
+  (list +wear-head+ +wear-face+ +wear-ear-l+ +wear-ear-r+
+        +wear-neck-1+ +wear-body+ +wear-back+ +wear-arms+
+        +wear-wrist-r+ +wear-wrist-l+ +wear-hands+ +wear-finger-r+
+        +wear-finger-l+ +wear-waist+ +wear-crotch+ +wear-legs+
+        +wear-feet+ +wear-ass+))
+
 (defparameter +eq-pos-descs+
-  #("<as light>       "
-    "<on finger>      "
-    "<on finger>      "
-    "<around neck>    "
-    "<around neck>    "
-    "<on body>        "
-    "<on head>        "
-    "<on legs>        "
-    "<on feet>        "
-    "<on hands>       "
-    "<on arms>        "
-    "<as shield>      "
-    "<about body>     "
-    "<about waist>    "
-    "<around wrist>   "
-    "<around wrist>   "
-    "<wielded>        "
-    "<held>           "
-    "<on crotch>      "
-    "<on eyes>        "
-    "<on back>        "
-    "<on belt>        "
-    "<on face>        "
-    "<on left ear>    "
-    "<on right ear>   "
-    "<second wielded> "
-    "<stuck up ass>   "))
+  #("&g<as light>       &n"
+    "&g<on finger>      &n"
+    "&g<on finger>      &n"
+    "&g<around neck>    &n"
+    "&g<around neck>    &n"
+    "&g<on body>        &n"
+    "&g<on head>        &n"
+    "&g<on legs>        &n"
+    "&g<on feet>        &n"
+    "&g<on hands>       &n"
+    "&g<on arms>        &n"
+    "&g<as shield>      &n"
+    "&g<about body>     &n"
+    "&g<about waist>    &n"
+    "&g<around wrist>   &n"
+    "&g<around wrist>   &n"
+    "&g<wielded>        &n"
+    "&g<held>           &n"
+    "&g<on crotch>      &n"
+    "&g<on eyes>        &n"
+    "&g<on back>        &n"
+    "&g<on belt>        &n"
+    "&g<on face>        &n"
+    "&g<on left ear>    &n"
+    "&g<on right ear>   &n"
+    "&g<second wielded> &n"
+    "&g<stuck up ass>   &n"))
+
+(defparameter +implant-pos-descs+
+  #("[       light] - "
+    "[finger_right] - "
+    "[ finger_left] - "
+    "[      throat] - "
+    "[        neck] - "
+    "[        body] - "
+    "[        head] - "
+    "[        legs] - "
+    "[        feet] - "
+    "[       hands] - "
+    "[        arms] - "
+    "[      shield] - "
+    "[       about] - "
+    "[       waist] - "
+    "[ wrist_right] - "
+    "[  wrist_left] - "
+    "[       wield] - "
+    "[        hold] - "
+    "[      crotch] - "
+    "[        eyes] - "
+    "[        back] - "
+    "[        belt] - "
+    "[        face] - "
+    "[    ear_left] - "
+    "[   ear_right] - "
+    "[     wield_2] - "
+    "[      rectum] - "))
 
 (defparameter +tattoo-pos-descs+
   #("<INVALID>        "
