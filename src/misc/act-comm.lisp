@@ -278,6 +278,12 @@
 (defcommand (ch #\: message) (:resting)
   (perform-emote ch message))
 
+(defcommand (ch "me") (:resting)
+  (send-to-char ch "Yes... but what?~%"))
+
+(defcommand (ch "me" message) (:resting)
+  (perform-emote ch message))
+
 (defcommand (ch "whisper") (:resting)
   (send-to-char ch "To whom do you want to whisper... and what?~%"))
 
