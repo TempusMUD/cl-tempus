@@ -327,6 +327,35 @@
           :place-emit "$n stops floating around and rests.")
      (setf (position-of ch) +pos-resting+))))
 
+(defcommand (ch "sit") (:sleeping)
+  (cond
+    ((= (position-of ch) +pos-standing+)
+     (act ch
+          :subject-emit "You sit down."
+          :place-emit "$n sits down.")
+     (setf (position-of ch) +pos-sitting+))
+    ((= (position-of ch) +pos-sitting+)
+     (send-to-char ch "You're sitting already.~%"))
+    ((= (position-of ch) +pos-resting+)
+     (act ch
+          :subject-emit "You stop resting and sit up."
+          :place-emit "$n stops resting.")
+     (setf (position-of ch) +pos-sitting+))
+    ((= (position-of ch) +pos-sleeping+)
+     (send-to-char ch "You have to wake up first.~%"))
+    ((= (position-of ch) +pos-fighting+)
+     (send-to-char ch "Sit down while fighting?  Are you MAD?~%"))
+    ((= (position-of ch) +pos-flying+)
+     (send-to-char ch "That's probably not a good idea while flying.~%"))
+    ((= (position-of ch) +pos-mounted+)
+     (act ch :target (mounted-of ch)
+          :subject-emit "You are already seated on $N."))
+    (t
+     (act ch
+          :subject-emit "You stop floating around, and sit down."
+          :place-emit "$n stops floating around and sits down.")
+     (setf (position-of ch) +pos-sitting+))))
+
 (defcommand (ch "sleep") ()
   (cond
     ((aff2-flagged ch +aff2-berserk+)
