@@ -180,7 +180,7 @@
      (send-to-outside zone "The red giant sun slowly sets in the west.~%"))
     ((= hour (+ 21 (aref +daylight-modifiers+ month)))
      (setf (sunlight-of (weather-of zone)) :sunset)
-     (send-to-outside zone "The red giant sun slowly sets in the west.~%"))
+     (send-to-outside zone "The small blue sun slowly sets in the west.~%"))
     ((= hour (+ 22 (aref +daylight-modifiers+ month)))
      (setf (sunlight-of (weather-of zone)) :sunset)
      (send-to-outside zone "The night has begun.~%"))))
