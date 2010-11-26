@@ -1084,11 +1084,14 @@ else is noticable about your character?
 ;;   (unless (and (action (actor-of cxn))
 ;;                (interpret (action (actor-of cxn)) line))
      (let ((trimmed-line (string-left-trim '(#\/ #\space #\tab) line)))
-       (when (plusp (length trimmed-line))
-         (interpret-command (actor-of cxn)
+       (if (plusp (length trimmed-line))
+           (interpret-command (actor-of cxn)
                             (string-trim '(#\space)
                                          (expand-aliases (actor-of cxn)
-                                                         trimmed-line)))))))
+                                                         trimmed-line)))
+           ;; No output is generated on an empty line, so if this
+           ;; isn't done, the prompt doesn't get printed
+           (schedule-cxn-output cxn)))))
 
 (define-connection-state editing
   (prompt (cxn)
