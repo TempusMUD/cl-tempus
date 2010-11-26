@@ -98,6 +98,8 @@
     (loop while (> month 15) do
          (decf month 16)
          (incf year))
+    (when (eql (time-frame-of zone) +time-future+)
+        (incf year 3567))
     (values hour day month year)))
 
 (defun reset-zone-weather ()
