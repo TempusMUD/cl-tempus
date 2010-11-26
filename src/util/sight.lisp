@@ -120,6 +120,7 @@
      nil)
     ;; Nothing at all gets through immort invis
     ((and (is-pc ch)
+          (is-pc target)
           (immortalp target)
           (< (level-of ch) (invis-level-of target)))
      nil)
