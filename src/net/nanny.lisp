@@ -1026,27 +1026,60 @@ else is noticable about your character?
    ;; hitting return causes re-entry into the game
    (player-to-game (actor-of cxn))))
 
+
+(defun short-health-desc (i)
+  (let ((percent (if (plusp (max-hitp-of i))
+                     (floor (* 100 (hitp-of i)) (max-hitp-of i))
+                     -1)))
+    (cond
+      ((>= percent 100) "excellent")
+      ((>= percent 90) "few scratches")
+      ((>= percent 75) "small wounds")
+      ((>= percent 50) "quite a few")
+      ((>= percent 30) "big nasty")
+      ((>= percent 15) "pretty hurt")
+      ((>= percent 5) "awful")
+      ((>= percent 0) "brink of death")
+      (t "bleeding awfully"))))
+
 (define-connection-state playing
   (prompt (cxn)
-   (cond
-#+nil     ((and (action-of (actor-of cxn))
-           (send-action-prompt (action-of (actor-of cxn))))
-      ;; if send-action-prompt returns t, we don't need to send the
-      ;; standard prompt
-      nil)
-     ((not (or (pref-flagged (actor-of cxn) +pref-disphp+)
-               (pref-flagged (actor-of cxn) +pref-dispmana+)
-               (pref-flagged (actor-of cxn) +pref-dispmove+)))
-      (cxn-write cxn "~:[&B(debug) ~;~]&N>&n " *production-mode*))
-     (t
-      (cxn-write cxn "&N< ~:[&B(debug) ~;~]~@[&G~a&YH ~]~@[&M~a&YM ~]~@[&C~a&YV ~]&N>&n "
-                 *production-mode*
-                 (when (pref-flagged (actor-of cxn) +pref-disphp+)
-                   (hitp-of (actor-of cxn)))
-                 (when (pref-flagged (actor-of cxn) +pref-dispmana+)
-                   (mana-of (actor-of cxn)))
-                 (when (pref-flagged (actor-of cxn) +pref-dispmove+)
-                   (move-of (actor-of cxn)))))))
+   (let ((ch (actor-of cxn)))
+     (cond
+       #+nil     ((and (action-of ch)
+                       (send-action-prompt (action-of ch)))
+                  ;; if send-action-prompt returns t, we don't need to send the
+                  ;; standard prompt
+                  nil)
+       ((not (or (pref-flagged ch +pref-disphp+)
+                 (pref-flagged ch +pref-dispmana+)
+                 (pref-flagged ch +pref-dispmove+)))
+        (cxn-write cxn "~:[&B(debug) ~;~]&N>&n " *production-mode*))
+       (t
+        (cxn-write cxn "&N< ~:[&B(debug) ~;~]~
+                            ~@[&G~a&YH ~]~
+                            ~@[&M~a&YM ~]~
+                            ~@[&C~a&YV ~]~
+                            ~@[~{&~c~d&YA ~}~]~
+                            ~@[&r(~a) ~]~
+                            &N>&n "
+                   *production-mode*
+                   (when (pref-flagged ch +pref-disphp+)
+                     (hitp-of ch))
+                   (when (pref-flagged ch +pref-dispmana+)
+                     (mana-of ch))
+                   (when (pref-flagged ch +pref-dispmove+)
+                     (move-of ch))
+                   (when (pref-flagged ch +pref-dispalign+)
+                     (list
+                      (cond
+                        ((is-good ch) #\C)
+                        ((is-evil ch) #\R)
+                        (t #\W))
+                      (alignment-of ch)))
+                   (when (and (fighting-of ch)
+                              (alivep (first (fighting-of ch))))
+                     (short-health-desc (first (fighting-of ch)))))))))
   (input (cxn line)
 ;;   (unless (and (action (actor-of cxn))
 ;;                (interpret (action (actor-of cxn)) line))
