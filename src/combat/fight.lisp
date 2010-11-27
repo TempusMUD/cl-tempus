@@ -437,14 +437,21 @@ and/or the structure of spacetime as we know it."
   (when (mob-flagged victim +mob-utility+)
     (return-from can-attack nil))
   (when (and ch
-             (or (and (mob2-flagged ch +mob2-unapproved+)
-                      (not (testerp victim)))
-                 (and (testerp ch)
-                      (is-npc victim)
-                      (not (testerp victim)))
-                 (and (is-npc victim)
-                      (immortal-level-p ch)
-                      (< (level-of ch) +lvl-timegod+))))
+             (mob2-flagged ch +mob2-unapproved+)
+             (not (testerp victim)))
+    (send-to-char ch "You're an unapproved mob.~ Stop attacking people.%")
+    (return-from can-attack nil))
+  (when (and ch
+             (testerp ch)
+             (is-pc victim)
+             (not (testerp victim)))
+    (send-to-char ch "Testers can only attack other tester players.~%")
+    (return-from can-attack nil))
+  (when (and ch
+             (is-npc victim)
+             (immortal-level-p ch)
+             (< (level-of ch) +lvl-timegod+))
+    (send-to-char ch "Immortals cannot attack mobiles.  Sorry.~%")
     (return-from can-attack nil))
 
   ;; Newbie protection and NOPK check
