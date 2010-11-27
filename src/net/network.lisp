@@ -157,6 +157,8 @@ closing the socket if it was being shutdown."
                 (return-from handle-flush))))
     (socket-connection-reset-error ()
       (cxn-close cxn))
+    (iolib.syscalls:epipe ()
+      (cxn-close cxn))
     (end-of-file ()
       (cxn-close cxn)))
   ;; At this point, we've flushed all output, so remove the output io
@@ -233,14 +235,20 @@ unless ABORT is T."
           (output-buf-of cxn))
      ;; We still have output to send, shutdown only half the
      ;; connection until we send it
-     (shutdown (socket-of cxn) :read t))
+     (handler-case
+         (shutdown (socket-of cxn) :read t)
+       (socket-not-connected-error ()
+         nil)))
     (t
      ;; Nothing more to do, so tear down the whole connection
      (when (iolib.multiplex::fd-monitored-p *event-base*
                                             (socket-os-fd (socket-of cxn))
                                             :write)
        (remove-fd-handlers *event-base* (socket-os-fd (socket-of cxn)) :write t))
-     (shutdown (socket-of cxn) :read t :write t)
+     (handler-case
+         (shutdown (socket-of cxn) :read t :write t)
+       (socket-not-connected-error ()
+         nil))
      (close (socket-of cxn))))
   (setf *cxns* (delete cxn *cxns*)))
 
