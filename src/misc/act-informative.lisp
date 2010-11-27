@@ -338,8 +338,7 @@
   ;; Describe soilage
   (when (and (not (eql mode :glance)) (typep i 'player))
     (loop
-       for idx upto +num-wears+
-       as pos = (aref +eq-pos-order+ idx)
+       as pos in +eq-pos-order+
        when (and (null (aref (equipment-of i) pos))
                  (not (illegal-soilpos pos))
                  (not (zerop (char-soilage i pos))))
