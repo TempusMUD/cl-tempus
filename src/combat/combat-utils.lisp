@@ -376,6 +376,16 @@
          (check-skill ch skill))))
    0))
 
+(defun effective-weapon-weight-of (weapon)
+  (let ((speed-affect (find +apply-weaponspeed+
+                            (remove-if-not #'identity (affected-of weapon))
+                            :key 'location-of)))
+    (if speed-affect
+        (max (floor (weight-of weapon) 4)
+             (- (weight-of weapon)
+                (modifier-of speed-affect)))
+        (weight-of weapon))))
+
 (defun calculate-weapon-probability (ch prob weapon)
   ;; Add in weapon specialization bonus
   (when (plusp (vnum-of weapon))
@@ -385,7 +395,7 @@
                          (vnum-of weapon)))
        do (incf prob (* (level-of spec) 4))))
 
-  (let ((effective-weight (weight-of weapon))
+  (let ((effective-weight (effective-weapon-weight-of weapon))
         (wield-weight (str-app-type-wield-w (aref +str-app+ (str-of ch)))))
     (cond
       ((/= (worn-on-of weapon) +wear-wield+)
@@ -479,8 +489,7 @@
     (decf prob (floor (* prob 32 (+ (carry-weight-of ch) (worn-weight-of ch)))
                       (* (can-carry-weight ch) 85)))
 
-    (when (> (get-condition ch +drunk+)
-             5)
+    (when (> (get-condition ch +drunk+) 5)
       (decf prob (floor (+ (* prob 15/100)
                            (* prob (/ (get-condition ch +drunk+) 100))))))
 
