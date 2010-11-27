@@ -166,7 +166,11 @@
        (setf (race-of ch) mod)))
     ((= loc +apply-sex+)
      (when (<= 0 mod 2)
-       (setf (sex-of ch) mod)))
+       (setf (sex-of ch)
+             (case mod
+               (0 'neuter)
+               (1 'male)
+               (2 'female)))))
     ((= loc +apply-backstab+)
      (apply-skill ch +skill-backstab+ mod))
     ((= loc +apply-pick-lock+)
