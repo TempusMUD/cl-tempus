@@ -366,8 +366,47 @@
 
     thaco))
 
+(defun weapon-prof (ch weapon)
+  (or
+   (unless (and (is-obj-kind weapon +item-weapon+)
+                (<= 0 (aref (value-of weapon) 3))
+                (< (aref (value-of weapon) 3) (- +top-attacktype+ +type-hit+)))
+     (let ((skill (aref +weapon-proficiencies+ (aref (value-of weapon) 3))))
+       (when (plusp skill)
+         (check-skill ch skill))))
+   0))
+
 (defun calculate-weapon-probability (ch prob weapon)
-  prob)
+  ;; Add in weapon specialization bonus
+  (when (plusp (vnum-of weapon))
+    (loop
+       for spec across (weap-spec-of ch)
+       when (and spec (= (vnum-of spec)
+                         (vnum-of weapon)))
+       do (incf prob (* (level-of spec) 4))))
+
+  (let ((effective-weight (weight-of weapon))
+        (wield-weight (str-app-type-wield-w (aref +str-app+ (str-of ch)))))
+    (cond
+      ((/= (worn-on-of weapon) +wear-wield+)
+       (decf prob (floor (* prob effective-weight)
+                         (* wield-weight 2)))
+       (cond
+         ((affected-by-spell ch +skill-neural-bridging+)
+          (incf prob (- (check-skill ch +skill-neural-bridging+) 60)))
+         ((>= (check-skill ch +skill-second-weapon+) (learned ch))
+          (incf prob (- (check-skill ch +skill-second-weapon+) 60))))
+       prob)
+      ((/= (worn-on-of weapon) +wear-wield-2+)
+       (decf prob (floor (* prob effective-weight)
+                         (max 1 (floor wield-weight 2))))
+       (when (is-barb ch)
+         (incf prob (floor (- (learned ch)
+                              (weapon-prof ch weapon))
+                           8)))
+       prob)
+      (t
+       prob))))
 
 (defun calculate-attack-probability (ch)
   (let ((prob (+ 1 (floor (level-of ch) 7) (* (dex-of ch) 2))))

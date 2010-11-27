@@ -1828,6 +1828,9 @@
 (defun str-app-type-to-dam (plist)
   (getf plist :to-dam))
 
+(defun str-app-type-wield-w (plist)
+  (getf plist :wield-w))
+
 (defparameter +con-app+
   #((:hitp -4 :shock 20)
     (:hitp -3 :shock 25)

@@ -1499,25 +1499,36 @@ if the players' reputations allow it."
     (pushnew ch (fighting-of victim))
     (pushnew victim (fighting-of ch))))
 
+(defun debug-to-chars (chars fmt &rest args)
+  (dolist (tch chars)
+    (when (pref-flagged tch +pref-debug+)
+      (send-to-char tch "~?" fmt args))))
+
 (defun perform-creature-violence (ch)
   (let ((prob (calculate-attack-probability ch))
         (die-roll (random-range 0 300)))
-    (dolist (tch (cons ch (fighting-of ch)))
-      (when (pref-flagged tch +pref-debug+)
-        (send-to-char tch "&c[COMBAT] ~a   prob:~a   roll:~a   wait:~a&n~%"
-                      (name-of ch) prob die-roll (wait-of ch))))
+
+    (debug-to-chars (cons ch (fighting-of ch))
+                    "&c[COMBAT] ~a   prob:~a   roll:~a   wait:~a&n~%"
+                    (name-of ch) prob die-roll (wait-of ch))
 
     ;; Handle regular hits
     (when (>= (min 100 (+ prob 15)) die-roll)
       (handler-case
           (loop
-             for time from 1 upto (min 4 (floor (level-of ch) 8)) do
+             for time from 0 upto (min 3 (floor (level-of ch) 8))
+             as die-roll = (random-range (* time 24) (* time 40))
+             as target = (random-elt (fighting-of ch))
+             do
+               (debug-to-chars (cons ch (fighting-of ch))
+                    "&c[ATTACK] ~a -> ~a  prob:~a   roll:~a   wait:~a&n~%"
+                    (name-of ch) (name-of target) prob die-roll (wait-of ch))
                (cond
                  ((< (position-of ch) +pos-fighting+)
                   (when (< (wait-of ch) 10)
                     (send-to-char ch "You can't fight while sitting!!~%")))
-                 ((>= prob (random-range (* time 24) (* time 40)))
-                  (attack ch (random-elt (fighting-of ch)) +type-undefined+))))
+                 ((>= prob die-roll)
+                  (attack ch target +type-undefined+))))
         (creature-died (death)
           (when (eql (creature-of death) ch)
             (return-from perform-creature-violence)))))
