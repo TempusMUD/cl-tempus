@@ -1275,7 +1275,9 @@ if the players' reputations allow it."
                (is-gun weapon))
            (setf w-type +type-bludgeon+))
           ((is-obj-kind weapon +item-weapon+)
-           (setf w-type (+ +type-hit+ (aref (value-of weapon) 3))))))
+           (setf w-type (+ +type-hit+ (aref (value-of weapon) 3))))
+          (t
+           (setf w-type +type-hit+))))
 
       (when (null weapon)
         (cond
