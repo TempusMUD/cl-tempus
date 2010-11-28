@@ -598,14 +598,15 @@ been displayed."
                              (eql (location-of af) +apply-caster+)))
                       (affected-of ch)))
          (caster-id (and af (modifier-of af))))
-    (if (eql caster-id (idnum-of ch))
-        ch
-        (find-if (lambda (tch)
-                   (or (and (is-pc ch)
-                            (eql caster-id (idnum-of tch)))
-                       (and (is-npc ch)
-                            (eql caster-id (- (mob-idnum-of tch))))))
-                 (people-of (in-room-of ch))))))
+    (when af
+      (if (eql caster-id (idnum-of ch))
+          ch
+          (find-if (lambda (tch)
+                     (or (and (is-pc ch)
+                              (eql caster-id (idnum-of tch)))
+                         (and (is-npc ch)
+                              (eql caster-id (- (mob-idnum-of tch))))))
+                   (people-of (in-room-of ch)))))))
 
 (defun dam-reduction-of (ch attacker)
   "Returns a floating point value of CH's damage reduction when attacked by ATTACKER."
