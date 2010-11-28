@@ -620,19 +620,20 @@ been displayed."
                              100))))
     ;; Sanctuary may be bypassed by an attacker with malefic violation
     ;; or righteous penetration
-    (incf reduction
-          (cond
-            ((and ch
-                  (or (not (is-affected-by-sanc ch attacker))
-                      (is-vampire ch)))
-             0)
-            ((and (not (is-neutral ch))
-                  (or (is-cleric ch) (is-knight ch)))
-             (incf reduction 25))
-            ((or (is-cyborg ch) (is-physic ch))
-             (incf reduction 8))
-            (t
-             (incf reduction 15))))
+    (when (aff-flagged ch +aff-sanctuary+)
+      (incf reduction
+            (cond
+              ((and ch
+                    (or (not (is-affected-by-sanc ch attacker))
+                        (is-vampire ch)))
+               0)
+              ((and (not (is-neutral ch))
+                    (or (is-cleric ch) (is-knight ch)))
+               (incf reduction 25))
+              ((or (is-cyborg ch) (is-physic ch))
+               (incf reduction 8))
+              (t
+               (incf reduction 15)))))
     ;; Zen of oblivity ranges up to about 35%
     (when (and (aff2-flagged ch +aff2-oblivity+) (is-neutral ch))
       (incf reduction (/ (+ (* (+ (level-of ch)
@@ -689,7 +690,8 @@ been displayed."
                 (t
                  0)))))
     ;; Petrification
-    (incf reduction 75)
+    (when (aff2-flagged ch +aff2-petrified+)
+      (incf reduction 75))
 
     ;; Various forms of protection
     (when attacker
@@ -755,7 +757,6 @@ been displayed."
           ((and (is-evil victim) (not (is-soulless victim)))
            (incf amount (floor (* amount (remort-gen-of attacker)) 20)))
           ((and (not (eql attacker victim)) (is-good victim))
-           (send-to-char attacker "You have been de-sanctified!~%")
            (affect-remove attacker af))))))
 
   ;; Damage modifier for not standing
