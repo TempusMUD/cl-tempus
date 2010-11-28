@@ -425,7 +425,6 @@
                    (not (is-obj-kind (get-eq ch +wear-body+) +item-armor+))
                    (not (is-metal (get-eq ch +wear-body+)))))
       (decf prob (floor (level-of ch) 4)))
-
     (when (get-eq ch +wear-wield-2+)
       (setf prob (calculate-weapon-probability ch prob (get-eq ch +wear-wield-2+))))
     (when (get-eq ch +wear-wield+)
@@ -477,14 +476,9 @@
 
     (when (aff3-flagged ch +aff3-divine-power+)
       (incf prob (floor (get-skill-bonus ch +spell-divine-power+) 3)))
-
     (if (link-of ch)
-        (decf prob (floor (* (max 0 (floor (wait-of (link-of ch)) 2))
-                             prob)
-                          100))
-        (decf prob (floor (* (max 0 (floor (wait-state-of ch) 2))
-                             prob)
-                          100)))
+        (decf prob (floor (* (max 0 (floor (wait-of (link-of ch)) 2)) prob) 100))
+        (decf prob (floor (* (max 0 (floor (wait-state-of ch) 2)) prob) 100)))
 
     (decf prob (floor (* prob 32 (+ (carry-weight-of ch) (worn-weight-of ch)))
                       (* (can-carry-weight ch) 85)))

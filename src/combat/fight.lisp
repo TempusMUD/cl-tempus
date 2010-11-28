@@ -1379,7 +1379,7 @@ if the players' reputations allow it."
                ((or (is-obj-kind weapon +item-weapon+)
                     (is-energy-gun weapon))
                 (incf damage (dice (aref (value-of weapon) 1)
-                                (aref (value-of weapon) 2)))
+                                   (aref (value-of weapon) 2)))
                 (let ((tmp-dam damage))
                   (when (invalid-char-class ch weapon)
                     (setf damage (floor damage 2)))
@@ -1396,8 +1396,7 @@ if the players' reputations allow it."
                              (not (is-energy-gun weapon))
                              (eql (worn-on-of weapon)
                                   +wear-wield+))
-                    (let ((dam-add (floor (weight-of weapon)
-                                          4)))
+                    (let ((dam-add (floor (weight-of weapon) 4)))
                       (when (> (skill-of ch +skill-discipline-of-steel+) 60)
                         (let ((bonus (get-skill-bonus ch +skill-discipline-of-steel+))
                               (weight (weight-of weapon)))
@@ -1428,17 +1427,15 @@ if the players' reputations allow it."
           (cond
             ((eql type +skill-cleave+)
              (setf damage (* damage
-                          (if (> (skill-of ch +skill-great-cleave+)
-                                 50)
-                              (+ 5 (floor (remort-gen-of ch) 5))
-                              4))))
+                             (if (> (skill-of ch +skill-great-cleave+) 50)
+                                 (+ 5 (floor (remort-gen-of ch) 5)) 4))))
 
             ((eql type +skill-backstab+)
              (gain-skill-proficiency ch type)
              (when (is-thief ch)
                (setf damage (* damage (backstab-multiplier ch)))
                (incf damage (random-range 0 (floor (- (skill-of ch +skill-backstab+)
-                                                   (learned ch)) 2))))
+                                                      (learned ch)) 2))))
 
              (damage-creature ch victim damage weapon +skill-backstab+ +wear-back+)
              (return-from attack))
@@ -1447,7 +1444,7 @@ if the players' reputations allow it."
              (when (is-thief ch)
                (setf damage (* damage (max 2 (floor (backstab-multiplier ch) 2))))
                (incf damage (random-range 0 (floor (- (skill-of ch +skill-circle+)
-                                                   (learned ch)) 2))))
+                                                      (learned ch)) 2))))
 
              (damage-creature ch victim damage weapon +skill-circle+ +wear-back+)
              (return-from attack))
@@ -1524,7 +1521,7 @@ if the players' reputations allow it."
 
     (debug-to-chars (cons ch (fighting-of ch))
                     "&c[COMBAT] ~a   prob:~a   roll:~a   wait:~a&n~%"
-                    (name-of ch) prob die-roll (wait-of ch))
+                    (name-of ch) (min 100 (+ prob 15)) die-roll (wait-of ch))
 
     ;; Handle regular hits
     (when (>= (min 100 (+ prob 15)) die-roll)
@@ -1535,8 +1532,8 @@ if the players' reputations allow it."
              as target = (random-elt (fighting-of ch))
              do
                (debug-to-chars (cons ch (fighting-of ch))
-                    "&c[ATTACK] ~a -> ~a  prob:~a   roll:~a   wait:~a&n~%"
-                    (name-of ch) (name-of target) prob die-roll (wait-of ch))
+                               "&c[ATTACK] ~a -> ~a  prob:~a   roll:~a   wait:~a&n~%"
+                               (name-of ch) (name-of target) prob die-roll (wait-of ch))
                (cond
                  ((< (position-of ch) +pos-fighting+)
                   (when (< (wait-of ch) 10)
