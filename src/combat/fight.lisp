@@ -972,8 +972,8 @@ the attack failed."
         (if (or (not (is-weapon kind))
                 (zerop amount)
                 (eql (position-of victim) +pos-dead+))
-            (skill-message ch victim base-amount weapon kind)
-            (damage-message ch victim base-amount weapon kind hit-location))
+            (skill-message ch victim amount weapon kind)
+            (damage-message ch victim amount weapon kind hit-location))
 
         (when (and ch (eql (master-of victim) ch))
           (stop-following victim))
