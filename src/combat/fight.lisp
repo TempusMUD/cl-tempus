@@ -1058,22 +1058,25 @@ it isn't or if OBJ is NIL."
       (t
        +wear-body+))))
 
-(defun get-random-uncovered-implant (ch kind)
-  "Return a random uncovered implant worn by CH of the given KIND,
-which may be NIL."
-  (random-elt
+(defun uncovered-implants (ch kind)
    (loop
       for implant across (implants-of ch)
       as equip across (equipment-of ch)
       when (and implant
                 (or (null kind) (is-obj-kind implant kind))
                 (null equip))
-      collect implant)))
+      collect implant))
+
+
+(defun get-random-uncovered-implant (ch kind)
+  "Return a random uncovered implant worn by CH of the given KIND,
+which may be NIL."
+  (random-elt (uncovered-implants ch kind)))
 
 (defun get-next-weapon (ch type)
   "Pick the next weapon that the creature will strike with"
-  (let* ((wielded (get-eq ch +wear-wield-2+))
-         (dual-wielded (get-eq ch +wear-wield+))
+  (let* ((wielded (get-eq ch +wear-wield+))
+         (dual-wielded (get-eq ch +wear-wield-2+))
          (dual-prob (if (and wielded dual-wielded)
                         (* (- (weight-of wielded) (weight-of dual-wielded)) 2)
                         0)))
@@ -1545,7 +1548,7 @@ if the players' reputations allow it."
             (return-from perform-creature-violence)))))
 
     ;; Handle cyborg normal implant hits
-    (when (and (is-cyborg ch) (fighting-of ch))
+    (when (and (is-cyborg ch) (fighting-of ch) (uncovered-implants ch +item-weapon+))
       (unless (fighting-of ch)
         (when (< (random-range 1 100) (skill-of ch +skill-implant-w+))
           (let ((implant-prob 25))
@@ -1557,10 +1560,9 @@ if the players' reputations allow it."
                   (attack ch (random-elt (fighting-of ch)) +skill-implant-w+)
                 (creature-died (death)
                   (when (eql (creature-of death) ch)
-                    (return-from perform-creature-violence)))))))))
+                    (return-from perform-creature-violence))))))))
 
-    ;; Handle cyborg advanced implant hits
-    (when (and (is-cyborg ch) (fighting-of ch))
+      ;; Handle cyborg advanced implant hits
       (when (< (position-of ch) +pos-fighting+)
         (when (< (wait-of ch) 10)
           (send-to-char ch "You can't fight while sitting!!~%"))
