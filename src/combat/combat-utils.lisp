@@ -266,6 +266,9 @@
       (t
        (decf thaco 20)))
 
+    (decf thaco (floor (- (int-of ch) 12) 2))
+    (decf thaco (floor (- (wis-of ch) 10) 2))
+
     (when (awakep victim)
       (decf thaco (getf (aref +dex-app+ (dex-of victim)) :defensive)))
 
