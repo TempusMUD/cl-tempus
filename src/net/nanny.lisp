@@ -1113,26 +1113,13 @@ else is noticable about your character?
 
 (defun handle-command (cxn)
   (when (commands-of cxn)
-    (setf (need-prompt-p cxn) t)
-    (let ((cmd (pop (commands-of cxn))))
-      (if *break-on-error*
-          (cxn-do-command cxn cmd)
-          (handler-bind ((error (lambda (str)
-                                  (cxn-write cxn "You become mildly queasy as reality distorts momentarily.~%")
-                                  (errlog "System error: ~a" str)
-                                  (invoke-restart 'continue))))
-            (cxn-do-command cxn cmd))))))
-
-(defun cxn-handle-commands ()
-  (dolist (cxn *cxns*)
-    (when (commands-of cxn)
-      (setf (need-prompt-p cxn) t)
-      (let ((cmd (pop (commands-of cxn))))
-        (if *break-on-error*
-            (cxn-do-command cxn cmd)
-            (handler-bind ((error (lambda (str)
-                                    (cxn-write cxn "You become mildly queasy as reality distorts momentarily.~%")
-                                    (errlog "System error: ~a" str)
-                                    (invoke-restart 'continue))))
-              (cxn-do-command cxn cmd)))))))
+   (setf (need-prompt-p cxn) t)
+   (let ((cmd (pop (commands-of cxn))))
+     (if *production-mode*
+         (handler-bind ((error (lambda (str)
+                                 (cxn-write cxn "You become mildly queasy as reality distorts momentarily.~%")
+                                 (errlog "System error: ~a" str)
+                                 (invoke-restart 'continue))))
+           (cxn-do-command cxn cmd))
+         (cxn-do-command cxn cmd)))))
 
