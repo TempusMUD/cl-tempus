@@ -26,7 +26,8 @@
    (input-len :accessor input-len-of :type fixnum :initform 0)
    (output-buf :accessor output-buf-of :initform nil)
    (output-tail :accessor output-tail-of :initform nil)
-   (commands :accessor commands-of :type list :initform '()))
+   (commands :accessor commands-of :type list :initform '())
+   (wait :accessor wait-of :initform 0))
   (:documentation
    "Class used for maintaining a non-blocking network connection which
    handles line-delimited input."))
@@ -82,15 +83,26 @@ lines onto the command queue.  The rest is kept in the input buffer."
                   (decf (input-len-of cxn) (1+ end-line))))))
 
 (defun do-throttled-command (cxn)
-  "Performs the next queued command.  If any commands are left to be
-performed, schedules a timer to handle the next one."
-  (when (commands-of cxn)
-    (handle-command cxn)
-    (setf (timer-of cxn)
-          (add-timer *event-base* (lambda ()
-                                    (setf (timer-of cxn) nil)
-                                    (do-throttled-command cxn))
-                     0.1 :one-shot t))))
+  "Performs the next queued command.  If the WAIT is non-zero on CXN,
+schedules a timer to decrement the WAIT.  If WAIT is zero, and
+commands are left to be performed, schedules a timer to handle the
+next one."
+  (cond
+    ((plusp (wait-of cxn))
+     (setf (timer-of cxn)
+           (add-timer *event-base* (lambda ()
+                                     (setf (timer-of cxn) nil)
+                                     (do-throttled-command cxn))
+                      0.1
+                      :one-shot t))
+     (decf (wait-of cxn)))
+    ((commands-of cxn)
+     (handle-command cxn)
+     (setf (timer-of cxn)
+           (add-timer *event-base* (lambda ()
+                                     (setf (timer-of cxn) nil)
+                                     (do-throttled-command cxn))
+                      0.1 :one-shot t)))))
 
 (defun make-tempus-read-handler (cxn)
   "Creates a handler function which responds to data on the cxn.
@@ -267,7 +279,6 @@ unless ABORT is T."
    (account :accessor account-of :initform nil)
    (actor :accessor actor-of :initform nil)
    (page-buf :accessor page-buf-of :initform "")
-   (wait :accessor wait-of :initform 0)
    (idle :accessor idle-of :initform 0)
    (mode-data :accessor mode-data-of :initform nil)
    (original-actor :accessor original-actor-of :initform nil)
