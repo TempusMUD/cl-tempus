@@ -124,6 +124,7 @@
 
   (add-timer *event-base* (lambda () (weather-and-time)) 60)
   (add-timer *event-base* (lambda () (update-creatures)) 1)
+  (add-timer *event-base* (lambda () (mobile-activity)) 4)
   (add-timer *event-base* (lambda () (perform-violence)) 7/10)
 
   (event-dispatch *event-base*))

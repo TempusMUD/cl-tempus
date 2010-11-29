@@ -657,14 +657,14 @@
        (block while-alive
          ,@(loop for form in body
               append (list form
-                           `(when (is-dead ch) (return-from while-alive))))))))
+                           `(when (is-dead ,ch-sym) (return-from while-alive))))))))
 
 (defun single-mobile-activity (ch)
   ;; Utility mobs don't do anything
   (when (and (is-npc ch) (mob-flagged ch +mob-utility+))
     (return-from single-mobile-activity))
 
-  (let ((cur_class (if (and (is-remort ch) (zerop (random 3)))
+  (let ((cur-class (if (and (is-remort ch) (zerop (random 3)))
                        (remort-char-class-of ch)
                        (char-class-of ch))))
     (while-alive (ch)
@@ -677,7 +677,7 @@
           (damage-creature ch damager (+ (dice 4 3)
                                          (if (affected-by-spell ch +spell-metabolism+)
                                              (dice 4 11) 0))
-                           +spell-poison+)))
+                           nil +spell-poison+ +wear-random+)))
       ;; Bleed
       (when (and (char-has-blood ch)
                  (< (hitp-of ch) (+ (floor (max-hitp-of ch) 8)
@@ -693,7 +693,7 @@
                                                        8)))))))
       ;; Deplete scuba tanks
       (let* ((mask (aref (equipment-of ch) +wear-face+))
-             (tank (and mask (aux-obj-of obj))))
+             (tank (and mask (aux-obj-of mask))))
         (when (and mask
                    (is-obj-kind mask +item-scuba-mask+)
                    (not (car-closed mask))
@@ -721,6 +721,10 @@
         (perform-monk-meditate ch))
 
       ;; Check if we've gotten knocked down
+      (when (or (not (awakep ch))
+                (plusp (wait-of ch)))
+        (return-from single-mobile-activity))
+
       (when (and (is-npc ch)
                  (not (mob2-flagged ch +mob2-mount+))
                  (not (aff-flagged ch +aff-sleep+))
@@ -738,10 +742,51 @@
            (act ch :all-emit "$n stand$% up.")
            (setf (position-of ch) +pos-standing+))))
 
-      (when (or (not (awake ch))
-                (plusp (wait-of ch))
-                (check-wait ch))
-        (return-from single-mobile-activity)))))
+      ;; Mob movement
+      (when (and (not (mob-flagged ch +mob-sentinel+))
+                 (not (and (or (mob-flagged ch +mob-pet+)
+                               (mob2-flagged ch +mob2-familiar+))
+                           (master-of ch)))
+                 (>= (position-of ch)
+                     +pos-standing+)
+                 (not (aff2-flagged ch +aff2-mounted+)))
+        (let ((door (random-range 0 (if (or (is-tarrasque ch)
+                                            (> (length (people-of (in-room-of ch))) 10))
+                                        (1- +num-of-dirs+)
+                                        20))))
+          (when (and (< door +num-of-dirs+)
+                     (mob-can-go ch door)
+                     (not (eql (to-room-of (exit ch door))
+                               (in-room-of ch)))
+                     (not (room-flagged (to-room-of (exit ch door))
+                                        +room-nomob+))
+                     (not (room-flagged (to-room-of (exit ch door))
+                                        +room-death+))
+                     (not (logtest (exit-info-of (exit ch door))
+                                   +ex-nomob+))
+                     (char-likes-room ch (to-room-of (exit ch door)))
+                     (or (not (mob2-flagged ch +mob2-stay-sect+))
+                         (eql (terrain-of (in-room-of ch))
+                              (terrain-of (to-room-of (exit ch door)))))
+                     (or (not (mob-flagged ch +mob-stay-zone+))
+                         (eql (zone-of (in-room-of ch))
+                              (zone-of (to-room-of (exit ch door)))))
+                     (< (length (people-of (to-room-of (exit ch door)))) 10))
+            (perform-move ch door :norm t)))))))
+
+(defun mobile-activity ()
+  (dolist (ch (copy-list *characters*))
+    (unless (or (eql (position-of ch) +pos-dead+)
+                (is-pc ch))
+      (with-simple-restart (continue "Continue from signal in mobile activity")
+        (if *production-mode*
+            (handler-bind ((error (lambda (str)
+                                    (errlog "System error: ~a" str))))
+              (single-mobile-activity ch))
+            (single-mobile-activity ch))))))
+
+(defun perform-monk-meditate (ch)
+  nil)
 
 (defun mobile-battle-activity (ch)
   nil)

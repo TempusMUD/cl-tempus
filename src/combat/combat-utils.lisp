@@ -491,3 +491,7 @@
                            (* prob (/ (get-condition ch +drunk+) 100))))))
 
     prob))
+
+
+(defun add-blood-to-room (ch room)
+  nil)
