@@ -473,6 +473,13 @@
 (defmethod cost-of ((obj obj-data))
   (cost-of (shared-of obj)))
 
+(defmethod obj-val-of ((obj obj-data) num)
+  (aref (value-of obj) num))
+
+(defmethod (setf obj-val-of) (value (obj obj-data) num)
+  (setf (aref (value-of obj) num) value))
+
+
 (defun is-obj-kind (obj type)
   (= (kind-of obj) type))
 
