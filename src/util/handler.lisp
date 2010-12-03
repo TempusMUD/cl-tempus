@@ -449,7 +449,7 @@
   (setf (fighting-of ch) nil)
   (when (eql (position-of ch) +pos-fighting+)
     (setf (position-of ch) +pos-standing+))
-  (dolist (tch *characters*)
+  (dolist (tch (people-of (in-room-of ch)))
     (when (eql (fighting-of tch) ch)
       (setf (fighting-of tch) nil)
       (when (eql (position-of tch) +pos-fighting+)
