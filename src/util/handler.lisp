@@ -999,8 +999,8 @@
     obj))
 
 (define-condition matcher-parse-error ()
-  ((msg :accessor msg-of :initarg msg)
-   (lineno :accessor lineno-of :initarg lineno)))
+  ((msg :accessor msg-of :initarg :msg)
+   (lineno :accessor lineno-of :initarg :lineno)))
 
 (defun match-spec-to-predicate (tokens)
   (let ((spec (first tokens))
