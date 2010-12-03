@@ -53,7 +53,7 @@
   #("!PK" "NPK" "CPK"))
 
 (defparameter +dirs+ #("north" "east" "south" "west" "up" "down" "future" "past"))
-(defparameter +to-dirs+ #("north" "east" "south" "west" "up" "down" "into the future" "into the past"))
+(defparameter +to-dirs+ #("northward" "eastward" "southward" "westward" "upwards" "downwards" "into the future" "into the past"))
 (defparameter +from-dirs+ #("the south" "the west" "the north" "the east" "below" "above" "the past" "the future"))
 (defparameter +rev-dir+ #(2 3 0 1 5 4 7 6))
 (defparameter +num-of-dirs+ (length +dirs+))

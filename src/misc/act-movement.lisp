@@ -129,6 +129,30 @@
         (return-from do-simple-move 1))
 
       (cond
+        ((or (aff-flagged ch +aff-blur+)
+             (and (mounted-of ch) (aff-flagged (mounted-of ch) +aff-blur+)))
+         (act ch :place-emit (format nil "A blurred, shifted image leaves ~a."
+                                     (aref +to-dirs+ dir))))
+        ((eql mode :jump)
+         (act ch :place-emit (format nil
+                                     (if (randomly-true)
+                                         "$n jumps ~a."
+                                         "$n takes a flying leap ~a.")
+                                     (aref +to-dirs+ dir))))
+        ((eql mode :flee)
+         (act ch :place-emit (format nil "$n flees ~a." (aref +to-dirs+ dir))))
+        ((eql mode :retreat)
+         (act ch :place-emit (format nil "$n retreats ~a." (aref +to-dirs+ dir))))
+        ((eql mode :crawl)
+         (act ch :place-emit (format nil "$n crawls slowly ~a." (aref +to-dirs+ dir))))
+        ((or (eql (position-of ch)
+                  +pos-flying+)
+             (room-is-open-air (in-room-of ch))
+             (room-is-open-air dest))
+         (act ch :place-emit (format nil "$n flies ~a." (aref +to-dirs+ dir))))
+        ((eql (terrain-of (in-room-of ch)) +sect-astral+)
+         (act ch :place-emit (format nil "$n travels what seems to be ~a."
+                                     (aref +to-dirs+ dir))))
         ((and (zerop (random-range 0 3))
               (or (= (terrain-of (in-room-of ch)) +sect-city+)
                   (= (terrain-of (in-room-of ch)) +sect-inside+)
@@ -137,7 +161,7 @@
         ((zerop (random-range 0 2))
          (act ch :place-emit (format nil "$n walks ~a." (aref +to-dirs+ dir))))
         ((zerop (random-range 0 2))
-         (act ch :place-emit (format nil "$n departs ~award." (aref +dirs+ dir))))
+         (act ch :place-emit (format nil "$n departs ~a." (aref +to-dirs+ dir))))
         (t
          (act ch :place-emit (format nil "$n leaves ~a." (aref +to-dirs+ dir)))))
 
@@ -146,15 +170,41 @@
       (char-to-room ch dest)
 
       (cond
+        ((or (aff-flagged ch +aff-blur+)
+             (and (mounted-of ch) (aff-flagged (mounted-of ch) +aff-blur+)))
+         (act ch :place-emit (format nil "A blurred, shifted image arrives from ~a."
+                                     (aref +from-dirs+ dir))))
+        ((eql mode :jump)
+         (act ch :place-emit (format nil
+                                     (if (randomly-true)
+                                         "$n jumps in from ~a."
+                                         "$n leaps in from ~a.")
+                                     (aref +from-dirs+ dir))))
+        ((eql mode :flee)
+         (act ch :place-emit (format nil "$n runs in ~a." (aref +from-dirs+ dir))))
+        ((eql mode :drag)
+         (act ch :place-emit (format nil "$n is dragged in from ~a." (aref +from-dirs+ dir))))
+        ((eql mode :crawl)
+         (act ch :place-emit (format nil "$n crawls slowly in from ~a." (aref +from-dirs+ dir))))
+        ((or (eql (position-of ch)
+                  +pos-flying+)
+             (room-is-open-air (in-room-of ch))
+             (room-is-open-air dest))
+         (act ch :place-emit (format nil "$n flies in from ~a." (aref +from-dirs+ dir))))
+        ((eql (terrain-of (in-room-of ch)) +sect-astral+)
+         (act ch :place-emit (format nil (if (randomly-true)
+                                             "$n arrives from what appears to be ~a."
+                                             "$n moves into view from what might be ~a.")
+                                     (aref +from-dirs+ dir))))
         ((zerop (random-range 0 3))
-         (act ch :place-emit (format nil "$n walks in from ~a." (aref +to-dirs+ dir))))
+         (act ch :place-emit (format nil "$n walks in from ~a." (aref +from-dirs+ dir))))
         ((and (zerop (random-range 0 2))
               (or (= (terrain-of (in-room-of ch)) +sect-city+)
                   (= (terrain-of (in-room-of ch)) +sect-inside+)
                   (= (terrain-of (in-room-of ch)) +sect-road+)))
-         (act ch :place-emit (format nil "$n strolls in from ~a." (aref +to-dirs+ dir))))
+         (act ch :place-emit (format nil "$n strolls in from ~a." (aref +from-dirs+ dir))))
         (t
-         (act ch :place-emit (format nil "$n has arrived from ~a." (aref +dirs+ dir)))))
+         (act ch :place-emit (format nil "$n has arrived from ~a." (aref +from-dirs+ dir)))))
       (when (link-of ch)
         (look-at-room ch (in-room-of ch) nil)))))
 
