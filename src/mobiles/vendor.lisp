@@ -651,7 +651,8 @@
                                  (msg-of e)
                                  (lineno-of e))
                          (perform-tell self ch "Sorry.  I'm broken, but a god has already been notified.")))))))
-    (let ((shop (vendor-parse-param (func-param-of (shared-of self)))))
+    (let ((shop (when (func-param-of (shared-of self))
+                  (vendor-parse-param (func-param-of (shared-of self))))))
       (when shop
         (case trigger
           (command
