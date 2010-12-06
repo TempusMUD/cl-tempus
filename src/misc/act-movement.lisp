@@ -206,7 +206,8 @@
         (t
          (act ch :place-emit (format nil "$n has arrived from ~a." (aref +from-dirs+ dir)))))
       (when (link-of ch)
-        (look-at-room ch (in-room-of ch) nil)))))
+        (look-at-room ch (in-room-of ch) nil))
+      0)))
 
 (defun perform-move (ch dir mode need-specials-check)
   (when (or (null ch)

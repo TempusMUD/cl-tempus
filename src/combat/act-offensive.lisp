@@ -24,8 +24,69 @@
      (attack ch target +type-undefined+)
      (wait-state ch +pulse-violence+))))
 
+(defun calc-fleeing-exp-penalty (ch tch)
+  (unless tch
+    (return-from calc-fleeing-exp-penalty 0))
+  (let ((loss (* (level-of tch)
+                 (1+ (floor (level-of ch)
+                            (- (1+ +lvl-grimp+)
+                               (level-of ch)))))))
+    (when (is-remort ch)
+      (setf loss (- loss (* loss (floor (remort-gen-of ch)
+                                        (+ 2 (remort-gen-of ch)))))))
+
+    (when (is-thief ch)
+      (setf loss (floor loss 2)))
+    loss))
+
+(defun attempt-fleeing (ch)
+  (let* ((dir (random-range 0 (1- +num-of-dirs+)))
+         (exit-info (exit ch dir))
+         (other-room (when exit-info (real-room (to-room-of exit-info)))))
+    (when (and (can-go ch dir)
+               (not (room-flagged other-room +room-noflee+))
+               (not (room-flagged other-room +room-death+))
+               (not (room-flagged other-room +room-godroom+))
+               (or (is-pc ch) (not (room-flagged other-room +room-nomob+))))
+      (act ch :place-emit "$n panics, and attempts to flee!")
+      (when (or (room-is-open-air (in-room-of ch))
+                (room-is-open-air other-room))
+          (if (aff-flagged ch +aff-inflight+)
+              (setf (position-of ch) +pos-flying+)
+              (return-from attempt-fleeing nil)))
+      (let* ((fighting (random-elt (fighting-of ch)))
+             (loss (calc-fleeing-exp-penalty ch fighting)))
+        (remove-all-combat ch)
+        (when (= (do-simple-move ch dir :flee t) 1)
+          (act ch :place-emit "$n tries to flee, but can't!")
+          (return-from attempt-fleeing nil))
+
+        (send-to-char ch "You flee head over heels.~%")
+        (when fighting
+          (gain-exp ch (- loss))
+          (gain-exp fighting (floor loss 32)))
+        t))))
+
 (defun perform-flee (ch)
-  nil)
+  (cond
+    ((aff2-flagged ch +aff2-petrified+)
+     (send-to-char ch "You are solid stone!~%"))
+    ((and (aff2-flagged ch +aff2-berserk+)
+          (fighting-of ch))
+     (send-to-char ch "You are too enraged to flee!~%"))
+    ((< (position-of ch)
+        +pos-fighting+)
+     (send-to-char ch "You can't flee until you get on your feet!~%"))
+    (t
+     (loop
+        for time from 0 upto 6
+        as success = (attempt-fleeing ch)
+        until success
+        finally (unless success
+                  (send-to-char ch "PANIC!  You couldn't escape!~%"))))))
+
+(defcommand (ch "flee") ()
+  (perform-flee ch))
 
 (defcommand (ch "attack") (:standing)
   (send-to-char ch "Attack who?~%"))

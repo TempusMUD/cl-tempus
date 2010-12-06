@@ -759,7 +759,7 @@
                                       (exit ch door))
                              (real-room (to-room-of (exit ch door))))))
           (when (and other-room
-                     (mob-can-go ch door)
+                     (can-go ch door)
                      (not (eql other-room (in-room-of ch)))
                      (not (room-flagged other-room +room-nomob+))
                      (not (room-flagged other-room +room-death+))

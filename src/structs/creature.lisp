@@ -930,7 +930,7 @@ control code."
   (and (is-npc ch)
        (= (vnum-of ch) 24800)))
 
-(defun mob-can-go (ch door)
+(defun can-go (ch door)
   (and (exit ch door)
        (to-room-of (exit ch door))
        (or (not (logtest (exit-info-of (exit ch door))
