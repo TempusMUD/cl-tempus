@@ -85,6 +85,39 @@
         finally (unless success
                   (send-to-char ch "PANIC!  You couldn't escape!~%"))))))
 
+(defun perform-assist (ch tch)
+  (let ((opponent (random-elt (remove-if-not (lambda (x)
+                                               (is-visible-to x ch))
+                                             (fighting-of tch)))))
+    (cond
+      ((fighting-of ch)
+       (send-to-char ch "You're already fighting!  How can you assist someone else?~%"))
+      ((eql ch tch)
+       (send-to-char ch "You can't help yourself more than this!~%"))
+      ((null (fighting-of tch))
+       (act ch :target tch :subject-emit "But nobody is fighting $M!"))
+      ((null opponent)
+       (act ch :target tch :subject-emit "You can't see who is fighting $M!"))
+      ((can-attack ch opponent)
+       (act ch :target tch
+            :subject-emit "You join the fight!"
+            :target-emit "$N assists you!"
+            :not-target-emit "$n assists $N.")
+       (perform-hit ch opponent)))))
+
+(defcommand (ch "assist") (:standing)
+  (send-to-char ch "Whom do you wish to assist?~%"))
+
+(defcommand (ch "assist" target) (:standing)
+  (let ((tchs (resolve-alias ch target (people-of (in-room-of ch)))))
+    (cond
+      ((null tchs)
+       (send-to-char ch "No-one by that name here.~%"))
+      ((cdr tchs)
+       (send-to-char ch "You can only assist one person at a time!~%"))
+      (t
+       (perform-assist ch (first tchs))))))
+
 (defcommand (ch "flee") ()
   (perform-flee ch))
 
