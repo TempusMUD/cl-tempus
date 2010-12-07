@@ -466,6 +466,36 @@
 (defcommand (ch "past") (:direction :standing)
   (perform-move ch 7 nil t))
 
+(defcommand (ch "move") (:standing)
+  (send-to-char ch "In which direction?~%"))
+(defcommand (ch "move" dir) (:standing)
+  (let ((dirnum (position dir +dirs+ :test 'string-abbrev)))
+    (cond
+      ((null dirnum)
+       (send-to-char ch "'~a' is not a valid direction.~%" dir))
+      (t
+       (perform-move ch dirnum nil t)))))
+
+(defcommand (ch "crawl") (:standing)
+  (send-to-char ch "In which direction?~%"))
+(defcommand (ch "crawl" dir) (:standing)
+  (let ((dirnum (position dir +dirs+ :test 'string-abbrev)))
+    (cond
+      ((null dirnum)
+       (send-to-char ch "'~a' is not a valid direction.~%" dir))
+      (t
+       (perform-move ch dirnum :crawl t)))))
+
+(defcommand (ch "jump") (:standing)
+  (send-to-char ch "In which direction?~%"))
+(defcommand (ch "jump" dir) (:standing)
+  (let ((dirnum (position dir +dirs+ :test 'string-abbrev)))
+    (cond
+      ((null dirnum)
+       (send-to-char ch "'~a' is not a valid direction.~%" dir))
+      (t
+       (perform-move ch dirnum :jump t)))))
+
 (defun obj-is-openable (obj)
   (and (logtest (aref (value-of obj) 1) +cont-closeable+)
           (or (and (is-obj-kind obj +item-container+)
