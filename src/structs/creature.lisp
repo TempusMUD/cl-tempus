@@ -264,6 +264,8 @@
   (declare (ignore val))
   ;; Does nothing
   nil)
+(defmethod weap-spec-of ((ch mobile))
+  #(nil nil nil nil nil))
 
 (defun clone-mobile-proto (proto)
   (let ((maxhitp (if (zerop (max-hitp-of proto))
