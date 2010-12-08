@@ -1797,6 +1797,14 @@ You feel slightly different.")
          (mudlog 'info t "~a has been restored by ~a" (name-of target) (name-of ch))
          (restore-creature target))))))
 
+(defcommand (ch "visible") (:immortal)
+  "Become totally visible"
+  (cond
+    ((is-npc ch)
+     (send-to-char ch "You can't do that!~%"))
+    (t
+     (perform-vis ch))))
+
 (defcommand (ch "invis") (:immortal)
   "Switch between totally visible and maximally invisible"
   (cond
