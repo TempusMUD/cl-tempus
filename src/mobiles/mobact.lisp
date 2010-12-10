@@ -652,65 +652,55 @@
                                     (errlog "System error: ~a" str))))
               (update-creature ch)))))))
 
-(defmacro while-alive ((ch-expr) &body body)
-  (let ((ch-sym (gensym "CH-")))
-    `(let ((,ch-sym ,ch-expr))
-       (block while-alive
-         ,@(loop for form in body
-              append (list form
-                           `(when (is-dead ,ch-sym) (return-from while-alive))))))))
+(defun secondary-creature-update (ch)
+  ;; Second level of poisoning
+  (when (and (has-poison-2 ch)
+             (not (immortalp ch)))
+    (let ((damager (let ((af (affected-by-spell ch +spell-poison+)))
+                     (when af
+                       (get-char-in-world-by-idnum (owner-of af))))))
+      (damage-creature damager ch (+ (dice 4 3)
+                                     (if (affected-by-spell ch +spell-metabolism+)
+                                         (dice 4 11) 0))
+                       nil +spell-poison+ +wear-random+)))
+
+  ;; Bleed
+  (when (and (char-has-blood ch)
+             (< (hitp-of ch) (+ (floor (max-hitp-of ch) 8)
+                                (random (max 1 (floor (max-hitp-of ch) 16))))))
+    (add-blood-to-room (in-room-of ch) 1))
+
+  ;; Zen of Motion Effect
+  (when (and (is-neutral ch)
+             (affected-by-spell ch +zen-motion+))
+    (setf (move-of ch) (min (max-move-of ch)
+                            (+ (move-of ch)
+                               (random (max 1
+                                            (floor (check-skill ch +zen-motion+)
+                                                   8)))))))
+  ;; Deplete scuba tanks
+  (let* ((mask (aref (equipment-of ch) +wear-face+))
+         (tank (and mask (aux-obj-of mask))))
+    (when (and mask
+               (is-obj-kind mask +item-scuba-mask+)
+               (not (car-closed mask))
+               tank
+               (is-obj-kind tank +item-scuba-tank+)
+               (plusp (obj-val-of tank 1))
+               (plusp (obj-val-of tank 0)))
+      (decf (obj-val-of tank 1))
+      (cond
+        ((zerop (obj-val-of tank 1))
+         (act ch :item tank
+              :subject-emit "A warning indicator reads: $p fully depleted."))
+        ((= (obj-val-of tank 1) 5)
+         (act ch :item tank
+              :subject-emit "A warning indicator reads: $p air level low."))))))
 
 (defun single-mobile-activity (ch)
-  ;; Utility mobs don't do anything
-  (when (and (is-npc ch) (mob-flagged ch +mob-utility+))
-    (return-from single-mobile-activity))
-
   (let ((cur-class (if (and (is-remort ch) (randomly-true 3))
                        (remort-char-class-of ch)
                        (char-class-of ch))))
-
-    ;; Second level of poisoning
-    (when (and (has-poison-2 ch)
-               (not (immortalp ch)))
-      (let ((damager (let ((af (affected-by-spell ch +spell-poison+)))
-                       (when af
-                         (get-char-in-world-by-idnum (owner-of af))))))
-        (damage-creature damager ch (+ (dice 4 3)
-                                       (if (affected-by-spell ch +spell-metabolism+)
-                                           (dice 4 11) 0))
-                         nil +spell-poison+ +wear-random+)))
-    ;; Bleed
-    (when (and (char-has-blood ch)
-               (< (hitp-of ch) (+ (floor (max-hitp-of ch) 8)
-                                  (random (max 1 (floor (max-hitp-of ch) 16))))))
-      (add-blood-to-room (in-room-of ch) 1))
-    ;; Zen of Motion Effect
-    (when (and (is-neutral ch)
-               (affected-by-spell ch +zen-motion+))
-      (setf (move-of ch) (min (max-move-of ch)
-                              (+ (move-of ch)
-                                 (random (max 1
-                                              (floor (check-skill ch +zen-motion+)
-                                                     8)))))))
-    ;; Deplete scuba tanks
-    (let* ((mask (aref (equipment-of ch) +wear-face+))
-           (tank (and mask (aux-obj-of mask))))
-      (when (and mask
-                 (is-obj-kind mask +item-scuba-mask+)
-                 (not (car-closed mask))
-                 tank
-                 (is-obj-kind tank +item-scuba-tank+)
-                 (plusp (obj-val-of tank 1))
-                 (plusp (obj-val-of tank 0)))
-        (decf (obj-val-of tank 1))
-        (cond
-          ((zerop (obj-val-of tank 1))
-           (act ch :item tank
-                :subject-emit "A warning indicator reads: $p fully depleted."))
-          ((= (obj-val-of tank 1) 5)
-           (act ch :item tank
-                :subject-emit "A warning indicator reads: $p air level low.")))))
-
     (cond
       ((or (fighting-of ch) (aff2-flagged ch +aff2-petrified+))
        ;; nothing below this affects fighting or petrified characters
@@ -873,14 +863,38 @@
 
 (defun mobile-activity ()
   (dolist (ch (copy-list *characters*))
+    (with-simple-restart (continue "Continue from signal in secondary creature update")
+      (if *production-mode*
+          (handler-bind ((error (lambda (str)
+                                  (errlog "System error: ~a" str)
+                                  (continue)))
+                         (creature-died (lambda (sig)
+                                          (declare (ignore sig))
+                                          (continue))))
+            (secondary-creature-update ch))
+          (handler-bind ((creature-died (lambda (sig)
+                                          (declare (ignore sig))
+                                          (continue))))
+            (secondary-creature-update ch))))
     (unless (or (eql (position-of ch) +pos-dead+)
-                (is-pc ch))
+                (is-pc ch)
+                (mob-flagged ch +mob-utility+)
+                (fighting-of ch)
+                (aff2-flagged ch +aff2-petrified+))
       (with-simple-restart (continue "Continue from signal in mobile activity")
         (if *production-mode*
             (handler-bind ((error (lambda (str)
-                                    (errlog "System error: ~a" str))))
+                                    (errlog "System error: ~a" str)
+                                    (continue)))
+                           (creature-died (lambda (sig)
+                                            (declare (ignore sig))
+                                            (continue))))
               (single-mobile-activity ch))
-            (single-mobile-activity ch))))))
+            (handler-bind ((creature-died (lambda (sig)
+                                            (declare (ignore sig))
+                                            (continue))))
+              (single-mobile-activity ch)))))))
+
 
 (defun perform-monk-meditate (ch)
   nil)
