@@ -103,7 +103,7 @@
          (cond
            ((and (not bloodlust)
                  (is-barb tch)
-                 (zerop (random 2)))
+                 (randomly-true))
             (setf bloodlust t)
             (act tch :target ch :subject-emit "You feel a rising bloodlust as you hear $n's death cry."))
            (t
@@ -131,7 +131,7 @@
                        (or (not (room-flagged (in-room-of ch) +room-ice-cold+))
                            (char-withstands-cold tch))
                        (can-see-room tch (in-room-of ch))
-                       (zerop (random 3)))
+                       (randomly-true 3))
               (do-simple-move tch (aref +rev-dir+ dir) :rush t))))))))
 
 (defparameter +dam-weapons+

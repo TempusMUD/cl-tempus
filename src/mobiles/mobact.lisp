@@ -665,7 +665,7 @@
   (when (and (is-npc ch) (mob-flagged ch +mob-utility+))
     (return-from single-mobile-activity))
 
-  (let ((cur-class (if (and (is-remort ch) (zerop (random 3)))
+  (let ((cur-class (if (and (is-remort ch) (randomly-true 3))
                        (remort-char-class-of ch)
                        (char-class-of ch))))
 
