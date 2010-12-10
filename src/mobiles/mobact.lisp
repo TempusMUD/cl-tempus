@@ -668,112 +668,208 @@
   (let ((cur-class (if (and (is-remort ch) (zerop (random 3)))
                        (remort-char-class-of ch)
                        (char-class-of ch))))
-    (while-alive (ch)
-      ;; Second level of poisoning
-      (when (and (has-poison-2 ch)
-                 (not (immortalp ch)))
-        (let ((damager (let ((af (affected-by-spell ch +spell-poison+)))
-                         (when af
-                           (get-char-in-world-by-idnum (owner-of af))))))
-          (damage-creature damager ch (+ (dice 4 3)
-                                         (if (affected-by-spell ch +spell-metabolism+)
-                                             (dice 4 11) 0))
-                           nil +spell-poison+ +wear-random+)))
-      ;; Bleed
-      (when (and (char-has-blood ch)
-                 (< (hitp-of ch) (+ (floor (max-hitp-of ch) 8)
-                                    (random (max 1 (floor (max-hitp-of ch) 16))))))
-        (add-blood-to-room (in-room-of ch) 1))
-      ;; Zen of Motion Effect
-      (when (and (is-neutral ch)
-                 (affected-by-spell ch +zen-motion+))
-        (setf (move-of ch) (min (max-move-of ch)
-                                (+ (move-of ch)
-                                   (random (max 1
-                                                (floor (check-skill ch +zen-motion+)
-                                                       8)))))))
-      ;; Deplete scuba tanks
-      (let* ((mask (aref (equipment-of ch) +wear-face+))
-             (tank (and mask (aux-obj-of mask))))
-        (when (and mask
-                   (is-obj-kind mask +item-scuba-mask+)
-                   (not (car-closed mask))
-                   tank
-                   (is-obj-kind tank +item-scuba-tank+)
-                   (plusp (obj-val-of tank 1))
-                   (plusp (obj-val-of tank 0)))
-          (decf (obj-val-of tank 1))
-          (cond
-            ((zerop (obj-val-of tank 1))
-             (act ch :item tank
-                  :subject-emit "A warning indicator reads: $p fully depleted."))
-            ((= (obj-val-of tank 1) 5)
-             (act ch :item tank
-                  :subject-emit "A warning indicator reads: $p air level low.")))))
 
-      ;; nothing below this affects fighting characters
-      (when (fighting-of ch)
-        (return-from single-mobile-activity))
-
-      ;; Meditate
-      (when (and (is-neutral ch)
-                 (eql (position-of ch) +pos-sitting+)
-                 (aff2-flagged ch +aff2-meditate+))
-        (perform-monk-meditate ch))
-
-      ;; Check if we've gotten knocked down
-      (when (or (not (awakep ch))
-                (plusp (wait-of ch)))
-        (return-from single-mobile-activity))
-
-      (when (and (is-npc ch)
-                 (not (mob2-flagged ch +mob2-mount+))
-                 (not (aff-flagged ch +aff-sleep+))
-                 (< (wait-of ch) 30)
-                 (>= (position-of ch) +pos-sleeping+)
-                 (< (position-of ch) (default-pos-of (shared-of ch)))
-                 (or (<= (default-pos-of (shared-of ch)) +pos-standing+)
-                     (< (position-of ch) +pos-standing+)))
+    ;; Second level of poisoning
+    (when (and (has-poison-2 ch)
+               (not (immortalp ch)))
+      (let ((damager (let ((af (affected-by-spell ch +spell-poison+)))
+                       (when af
+                         (get-char-in-world-by-idnum (owner-of af))))))
+        (damage-creature damager ch (+ (dice 4 3)
+                                       (if (affected-by-spell ch +spell-metabolism+)
+                                           (dice 4 11) 0))
+                         nil +spell-poison+ +wear-random+)))
+    ;; Bleed
+    (when (and (char-has-blood ch)
+               (< (hitp-of ch) (+ (floor (max-hitp-of ch) 8)
+                                  (random (max 1 (floor (max-hitp-of ch) 16))))))
+      (add-blood-to-room (in-room-of ch) 1))
+    ;; Zen of Motion Effect
+    (when (and (is-neutral ch)
+               (affected-by-spell ch +zen-motion+))
+      (setf (move-of ch) (min (max-move-of ch)
+                              (+ (move-of ch)
+                                 (random (max 1
+                                              (floor (check-skill ch +zen-motion+)
+                                                     8)))))))
+    ;; Deplete scuba tanks
+    (let* ((mask (aref (equipment-of ch) +wear-face+))
+           (tank (and mask (aux-obj-of mask))))
+      (when (and mask
+                 (is-obj-kind mask +item-scuba-mask+)
+                 (not (car-closed mask))
+                 tank
+                 (is-obj-kind tank +item-scuba-tank+)
+                 (plusp (obj-val-of tank 1))
+                 (plusp (obj-val-of tank 0)))
+        (decf (obj-val-of tank 1))
         (cond
-          ((= (default-pos-of (shared-of ch)) +pos-sitting+)
-           (act ch :all-emit "$n sit$% up.")
-           (setf (position-of ch) +pos-sitting+))
-          ((or (aff3-flagged ch +aff3-gravity-well+)
-               (< (random-range 1 20) (str-of ch)))
-           (act ch :all-emit "$n stand$% up.")
-           (setf (position-of ch) +pos-standing+))))
+          ((zerop (obj-val-of tank 1))
+           (act ch :item tank
+                :subject-emit "A warning indicator reads: $p fully depleted."))
+          ((= (obj-val-of tank 1) 5)
+           (act ch :item tank
+                :subject-emit "A warning indicator reads: $p air level low.")))))
 
-      ;; Mob movement
-      (when (and (not (mob-flagged ch +mob-sentinel+))
-                 (not (and (or (mob-flagged ch +mob-pet+)
-                               (mob2-flagged ch +mob2-familiar+))
-                           (master-of ch)))
-                 (>= (position-of ch)
-                     +pos-standing+)
-                 (not (aff2-flagged ch +aff2-mounted+)))
-        (let* ((door (random-range 0 (if (or (is-tarrasque ch)
-                                             (> (length (people-of (in-room-of ch))) 10))
-                                         (1- +num-of-dirs+)
-                                         20)))
-               (other-room (when (and (< door +num-of-dirs+)
-                                      (exit ch door))
-                             (real-room (to-room-of (exit ch door))))))
-          (when (and other-room
-                     (can-go ch door)
-                     (not (eql other-room (in-room-of ch)))
-                     (not (room-flagged other-room +room-nomob+))
-                     (not (room-flagged other-room +room-death+))
-                     (not (logtest (exit-info-of (exit ch door))
-                                   +ex-nomob+))
-                     (char-likes-room ch other-room)
-                     (or (not (mob2-flagged ch +mob2-stay-sect+))
-                         (eql (terrain-of (in-room-of ch))
-                              (terrain-of other-room)))
-                     (or (not (mob-flagged ch +mob-stay-zone+))
-                         (eql (zone-of (in-room-of ch))
-                              (zone-of other-room)))
-                     (< (length (people-of other-room)) 10))
-            (perform-move ch door :norm t)))))))
+    (cond
+      ((or (fighting-of ch) (aff2-flagged ch +aff2-petrified+))
+       ;; nothing below this affects fighting or petrified characters
+       nil)
+
+      ((and (is-neutral ch)
+            (eql (position-of ch) +pos-sitting+)
+            (aff2-flagged ch +aff2-meditate+))
+       ;; Meditate
+       (perform-monk-meditate ch))
+
+      ((and (is-npc ch)
+            (not (mob2-flagged ch +mob2-mount+))
+            (not (aff-flagged ch +aff-sleep+))
+            (< (wait-of ch) 30)
+            (>= (position-of ch) +pos-sleeping+)
+            (< (position-of ch) (default-pos-of (shared-of ch)))
+            (or (<= (default-pos-of (shared-of ch)) +pos-standing+)
+                (< (position-of ch) +pos-standing+)))
+       ;; Check if we've gotten knocked down
+       (cond
+         ((= (default-pos-of (shared-of ch)) +pos-sitting+)
+          (act ch :all-emit "$n sit$% up.")
+          (setf (position-of ch) +pos-sitting+))
+         ((or (aff3-flagged ch +aff3-gravity-well+)
+              (< (random-range 1 20) (str-of ch)))
+          (act ch :all-emit "$n stand$% up.")
+          (setf (position-of ch) +pos-standing+))))
+
+      ((or (not (awakep ch)) (plusp (wait-of ch)))
+       ;; Nothing below this affects characters who are asleep or in a wait state
+       nil)
+
+      ;; Barbs go BERSERK
+      ((and (not (immortalp ch))
+            (aff2-flagged ch +aff2-berserk+)
+            (not (room-flagged (in-room-of ch)
+                               +room-peaceful+)))
+       (perform-barb-berserk ch))
+
+      ;; Drunk affects
+      ((and (> (get-condition ch +drunk+) (con-of ch))
+            (randomly-true 10))
+       (act ch :all-emit "$n burp$% loudly."))
+      ((and (> (get-condition ch +drunk+) (floor (con-of ch) 2))
+            (randomly-true 10))
+       (act ch :all-emit "$n hiccup$%."))
+
+      ((or (is-pc ch) (link-of ch))
+       ;; Nothing below this affects PCs
+       nil)
+
+      ((and (room-flagged (in-room-of ch) +room-holyocean+)
+            (is-evil ch)
+            (< (position-of ch) +pos-flying+))
+       ;; Attempt to flee from oceans of holy water
+       (perform-flee ch))
+
+      ((and (room-flagged (in-room-of ch)
+                          +room-ice-cold+)
+            (not (char-withstands-cold ch))
+            (can-cast-spell ch ch +spell-endure-cold+ (spell-mana-cost ch +spell-endure-cold+)))
+       ;; Attempt to keep from freezing
+       (cast-spell ch ch nil 0 +spell-endure-cold+))
+
+      ((and (aff2-flagged ch +aff2-ablaze+)
+            (not (char-withstands-fire ch)))
+       ;; Attempt to extinguish the flames if on fire
+       (if (can-cast-spell ch ch +spell-prot-from-fire+ (spell-mana-cost ch +spell-prot-from-fire+))
+           (cast-spell ch ch nil 0 +spell-prot-from-fire+)
+           (perform-extinguish ch ch)))
+
+      ((and (not (aff-flagged ch +aff-hide+))
+            (aff-flagged (proto-of (shared-of ch)) +aff-hide+))
+       ;; Attempt to re-hide
+       (perform-hide ch))
+
+      ((and (randomly-true 50) (rest (people-of (in-room-of ch))))
+       ;; Mobiles looking at people
+       (let ((target (random-elt (remove-if-not (lambda (tch)
+                                                  (and (not (eql tch ch))
+                                                       (is-visible-to tch ch)))
+                                                (people-of (in-room-of ch))))))
+         (when target
+           (cond
+             ((eql cur-class +class-predator+)
+              (act ch :target target :all-emit "$n growl$% at $N."))
+             ((or (and (is-evil ch) (is-good target))
+                  (and (is-good ch) (is-evil target)))
+              (if (< (level-of ch) (- 10 (level-of target)))
+                  (act ch :target target :all-emit "$n look$% warily at $N.")
+                  (act ch :target target :all-emit "$n growl$% at $N.")))
+             ((eql cur-class +class-thief+)
+              (act ch :target target :all-emit "$n glance$% sidelong at $N."))
+             ((and (or (and (eql (sex-of ch) 'male) (eql (sex-of target) 'female))
+                       (and (eql (sex-of ch) 'female) (eql (sex-of target) 'male)))
+                   (randomly-true 4))
+              (act ch :target target :all-emit "$n stare$% dreamily at $N."))
+             (t
+              (act ch :target target :all-emit "$n look$% at $N."))))))
+
+      ;; Scavenger (picking up objects)
+      ((and (mob-flagged ch +mob-scavenger+)
+            (contents-of (in-room-of ch)))
+       ;; pick up most valuable item in room
+       (let ((obj (first (sort (remove-if-not (lambda (obj)
+                                                (and (is-visible-to obj ch)
+                                                     (can-take-obj ch obj t nil)))
+                                              (contents-of (in-room-of ch)))
+                               #'> :key 'cost-of))))
+         (when obj
+           (get-from-room ch (list obj) ""))))
+
+      ;; Drink from fountains
+      ((and (contents-of (in-room-of ch))
+            (randomly-true 100)
+            (not (or (is-undead ch)
+                     (is-dragon ch)
+                     (is-golem ch)
+                     (is-elemental ch))))
+       (let ((obj (random-elt (remove-if-not (lambda (obj)
+                                               (and (is-visible-to obj ch)
+                                                    (is-obj-kind obj +item-fountain+)
+                                                    (plusp (aref (value-of obj) 1))))
+                                             (contents-of (in-room-of ch))))))
+         (when obj
+           (act ch :item obj :all-emit "$n drinks from $p."))))
+
+      ((and (not (mob-flagged ch +mob-sentinel+))
+            (not (and (or (mob-flagged ch +mob-pet+)
+                          (mob2-flagged ch +mob2-familiar+))
+                      (master-of ch)))
+            (>= (position-of ch) +pos-standing+)
+            (not (aff2-flagged ch +aff2-mounted+)))
+
+       ;; Mob movement
+       (let* ((door (random-range 0 (if (or (is-tarrasque ch)
+                                            (> (length (people-of (in-room-of ch))) 10))
+                                        (1- +num-of-dirs+)
+                                        20)))
+              (other-room (when (and (< door +num-of-dirs+)
+                                     (exit ch door))
+                            (real-room (to-room-of (exit ch door))))))
+         (when (and other-room
+                    (can-go ch door)
+                    (not (eql other-room (in-room-of ch)))
+                    (not (room-flagged other-room +room-nomob+))
+                    (not (room-flagged other-room +room-death+))
+                    (not (logtest (exit-info-of (exit ch door))
+                                  +ex-nomob+))
+                    (char-likes-room ch other-room)
+                    (or (not (mob2-flagged ch +mob2-stay-sect+))
+                        (eql (terrain-of (in-room-of ch))
+                             (terrain-of other-room)))
+                    (or (not (mob-flagged ch +mob-stay-zone+))
+                        (eql (zone-of (in-room-of ch))
+                             (zone-of other-room)))
+                    (< (length (people-of other-room)) 10))
+           (perform-move ch door :norm t)))))))
 
 (defun mobile-activity ()
   (dolist (ch (copy-list *characters*))

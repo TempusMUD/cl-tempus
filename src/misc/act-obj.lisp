@@ -173,9 +173,8 @@
     (t
      t)))
 
-(defun get-from-room (ch arg)
-  (let ((objs (resolve-alias ch arg (contents-of (in-room-of ch))))
-        (mode (find-all-dots arg))
+(defun get-from-room (ch objs arg)
+  (let ((mode (find-all-dots arg))
         (money-found nil)
         (quad-found nil)
         (sigil-found nil))
@@ -1089,7 +1088,7 @@
       ((>= (carry-items-of ch) (can-carry-items ch))
        (send-to-char ch "Your arms are already full!~%"))
       (t
-       (get-from-room ch thing))))
+       (get-from-room ch (resolve-alias ch thing (contents-of (in-room-of ch))) thing))))
 
 (defcommand (ch "get" thing "from" container) (:resting)
   (cond

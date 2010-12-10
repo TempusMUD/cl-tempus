@@ -403,3 +403,45 @@ Display Hit Pts: ~a       Display Mana: ~a       Display Move: ~a
                 (nth (compact-level-of (account-of ch)) +compact-levels+)))
       (t
        (send-to-char ch "Usage: compact { ~{~a~^ | ~} }~%" +compact-levels+)))))
+
+(defun perform-extinguish (ch tch)
+  (cond
+    ((not (aff2-flagged ch +aff2-ablaze+))
+     (if (eql ch tch)
+         (send-to-char ch "You're not even on fire!~%")
+         (act ch :target tch :subject-emit "$N's not even on fire!~%")))
+    ((> (random-range 40 80)
+        (+ (level-of ch)
+           (wis-of ch)
+           (- (floor (armor-of tch) 10))))
+     (if (eql ch tch)
+         (act ch
+              :subject-emit "You fail to extinguish yourself!"
+              :place-emit "$n tries to put out the flames which cover $s body, but fails!")
+         (act ch :target tch
+              :subject-emit "You fail to extinguish $M!"
+              :target-emit "$n tries to put out the flames on your body, but fails!"
+              :not-target-emit "$n tries to put out the flames on $N's body, but fails!")))
+    (t
+     (if (eql ch tch)
+         (act ch
+              :subject-emit "You succeed in putting out the flames.  WHEW!"
+              :place-emit "$n hastily extinguishes the flames which cover $s body.")
+         (act ch :target tch
+              :subject-emit "You succeed in putting out the flames.  WHEW!\r\n"
+              :target-emit "$n hastily puts out the flames on your body."
+              :not-target-emit "$n hastily extinguishes the flames on $N's body."))
+     (extinguish tch))))
+
+(defcommand (ch "extinguish") (:standing)
+  (perform-extinguish ch ch))
+
+(defcommand (ch "extinguish" target) (:standing)
+  (let ((tchs (resolve-alias ch target (people-of (in-room-of ch)))))
+    (cond
+      ((null tchs)
+       (send-to-char ch "You don't see one of those.~%"))
+      ((cdr tchs)
+       (send-to-char ch "You can only extinguish one thing at a time.~%"))
+      (t
+       (perform-extinguish ch (first tchs))))))
