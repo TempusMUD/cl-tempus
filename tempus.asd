@@ -31,6 +31,8 @@
                          :depends-on ("defs" "constants" "creature" "obj-data" "zone-data" "room-data" "search" "artisan" "account" "spec-assign" "clan" "help" "act-social" "tongues" "act-physic" "dyntext" "spell-parser" "combat-messages" "quest" "artisan" "utils" "weather"))
              (:file "account" :pathname "db/account"
                               :depends-on ("defs" "utils"))
+             (:file "act-barb" :pathname "class/act-barb"
+                               :depends-on ("defs" "utils" "constants" "creature"))
              (:file "act-comm" :pathname "misc/act-comm"
                                :depends-on ("defs"
                                             "utils"
@@ -69,8 +71,10 @@
                                              "creature"))
              (:file "act-other" :pathname "misc/act-other"
                                 :depends-on ("defs" "utils" "interpreter"))
+             (:file "act-thief" :pathname "class/act-thief"
+                               :depends-on ("defs" "utils" "constants" "creature"))
              (:file "act-physic" :pathname "classes/act-physic"
-                                 :depends-on ("defs" "utils" "interpreter"))
+                                 :depends-on ("defs" "utils" "constants" "creature"))
              (:file "act-social" :pathname "social/act-social"
                                  :depends-on ("defs" "utils" "interpreter"))
              (:file "act-wizard" :pathname "misc/act-wizard"
