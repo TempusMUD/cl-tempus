@@ -702,10 +702,6 @@
                        (remort-char-class-of ch)
                        (char-class-of ch))))
     (cond
-      ((or (fighting-of ch) (aff2-flagged ch +aff2-petrified+))
-       ;; nothing below this affects fighting or petrified characters
-       nil)
-
       ((and (is-neutral ch)
             (eql (position-of ch) +pos-sitting+)
             (aff2-flagged ch +aff2-meditate+))
@@ -827,7 +823,76 @@
                                                     (plusp (aref (value-of obj) 1))))
                                              (contents-of (in-room-of ch))))))
          (when obj
-           (act ch :item obj :all-emit "$n drinks from $p."))))
+           (act ch :item obj :all-emit "$n drink$% from $p."))))
+
+      ((and (= cur-class +class-predator+)
+            (contents-of (in-room-of ch))
+            (find-if (lambda (o)
+                       (and (is-visible-to o ch)
+                            (or (is-obj-kind o +item-food+)
+                                (is-corpse o))))
+                     (contents-of (in-room-of ch)))
+            (randomly-true 4))
+       (let ((food (random-elt (remove-if-not
+                                (lambda (o)
+                                  (and (is-visible-to o ch)
+                                       (or (is-obj-kind o +item-food+)
+                                           (is-corpse o))))
+                                (contents-of (in-room-of ch))))))
+         (cond
+           ((and (is-corpse food)
+                 (or (minusp (corpse-idnum food))
+                     (eql (pk-style-of (zone-of (in-room-of ch))) +zone-chaotic-pk+))
+                 (aff-flagged ch +aff-charm+)
+                 (master-of ch)
+                 (eql (in-room-of ch)
+                      (in-room-of (master-of ch))))
+            ;; Aggro against master if charmed and there's a PC
+            ;; corpse in the room
+            (let ((vict (master-of ch)))
+              (stop-following ch)
+              (attack ch vict +type-undefined+)))
+           (t
+            (act ch :item food :all-emit "$n devour$% $p, growling and drooling all over.")
+            (let ((stuff-rm (or (and (is-tarrasque ch) (real-room 24919))
+                                (in-room-of ch))))
+              (dolist (i (copy-list (contains-of food)))
+                (when (is-implant i)
+                  (setf (wear-flags-of i) (logior (wear-flags-of i) +item-wear-take+))
+                  (when (plusp (damage-of i))
+                    (setf (damage-of i) (floor (damage-of i) 2))))
+                (obj-from-obj i)
+                (obj-to-room i stuff-rm nil)))))))
+
+      ((and (not (mob2-flagged ch +mob2-wont-wear+))
+            (not (is-animal ch))
+            (not (is-dragon ch))
+            (not (is-elemental ch))
+            (carrying-of ch)
+            (randomly-true 4))
+       (let* ((wear-objs (mapcan (lambda (obj)
+                                   (when (is-visible-to obj ch)
+                                     (let ((pos (find-eq-pos obj)))
+                                       (when pos
+                                         (list (cons obj pos))))))
+                                 (carrying-of ch)))
+              (obj (random-elt wear-objs)))
+         (when obj
+           (perform-wear ch (car obj) (cdr obj)))))
+
+      ((and (mob2-flagged ch +mob2-looter+)
+            (find-if 'is-corpse (contents-of (in-room-of ch)))
+            (randomly-true 3))
+       (let* ((corpse (random-elt (remove-if-not (lambda (obj)
+                                                   (and (is-corpse obj)
+                                                        (contents-of obj)))
+                                                 (contents-of (in-room-of ch)))))
+              (obj (random-elt (remove-if-not (lambda (obj)
+                                                (and (is-visible-to obj ch)
+                                                     (can-take-obj ch obj t nil)))
+                                              (contents-of corpse)))))
+         (when obj
+           (perform-get-from-container ch obj corpse (aliases-of obj) :find-indiv))))
 
       ((and (not (mob-flagged ch +mob-sentinel+))
             (not (and (or (mob-flagged ch +mob-pet+)
@@ -835,6 +900,7 @@
                       (master-of ch)))
             (>= (position-of ch) +pos-standing+)
             (not (aff2-flagged ch +aff2-mounted+)))
+
 
        ;; Mob movement
        (let* ((door (random-range 0 (if (or (is-tarrasque ch)
@@ -860,6 +926,7 @@
                              (zone-of other-room)))
                     (< (length (people-of other-room)) 10))
            (perform-move ch door :norm t)))))))
+
 
 (defun mobile-activity ()
   (dolist (ch (copy-list *characters*))

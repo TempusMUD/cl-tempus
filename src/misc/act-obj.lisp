@@ -233,10 +233,8 @@
     (when sigil-found
       (explode-all-sigils ch))))
 
-(defun get-from-container (ch thing container)
-  (let ((objs (resolve-alias ch thing (contains-of container)))
-        (mode (find-all-dots thing))
-        (money-found nil)
+(defun perform-get-from-container (ch objs container name mode)
+  (let ((money-found nil)
         (quad-found nil)
         (sigil-found nil))
     (cond
@@ -278,21 +276,17 @@
                     :all-emit (format nil "$n get$% $p from $P.~[~;~:;~:* (x~d)~]" counter))
                (setf counter 0))))))
       ((eql mode :find-indiv)
-       (multiple-value-bind (ignore name)
-           (get-number thing)
-         (declare (ignore ignore))
-         (act ch :item container
-              :subject-emit (format nil "There doesn't seem to be ~a ~a in $p."
-                                    (a-or-an name) name))))
+       (act ch :item container
+            :subject-emit (format nil "There doesn't seem to be ~a ~a in $p."
+                                  (a-or-an name) name)))
       ((eql mode :find-all)
        (act ch :item container
             :subject-emit "You didn't find anything to take in $p."))
       (t
-       (let ((name (subseq thing 4)))
-         (act ch :item container
-              :subject-emit (format nil "You didn't find anything in $p that looks like ~a ~a."
-                                    (a-or-an name)
-                                    name)))))
+       (act ch :item container
+            :subject-emit (format nil "You didn't find anything in $p that looks like ~a ~a."
+                                  (a-or-an name)
+                                  name))))
 
     (when money-found
       (consolidate-char-money ch))
@@ -300,6 +294,18 @@
       (activate-char-quad ch))
     (when sigil-found
       (explode-all-sigils ch))))
+
+(defun get-from-container (ch thing container)
+  (let* ((objs (resolve-alias ch thing (contains-of container)))
+         (mode (find-all-dots thing))
+         (name (cond
+                 ((eql mode :find-all)
+                  (subseq thing 4))
+                 ((eql mode :find-indiv)
+                  (nth-value 2 (get-number thing)))
+                 (t
+                  thing))))
+    (perform-get-from-container ch objs container name mode)))
 
 (defun perform-autoloot (ch corpse)
   ;; Only loot the corpse if the character can see it, and if the
