@@ -14,8 +14,7 @@
 
 (defun boot-tongues ()
   (clrhash *tongues*)
-  (let ((doc (with-open-file (inf (tempus-path "lib/etc/tongues.xml"))
-               (xmls:parse inf :compress-whitespace nil))))
+  (let ((doc (cxml:parse-file (tempus-path "lib/etc/tongues.xml") (cxml-xmls:make-xmls-builder))))
     (assert (string= "tongues" (first doc)) nil 'invalid-tongues-file)
     (dolist (node (cddr doc))
       (when (and (consp node)

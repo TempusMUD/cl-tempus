@@ -96,7 +96,7 @@
     (#\r
      (refresh-screen editor cxn))
     (#\u
-     (setf (buffer-of editor) (split-sequence #\newline (old-buffer-of editor)))
+     (setf (buffer-of editor) (cl-ppcre:split "\\s+" (old-buffer-of editor)))
      (refresh-screen editor cxn)
      (cxn-write cxn "Reverted back to previous.~%"))
     (#\e
@@ -215,7 +215,7 @@
 &C     *&B---------------------------------------------------------&C*
 "))
     (#\a
-     (let* ((names (split-sequence #\space arg :remove-empty-subseqs t))
+     (let* ((names (cl-ppcre:split "\\s+" arg))
             (idnums (mapcar 'retrieve-player-idnum names)))
        (if (null names)
            (cxn-write cxn "You were going to add some recipients?~%")
@@ -232,7 +232,7 @@
                                                  (append (recipients-of editor)
                                                          (list idnum))))))))))
     (#\z
-     (let* ((names (split-sequence #\space arg :remove-empty-subseqs t))
+     (let* ((names (cl-ppcre:split "\\s+" arg))
             (idnums (mapcar 'retrieve-player-idnum names)))
        (if (null names)
            (cxn-write cxn "You were going to remove some recipients?~%")
@@ -285,14 +285,13 @@
          (let* ((mail-path (mail-pathname recipient))
                 (old-mail (ignore-errors
                             (when (probe-file mail-path)
-                              (with-open-file (inf mail-path)
-                                (cddr (xmls:parse inf)))))))
+                              (cddr (cxml:parse-file mail-path (cxml-xmls:make-xmls-builder)))))))
            (with-open-file (ouf mail-path :direction :output
                                 :if-exists :rename-and-delete
                                 :if-does-not-exist :create)
-             (write-string
-              (xmls:toxml `("objects" nil ,@old-mail ,(serialize-object mail)))
-              ouf)))
+
+             (let ((sink (cxml:make-character-stream-sink ouf :canonical nil)))
+               (cxml-xmls:map-node sink `("objects" nil ,@old-mail ,(serialize-object mail))))))
 
          (let ((target (gethash recipient *character-map*)))
            (when target
@@ -306,7 +305,7 @@
   (setf (state-of cxn) 'playing))
 
 (defun start-text-editor (cxn target target-desc old-buffer finalizer cancel-func)
-  (let ((split-buffer (butlast (split-sequence #\newline old-buffer))))
+  (let ((split-buffer (butlast (cl-ppcre:split "\\s+" old-buffer))))
     (setf (mode-data-of cxn) (make-instance 'text-editor
                                             :target target
                                             :target-desc target-desc

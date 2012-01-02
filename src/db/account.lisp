@@ -3,9 +3,7 @@
 (defclass player-record ()
   ((idnum :accessor idnum-of :initarg :idnum)
    (account :accessor account-of :initarg :account)
-   (name :accessor name-of :initarg :name)
-   (birth-time :accessor birth-time-of :initarg :birth-time)
-   (login-time :accessor login-time-of :initarg :login-time)))
+   (name :accessor name-of :initarg :name)))
 
 (defclass account ()
   ((idnum :accessor idnum-of :initarg :idnum)
@@ -28,7 +26,14 @@
    (quest-banned :accessor quest-banned-of :initarg :quest-banned :initform nil)
    (bank-past :accessor past-bank-of :initform 0)
    (bank-future :accessor future-bank-of :initform 0)
-   (players :accessor players-of :initform nil)))
+   (players :accessor players-of :initform nil))
+  (:default-initargs :password "" :email ""
+                                :creation-time (now)
+                                :creation-addr ""
+                                :login-time (now)
+                                :login-addr ""
+                                :entry-time (now)))
+
 
 (defvar *account-max-idnum* 0)
 (defvar *account-idnum-cache* (make-hash-table))
@@ -65,11 +70,17 @@ the password."
 
 (defun max-account-id ()
   "Returns the maximum account id in the database"
-  (or (postmodern:query (:select (:max 'idnum) :from 'accounts) :single) 0))
+  (let ((result (postmodern:query (:select (:max 'idnum) :from 'accounts) :single)))
+    (if (eql result :null)
+        0
+        result)))
 
 (defun max-player-id ()
   "Returns the maximum player id in the database"
-  (or (postmodern:query (:select (:max 'idnum) :from 'players) :single) 0))
+  (let ((result (postmodern:query (:select (:max 'idnum) :from 'players) :single)))
+    (if (eql result :null)
+        0
+        result)))
 
 (defun account-exists (name)
   "Returns true if the account with the given name exists.  The comparison
@@ -116,10 +127,8 @@ be loaded from the database or it may be retrieved from a cache."
                             (make-instance 'player-record
                                            :idnum (cdr (assoc :idnum info))
                                            :account (idnum-of account)
-                                           :name (cdr (assoc :name info))
-                                           :birth-time (if (eql (cdr (assoc :birth-time info)) :null) (now) (cdr (assoc :birth-time info)))
-                                           :login-time (if (eql (cdr (assoc :login-time info)) :null) (now) (cdr (assoc :login-time info)))))
-                          (postmodern:query (:order-by (:select 'idnum 'name 'birth-time 'login-time :from 'players :where (:= 'account (idnum-of account))) 'idnum) :alists)))
+                                           :name (cdr (assoc :name info))))
+                          (postmodern:query (:order-by (:select 'idnum 'name :from 'players :where (:= 'account (idnum-of account))) 'idnum) :alists)))
             account)))))
 
 (defmethod save-account ((account account))
@@ -221,21 +230,18 @@ file."
          (player-record (make-instance 'player-record
                                        :idnum (idnum-of actor)
                                        :account (idnum-of account)
-                                       :name (name-of actor)
-                                       :birth-time now
-                                       :login-time now)))
+                                       :name (name-of actor))))
     (postmodern:execute (:insert-into 'players :set
                            'idnum (idnum-of actor)
                            'account (idnum-of account)
-                           'name (name-of actor)
-                           'birth_time now
-                           'login_time now))
+                           'name (name-of actor)))
     (setf (players-of account)
           (nconc (players-of account) (list player-record)))
     (save-account account)
     (setf (title-of actor) "the utter newbie")
     (setf (birth-time-of actor) now)
     (setf (login-time-of actor) now)
+    (setf (rentcode-of actor) 'creating)
     (save-player-to-xml actor)))
 
 (defun delete-player (ch)

@@ -119,8 +119,7 @@
 (defun vnum-prototypes (ch namelist-str name-color prototype-hash)
   "Displays to CH a list of the objects or mobiles in PROTOTYPE-HASH which match NAME.  The name of the object or mobile will be in the color designated by NAME-COLOR.  Returns the number displayed."
   (let ((count 0)
-        (namelist (split-sequence #\space namelist-str
-                                  :remove-empty-subseqs t)))
+        (namelist (cl-ppcre:split "\\s+" namelist-str)))
     (with-pagination ((link-of ch))
       (send-to-char ch "~a"
                     (with-output-to-string (str)
@@ -1471,7 +1470,7 @@
   (send-to-char ch "Whom do you wish to transport?~%"))
 
 (defcommand (ch "transport" targets) (:immortal)
-  (dolist (name (split-sequence #\space targets :remove-empty-subseqs t))
+  (dolist (name (cl-ppcre:split "\\s+" targets))
     (let ((tch (get-char-vis ch name)))
       (if tch
           (perform-transport ch tch)

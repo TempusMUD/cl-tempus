@@ -30,8 +30,7 @@
              (not (is-npc ch)))
     (string-case (first (command-info-pattern command))
       ("mail"
-       (let* ((names (split-sequence #\space (first vars)
-                                     :remove-empty-subseqs t))
+       (let* ((names (cl-ppcre:split "\\s+" (first vars)))
               (idnums (mapcar 'retrieve-player-idnum names)))
          (cond
            ((null names)
@@ -50,8 +49,7 @@
        (let* ((mail-path (mail-pathname (idnum-of ch)))
               (letters (ignore-errors
                          (when (probe-file mail-path)
-                           (with-open-file (inf mail-path)
-                             (cddr (xmls:parse inf)))))))
+                           (cddr (cxml:parse-file mail-path (cxml-xmls:make-xmls-builder)))))))
          (cond
            ((null letters)
             (perform-tell self ch "Sorry, you don't have any mail waiting."))

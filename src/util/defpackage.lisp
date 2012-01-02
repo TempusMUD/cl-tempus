@@ -1,6 +1,5 @@
 (defpackage #:tempus
     (:use :common-lisp
-          :split-sequence
           :local-time
           :iolib)
     (:export main))
@@ -19,7 +18,6 @@
           sb-alien:with-alien
           sb-alien:addr
           sb-sys:ignore-interrupt
-          split-sequence:split-sequence
           sb-unix:SIGPIPE)
 
  #+cmu '(extensions:format-universal-time

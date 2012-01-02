@@ -607,7 +607,7 @@
                  (#\+ 100)
                  (#\- 0)
                  (t (signal 'parser-error :message "Usage: olc mset knownlanguage (+|-) <languages>\n")))))
-      (dolist (language (split-sequence #\space languages :remove-empty-subseqs t))
+      (dolist (language (cl-ppcre:split "\\s+" languages))
         (let ((tongue-idx (find-tongue-idx-by-name language)))
           (cond
             (tongue-idx

@@ -1075,7 +1075,7 @@
         (loop
            for line = (read-line str nil)
            while line do
-             (let ((tokens (split-sequence #\space line :remove-empty-subseqs t)))
+             (let ((tokens (cl-ppcre:split "\\s+" line)))
                (incf lineno)
                (when (find (first tokens) '("allow" "deny") :test #'string-equal)
                  (setf result (match-clause-to-lambda tokens result)))))

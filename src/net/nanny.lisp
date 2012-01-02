@@ -91,8 +91,10 @@
   (cond
     ((member state +valid-cxn-states+)
      (call-next-method)
+     (setf (need-prompt-p cxn) t)
      (send-state-menu cxn state)
-     (setf (need-prompt-p cxn) t))
+     (send-state-prompt cxn state)
+     (setf (need-prompt-p cxn) nil))
     (t
      (mudlog 'warning t "attempt to set cxn to state ~a" state)))
 
@@ -172,8 +174,8 @@
 
 (defun apply-player-alias (actor alias args)
   ;; split replacements into lines
-  (let ((replacements (split-sequence #\; (second alias)))
-        (split-args (split-sequence #\space args :remove-empty-subseqs t)))
+  (let ((replacements (cl-ppcre:split ";" (second alias)))
+        (split-args (cl-ppcre:split "\\s+" args)))
     (dolist (cmd-line (reverse replacements))
       ;; push each alias expansion into the command queue of the actor
       ;; (in reverse for proper ordering)
@@ -274,7 +276,7 @@
 
 (define-connection-state login
   (menu (cxn)
-     (cxn-write cxn "&@~a" *welcome-message*))
+     (cxn-write cxn "&@~a" +greetings+))
   (prompt (cxn)
     (cxn-write cxn "Please enter your account name, or 'new': "))
   (input (cxn line)
@@ -289,9 +291,7 @@
       (setf (state-of cxn) (if *production-mode* 'authenticate 'main-menu)))
      (t
       (cxn-write cxn
-                 "Sorry, that account does not exist.  Type 'new' to create another account.~%"))))
-  (menu (cxn)
-        ""))
+                 "Sorry, that account does not exist.  Type 'new' to create another account.~%")))))
 
 (define-connection-state authenticate
   (prompt (cxn)
@@ -337,14 +337,18 @@ have received mail.  Quest points are also shared by all your characters.
       nil))))
 
 (define-connection-state new-account-verify
+  (menu (cxn)
+    (cxn-write cxn "~%"))
   (prompt (cxn)
-    (cxn-write cxn "~%~%Are you sure you want your account name to be '~a' (Y/N)? "))
+    (cxn-write cxn "~%Are you sure you want your account name to be '~a' (Y/N)? " (mode-data-of cxn)))
   (input (cxn line)
-   (case (char-downcase (char line 0))
-     (#\y
+   (cond
+     ((string= "" line)
+      (cxn-write cxn "Please enter Y or N.~%"))
+     ((string-equal "y" line :end2 1)
       (setf (account-of cxn) (create-account (mode-data-of cxn)))
       (setf (state-of cxn) 'new-account-ansi))
-     (#\n
+     ((string-equal "n" line :end2 1)
       (setf (state-of cxn) 'new-account))
      (t
       (cxn-write cxn "Please enter Y or N.~%")))))
@@ -429,7 +433,7 @@ password reminders.
 
 "))
   (prompt (cxn)
-    (cxn-write cxn "Please enter your email address:"))
+    (cxn-write cxn "Please enter your email address: "))
   (input (cxn line)
    (setf (email-of (account-of cxn)) line)
    (save-account (account-of cxn))
@@ -444,7 +448,7 @@ password reminders.
 choose a password to use on this system.
 "))
   (prompt (cxn)
-    (cxn-write cxn "        Enter your desired password:"))
+    (cxn-write cxn "        Enter your desired password: "))
   (input (cxn line)
    (setf (password-of (account-of cxn)) line)
    (save-account (account-of cxn))
@@ -455,7 +459,7 @@ choose a password to use on this system.
     ;; This awkward wording due to lame "assword:" search in tintin instead
     ;; of actually implementing one facet of telnet protocol
     (cxn-write cxn
-               "        Enter it again to verify your password:"))
+               "        Enter it again to verify your password: "))
   (input (cxn line)
    (cond
      ((check-password (account-of cxn) line)
@@ -845,10 +849,6 @@ You may type 'help <race>' for information on any of the available races.
            (cxn-write cxn "That character selection does not exist!~%~%"))
           ((null prev-actor)
            (setf (actor-of cxn) (load-player-from-xml (idnum-of player)))
-           (setf (login-time-of player) (now))
-           (postmodern:execute (:update 'players :set
-                             'login-time (login-time-of player)
-                             :where (:= 'idnum (idnum-of player))))
            (setf (link-of (actor-of cxn)) cxn)
            (setf (account-of (actor-of cxn)) (account-of cxn))
            (player-to-game (actor-of cxn)))
@@ -1114,6 +1114,7 @@ else is noticable about your character?
 (defun handle-command (cxn)
   (when (commands-of cxn)
    (setf (need-prompt-p cxn) t)
+   (schedule-cxn-output cxn)
    (let ((cmd (pop (commands-of cxn))))
      (if *production-mode*
          (handler-bind ((error (lambda (str)

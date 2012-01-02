@@ -282,8 +282,7 @@
 (defun parse-zcmd-exitflags (ch flag-names)
   (let* ((bits (mapcar (lambda (flag-name)
                          (position flag-name +exit-bits+ :test 'string-abbrev))
-                       (split-sequence #\space flag-names
-                                       :remove-empty-subseqs t)))
+                       (cl-ppcre:split "\\s+" flag-names)))
          (null-pos (position-if #'null bits)))
     (cond
       (null-pos
@@ -638,7 +637,7 @@ olc zcmd [zone] <I> <if_flag> <obj> <num> <pos> <mob> <prob>
                      0 100))
 
 (defcommand (ch "olc" "zcmd" "list" args) (:immortal)
-  (let ((option-strs (split-sequence #\space args :remove-empty-subseqs t))
+  (let ((option-strs (cl-ppcre:split "\\s+" args))
         (options nil)
         (start-pos 0)
         (end-pos nil))

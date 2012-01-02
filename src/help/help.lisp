@@ -40,7 +40,7 @@
     (let ((item-count (parse-integer (read-line inf))))
       (dotimes (idx item-count)
         (destructuring-bind (idnum groups counter flags owner)
-            (mapcar #'parse-integer (split-sequence #\space (read-line inf)))
+            (mapcar #'parse-integer (cl-ppcre:split "\\s+" (read-line inf)))
           (let ((name (read-line inf))
                 (keywords (read-line inf)))
             (push (make-instance 'help-item
@@ -60,7 +60,7 @@
   (with-open-file (inf (tempus-path "lib/text/help_data/~4,'0d.topic"
                                     (idnum-of item)))
     (destructuring-bind (idnum length)
-        (mapcar 'parse-integer (split-sequence #\space (read-line inf)))
+        (mapcar 'parse-integer (cl-ppcre:split "\\s+" (read-line inf)))
       (assert (= idnum (idnum-of item))
               nil
               "idnums don't match in load-help-item")
@@ -269,7 +269,7 @@ hcollect commands:
                           (setf (state-of cxn) 'playing))))))
 
 (defcommand (ch "hcollect" "set" "groups" plus-or-minus groups) (:immortal)
-  (let ((group-names (split-sequence #\space groups)))
+  (let ((group-names (cl-ppcre:split "\\s+" groups)))
     (cond
       ((null (olc-help-of ch))
        (send-to-char ch "You have to be editing an item to set it.~%"))
@@ -296,7 +296,7 @@ hcollect commands:
               (send-to-char ch "Item added to group ~a.~%" (aref +help-group-names+ group-id))))))))))
 
 (defcommand (ch "hcollect" "set" "flags" plus-or-minus flags) (:immortal)
-  (let ((flag-names (split-sequence #\space flags)))
+  (let ((flag-names (cl-ppcre:split "\\s+" flags)))
     (cond
       ((null (olc-help-of ch))
        (send-to-char ch "You have to be editing an item to set it.~%"))

@@ -142,7 +142,7 @@
            (setf (aff3-flags-of ch) (xml-attr node "flag3" :hex t)))
           ("immort"
            (setf (badge-of ch) (xml-attr node "badge"))
-           (setf (qlog-level-of ch) (xml-attr node "qlog" :numeric t))
+           (setf (qlog-level-of ch) (xml-attr node "qlog" :numeric t :default 0))
            (setf (invis-level-of ch) (xml-attr node "invis" :numeric t)))
           ("poofin"
            (setf (poofin-of ch) (third node)))
@@ -171,19 +171,17 @@
     ch))
 
 (defun load-player-from-xml (idnum)
-  (let ((xml (with-open-file (inf (player-pathname idnum))
-               (xmls:parse inf :compress-whitespace nil))))
+  (let ((xml (cxml:parse-file (player-pathname idnum) (cxml-xmls:make-xmls-builder))))
     (unserialize-creature xml)))
 
 (defun load-player-objects (ch)
   (handler-case
-      (with-open-file (inf (equipment-pathname (idnum-of ch)))
-        (let ((xml (xmls:parse inf :compress-whitespace nil)))
-          (assert (string= (first xml) "objects") nil 'invalid-equipment-file)
-          (dolist (node (cddr xml))
-            (when (and (consp node)
-                       (string-equal (first node) "object"))
-              (unserialize-object nil ch nil node)))))
+      (let ((xml (cxml:parse-file (equipment-pathname (idnum-of ch)) (cxml-xmls:make-xmls-builder))))
+        (assert (string= (first xml) "objects") nil 'invalid-equipment-file)
+        (dolist (node (cddr xml))
+          (when (and (consp node)
+                     (string-equal (first node) "object"))
+            (unserialize-object nil ch nil node))))
     (file-error ()
       nil)))
 
@@ -196,9 +194,9 @@
   (with-open-file (ouf (equipment-pathname (idnum-of ch))
                        :direction :output
                        :if-exists :rename-and-delete)
-    (write-string
-     (xmls:toxml
-      `("objects" NIL
+    (let ((sink (cxml:make-character-stream-sink ouf :canonical nil)))
+      (cxml-xmls:map-node sink
+             `("objects" NIL
                 ,@(map 'list 'serialize-object
                        (remove nil (carrying-of ch)))
                 ,@(map 'list 'serialize-object
@@ -206,8 +204,8 @@
                 ,@(map 'list 'serialize-object
                        (remove nil (implants-of ch)))
                 ,@(map 'list 'serialize-object
-                       (remove nil (tattoos-of ch)))))
-     ouf)))
+                       (remove nil (tattoos-of ch))))
+             :include-namespace-uri nil))))
 
 (defmethod save-player-to-xml ((ch mobile))
   (values))
@@ -395,7 +393,9 @@
                        :direction :output
                        :if-exists :rename-and-delete
                        :if-does-not-exist :create)
-    (write-string (xmls:toxml (serialize-creature ch) :indent t) ouf))
+    (let ((sink (cxml:make-character-stream-sink ouf :canonical nil)))
+      (cxml-xmls:map-node sink (serialize-creature ch)
+                          :include-namespace-uri nil)))
 
   ;; Reinstate all spell affects
   (dolist (aff (affected-of ch))

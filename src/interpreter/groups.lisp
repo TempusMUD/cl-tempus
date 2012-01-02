@@ -56,11 +56,9 @@
 
 (defmethod security-is-member ((ch player) group-name)
   (let ((group (gethash group-name *access-groups-name*)))
-    (assert group nil
-            "Unknown group ~s passed to security-is-member"
-            group-name)
     (or (= (level-of ch) 72)
-        (find (idnum-of ch) (members-of group)))))
+        (and group
+             (find (idnum-of ch) (members-of group))))))
 
 (defmethod security-is-really-member ((ch mobile) group-name)
   (declare (ignore ch group-name))
@@ -68,10 +66,8 @@
 
 (defmethod security-is-really-member ((ch player) group-name)
   (let ((group (gethash group-name *access-groups-name*)))
-    (assert group nil
-            "Unknown group ~s passed to security-is-member"
-            group-name)
-    (find (idnum-of ch) (members-of group))))
+    (and group
+         (find (idnum-of ch) (members-of group)))))
 
 (defun can-admin-group (ch group-name)
   (let ((group (gethash group-name *access-groups-name*)))
@@ -162,7 +158,7 @@
       ((not (can-admin-group ch group-name))
        (send-to-char ch "You cannot add members to this group.~%"))
       (t
-       (dolist (name (split-sequence #\space members :remove-empty-subseqs t))
+       (dolist (name (cl-ppcre:split "\\s+" members))
          (if (add-group-member group name)
              (send-to-char ch "Member added: ~a~%" name)
              (send-to-char ch "Unable to add member: ~a~%" name)))))))
@@ -175,7 +171,7 @@
       ((not (can-admin-group ch group-name))
        (send-to-char ch "You cannot add commands to this group.~%"))
       (t
-       (dolist (command (split-sequence #\space cmd-names :remove-empty-subseqs t))
+       (dolist (command (cl-ppcre:split "\\s+" cmd-names))
          (if (add-group-command group command)
              (send-to-char ch "Command added: ~a~%" command)
              (send-to-char ch "Unable to add command: ~a~%" command)))))))
@@ -237,7 +233,7 @@
     ((not (security-is-member ch "GroupsAdmin"))
      (send-to-char ch "You cannot create groups.~%"))
     (t
-     (dolist (name (split-sequence #\space group-names :remove-empty-subseqs t))
+     (dolist (name (cl-ppcre:split "\\s+" group-names))
        (if (create-group name)
            (send-to-char ch "Group created: ~a~%" name)
            (send-to-char ch "Unable to create group: ~a~%" name))))))
@@ -313,7 +309,7 @@
       ((not (can-admin-group ch group-name))
        (send-to-char ch "You cannot remove members from this group.~%"))
       (t
-       (dolist (member-name (split-sequence #\space member-names :remove-empty-subseqs t))
+       (dolist (member-name (cl-ppcre:split "\\s+" member-names))
          (if (remove-group-member group member-name)
              (send-to-char ch "Member removed: ~a~%" member-name)
              (send-to-char ch "Unable to remove member: ~a~%" member-name)))))))
@@ -326,7 +322,7 @@
       ((not (can-admin-group ch group-name))
        (send-to-char ch "You cannot remove commands from this group.~%"))
       (t
-       (dolist (cmd-name (split-sequence #\space cmd-names :remove-empty-subseqs t))
+       (dolist (cmd-name (cl-ppcre:split "\\s+" cmd-names))
          (if (remove-group-command group cmd-name)
              (send-to-char ch "Command removed: ~a~%" cmd-name)
              (send-to-char ch "Unable to remove command: ~a~%" cmd-name)))))))

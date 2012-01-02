@@ -517,8 +517,7 @@
 
 (defun boot-spells ()
   (clear-spells)
-  (let ((xml (with-open-file (inf (tempus-path "lib/etc/spells.xml"))
-               (xmls:parse inf))))
+  (let ((xml (cxml:parse-file (tempus-path "lib/etc/spells.xml") (cxml-xmls:make-xmls-builder))))
     (assert xml nil "Empty spells.xml file")
     (dolist (node (cddr xml))
       (when (and (listp node)

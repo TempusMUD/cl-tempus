@@ -6,18 +6,16 @@
 (defsystem :tempus
   :name "Tempus"
   :version "1.0.0d"
-  :author "Daniel Lowe <dlowe@bitmuse.com>"
+  :author "Daniel Lowe <dlowe@dlowe.net>"
   :description "Tempus MUD Codebase"
   :depends-on (postmodern
                anaphora
-               split-sequence
-               asdf-system-connections
                local-time
-               cl-interpol
                cl-postgres+local-time
+               cl-interpol
                cl-ppcre
                cffi
-               xmls
+               cxml
                iolib)
 
   :components
@@ -31,7 +29,7 @@
                          :depends-on ("defs" "constants" "creature" "obj-data" "zone-data" "room-data" "search" "artisan" "account" "spec-assign" "clan" "help" "act-social" "tongues" "act-physic" "dyntext" "spell-parser" "combat-messages" "quest" "artisan" "utils" "weather"))
              (:file "account" :pathname "db/account"
                               :depends-on ("defs" "utils"))
-             (:file "act-barb" :pathname "class/act-barb"
+             (:file "act-barb" :pathname "classes/act-barb"
                                :depends-on ("defs" "utils" "constants" "creature"))
              (:file "act-comm" :pathname "misc/act-comm"
                                :depends-on ("defs"
@@ -71,7 +69,7 @@
                                              "creature"))
              (:file "act-other" :pathname "misc/act-other"
                                 :depends-on ("defs" "utils" "interpreter"))
-             (:file "act-thief" :pathname "class/act-thief"
+             (:file "act-thief" :pathname "classes/act-thief"
                                :depends-on ("defs" "utils" "constants" "creature"))
              (:file "act-physic" :pathname "classes/act-physic"
                                  :depends-on ("defs" "utils" "constants" "creature"))

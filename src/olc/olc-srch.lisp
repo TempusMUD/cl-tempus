@@ -225,7 +225,7 @@
   (let ((zone (zone-of (in-room-of ch)))
         (command nil))
     (loop
-       for (opt val) on (split-sequence #\space option-str :remove-empty-subseqs t) by #'cddr
+       for (opt val) on (cl-ppcre:split "\\s+" option-str) by #'cddr
        do
          (cond
            ((string-abbrev opt "zone")
