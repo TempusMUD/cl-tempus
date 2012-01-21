@@ -699,7 +699,7 @@ You may type 'help <race>' for information on any of the available races.
                                             :year #\space
                                             :hour #\: :min #\: :sec))
                     (+brief-time-format+ '(:year #\/ (:month 2) #\/ (:day 2)))
-                    (+long-time-format+ '(:long-month #\space :day #\,
+                    (+long-time-format+ '(#\space :short-month #\space :day #\,
                                           #\space :year))
                     (max-name-length (if brief 8 13))
                     (truncated-name (if (> (length (name-of tmp-ch))
@@ -715,13 +715,13 @@ You may type 'help <race>' for information on any of the available races.
                                            (char-class-name (char-class-of tmp-ch))
                                            (char-class-color tmp-ch (remort-char-class-of tmp-ch))
                                            (char-class-name (remort-char-class-of tmp-ch)))
-                                   (format nil "~a~9a&n"
+                                   (format nil "~a~9@a&n"
                                            (char-class-color tmp-ch (char-class-of tmp-ch))
                                            (char-class-name (char-class-of tmp-ch)))))
                     (sex-str (case (sex-of tmp-ch)
-                               (male "&bmale")
-                               (female "&mfemale")
-                               (t "neuter")))
+                               (male "&bM")
+                               (female "&mF")
+                               (t "N")))
                     (laston-str (format-timestring nil (login-time-of tmp-ch)
                                                    :format (cond
                                                              (immort +immort-time-format+)
@@ -769,7 +769,7 @@ You may type 'help <race>' for information on any of the available races.
                   (cxn-write cxn "&b[&y~2d&b] &n~8a ~10a ~a ~a&n "
                              idx name-str laston-str status-str mail-str))
                  (t
-                  (cxn-write cxn "&b[&y~2d&b] &n~13a ~3d ~3d  ~a  ~8a ~a ~13a ~a ~a&n~%"
+                  (cxn-write cxn "&b[&y~2d&b] &n~13a ~3d ~3d  ~a  ~8@a ~a ~13a ~a ~a&n~%"
                              idx name-str
                              (level-of tmp-ch) (remort-gen-of tmp-ch)
                              sex-str
