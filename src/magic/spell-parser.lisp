@@ -512,6 +512,8 @@
     (dolist (child (cddr node))
       (when (listp child)
         (apply-attribute-to-spell spell child)))
+    (when (null (func-of spell))
+      (slog "WARNING: Spell ~a not implemented" (name-of spell)))
     (when (zerop (targets-of spell))
       (setf (targets-of spell) +tar-ignore+))))
 
@@ -537,7 +539,21 @@
        (when ch
          (send-to-char ch "Oops, that spell isn't implemented.~%")))
       (t
-       (funcall func ch level (or vict ovict dvict))
+       (funcall func ch (or vict ovict dvict) level
+                (or (cdr (assoc casttype
+                                `((,+cast-staff+ . ,+saving-rod+)
+                                  (,+cast-scroll+ . ,+saving-rod+)
+                                  (,+cast-potion+ . ,+saving-rod+)
+                                  (,+cast-wand+ . ,+saving-rod+)
+                                  (,+cast-psionic+ . ,+saving-psi+)
+                                  (,+cast-physic+ . ,+saving-phy+)
+                                  (,+cast-chem+ . ,+saving-chem+)
+                                  (,+cast-para+ . ,+saving-para+)
+                                  (,+cast-petri+ . ,+saving-petri+)
+                                  (,+cast-breath+ . ,+saving-breath+)
+                                  (,+cast-bard+ . ,+saving-breath+)
+                                  (,+cast-internal+ . ,+saving-none+))))
+                    +saving-breath+))
        (when (and (violentp info) vict)
          (pushnew vict (fighting-of ch)))))))
 
