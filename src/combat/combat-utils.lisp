@@ -251,7 +251,7 @@
 
 (defun calculate-thaco (ch victim weapon)
   (let ((thaco (min (thaco (char-class-of ch) (level-of ch))
-                    (thaco (remort-char-class-of ch) (level-of ch)))))
+                    (thaco (or (remort-char-class-of ch) -1) (level-of ch)))))
     (if (and weapon (is-energy-gun weapon))
         (decf thaco (getf (aref +dex-app+ (dex-of ch)) :to-hit))
         (decf thaco (getf (aref +str-app+ (str-of ch)) :to-hit)))

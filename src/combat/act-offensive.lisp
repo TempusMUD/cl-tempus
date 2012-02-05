@@ -1,5 +1,160 @@
 (in-package #:tempus)
 
+(defun check-mob-reaction (ch vict)
+  "Returns T if VICT gets pissed off at CH for doing something
+annoying."
+  (cond
+    ((and (not (is-pc vict))
+         (> (- (/ (- (alignment-of vict)
+                     (alignment-of ch))
+                  20)
+               (cha-of ch))
+            (random 101)))
+     (act vict :all-emit "$n get$% pissed off!")
+     t)
+    (t
+     nil)))
+
+(defun raw-eq-damage (ch pos base-damage)
+  "Returns amount of damage done by the CH's equipment or implant at
+POS, given the BASE-DAMAGE."
+  (let ((obj (or (aref (equipment-of ch) pos)
+                 (aref (implants-of ch) pos))))
+    (cond
+      ((is-obj-kind obj +item-armor+)
+       (+ base-damage
+          (weight-of obj)
+          (floor (obj-val-of obj 0) 4)))
+      ((is-obj-kind obj +item-weapon+)
+       (+ base-damage
+          (dice (obj-val-of obj 1)
+                (obj-val-of obj 2))))
+      (t
+       base-damage))))
+
+(defun calc-skill-prob (ch vict skill)
+  "Returns a number from 0 to 100 which is the probability that CH
+  will succeed at SKILL against VICT.  Also returns values for WAIT,
+  VICT-WAIT, MOVE, MANA, DAM, FAIL-POS, VICT-POS, WEAPON, LOCATION,
+  and AFFECT."
+  (let ((prob (+ (check-skill ch skill)
+                 (dex-of ch)
+                 (floor (str-app-type-to-hit (str-of ch)) 2)
+                 (floor (hitroll-of ch) 2)
+                 (max -200 (floor (armor-of vict) 10))))
+        (bad-terrain nil))
+    (when (< (check-skill ch skill)
+             (learned ch))
+      (decf prob (- (learned ch) (check-skill ch skill))))
+    (when (< (position-of vict) +pos-fighting+)
+      (incf prob (* (- +pos-fighting+ (position-of vict)) 6))
+      (decf prob (floor (dex-of vict) 2)))
+    (when (is-drow ch)
+      (cond
+        ((room-is-dark (in-room-of ch))
+         (incf prob 10))
+        ((room-is-sunny (in-room-of ch))
+         (decf prob 25))))
+    (when (and (aff2-flagged ch +aff2-displacement+)
+               (not (aff2-flagged vict +aff2-true-seeing+)))
+      (incf prob 5))
+    (when (aff-flagged ch +aff-blur+)
+      (incf prob 5))
+    (when (not (can-see-creature vict ch))
+      (incf prob 20))
+    (unless (zerop (get-condition ch +drunk+))
+      (decf prob (* (get-condition ch +drunk+) 2)))
+    (when (is-sick ch)
+      (decf prob 5))
+    (when (and (aff2-flagged vict +aff2-displacement+)
+               (not (aff2-flagged ch +aff2-true-seeing+)))
+      (decf prob (floor (level-of vict) 2)))
+    (when (aff2-flagged vict +aff2-evade+)
+      (decf prob (+ (floor (level-of vict) 2) 5)))
+    (when (and (is-barb ch)
+               (get-eq ch +wear-wield+))
+      (incf prob (floor (- (learned ch)
+                           (weapon-prof ch (get-eq ch +wear-wield+)))
+                        2)))
+    (when (or (room-is-watery (in-room-of ch))
+              (eql (terrain-of (in-room-of ch)) +sect-astral+)
+              (room-is-open-air (in-room-of ch)))
+      (setf bad-terrain t)
+      (decf prob (floor (* prob 20) 100)))
+
+    (cond
+      ((eql skill +skill-bash+)
+       (decf prob (floor (str-app-type-wield-w (str-of vict)) 2))
+       (decf prob (floor (- (weight-of vict)
+                            (weight-of ch))
+                         16))
+       (when (get-eq ch +wear-wield+)
+         (incf prob (weight-of (get-eq ch +wear-wield+))))
+       (when (get-eq ch +wear-shield+)
+         (incf prob (weight-of (get-eq ch +wear-shield+))))
+       (when bad-terrain
+         (setf prob (* prob 0.9)))
+       (when (and (or (mob-flagged vict +mob-nobash+)
+                      (< (position-of vict)
+                         +pos-fighting+))
+                  (not (immortalp ch)))
+         (setf prob 0))
+
+       (values prob
+               (if (is-barb ch)
+                   (- (rl-sec 9)
+                      (floor (* 5 (get-skill-bonus ch +skill-bash+)
+                                100)))
+                   (rl-sec 9))
+               (rl-sec 2)
+               10 0
+               (if (is-barb ch)
+                   (dice 2 (floor (level-of ch) 4))
+                   (+ (dice 2 (floor (level-of ch) 4))
+                      (dice 2 (get-skill-bonus ch +skill-bash+))))
+               +pos-sitting+
+               +pos-sitting+
+               nil
+               nil
+               nil))
+      ((eql skill +skill-strike+)
+       (let ((dam (cond
+                    ((get-eq ch +wear-wield+)
+                     (raw-eq-damage ch +wear-wield+ 0))
+                    ((get-eq ch +wear-hands+)
+                     (raw-eq-damage ch +wear-hands+ 0)))))
+         (cond
+           (dam
+             (values prob
+                     (rl-sec 2)
+                     (rl-sec 1)
+                     0 0
+                     (* dam 2)
+                     nil nil nil
+                     +wear-random+
+                     nil))
+           (t
+            (send-to-char ch "You need a weapon to strike out with!~%")
+            nil))))
+      ((eql skill +skill-headbutt+)
+       (values
+        (if (and (not (affected-by-spell ch +skill-kata+))
+                 (or (is-pudding vict)
+                     (is-slime vict)
+                     (noncorporealp vict)))
+            0
+            prob)
+        (rl-sec 4)
+        (rl-sec 1)
+        0 0
+        (dice 3 (floor (level-of ch) 8))
+        nil nil nil +wear-head+ nil))
+
+
+
+      )
+    ))
+
 (defun perform-hit (ch target)
   (cond
     ((null target)
