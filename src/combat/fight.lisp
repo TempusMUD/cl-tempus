@@ -1587,6 +1587,8 @@ if the players' reputations allow it."
 (defun stop-separated-fights (ch)
   (dolist (tch (copy-list (fighting-of ch)))
     (unless (eql (in-room-of ch) (in-room-of tch))
+      (remove-combat ch tch))
+    (when (eql ch tch)
       (remove-combat ch tch))))
 
 (defun perform-violence ()
