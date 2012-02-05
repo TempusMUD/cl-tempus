@@ -170,6 +170,15 @@
        (act ch :item obj
             :subject-emit "$p: you can't take that!"))
      nil)
+    ((and (is-corpse obj)
+          (eql (corpse-idnum obj) (idnum-of ch))
+          (not (immortalp ch))
+          (eql (pk-style-of (zone-of (in-room-of ch))) +zone-neutral-pk+)
+          (not (is-npc ch))
+          (plusp (corpse-idnum obj)))
+     (when print
+       (act ch :item obj
+            :subject-emit "$p: you can't pick up PC corpses in a NPK zone!")))
     (t
      t)))
 
@@ -185,33 +194,24 @@
           as obj = (first obj-sublist)
           as next-obj = (second obj-sublist)
           as counter from 1
+          when (can-take-obj ch obj t t)
           do
-          (cond
-            ((and (is-corpse obj)
-                 (/= (corpse-idnum obj) (idnum-of ch))
-                 (not (immortalp ch))
-                 (eql (pk-style-of (zone-of (in-room-of ch))) +zone-neutral-pk+)
-                 (not (is-npc ch))
-                 (plusp (corpse-idnum obj)))
-             (send-to-char ch "You can't take corpses in NPK zones!~%")
-             (setf counter 0))
-            ((can-take-obj ch obj t t)
-             (obj-from-room obj)
-             (obj-to-char obj ch)
+            (obj-from-room obj)
+            (obj-to-char obj ch)
 
-             (cond
-               ((is-obj-kind obj +item-money+)
-                (setf money-found t))
-               ((eql (vnum-of obj) +quad-vnum+)
-                (setf quad-found t))
-               ((and (not (zerop (sigil-idnum-of obj)))
-                     (/= (sigil-idnum-of obj) (idnum-of ch)))
-                (setf sigil-found t)))
-             (when (or (null next-obj)
-                       (string/= (name-of next-obj) (name-of obj)))
-               (act ch :item obj
-                    :all-emit (format nil "$n get$% $p.~[~;~:;~:* (x~d)~]" counter))
-               (setf counter 0))))))
+            (cond
+              ((is-obj-kind obj +item-money+)
+               (setf money-found t))
+              ((eql (vnum-of obj) +quad-vnum+)
+               (setf quad-found t))
+              ((and (not (zerop (sigil-idnum-of obj)))
+                    (/= (sigil-idnum-of obj) (idnum-of ch)))
+               (setf sigil-found t)))
+            (when (or (null next-obj)
+                      (string/= (name-of next-obj) (name-of obj)))
+              (act ch :item obj
+                   :all-emit (format nil "$n get$% $p.~[~;~:;~:* (x~d)~]" counter))
+              (setf counter 0))))
       ((eql mode :find-indiv)
        (multiple-value-bind (ignore name)
            (get-number arg)
@@ -225,7 +225,6 @@
          (send-to-char ch "You didn't find anything that looks like ~a ~a.~%"
                        (a-or-an name)
                        name))))
-
     (when money-found
       (consolidate-char-money ch))
     (when quad-found
@@ -299,7 +298,7 @@
   (let* ((objs (resolve-alias ch thing (contains-of container)))
          (mode (find-all-dots thing))
          (name (cond
-                 ((eql mode :find-all)
+                 ((eql mode :find-alldot)
                   (subseq thing 4))
                  ((eql mode :find-indiv)
                   (nth-value 2 (get-number thing)))
@@ -321,7 +320,7 @@
                        (plusp (corpse-idnum corpse)))))
     (let ((money-found nil))
       (loop
-         for obj-sublist on (contents-of corpse)
+         for obj-sublist on (contains-of corpse)
          as obj = (first obj-sublist)
          as next-obj = (second obj-sublist)
          as counter from 1
