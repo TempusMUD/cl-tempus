@@ -11,7 +11,7 @@
   "Returns a list of all the objects in obj-list, including all the objects contained by other objects."
   (append obj-list
           (mapcar (lambda (obj)
-                    (find-all-objects (contents-of obj)))
+                    (find-all-objects (contains-of obj)))
                   obj-list)))
 
 (defun is-unrentable (obj)

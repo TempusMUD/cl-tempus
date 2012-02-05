@@ -885,12 +885,12 @@
             (randomly-true 3))
        (let* ((corpse (random-elt (remove-if-not (lambda (obj)
                                                    (and (is-corpse obj)
-                                                        (contents-of obj)))
+                                                        (contains-of obj)))
                                                  (contents-of (in-room-of ch)))))
               (obj (random-elt (remove-if-not (lambda (obj)
                                                 (and (is-visible-to obj ch)
                                                      (can-take-obj ch obj t nil)))
-                                              (contents-of corpse)))))
+                                              (contains-of corpse)))))
          (when obj
            (perform-get-from-container ch obj corpse (aliases-of obj) :find-indiv))))
 
