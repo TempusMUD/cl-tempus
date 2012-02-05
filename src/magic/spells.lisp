@@ -24,6 +24,10 @@
 (define-spell-predicate spell-is-divine +mag-divine+)
 (define-spell-predicate spell-is-good +mag-good+)
 (define-spell-predicate spell-is-evil +mag-evil+)
+(defun spell-is-unpleasant (spell)
+  (and (<= spell +top-spell-define+)
+       (logtest (targets-of (aref *spell-info* spell))
+                +tar-unpleasant+)))
 
 (defun spell-gen (spell class)
   (aref (min-gen-of (aref *spell-info* spell)) class))
@@ -50,6 +54,110 @@
       (real-mobile-proto (- (corpse-idnum obj)))
       (load-player-from-xml (corpse-idnum obj))))
 
+(defun spell-add-affect (spell caster target duration level saved location modifier)
+  (when (or (not (spell-is-unpleasant spell))
+            (not (violentp spell))
+            saved)
+    (affect-to-char target
+                    (make-instance 'affected-type
+                                   :kind spell
+                                   :owner (idnum-of caster)
+                                   :duration duration
+                                   :level level
+                                   :modifier modifier
+                                   :location location))))
+
+(defun spell-set-affbit (spell caster target duration level saved idx bit)
+  (when (or (not (spell-is-unpleasant spell))
+            (not (violentp spell))
+            saved)
+  (affect-to-char target
+                  (make-instance 'affected-type
+                                 :kind spell
+                                 :owner (idnum-of caster)
+                                 :duration duration
+                                 :level level
+                                 :aff-index idx
+                                 :bitvector bit))))
+
+(defun spell-damage (spell caster target saved amt kind)
+  (when (>= (check-skill caster spell) 50)
+    (when (> (check-skill caster spell) 100)
+      (incf amt (floor (* amt (- (check-skill caster spell) 100)) 100)))
+    (cond
+      ;; int bonus for mages
+      ((and caster
+            (spell-is-magic spell)
+            (is-mage caster))
+       (incf amt (floor (* amt (- (int-of caster) 10)) 45)))
+      ;; wis bonus for clerics
+      ((and caster
+            (spell-is-divine spell)
+            (is-cleric caster))
+       (incf amt (floor (* amt (- (wis-of caster) 10)) 45)))
+      ;; cha bonus for bards
+      ((and caster
+            (spell-is-bardic spell)
+            (is-bard caster))
+       (incf amt (floor (* amt (- (cha-of caster) 10)) 45))
+       ;; fortissimo makes bard songs more powerful
+       (let ((af (affected-by-spell caster +song-fortissimo+)))
+         (incf amt (floor (* amt (level-of af)) 100))))))
+
+  ;; Divine attacks modified by caster alignment
+  (when (and (spell-is-divine spell)
+             caster)
+    (cond
+      ((is-good caster)
+       (setf amt (floor (* amt 3) 4)))
+      ((is-evil caster)
+       (incf amt (floor (* amt (abs (alignment-of caster)))
+                        4000))
+       (when (is-soulless caster)
+         (incf amt (floor amt 4)))
+       (when (is-good target)
+         (incf amt (floor (* amt (abs (alignment-of target))) 4000))))))
+
+  (when saved
+    (setf amt (floor amt 2)))
+
+  (damage-creature caster target amt nil kind nil))
+
+(defun spell-restore-hitp (spell caster target amt)
+  (cond
+    ((affected-by-spell target +spell-blackmantle+)
+     (send-to-char target "Your blackmantle absorbs the healing!~%")
+     0)
+    (t
+     ;; divine healing spells affected by alignment
+     (when (and caster
+                (plusp amt)
+                (spell-is-divine spell))
+       (incf amt (floor (* amt (abs (alignment-of caster))) 3000))
+       (when (is-evil caster)
+         (setf amt (floor amt 2))))
+
+     (setf amt (min (- (max-hitp-of target) (hitp-of target)) amt))
+
+     (incf (hitp-of target) amt)
+     amt)))
+
+(defun spell-restore-mana (target amt)
+  (setf amt (min (- (max-mana-of target) (mana-of target)) amt))
+  (incf (mana-of target) amt))
+
+(defun spell-restore-move (target amt)
+  (setf amt (min (- (max-move-of target) (move-of target)) amt))
+  (incf (move-of target) amt))
+
+(defun spell-alter-align (target amt)
+  (setf (alignment-of target) (pin (+ (alignment-of target) amt) -1000 1000)))
+
+(defun spell-extinguish (target)
+  (extinguish target)
+  (act target
+       :subject-emit "The flames on your body sizzle out and die."
+       :place-emit "The flames on $n's body sizzle out and die."))
 
 (eval-when (:load-toplevel :compile-toplevel :execute)
   (defun build-ability-macro (kind name body)
@@ -57,82 +165,48 @@
           (id-name (intern (format nil "+~a-~a+" kind name)))
           (body-syms (alexandria:flatten body)))
       `(progn
-         (defun ,func-name (caster target level savetype)
-           (let ((duration (floor level 4))
-                 (caster-emit nil)
-                 (target-emit nil)
-                 (room-emit nil))
-             (flet ((duration (new-duration)
-                      (setf duration new-duration))
-                    (affect (&optional (location +apply-none+) (modifier 0))
-                      (affect-to-char target
-                                      (make-instance 'affected-type
-                                                     :kind ,id-name
-                                                     :owner (idnum-of caster)
-                                                     :duration duration
-                                                     :level level
-                                                     :modifier modifier
-                                                     :location location)))
-                    (set-affbit (idx bit)
-                      (affect-to-char target
-                                      (make-instance 'affected-type
-                                                     :kind ,id-name
-                                                     :owner (idnum-of caster)
-                                                     :duration duration
-                                                     :level level
-                                                     :aff-index idx
-                                                     :bitvector bit)))
-                    (damage (amt)
-                      (damage-creature caster target amt nil ,id-name nil))
-                    (restore-hitp (amt)
-                      (cond
-                        ((affected-by-spell target +spell-blackmantle+)
-                         (send-to-char target "Your blackmantle absorbs the healing!~%"))
-                        (t
-                         ;; divine healing spells affected by alignment
-                         (when (and caster
-                                    (plusp amt)
-                                    (eql savetype :spell)
-                                    (spell-is-divine ,id-name))
-                           (incf amt (floor (* amt (abs (alignment-of caster))) 3000))
-                           (when (is-evil caster)
-                             (setf amt (floor amt 2))))
-
-                         (setf (hitp-of target)
-                               (pin (+ (hitp-of target) amt) -10 (max-hitp-of target))))))
-                    (restore-mana (amt)
-                      (setf (mana-of target)
-                            (pin (+ (mana-of target) amt) -10 (max-mana-of target))))
-                    (restore-move (amt)
-                      (setf (move-of target)
-                            (pin (+ (move-of target) amt) -10 (max-move-of target))))
-                    (alter-alignment (amt)
-                      (setf (alignment-of target)
-                            (pin (+ (alignment-of target) amt)
-                                 -1000 1000)))
-                    (to-caster (str)
-                      (setf caster-emit str))
-                    (to-target (str)
-                      (setf target-emit str))
-                    (to-room (str)
-                      (setf room-emit str)))
-               (declare (ignorable #'duration #'affect #'to-target
-                                   #'to-room #'to-caster #'set-affbit #'damage
-                                   #'restore-hitp #'restore-mana #'restore-move
-                                   #'alter-alignment)
-                        (dynamic-extent #'affect #'to-target #'to-room #'to-caster
-                                        #'set-affbit #'restore-hitp #'restore-mana
-                                        #'restore-move #'alter-alignment))
+         (defun ,func-name (caster target level saved)
+           (declare (ignorable caster target level saved))
+           (let (,@(when (or (member 'affect body-syms)
+                             (member 'set-affbit body-syms))
+                         `((duration (floor level 4))))
+                 ,@(when (member 'to-caster body-syms) `((caster-emit nil)))
+                 ,@(when (member 'to-target body-syms) `((target-emit nil)))
+                 ,@(when (member 'to-room body-syms) `((room-emit nil))))
+             (macrolet ((duration (new-duration)
+                          `(setf duration ,new-duration))
+                        (affect (&optional (location +apply-none+) (modifier 0))
+                          `(spell-add-affect ,,id-name caster target duration level saved ,location ,modifier))
+                        (set-affbit (idx bit)
+                          `(spell-set-affbit ,,id-name caster target duration level saved ,idx ,bit))
+                        (damage (amt &optional kind)
+                          `(spell-damage ,,id-name caster target saved ,amt ,(or kind ,id-name)))
+                        (restore-hitp (amt)
+                          `(spell-restore-hitp ,,id-name caster target ,amt))
+                        (restore-mana (amt)
+                          `(spell-restore-mana target ,amt))
+                        (restore-move (amt)
+                          `(spell-restore-move target ,amt))
+                        (alter-alignment (amt)
+                          `(spell-alter-align target ,amt))
+                        (extinguish-fire ()
+                          `(spell-extinguish target))
+                        (to-caster (str)
+                          `(setf caster-emit ,str))
+                        (to-target (str)
+                          `(setf target-emit ,str))
+                        (to-room (str)
+                          `(setf room-emit ,str)))
                ,@body
                ,@(when (member 'to-caster body-syms)
                        `((when (and caster-emit caster)
-                          (act target :target caster :target-emit caster-emit))))
+                           (act target :target caster :target-emit caster-emit))))
                ,@(when (member 'to-target body-syms)
                        `((when target-emit
-                          (act target :target caster :subject-emit target-emit))))
+                           (act target :target caster :subject-emit target-emit))))
                ,@(when (member 'to-room body-syms)
                        `((when room-emit
-                          (act target :target caster :place-emit room-emit)))))))
+                           (act target :target caster :place-emit room-emit)))))))
          (when (null (aref *spell-info* ,id-name))
            (setf (aref *spell-info* ,id-name) (make-instance 'spell-info)))
          (setf (func-of (aref *spell-info* ,id-name)) (function ,func-name))))))
@@ -177,6 +251,7 @@
              (floor level 2))))
 
 (define-spell cone-cold ()
+  (extinguish-fire)
   (damage (+ (dice level 12)
              (floor level 2))))
 
@@ -189,6 +264,7 @@
              (floor level 2))))
 
 (define-spell hailstorm ()
+  (extinguish-fire)
   (damage (+ (dice level 9) 10)))
 
 (define-spell microwave ()
@@ -258,10 +334,23 @@
 
 (define-spell psychic-surge ()
   (unless (affected-by-spell caster +spell-psychic-surge+)
-    (damage (+ (dice 3 7) (* 4 level)))))
+    (damage (+ (dice 3 7) (* 4 level)))
+    (remove-all-combat target)
+    (remove-combat caster target)
+    (setf (position-of target) +pos-stunned+)
+    (wait-state target (rl-sec 5))
+    (duration 1)
+    (affect)))
 
 (define-spell ego-whip ()
-  (damage (+ (dice 5 9) level)))
+  (damage (+ (dice 5 9) level))
+  (when (and (> (position-of target) +pos-sitting+)
+             (> (random-range 5 25)
+                (dex-of target)))
+    (to-target "You are knocked to the ground by the psychic attack!")
+    (to-room "$n is knocked to the ground by the psychic attack!")
+    (setf (position-of target) +pos-sitting+)
+    (wait-state target (rl-sec 2))))
 
 (define-spell earthquake ()
   (damage (+ (dice (floor level 2) 14) (* 2 level))))
@@ -836,13 +925,23 @@
   (duration (floor level 8))
   (let ((dam (+ 10 (dice (floor level 2) 5))))
     (if (aff3-flagged target +aff3-gravity-well+)
-        (damage (floor dam 2))
-        (damage dam)))
+        (damage (floor dam 2) +type-pressure+)
+        (damage dam +type-pressure+)))
+  (when (and (not (aff3-flagged target +aff3-gravity-well+))
+             (or (> (position-of target)
+                    +pos-standing+)
+                 (> (random-range 1 level)
+                    (str-of target))))
+    (setf (position-of target) +pos-resting+)
+    (act target
+         :subject-emit "The gravity around you suddenly increases, slamming you to the ground!"
+         :place-emit "The gravity around $n suddenly increases, slamming $m to the ground!"))
+
   (affect +apply-str+
           (if (eql (char-class-of caster)
-                             +class-physic+)
-                        (- (floor level 5))
-                        (- (floor level 8))))
+                   +class-physic+)
+              (- (floor level 5))
+              (- (floor level 8))))
   (to-target "The gravity well seems to take hold on your body."))
 
 (define-spell capacitance-boost ()
@@ -897,6 +996,7 @@
 
 (define-spell electrostatic-field ()
   (duration (+ 2 (floor level 4)))
+  (affect)
   (to-target "An electrostatic field cracles into being around you.")
   (to-room "An electrostatic field cracles into being around $n."))
 
@@ -1132,11 +1232,13 @@
 
 (define-spell fire-breathing ()
   (duration (+ 10 (floor level 4)))
+  (affect)
   (to-target "A warm tingling begins in the back of your throat.")
   (to-room "$n's eyes begin to glow a deep red."))
 
 (define-spell frost-breathing ()
   (duration (+ 10 (floor level 4)))
+  (affect)
   (to-target "A cool tingling begins in the back of your throat.")
   (to-room "$n's eyes begin to glow a deep blue."))
 
@@ -1232,13 +1334,12 @@
 (define-song weight-of-the-world ()
   (duration (+ 1 (floor level 25)))
   (set-affbit 2 +aff2-telekinesis+)
-
   (to-target "You feel the weight of the world lifted from your shoulders."))
 
 (define-song guiharias-glory ()
   (duration (+ 3 (floor level 8)))
   (affect +apply-damroll+ (dice 2 (+ 1 (floor level 16))))
-  (to-target "You feel the power ot dieties flowing in your veins!"))
+  (to-target "You feel the power of dieties flowing in your veins!"))
 
 (define-song unladen-swallow-song ()
   (cond
@@ -1307,41 +1408,37 @@
   (to-room "Mirror images of $n begin moving around $m."))
 
 (define-spell cure-light ()
-  (when (< (hitp-of target) (max-hitp-of target))
-    (restore-hitp (floor
-                   (* (check-skill caster +spell-cure-light+)
-                      (+ 1
-                         (dice 1 8)
-                         (floor level 4)))
-                   100))
+  (when (plusp (restore-hitp (floor
+                              (* (check-skill caster +spell-cure-light+)
+                                 (+ 1
+                                    (dice 1 8)
+                                    (floor level 4)))
+                              100)))
     (to-target "You feel better.")))
 
 (define-spell cure-critic ()
-  (when (< (hitp-of target) (max-hitp-of target))
-    (restore-hitp (floor
-                   (* (check-skill caster +spell-cure-light+)
-                      (+ 3
-                         (dice 3 8)
-                         (floor level 4)))
-                   100))
+  (when (plusp (restore-hitp (floor
+                              (* (check-skill caster +spell-cure-light+)
+                                 (+ 3
+                                    (dice 3 8)
+                                    (floor level 4)))
+                              100)))
     (to-target "You feel a lot better!")))
 
 (define-spell heal ()
-  (when (< (hitp-of target) (max-hitp-of target))
-    (restore-hitp (floor
-                   (* (check-skill caster +spell-cure-light+)
-                      (+ 50
-                         (dice 3 level)))
-                   100))
+  (when (plusp (restore-hitp (floor
+                              (* (check-skill caster +spell-cure-light+)
+                                 (+ 50
+                                    (dice 3 level)))
+                              100)))
     (to-target "A warm feeling floods your body.")))
 
 (define-spell greater-heal ()
-  (when (< (hitp-of target) (max-hitp-of target))
-    (restore-hitp (floor
-                   (* (check-skill caster +spell-cure-light+)
-                      (+ 100
-                         (dice 5 level)))
-                   100))
+  (when (plusp (restore-hitp (floor
+                              (* (check-skill caster +spell-cure-light+)
+                                 (+ 100
+                                    (dice 5 level)))
+                              100)))
     (to-target "A supreme warm feeling floods your body.")))
 
 (define-spell restoration ()
@@ -1349,33 +1446,32 @@
     (setf (aref (conditions-of target) +full+) 24))
   (unless (minusp (get-condition target +thirst+))
     (setf (aref (conditions-of target) +thirst+) 24))
-  (when (< (hitp-of target) (max-hitp-of target))
+
+  ;; Note hack here to handle blackmantle
+  (when (plusp (restore-hitp (max-hitp-of target)))
     (setf (hitp-of target) (max-hitp-of target))
     (to-target "You feel totally healed!")))
 
 (define-spell refresh ()
-  (when (< (move-of target) (max-move-of target))
-    (restore-move (floor
-                   (* (check-skill caster +spell-greater-heal+)
-                      (+ 50 (random-range 0 level))
-                      (wis-of caster))
-                   100))
+  (when (plusp (restore-move (floor
+                              (* (check-skill caster +spell-greater-heal+)
+                                 (+ 50 (random-range 0 level))
+                                 (wis-of caster))
+                              100)))
     (to-target "You feel refreshed!")))
 
 (define-spell mana-restore ()
-  (when (< (mana-of target) (max-mana-of target))
-    (restore-mana (dice level 10))
+  (when (plusp (restore-mana (dice level 10)))
     (to-target "You feel your spiritual energies replenished.")
     (to-room "$n is surrounded by a brief aura of blue light.")))
 
 (define-spell psychic-conduit ()
-  (when (< (mana-of target) (max-mana-of target))
-    (restore-mana
-     (+ level
-        (floor (check-skill caster +spell-psychic-conduit+)
-               20)
-        (random-range 0 (+ (wis-of caster)
-                           (* 4 (remort-gen-of caster))))))))
+  (restore-mana
+   (+ level
+      (floor (check-skill caster +spell-psychic-conduit+)
+             20)
+      (random-range 0 (+ (wis-of caster)
+                         (* 4 (remort-gen-of caster)))))))
 
 (define-spell satiation ()
   (gain-condition target +full+ (dice 3 (min 3 (1+ (floor level 4)))))
@@ -1419,3 +1515,13 @@
     ((is-evil target)
      (damage (+ 100 (* 4 level))))))
 
+(define-spell psionic-shockwave ()
+  (when (and (> (position-of target) +pos-sitting+)
+             (> (random-range 5 25) (floor (dex-of target) 3)))
+    (setf (position-of target) +pos-sitting+)
+    (wait-state target (rl-sec 2))
+    (to-caster "$N is knocked to the ground by your psionic shockwave!")
+    (if (is-psionic target)
+        (to-target "You are knocked to the ground by $N's psionic shockwave!")
+        (to-target "Your head explodes with pain and you fall to the ground in agony!"))
+    (to-room "$N suddenly falls to the ground, clutching $S head!")))

@@ -509,6 +509,13 @@
                (eql (char-class-of ch) +class-water+)
                (eql (char-class-of ch) +class-fire+)))))
 
+(defun mindlessp (ch)
+  (or (is-undead ch)
+      (is-slime ch)
+      (is-plant ch)
+      (is-pudding ch)
+      (is-robot ch)))
+
 (defun get-eq (ch pos) (aref (equipment-of ch) pos))
 (defun get-implant (ch pos) (aref (implants-of ch) pos))
 (defun get-tattoo (ch pos) (aref (tattoos-of ch) pos))
