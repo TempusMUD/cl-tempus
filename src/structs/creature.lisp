@@ -811,9 +811,9 @@
 
   (when (immortalp ch)
     (loop for i from 1 upto +max-skills+ do
-         (set (aref (skills-of ch) i) 100))
-    (loop for i from 1 upto +max-tongues+ do
-         (set (aref (tongues-of ch) i) 100))
+         (setf (aref (skills-of ch) i) 100))
+    (loop for i from 1 upto (1- +max-tongues+) do
+         (setf (aref (tongues-of ch) i) 100))
     (setf (str-of ch) 25)
     (setf (int-of ch) 25)
     (setf (wis-of ch) 25)
