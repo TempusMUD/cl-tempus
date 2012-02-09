@@ -5,7 +5,7 @@
 (define-condition invalid-equipment-file (error)
   ())
 
-(defun xml-attr (node name &key numeric default numeric-with-nil hex)
+(defun xml-attr (node name &key numeric default numeric-with-nil hex float)
   (let ((val (assoc name (second node) :test #'string=)))
     (cond
       ((null (second val))
@@ -19,6 +19,8 @@
        (parse-integer (second val)))
       (hex
        (parse-integer (second val) :radix 16))
+      (float
+       (read-from-string (second val)))
       (t
        (second val)))))
 
@@ -61,7 +63,7 @@
            (setf (gold-of ch) (xml-attr node "gold" :numeric t)))
           ("stats"
            (setf (alignment-of ch) (xml-attr node "align" :numeric t))
-           (setf (weight-of ch) (xml-attr node "weight" :numeric t))
+           (setf (weight-of ch) (xml-attr node "weight" :float t))
            (setf (height-of ch) (xml-attr node "height" :numeric t))
            (setf (race-of ch) (parse-pc-race (xml-attr node "race")))
            (setf (sex-of ch) (string-case (xml-attr node "sex")

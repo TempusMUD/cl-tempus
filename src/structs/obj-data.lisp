@@ -709,7 +709,7 @@
           ("points"
            (setf (kind-of obj) (xml-attr node "type" :numeric t))
            (setf (soilage-of obj) (xml-attr node "soilage" :numeric t))
-           (setf (weight-of obj) (xml-attr node "weight" :numeric t))
+           (setf (weight-of obj) (xml-attr node "weight" :float t))
            (setf (material-of obj) (xml-attr node "material" :numeric t))
            (setf (timer-of obj) (xml-attr node "timer" :numeric t)))
           ("tracking"
