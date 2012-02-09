@@ -163,7 +163,12 @@
           ("recentkill"
            (push (list (xml-attr node "vnum" :numeric t)
                        (xml-attr node "times" :numeric t))
-                 (recently-killed-of ch))))))
+                 (recently-killed-of ch)))
+          ("skill"
+           (let ((skill (str-to-spell (xml-attr node "name"))))
+             (when skill
+               (setf (skill-of ch (idnum-of skill))
+                     (xml-attr node "level" :numeric t))))))))
 
     (setf (command-aliases-of ch) (nreverse (command-aliases-of ch)))
     (setf (recently-killed-of ch) (nreverse (recently-killed-of ch)))
