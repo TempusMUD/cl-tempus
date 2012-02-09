@@ -26,6 +26,7 @@
    (quest-banned :accessor quest-banned-of :initarg :quest-banned :initform nil)
    (bank-past :accessor past-bank-of :initform 0)
    (bank-future :accessor future-bank-of :initform 0)
+   (metric-units :accessor metric-units-of :initform nil)
    (players :accessor players-of :initform nil))
   (:default-initargs :password "" :email ""
                                 :creation-time (now)
