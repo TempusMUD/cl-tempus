@@ -697,6 +697,27 @@
          (act ch :item tank
               :subject-emit "A warning indicator reads: $p air level low."))))))
 
+(defun mobile-specs ()
+  (dolist (ch (copy-list *characters*))
+    (when (and (is-npc ch)
+               (mob-flagged ch +mob-spec+)
+               (null (link-of ch))
+               (zerop (wait-state-of ch))
+               (func-of (shared-of ch)))
+      (with-simple-restart (continue "Continue from signal in mobile special")
+        (if *production-mode*
+            (handler-bind ((error (lambda (str)
+                                    (errlog "System error: ~a" str)
+                                    (continue)))
+                           (creature-died (lambda (sig)
+                                            (declare (ignore sig))
+                                            (continue))))
+              (funcall (func-of (shared-of ch)) 'tick ch ch nil nil))
+            (handler-bind ((creature-died (lambda (sig)
+                                            (declare (ignore sig))
+                                            (continue))))
+              (funcall (func-of (shared-of ch)) 'tick ch ch nil nil)))))))
+
 (defun single-mobile-activity (ch)
   (let ((cur-class (if (and (is-remort ch) (randomly-true 3))
                        (remort-char-class-of ch)
