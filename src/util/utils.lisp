@@ -475,21 +475,24 @@ sequences in seq-list with the delimiter between each element"
   (let* ((buf (page-buf-of cxn))
          (buf-len (length buf)))
     (loop
-     for count = 1 then (1+ count)
-     for line-begin = 0 then (1+ line-end)
-     for line-end = (and (< line-begin buf-len)
-                         (position #\newline buf :start line-begin))
-     while (and line-end (< count 22))
-     finally
-     (cond
-      (line-end
-       (cxn-write cxn "~a~a~%" (subseq buf 0 (1+ line-end))
-                  (colorize cxn
-                   "&r**** &nUse the 'more' command to continue. &r****&n"))
-       (setf (page-buf-of cxn) (subseq buf (1+ line-end))))
-      (t
-       (cxn-write cxn "~a" buf)
-       (setf (page-buf-of cxn) nil))))))
+       for count = 1 then (1+ count)
+       for line-begin = 0 then (1+ line-end)
+       for line-end = (and (< line-begin buf-len)
+                           (position #\newline buf :start line-begin))
+       while (and line-end (< count 22))
+       finally
+         (cond
+           (line-end
+            (cxn-write cxn "~a" (subseq buf 0 (1+ line-end)))
+            (setf (page-buf-of cxn) (subseq buf (1+ line-end)))
+            (if (string= (page-buf-of cxn) "")
+                (setf (page-buf-of cxn) nil)
+                (cxn-write cxn "~a~%"
+                           (colorize cxn
+                                     "&r**** &nUse the 'more' command to continue. &r****&n"))))
+           (t
+            (cxn-write cxn "~a" buf)
+            (setf (page-buf-of cxn) nil))))))
 
 (defun print-columns-to-string (cols width list)
   (with-output-to-string (result)
