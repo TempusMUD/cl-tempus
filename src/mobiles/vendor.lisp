@@ -307,7 +307,7 @@
 
         (let ((cost (vendor-get-value obj
                                       (markdown-of shop)
-                                      (cost-modifier-of ch self)
+                                      (- (cost-modifier-of ch self))
                                       (currency-of shop)))
               (amt-carried (if (eql (currency-of shop) 'gold) (gold-of self) (cash-of self))))
 
@@ -364,7 +364,7 @@
 
       (let ((cost (vendor-get-value obj
                                     (markdown-of shop)
-                                    (cost-modifier-of ch self)
+                                    (- (cost-modifier-of ch self))
                                     (currency-of shop))))
         (perform-say-to self ch (format nil "I'll give you ~d ~a for it!"
                                         cost
@@ -373,7 +373,7 @@
 (defun vendor-get-value (obj percent modifier currency)
   "Returns the value of an OBJ, checking for buyability."
   (let ((cost (cost-of obj))
-        (min-cost (if (eql currency 'qp) 1 100)))
+        (min-cost (if (eql currency 'qp) 1 12)))
     ;; Adjust cost for wear and tear on a direct percentage basis
     (when (and (/= (damage-of obj) -1)
                (/= (max-dam-of obj) -1)
@@ -389,7 +389,7 @@
     ;; Other item flag modifiers
     (when (is-obj-stat2 obj +item2-reinforced+)
       (incf percent 25))
-    (when (is-obj-stat2 obj +item2-reinforced+)
+    (when (is-obj-stat2 obj +item2-enhanced+)
       (incf percent 25))
 
     (incf percent modifier)
