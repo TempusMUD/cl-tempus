@@ -69,6 +69,7 @@
      t)
     ;; Nothing at all gets through immort invis
     ((and (is-pc ch)
+          (is-pc tch)
           (immortalp tch)
           (< (level-of ch) (invis-level-of tch)))
      nil)
