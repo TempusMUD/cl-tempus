@@ -3036,3 +3036,12 @@
       ("system coordinator" "parallel processor" "parallel processor")
       ("kinetic drive unit" "kinetic drive unit" "power converter")
       ("hard disk" "hard disk" "hard disk")))
+;;  MG CL TH WR BR PS PH CY KN RN BD MN VP MR S1 S2 S3
+(defparameter +class-max-skill+
+  #(75 75 70 70 65 75 75 80 75 75 80 75 75 70 70 70 70))
+(defparameter +class-max-prac+
+  #(25 20 20 20 20 25 20 30 20 25 30 20 15 25 25 25 25))
+(defparameter +class-min-prac+
+  #(15 15 10 15 10 15 15 15 15 15 15 10 10 10 10 10 10))
+(defparameter +class-prac-type+
+  #(spell spell skill skill skill trigger alteration program spell spell song zen spell skill skill skill skill))

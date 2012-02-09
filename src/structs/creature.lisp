@@ -971,3 +971,6 @@ control code."
            (and (not (can-see-room ch room))
                 (or (not (get-eq ch +wear-light+))
                     (aref (value-of (get-eq ch +wear-light+)) 0))))))
+
+(defun cost-modifier-of (ch seller)
+  (* (- (cha-of seller) (cha-of ch)) 2))

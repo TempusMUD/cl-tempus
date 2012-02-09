@@ -1,7 +1,8 @@
 (in-package :tempus)
 
 (defclass spell-info ()
-  ((name :accessor name-of :initarg :name :initform "!UNUSED!")
+  ((idnum :accessor idnum-of :initarg :idnum :initform 0)
+   (name :accessor name-of :initarg :name :initform "!UNUSED!")
    (min-position :accessor min-position-of :initarg :min-position :initform 0)
    (mana-min :accessor mana-min-of :initarg :mana-min :initform 0)
    (mana-max :accessor mana-max-of :initarg :mana-max :initform 0)
@@ -499,8 +500,9 @@
   (dotimes (idx 1000)
     (if (aref *spell-info* idx)
         (reinitialize-instance (aref *spell-info* idx)
+                               :idnum idx
                                :func (func-of (aref *spell-info* idx)))
-        (setf (aref *spell-info* idx) (make-instance 'spell-info))))
+        (setf (aref *spell-info* idx) (make-instance 'spell-info :idnum idx))))
   (setf (name-of (aref *spell-info* 0)) "!RESERVED!"))
 
 (defun apply-attribute-to-spell (spell child)
