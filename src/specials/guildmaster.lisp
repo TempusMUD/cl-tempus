@@ -1,23 +1,13 @@
 (in-package #:tempus)
 
-(defcommand (ch "list") ()
-  (send-to-char ch "You'll have to do that someplace else.~%"))
-(defcommand (ch "list" args) ()
-  (declare (ignore args))
-  (send-to-char ch "You'll have to do that someplace else.~%"))
 (defcommand (ch "practice") ()
-  (list-skills ch t 3))
+  (list-skills ch :only-known-p t))
 (defcommand (ch "practice" args) ()
   (declare (ignore args))
   (send-to-char ch "You'll have to do that someplace else.~%"))
 (defcommand (ch "learn") ()
-  (list-skills ch t 3))
+  (list-skills ch :only-known-p t))
 (defcommand (ch "learn" args) ()
-  (declare (ignore args))
-  (send-to-char ch "You'll have to do that someplace else.~%"))
-(defcommand (ch "offer") ()
-  (send-to-char ch "You'll have to do that someplace else.~%"))
-(defcommand (ch "offer" args) ()
   (declare (ignore args))
   (send-to-char ch "You'll have to do that someplace else.~%"))
 
@@ -42,7 +32,7 @@
     ((<= percent 150) "extraordinary")
     (t "superhuman")))
 
-(defun list-skills (ch only-known-p type)
+(defun list-skills (ch &key only-known-p only-spells-p only-skills-p)
   (with-pagination ((link-of ch))
     (let ((spells nil)
           (skills nil))
@@ -62,7 +52,7 @@
                    (setf spells (sort unsorted-spells #'string< :key 'name-of))
                    (setf skills (sort unsorted-skills #'string< :key 'name-of))))
 
-      (when (and (or (= type 1) (= type 3))
+      (when (and (not only-skills-p)
                  (or (and (not (eql (aref +class-prac-type+ (char-class-of ch)) 'skill))
                           (not (eql (aref +class-prac-type+ (char-class-of ch)) 'program)))
                      (and (remort-gen-of ch)
@@ -83,7 +73,7 @@
                             (how-good (skill-of ch (idnum-of spell)))
                             (spell-mana-cost ch (idnum-of spell))))))
 
-      (when (or (= type 2) (= type 3))
+      (unless only-spells-p
         (send-to-char ch "~%&YYou know ~:[~;of ~]the following ~a:&n~%"
                       only-known-p (if (is-cyborg ch)
                                        "programs" "skills"))
@@ -127,14 +117,14 @@
     (cond
       ((string= "list" (first (command-info-pattern command)))
 
-       (list-skills ch nil 3)
+       (list-skills ch)
        t)
       ((not (member (first (command-info-pattern command))
                     '("practice" "train" "learn" "offer")
                     :test #'string-equal))
        nil)
       ((null vars)
-       (list-skills ch nil 3)
+       (list-skills ch)
        t)
       (t
        (let ((skill (position (first vars) *spell-info* :key 'name-of :test 'string-abbrev)))

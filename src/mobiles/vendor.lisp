@@ -50,9 +50,6 @@
 
 (defparameter +vendor-max-items+ 25)
 
-(defun cost-modifier-of (ch seller)
-  (* (- (cha-of seller) (cha-of ch)) 2))
-
 (defun shop-is-closed (self shop)
   (let ((time (local-time-of (zone-of (in-room-of self)))))
     (find-if (lambda (shop-hours)
@@ -493,7 +490,7 @@
      (when (vendor-will-deal-with self ch shop)
        (vendor-list-wares self ch vars shop))
      t)
-    ("value"
+    (("value" "offer")
      (when (vendor-will-deal-with self ch shop)
        (vendor-value-ware self ch vars shop))
      t)
@@ -513,7 +510,7 @@
          unless (string= (string-trim " " line) "")
          do
            (with-words line (param-key &rest value)
-             (string-abbrev-case param-key
+             (string-case param-key
                ("room"
                 (setf (room-of shop) (parse-integer value :junk-allowed t)))
                ("produce"
@@ -634,6 +631,11 @@
 (defcommand (ch "value") (:resting)
   (send-to-char ch "You can't do that here.~%"))
 (defcommand (ch "value" args) (:resting)
+  (declare (ignore args))
+  (send-to-char ch "You can't do that here.~%"))
+(defcommand (ch "offer") ()
+  (send-to-char ch "You can't do that here.~%"))
+(defcommand (ch "offer" args) (:resting)
   (declare (ignore args))
   (send-to-char ch "You can't do that here.~%"))
 
