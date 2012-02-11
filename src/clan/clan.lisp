@@ -443,7 +443,7 @@
          (send-to-clan (clan-of ch) "~a has been inducted into the clan by ~a!"
                        (name-of target)
                        (name-of ch))
-         (add-clan-member ch clan))))))
+         (add-clan-member target clan))))))
 
 (defcommand (ch "enroll" target-str clan-str) ()
   (let* ((targets (resolve-alias ch target-str (people-of (in-room-of ch))))
@@ -470,7 +470,7 @@
                      "~a has been inducted into the clan by ~a!"
                      (name-of target)
                      (name-of ch))
-         (add-clan-member ch clan)))))
+         (add-clan-member target clan)))))
 
 (defcommand (ch "dismiss" target-str) ()
   (let* ((targets (or (resolve-alias ch target-str (people-of (in-room-of ch)))
