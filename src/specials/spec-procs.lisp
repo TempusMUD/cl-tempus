@@ -9,7 +9,7 @@
 (defmacro define-special (name (&rest args) (&rest flags) &body body)
   (let ((func-sym (intern (format nil "SPECIAL-~a" name)
                           (find-package :tempus)))
-        (name-str (string-downcase name)))
+        (name-str (substitute #\_ #\- (string-downcase name))))
     `(progn
        (defun ,func-sym ,args ,@body)
        (setf (gethash ,name-str *special-funcs*) ',func-sym)

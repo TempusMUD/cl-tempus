@@ -177,6 +177,8 @@
                                  :depends-on ("defs" "utils"))
              (:file "guildmaster" :pathname "specials/guildmaster"
                                  :depends-on ("defs" "utils"))
+             (:file "mystical-enclave" :pathname "specials/mystical-enclave"
+                                 :depends-on ("defs" "utils"))
              (:file "spells" :pathname "magic/spells"
                                    :depends-on ("defs" "utils"))
              (:file "spell-parser" :pathname "magic/spell-parser"

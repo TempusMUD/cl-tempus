@@ -12,7 +12,7 @@
 
 (defparameter +spec-file-mob+ "lib/etc/spec_ass_mob")
 (defparameter +spec-file-obj+ "lib/etc/spec_ass_obj")
-(defparameter +spec-file-rm+ "lib/etc/spec_ass_room")
+(defparameter +spec-file-rm+ "lib/etc/spec_ass_wld")
 (defparameter +timewarp-file+ "lib/etc/timewarps")
 
 (defparameter +spec-mob+ 1)
