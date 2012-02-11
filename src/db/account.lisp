@@ -101,6 +101,36 @@ is case-insensitive."
     (save-account new-account)
     new-account))
 
+(defun account-by-idnum (idnum)
+  "Returns the account associated with the given id. The account may
+be loaded from the database or it may be retrieved from a cache."
+  (let* ((cached (gethash idnum *account-idnum-cache* nil)))
+    (if cached
+        cached
+        (let ((result (postmodern:query (:select '*
+                                      :from 'accounts
+                                      :where (:= 'idnum idnum))
+                             :alist))
+              (account (make-instance 'account)))
+          (when result
+            (loop
+               with tempus-pkg = (find-package :tempus)
+               for tuple in result
+               unless (eql (cdr tuple) :null)
+               do (setf (slot-value account (intern (symbol-name (car tuple))
+                                                    tempus-pkg))
+                        (cdr tuple)))
+            (setf (gethash (name-of account) *account-name-cache*) account)
+            (setf (gethash (idnum-of account) *account-idnum-cache*) account)
+            (setf (players-of account)
+                  (mapcar (lambda (info)
+                            (make-instance 'player-record
+                                           :idnum (cdr (assoc :idnum info))
+                                           :account (idnum-of account)
+                                           :name (cdr (assoc :name info))))
+                          (postmodern:query (:order-by (:select 'idnum 'name :from 'players :where (:= 'account (idnum-of account))) 'idnum) :alists)))
+            account)))))
+
 (defun load-account (name)
   "Returns the account associated with the given name. The account may
 be loaded from the database or it may be retrieved from a cache."
@@ -314,11 +344,27 @@ file."
     (incf (future-bank-of account) amount)
     (save-account account)))
 
+(defun withdraw-future-bank (account amount)
+  "Withdraws AMOUNT from the future bank of ACCOUNT."
+  (check-type account account)
+  (assert (not (minusp amount)))
+  (unless (zerop amount)
+    (decf (future-bank-of account) amount)
+    (save-account account)))
+
 (defun deposit-past-bank (account amount)
-  "Deposits AMOUNT into the past bank of ACCOUNT."
+  "Deposits AMOUNT into the future bank of ACCOUNT."
   (check-type account account)
   (assert (not (minusp amount)))
   (unless (zerop amount)
     (incf (past-bank-of account) amount)
+    (save-account account)))
+
+(defun withdraw-past-bank (account amount)
+  "Withdraws AMOUNT from the past bank of ACCOUNT."
+  (check-type account account)
+  (assert (not (minusp amount)))
+  (unless (zerop amount)
+    (decf (past-bank-of account) amount)
     (save-account account)))
 
