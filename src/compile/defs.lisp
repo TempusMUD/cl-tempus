@@ -170,10 +170,24 @@ Understands the &rest qualifier."
 (defun bitp (bitv idx)
   (plusp (bit bitv idx)))
 (defsetf bitp (bitv idx) (val)
-`(setf (bit ,bitv ,idx) (if ,val 1 0)))
+  `(setf (bit ,bitv ,idx) (if ,val 1 0)))
 
 (defun new-hash-table (&rest args)
   (let ((table (make-hash-table)))
     (loop for (key val) on args by #'cddr do
          (setf (gethash key table) val))
     table))
+
+(defmacro with-numeric-input (vars &body body)
+  `(let ,(loop for var-tuple in vars
+              as var = (first var-tuple)
+            collect `(,var (parse-integer ,var :junk-allowed t)))
+     (cond
+       ,@(loop for var-tuple in vars
+              as var = (first var-tuple)
+              as message = (second var-tuple)
+              as pred = (third var-tuple)
+            if pred collect `((not (and ,var (funcall ,pred ,var))) (signal 'parser-error :message ,message))
+            else collect  `((null ,var) (signal 'parser-error :message ,message)))
+       (t
+        ,@body))))

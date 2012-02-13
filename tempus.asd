@@ -5,11 +5,12 @@
 
 (defsystem :tempus
   :name "Tempus"
-  :version "1.0.0d"
+  :version "1.0.0"
   :author "Daniel Lowe <dlowe@dlowe.net>"
   :description "Tempus MUD Codebase"
   :depends-on (postmodern
                anaphora
+               alexandria
                local-time
                cl-postgres+local-time
                cl-interpol
@@ -19,188 +20,107 @@
                iolib)
 
   :components
-  ((:module :src :components
-            ((:file "defpackage" :pathname "util/defpackage")
-             (:file "defs" :pathname "util/defs"
-                           :depends-on ("defpackage"))
-             (:file "config" :pathname "misc/config"
-                             :depends-on ("defpackage"))
-             (:file "db" :pathname "db/db"
-                         :depends-on ("defs" "constants" "creature" "obj-data" "zone-data" "room-data" "search" "artisan" "account" "spec-assign" "clan" "help" "act-social" "tongues" "act-physic" "dyntext" "spell-parser" "combat-messages" "quest" "artisan" "utils" "weather"))
-             (:file "account" :pathname "db/account"
-                              :depends-on ("defs" "utils"))
-             (:file "act-barb" :pathname "classes/act-barb"
-                               :depends-on ("defs" "utils" "constants" "creature"))
-             (:file "act-comm" :pathname "misc/act-comm"
-                               :depends-on ("defs"
-                                            "utils"
-                                            "constants"
-                                            "interpreter"
-                                            "act-social"
-                                            "creature"
-                                            "db"
-                                            "room-data"
-                                            "zone-data"))
-             (:file "act-informative" :pathname "misc/act-informative"
-                                      :depends-on ("defs"
-                                                   "utils"
-                                                   "interpreter"
-                                                   "constants"
-                                                   "creature"
-                                                   "weather"))
-             (:file "act-movement" :pathname "misc/act-movement"
-                                   :depends-on ("defs"
-                                                "utils"
-                                                "interpreter"
-                                                "constants"))
-             (:file "act-obj" :pathname "misc/act-obj"
-                                :depends-on ("defs"
-                                             "utils"
-                                             "interpreter"
-                                             "constants"
-                                             "obj-data"
-                                             "creature"))
-             (:file "act-offensive" :pathname "combat/act-offensive"
-                                :depends-on ("defs"
-                                             "utils"
-                                             "interpreter"
-                                             "constants"
-                                             "obj-data"
-                                             "creature"))
-             (:file "act-other" :pathname "misc/act-other"
-                                :depends-on ("defs" "utils" "interpreter"))
-             (:file "act-thief" :pathname "classes/act-thief"
-                               :depends-on ("defs" "utils" "constants" "creature"))
-             (:file "act-physic" :pathname "classes/act-physic"
-                                 :depends-on ("defs" "utils" "constants" "creature"))
-             (:file "act-social" :pathname "social/act-social"
-                                 :depends-on ("defs" "utils" "interpreter"))
-             (:file "act-wizard" :pathname "misc/act-wizard"
-                                 :depends-on ("defs" "utils" "interpreter"
-                                                     "weather"))
-             (:file "artisan" :pathname "mobiles/artisan"
-                              :depends-on ("creature"))
-             (:file "ban" :pathname "net/ban"
-                          :depends-on ("defs" "utils"))
-             (:file "bomb" :pathname "objects/bomb"
-                           :depends-on ("defs" "utils"))
-             (:file "char-class" :pathname "classes/char-class"
-                    :depends-on ("defpackage" "constants"))
-             (:file "constants" :pathname "db/constants"
-                    :depends-on ("defpackage" "defs"))
-             (:file "clan" :pathname "clan/clan"
-                           :depends-on ("defs" "utils" "interpreter"))
-             (:file "combat-messages" :pathname "combat/combat-messages"
-                                      :depends-on ("defs" "utils"))
-             (:file "combat-utils" :pathname "combat/combat-utils"
-                                      :depends-on ("defs" "utils"))
-             (:file "comm" :pathname "net/comm"
-                           :depends-on ("defs" "utils" "network" "nanny" "fight"))
-             (:file "creature" :pathname "structs/creature"
-                               :depends-on ("defs" "random" "constants"))
-             (:file "creature-io" :pathname "structs/creature-io"
-                                  :depends-on ("creature"))
-             (:file "dyntext" :pathname "dyntext/dyntext"
-                              :depends-on ("defs" "creature" "editor" "interpreter"))
-             (:file "editor" :pathname "editor/editor"
-                             :depends-on ("network" "creature"))
-             (:file "fight" :pathname "combat/fight"
-                             :depends-on ("defs" "utils" "combat-utils" "handler" "weather"))
-             (:file "groups" :pathname "interpreter/groups"
-                             :depends-on ("defs" "utils"))
-             (:file "graph" :pathname "util/graph"
-                             :depends-on ("creature" "room-data"))
-             (:file "handler" :pathname "util/handler"
-                              :depends-on ("defs" "creature" "obj-data" "room-data"))
-             (:file "help" :pathname "help/help"
-                           :depends-on ("defs" "utils" "interpreter"))
-             (:file "house" :pathname "house/house"
-                            :depends-on ("defs" "utils"))
-             (:file "interpreter" :pathname "interpreter/interpreter"
-                                  :depends-on ("defs" "utils" "comm"))
-             (:file "limits" :pathname "misc/limits"
-                            :depends-on ("defs" "creature"))
-             (:file "logging" :pathname "util/logging"
-                            :depends-on ("defs" "char-class" "constants" "network"))
-             (:file "login" :pathname "misc/login"
-                            :depends-on ("defs" "char-class"))
-             (:file "magic" :pathname "magic/magic"
-                           :depends-on ("defs" "creature"))
-             (:file "mail" :pathname "mobiles/mail"
-                           :depends-on ("defs" "creature"))
-             (:file "mobact" :pathname "mobiles/mobact"
-                           :depends-on ("defs" "creature"))
-             (:file "nanny" :pathname "net/nanny"
-                            :depends-on ("defs" "utils" "config" "editor"
-                                                "network" "login" "mail"))
-             (:file "network" :pathname "net/network"
-                              :depends-on ("defs"))
-             (:file "obj-data" :pathname "structs/obj-data"
-                               :depends-on ("defs"))
-             (:file "olc" :pathname "olc/olc"
-                               :depends-on ("defs" "interpreter"))
-             (:file "olc-wld" :pathname "olc/olc-wld"
-                               :depends-on ("defs" "olc" "interpreter" "room-data"))
-             (:file "olc-srch" :pathname "olc/olc-srch"
-                               :depends-on ("defs" "olc" "interpreter" "room-data"))
-             (:file "olc-obj" :pathname "olc/olc-obj"
-                               :depends-on ("defs" "olc" "interpreter" "obj-data"))
-             (:file "olc-zon" :pathname "olc/olc-zon"
-                               :depends-on ("defs" "olc" "interpreter" "zone-data"))
-             (:file "olc-mob" :pathname "olc/olc-mob"
-                               :depends-on ("defs" "olc" "interpreter" "creature"))
-             (:file "paths" :pathname "objects/paths"
-                            :depends-on ("defs" "utils"))
-             (:file "prog-compile" :pathname "search/prog-compile"
-                                   :depends-on ("defs" "utils"))
-             (:file "prog" :pathname "search/prog"
-                           :depends-on ("defs" "utils"))
-             (:file "pvp" :pathname "combat/pvp"
-                           :depends-on ("defs" "utils"))
-             (:file "quest" :pathname "quest/quest"
-                            :depends-on ("defs" "utils"))
-             (:file "random" :pathname "util/random"
-                             :depends-on ("defs"))
-             (:file "room-data" :pathname "structs/room-data"
-                                :depends-on ("defs"))
-             (:file "search" :pathname "structs/search"
-                             :depends-on ("defs"))
-             (:file "sight" :pathname "util/sight"
-                            :depends-on ("defs" "obj-data" "room-data" "creature"))
-             (:file "smokes" :pathname "objects/smokes"
-                             :depends-on ("defs"))
-             (:file "spec-assign" :pathname "specials/spec-assign"
-                                  :depends-on ("defs" "utils"))
-             (:file "spec-procs" :pathname "specials/spec-procs"
-                                 :depends-on ("defs" "utils"))
-             (:file "bank" :pathname "specials/bank"
-                                 :depends-on ("defs" "utils"))
-             (:file "guildmaster" :pathname "specials/guildmaster"
-                                 :depends-on ("defs" "utils"))
-             (:file "mystical-enclave" :pathname "specials/mystical-enclave"
-                                 :depends-on ("defs" "utils"))
-             (:file "spells" :pathname "magic/spells"
-                                   :depends-on ("defs" "utils"))
-             (:file "spell-parser" :pathname "magic/spell-parser"
-                                   :depends-on ("defs" "utils" "interpreter" "spells"))
-             (:file "structs" :pathname "structs/structs"
-                              :depends-on ("defs"))
-             (:file "tongues" :pathname "social/tongues"
-                              :depends-on ("defs" "utils"))
-             (:file "utils" :pathname "util/utils"
-                            :depends-on ("defs" "logging" "network" "sight"))
-             (:file "vendor" :pathname "mobiles/vendor"
-                    :depends-on ("defs" "handler"))
-             (:file "weather" :pathname "util/weather"
-                              :depends-on ("zone-data"))
-             (:file "zone-data" :pathname "structs/zone-data"
-                                :depends-on ("defs"))))))
+  ((:module :src :serial t :components
+            ((:module :compile :components
+                      ((:file "defpackage")
+                       (:file "defs" :depends-on ("defpackage"))
+                       (:file "defcommand" :depends-on ("defpackage"))
+                       (:file "config" :depends-on ("defpackage"))
+                       (:file "constants" :depends-on ("defpackage"))))
+             (:module :definitions
+                      :components
+                      ((:file "clan")
+                       (:file "creature")
+                       (:file "house")
+                       (:file "room-data")
+                       (:file "net-classes")
+                       (:file "obj-data")
+                       (:file "smokes" :depends-on ("obj-data"))
+                       (:file "bomb" :depends-on ("obj-data"))
+                       (:file "search")
+                       (:file "structs")
+                       (:file "zone-data")))
+             (:module :utilities
+                      :components
+                      ((:file "ban")
+                       (:file "comm")
+                       (:file "graph")
+                       (:file "logging")
+                       (:file "login")
+                       (:file "network")
+                       (:file "random")
+                       (:file "sight")
+                       (:file "utils")))
+             (:module :persistence
+                      :components
+                      ((:file "account")
+                       (:file "creature-io")
+                       (:file "db")
+                       (:file "objsave")))
+             (:module :events
+                      :components
+                      ((:file "char-class")
+                       (:file "handler")
+                       (:file "limits")
+                       (:file "paths")))
+             (:module :actions
+                      :components
+                      ((:file "act-barb")
+                       (:file "act-comm")
+                       (:file "act-informative")
+                       (:file "act-movement")
+                       (:file "act-obj")
+                       (:file "act-offensive")
+                       (:file "act-other")
+                       (:file "act-physic")
+                       (:file "act-social")
+                       (:file "act-thief")
+                       (:file "act-wizard")
+                       (:file "combat-messages")
+                       (:file "combat-utils")
+                       (:file "fight")
+                       (:file "magic")
+                       (:file "pvp")
+                       (:file "spell-parser")
+                       (:file "spells")
+                       (:file "tongues")))
+             (:module :support
+                      :components
+                      ((:file "dyntext")
+                       (:file "editor")
+                       (:file "help")
+                       (:file "olc-mob")
+                       (:file "olc-obj")
+                       (:file "olc-srch")
+                       (:file "olc-wld")
+                       (:file "olc-zon")
+                       (:file "olc")
+                       (:file "quest")))
+             (:module :textui
+                      :components
+                      ((:file "groups")
+                       (:file "interpreter")
+                       (:file "nanny")))
+             (:module :engine
+                      :components
+                      ((:file "prog")
+                       (:file "prog-compile")
+                       (:file "mobact")
+                       (:file "weather")))
+             (:module :specials
+                      :components
+                      ((:file "spec-procs")
+                       (:file "spec-assign")
+                       (:file "artisan")
+                       (:file "fido")
+                       (:file "mail")
+                       (:file "vendor")))))))
 
 
 (defsystem #:tempus.test
   :name "tempus.test"
-  :version "1.0.0d"
-  :author "Daniel Lowe <dlowe@bitmuse.com>"
+  :version "1.0.0"
+  :author "Daniel Lowe <dlowe@dlowe.net>"
   :description "Testing code for the TempusMUD"
   :depends-on (:tempus :stefil)
   :components ((:file "defpackage" :pathname "tests/test-defpackage")

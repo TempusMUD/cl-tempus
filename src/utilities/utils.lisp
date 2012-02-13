@@ -535,50 +535,6 @@ sequences in seq-list with the delimiter between each element"
              maximum
              (min maximum (safe-parse-integer max-str))))))))
 
-(defun circle-follow (ch victim)
-  "Returns T if CH following VICTIM would make a follow loop."
-  (loop
-     for k = victim then (master-of k)
-     until (or (null k)
-               (eql k ch))
-     finally (return (eql k ch))))
-
-(defun add-follower (ch leader)
-  (assert (null (master-of ch)) nil "Master of creature is non-NULL in add-follower")
-  (setf (master-of ch) leader)
-  (push ch (followers-of leader))
-
-  (act ch :target leader
-       :subject-emit "You now follow $N."
-       :target-emit "$n starts following you."
-       :not-target-emit "$n starts to follow $N."))
-
-(defun stop-following (ch)
-  (assert (master-of ch) nil "stop-follower called with NIL master")
-
-  (cond
-    ((and (aff-flagged ch +aff-charm+)
-          (not (mob2-flagged ch +mob2-mount+)))
-     (act ch :target (master-of ch)
-          :subject-emit "You realize that $N is a jerk!"
-          :target-emit "$n hates your guts!"
-          :not-target-emit "$n realizes that $N is a jerk!")
-     (affect-from-char ch +spell-charm+))
-    (t
-     (act ch :target (master-of ch)
-          :subject-emit "You stop following $N."
-          :not-target-emit "$n stops following $N.")
-     (when (and (or (is-npc ch)
-                    (< (invis-level-of ch) (level-of (master-of ch))))
-                (not (aff-flagged ch +aff-sneak+)))
-       (act ch :target (master-of ch)
-            :target-emit "$n stops following you."))))
-
-  (setf (followers-of (master-of ch)) (delete ch (followers-of (master-of ch))))
-  (setf (master-of ch) nil)
-
-  (setf (aff-flags-of ch) (logandc2 (aff-flags-of ch) (logior +aff-charm+ +aff-group+))))
-
 
 (defun describe-char (viewer subject)
   (cond

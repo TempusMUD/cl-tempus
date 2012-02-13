@@ -744,7 +744,7 @@
           (act ch :item implant
                :subject-emit "$p burns its way out through your flesh!"
                :place-emit "$n screams in horror as $p burns its way out through $s flesh!")
-          (damage-eq nil implant (floor (damage-of obj) 2))
+          (damage-eq nil implant (floor (damage-of obj) 2) +top-spell-define+)
           (damage-creature ch ch (dice (floor
                                         (cond
                                           ((= pos +wear-body+)
@@ -755,7 +755,7 @@
                                            (abs (alignment-of ch))))
                                         8)
                                        3)
-                           +top-spell-define+
+                           nil +top-spell-define+
                            pos))
         (when (and obj
                    (or (and (is-good ch) (is-obj-stat obj +item-damned+))
@@ -765,7 +765,7 @@
                :place-emit "$n franctically takes off $p as $e screams in agony!")
           (obj-to-char (unequip-char ch pos :worn nil) ch)
           (damage-creature ch ch (dice (max (floor (abs (alignment-of ch)) 32) 1) 2)
-                           +top-spell-define+ pos))
+                           nil +top-spell-define+ pos))
         (when (and obj
                    (or (and (is-evil ch) (is-obj-stat obj +item-anti-evil+))
                        (and (is-good ch) (is-obj-stat obj +item-anti-good+))
@@ -879,6 +879,11 @@
 
 (defun get-char-room-vis (ch name)
   (first (resolve-alias ch name (people-of (in-room-of ch)))))
+
+(defun get-char-random-vis (ch room)
+  (random-elt (remove-if-not (lambda (tch)
+                               (can-see-creature ch tch))
+                             (people-of room))))
 
 (defun get-char-vis (ch name)
   (or
@@ -1080,3 +1085,47 @@
                (when (find (first tokens) '("allow" "deny") :test #'string-equal)
                  (setf result (match-clause-to-lambda tokens result)))))
         result))))
+
+(defun circle-follow (ch victim)
+  "Returns T if CH following VICTIM would make a follow loop."
+  (loop
+     for k = victim then (master-of k)
+     until (or (null k)
+               (eql k ch))
+     finally (return (eql k ch))))
+
+(defun add-follower (ch leader)
+  (assert (null (master-of ch)) nil "Master of creature is non-NULL in add-follower")
+  (setf (master-of ch) leader)
+  (push ch (followers-of leader))
+
+  (act ch :target leader
+       :subject-emit "You now follow $N."
+       :target-emit "$n starts following you."
+       :not-target-emit "$n starts to follow $N."))
+
+(defun stop-following (ch)
+  (assert (master-of ch) nil "stop-follower called with NIL master")
+
+  (cond
+    ((and (aff-flagged ch +aff-charm+)
+          (not (mob2-flagged ch +mob2-mount+)))
+     (act ch :target (master-of ch)
+          :subject-emit "You realize that $N is a jerk!"
+          :target-emit "$n hates your guts!"
+          :not-target-emit "$n realizes that $N is a jerk!")
+     (affect-from-char ch +spell-charm+))
+    (t
+     (act ch :target (master-of ch)
+          :subject-emit "You stop following $N."
+          :not-target-emit "$n stops following $N.")
+     (when (and (or (is-npc ch)
+                    (< (invis-level-of ch) (level-of (master-of ch))))
+                (not (aff-flagged ch +aff-sneak+)))
+       (act ch :target (master-of ch)
+            :target-emit "$n stops following you."))))
+
+  (setf (followers-of (master-of ch)) (delete ch (followers-of (master-of ch))))
+  (setf (master-of ch) nil)
+
+  (setf (aff-flags-of ch) (logandc2 (aff-flags-of ch) (logior +aff-charm+ +aff-group+))))

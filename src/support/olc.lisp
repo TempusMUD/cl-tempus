@@ -1,19 +1,5 @@
 (in-package #:tempus)
 
-(defmacro with-numeric-input (vars &body body)
-  `(let ,(loop for var-tuple in vars
-              as var = (first var-tuple)
-            collect `(,var (parse-integer ,var :junk-allowed t)))
-     (cond
-       ,@(loop for var-tuple in vars
-              as var = (first var-tuple)
-              as message = (second var-tuple)
-              as pred = (third var-tuple)
-            if pred collect `((not (and ,var (funcall ,pred ,var))) (signal 'parser-error :message ,message))
-            else collect  `((null ,var) (signal 'parser-error :message ,message)))
-       (t
-        ,@body))))
-
 (defun can-edit-zone (ch zone &optional flag)
   (or (and (security-is-member ch "OLCWorldWrite")
            (pref-flagged ch +pref-worldwrite+))
