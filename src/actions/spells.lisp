@@ -798,7 +798,7 @@
      (to-target "You suddenly feel very afraid!")
      (to-room "$n looks very afraid!")
      (unless (and (> (position-of target) +pos-sitting+)
-                  (mag-savingthrow target level +saving-psi+))
+                  saved)
        (perform-flee target)))))
 
 (define-spell telepathy ()
@@ -1525,3 +1525,125 @@
         (to-target "You are knocked to the ground by $N's psionic shockwave!")
         (to-target "Your head explodes with pain and you fall to the ground in agony!"))
     (to-room "$N suddenly falls to the ground, clutching $S head!")))
+
+(defun activate-vstone (caster stone)
+  (let ((dest-room (real-room (obj-val-of stone 0))))
+    (cond
+      ((or (not (is-obj-kind stone +item-vstone+))
+           (/= (obj-val-of stone 2) 0 -1))
+       (send-to-char caster "~a" +noeffect+))
+      ((and (plusp (obj-val-of stone 1))
+            (/= (obj-val-of stone 1)
+                (idnum-of caster)))
+       (act caster :item stone :all-emit "$p hums loudly and zaps $n!"))
+      ((or (zerop (obj-val-of stone 0))
+           (null dest-room))
+       (act caster :item stone :subject-emit "$p is not linked with a real location."))
+      ((and (not (eql (zone-of dest-room)
+                      (zone-of (in-room-of caster))))
+            (or (zone-flagged (zone-of dest-room) +zone-isolated+)
+                (zone-flagged (zone-of (in-room-of caster)) +zone-isolated+)))
+       (send-to-char caster "You cannot get to there from here.~%"))
+      ((not (can-enter-room caster dest-room))
+       (act caster :item stone
+            :subject-emit "You slowly fade into nothingness."
+            :place-emit "$p glows brightly as $n fades from view.")
+       (act caster
+            :subject-emit "Your gut wrenches as you are slung violently through spacetime."
+            :place-emit "$n reappears, clutching $s gut in pain.")
+       (when (plusp (obj-val-of stone 2))
+         (decf (obj-val-of stone 2))
+         (when (zerop (obj-val-of stone 2))
+           (act caster :item stone
+                :subject-emit "$p becomes dim and ceases to glow."))))
+
+      (t
+       (act caster :item stone
+            :subject-emit "You slowly fade into nothingness."
+            :place-emit "$p glows brightly as $n fades from view.")
+       (char-from-room caster t)
+       (char-to-room caster dest-room)
+       (look-at-room caster (in-room-of caster) nil)
+       (act caster :item stone
+            :place-emit "$n slowly fades into view, $p brightly glowing.")
+       (when (plusp (obj-val-of stone 2))
+         (decf (obj-val-of stone 2))
+         (when (zerop (obj-val-of stone 2))
+           (act caster :item stone
+                :subject-emit "$p becomes dim and ceases to glow.")))))))
+
+(defun can-teleport? (caster target saved)
+  (and (not (and (not (immortalp caster))
+                 (immortalp target)))
+       (not (and (is-pc target)
+                 (link-of target)
+                 (eql (state-of (link-of target)) 'network)))
+       (or (creature-trusts target caster)
+           (not saved))))
+
+(defun teleportable? (ch room)
+  (and (not (room-flagged room (logior +room-godroom+
+                                       +room-notel+
+                                       +room-norecall+
+                                       +room-nomagic+
+                                       +room-nophysic+
+                                       +room-clan-house+
+                                       +room-death+)))
+       (zone-approvedp (zone-of room))
+       (not (eql (plane-of (zone-of room)) +plane-olc+))
+       (not (zone-flagged (zone-of room)
+                          +zone-isolated+))
+       (can-travel-terrain ch (terrain-of room))
+       (can-enter-room ch room)))
+
+(define-spell teleport ()
+  (cond
+    ((typep target 'obj-data)
+     (activate-vstone caster target))
+    ((or (room-flagged (in-room-of target)
+                       +room-notel+)
+         (room-flagged (in-room-of target)
+                       +room-norecall+))
+     (act target
+          :subject-emit "You fade out for a moment, but the magic quickly dissipates!"
+          :place-emit "$n fades out for a moment but quickly flickers back into view."))
+    ((zone-flagged (zone-of (in-room-of target))
+                   +zone-isolated+)
+     (call-magic caster target nil nil +spell-local-teleport+ level +cast-spell+))
+    ((and (not (eql caster target))
+          (room-flagged (in-room-of target)
+                        +room-peaceful+))
+     (act caster :target target
+          :subject-emit "You fail.  $N is in a non-violence zone!"
+          :target-emit "You feel strange as $n attempts to teleport you."))
+    ((and (immortalp target)
+          (> (level-of target)
+             (level-of caster)))
+     (act caster :target target :all-emit "$n sneer$% at $N with disgust."))
+
+    ((not (can-teleport? caster target saved))
+     (act target :target caster
+          :subject-emit "You resist $N's attempt to teleport you!"
+          :target-emit "$n resists your attempt to teleport $m!"))
+    ((or (mob-flagged target +mob-nosummon+)
+         saved)
+     (send-to-char caster "You fail.~%"))
+    (t
+     (act target
+          :subject-emit "Your vision slowly fades to blackness..."
+          :place-emit "$n slowly fades out of existence and is gone.")
+     (char-from-room target t)
+
+     (let ((teleportable-rooms (make-array 0 :adjustable t :fill-pointer 0)))
+       (alexandria:maphash-values
+        (lambda (room)
+          (when (teleportable? target room)
+            (vector-push-extend room teleportable-rooms)))
+        *rooms*)
+       (let ((dest-room (random-elt teleportable-rooms)))
+         (char-to-room target dest-room t)))
+
+     (act target
+          :subject-emit "A new scene unfolds before you!"
+          :place-emit "$n slowly fades into of existence.")
+     (look-at-room target (in-room-of target) nil))))

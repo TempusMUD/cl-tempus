@@ -977,3 +977,14 @@ control code."
 should be added or removed from a transaction involving the two
 creatures."
   (* (- (cha-of seller) (cha-of ch)) 2))
+
+(defun creature-trusts-idnum (ch idnum)
+  (or (find idnum (players-of (account-of ch)) :key 'idnum-of)
+      (find idnum (trust-of (account-of ch)))))
+
+(defun creature-trusts (ch target)
+  (and (not (is-npc ch))
+       (or (and (aff-flagged ch +aff-charm+)
+                (eql (master-of ch)
+                     target))
+           (creature-trusts-idnum ch (idnum-of target)))))
