@@ -972,5 +972,8 @@ control code."
                 (or (not (get-eq ch +wear-light+))
                     (aref (value-of (get-eq ch +wear-light+)) 0))))))
 
-(defun cost-modifier-of (ch seller)
+(defun get-cost-modifier (ch seller)
+  "Returns a number from -44 to 44, indicating the percentage that
+should be added or removed from a transaction involving the two
+creatures."
   (* (- (cha-of seller) (cha-of ch)) 2))

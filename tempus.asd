@@ -55,8 +55,7 @@
                       :components
                       ((:file "account")
                        (:file "creature-io")
-                       (:file "db")
-                       (:file "objsave")))
+                       (:file "db")))
              (:module :events
                       :components
                       ((:file "char-class")
@@ -114,6 +113,11 @@
                        (:file "artisan")
                        (:file "fido")
                        (:file "mail")
+                       (:file "guildmaster")
+                       (:file "bounty-clerk")
+                       (:file "mystical-enclave")
+                       (:file "receptionist")
+                       (:file "bank")
                        (:file "vendor")))))))
 
 

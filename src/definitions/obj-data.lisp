@@ -827,3 +827,20 @@
              ("type" ,(get-worn-type obj)))))
   ;; TODO: reapply temp affects from object
   )
+
+
+
+(defun find-object-room (obj)
+  "Given OBJ, find the room that it is located in."
+  (cond
+    ((worn-by-of obj)
+     (in-room-of (worn-by-of obj)))
+    ((carried-by-of obj)
+     (in-room-of (carried-by-of obj)))
+    ((in-obj-of obj)
+     (find-object-room (in-obj-of obj)))
+    ((in-room-of obj)
+     (in-room-of obj))
+    (t
+     (errlog "Object ~a [~d] detected in limbo" (name-of obj)
+             (vnum-of obj)))))
