@@ -626,7 +626,10 @@
        (when ch
          (send-to-char ch "Oops, that spell isn't implemented.~%")))
       (t
-       (let ((saved (mag-savingthrow vict level
+       (let ((saved (and
+                     vict
+                     (not (eql ch vict))
+                     (mag-savingthrow vict level
                                      (or (cdr (assoc casttype
                                                      `((,+cast-staff+ . ,+saving-rod+)
                                                        (,+cast-scroll+ . ,+saving-rod+)
@@ -640,7 +643,7 @@
                                                        (,+cast-breath+ . ,+saving-breath+)
                                                        (,+cast-bard+ . ,+saving-breath+)
                                                        (,+cast-internal+ . ,+saving-none+))))
-                                         +saving-breath+))))
+                                         +saving-breath+)))))
          (funcall func ch (or vict ovict dvict) level saved))
        (when (and (violentp info)
                   vict
