@@ -131,6 +131,15 @@ be loaded from the database or it may be retrieved from a cache."
                           (postmodern:query (:order-by (:select 'idnum 'name :from 'players :where (:= 'account (idnum-of account))) 'idnum) :alists)))
             account)))))
 
+(defun load-players (account)
+  (setf (players-of account)
+        (mapcar (lambda (info)
+                  (make-instance 'player-record
+                                 :idnum (cdr (assoc :idnum info))
+                                 :account (idnum-of account)
+                                 :name (cdr (assoc :name info))))
+                (postmodern:query (:order-by (:select 'idnum 'name :from 'players :where (:= 'account (idnum-of account))) 'idnum) :alists))))
+
 (defun load-account (name)
   "Returns the account associated with the given name. The account may
 be loaded from the database or it may be retrieved from a cache."
@@ -153,13 +162,7 @@ be loaded from the database or it may be retrieved from a cache."
                         (cdr tuple)))
             (setf (gethash canonical-name *account-name-cache*) account)
             (setf (gethash (idnum-of account) *account-idnum-cache*) account)
-            (setf (players-of account)
-                  (mapcar (lambda (info)
-                            (make-instance 'player-record
-                                           :idnum (cdr (assoc :idnum info))
-                                           :account (idnum-of account)
-                                           :name (cdr (assoc :name info))))
-                          (postmodern:query (:order-by (:select 'idnum 'name :from 'players :where (:= 'account (idnum-of account))) 'idnum) :alists)))
+            (load-players account)
             account)))))
 
 (defmethod save-account ((account account))
@@ -220,6 +223,13 @@ NIL if it is invalid in some way."
   (plusp (postmodern:query (:select (:count '*)
                  :from 'players
                  :where (:= (:lower 'name) (string-downcase name)))
+                :single)))
+
+(defun player-idnum-exists (idnum)
+  "Returns T if a player exists with the given idnum."
+  (plusp (postmodern:query (:select (:count '*)
+                 :from 'players
+                 :where (:= 'idnum idnum))
                 :single)))
 
 (defun retrieve-player-idnum (name)
@@ -368,3 +378,37 @@ file."
     (decf (past-bank-of account) amount)
     (save-account account)))
 
+(defun account-move-char (account char-id dest)
+  (let ((player-rec (find char-id (players-of account) :key 'idnum-of)))
+    (when player-rec
+      (setf (players-of account) (delete player-rec (players-of account)))
+      (push player-rec (players-of dest))
+      (postmodern:execute
+       (:update 'players
+                :set 'account (idnum-of dest)
+                :where (:= 'idnum char-id))))))
+
+(defun account-exhume-char (account exhumer id)
+  (anaphora:acond
+    ((player-idnum-exists id)
+     (send-to-char exhumer "That character has already been exhumed.~%"))
+    ((load-player-from-xml id)
+     (postmodern:execute
+      (:insert-into 'players :set
+                           'idnum (idnum-of anaphora:it)
+                           'account (idnum-of account)
+                           'name (name-of anaphora:it)))
+     (load-players account)
+     (send-to-char exhumer "~a exhumed.~%" (name-of anaphora:it))
+     (slog "~a[~d] exhumed into account ~a[~d]"
+           (name-of anaphora:it)
+           (idnum-of anaphora:it)
+           (name-of account)
+           (idnum-of account)))
+    (t
+     (send-to-char exhumer "Unable to load character ~d.~%" id))))
+
+(defun account-reload (account)
+  (remhash (idnum-of account) *account-idnum-cache*)
+  (remhash (name-of account) *account-name-cache*)
+  (account-by-idnum (idnum-of account)))
