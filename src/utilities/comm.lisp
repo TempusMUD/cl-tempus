@@ -127,6 +127,9 @@
   (add-timer *event-base* (lambda () (mobile-activity)) 4)
   (add-timer *event-base* (lambda () (perform-violence)) 7/10)
   (add-timer *event-base* (lambda () (mobile-specs)) 2)
+  (add-timer *event-base* (lambda () (update-rooms 'update-room-flows)) 1)
+  (add-timer *event-base* (lambda () (update-rooms 'update-room-affects)) 5)
+  (add-timer *event-base* (lambda () (update-rooms 'update-room-ambience)) 4)
 
   (event-dispatch *event-base*))
 

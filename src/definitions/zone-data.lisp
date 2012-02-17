@@ -87,6 +87,8 @@
 (defparameter +zone-neutral-pk+ 1)
 (defparameter +zone-chaotic-pk+ 2)
 
+(defparameter +zone-idle-time+ 5)
+
 (defclass reset-com ()
   ((command :accessor command-of :initarg :command :initform nil)
    (if-flag :accessor if-flag-of :initarg :if-flag :initform nil)

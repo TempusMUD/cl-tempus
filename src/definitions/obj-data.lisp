@@ -303,7 +303,7 @@
 (defclass obj-data ()
   ((shared :accessor shared-of :initarg :shared)
    (in-room :accessor in-room-of :initarg :in-room :initform nil)
-   (cur-flow-pulse :accessor cur-flow-pulse-of :initform 0)
+   (flow-pulse :accessor flow-pulse-of :initform 0)
    (affected :accessor affected-of :initarg :affected
              :initform (make-array +max-obj-affect+))
    (name :accessor name-of :initarg :name :initform nil)

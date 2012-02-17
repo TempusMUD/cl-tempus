@@ -122,7 +122,7 @@
 (defconstant +sect-blood+                42)
 (defconstant +sect-rock+                 43)
 (defconstant +sect-muddy+                44)
- (defconstant +sect-trail+                45)
+(defconstant +sect-trail+                45)
 (defconstant +sect-tundra+               46)
 (defconstant +sect-catacombs+            47)
 (defconstant +sect-cracked-road+         48)
@@ -137,6 +137,9 @@
    (exit-info :accessor exit-info-of :initarg :exit-info :initform 0)
    (key :accessor key-of :initarg :key :initform -1)
    (to-room :accessor to-room-of :initarg :to-room :initform nil)))
+
+(defparameter +room-aff-flags+ +num-dirs+)
+(defparameter +room-aff-other+ (1+ +room-aff-flags+))
 
 (defclass room-affect-data ()
   ((description :accessor description-of :initarg :description :initform nil)
@@ -247,3 +250,23 @@
 
 (defun can-enter-room (ch room)
   t)
+
+(defun affect-to-room (room aff)
+  (error "Unimplemented"))
+
+(defun affect-from-room (room aff)
+  (setf (affects-of room) (delete aff (affects-of room)))
+  (cond
+    ((eql (kind-of aff) +room-aff-flags+)
+     (setf (flags-of room) (logandc2 (flags-of room) (flags-of aff))))
+    ((and (< (kind-of aff) +num-dirs+)
+          (abs-exit room (kind-of aff)))
+     (setf (exit-info-of (abs-exit room (kind-of aff)))
+           (logandc2 (exit-info-of (abs-exit room (kind-of aff)))
+                     (flags-of aff))))
+    (t
+     (error "affect_from_room: Invalid aff kind ~a" (kind-of aff)))))
+
+
+(defun room-affected-by (room spell-id)
+  (find spell-id (affects-of room) :key #'spell-kind-of))
