@@ -948,7 +948,7 @@ the attack failed."
                             (wait-state-of victim))
                         location))
         (when (pref-flagged victim +pref-debug+)
-          (send-to-char ch "&c[DAMAGE] ~a   dam: ~d  cap: ~d   type: ~d   wait: ~d   pos: ~d&n~%"
+          (send-to-char victim "&c[DAMAGE] ~a   dam: ~d  cap: ~d   type: ~d   wait: ~d   pos: ~d&n~%"
                         (name-of victim)
                         amount
                         damage-cap
