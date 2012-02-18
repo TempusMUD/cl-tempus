@@ -99,7 +99,9 @@
                       :components
                       ((:file "groups")
                        (:file "interpreter")
-                       (:file "nanny")))
+                       (:file "nanny")
+                       (:file "wizard-cmds")
+                       (:file "combat-cmds")))
              (:module :engine
                       :components
                       ((:file "prog")
