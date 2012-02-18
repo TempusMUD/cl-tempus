@@ -176,7 +176,7 @@ POS, given the BASE-DAMAGE."
            (cons target (delete target (fighting-of ch)))))
     (t
      (setf (move-of ch) (max 0 (- (move-of ch) 5)))
-     (attack ch target +type-undefined+)
+     (attack ch target (get-next-weapon ch +type-undefined+) +type-undefined+)
      (wait-state ch +pulse-violence+))))
 
 (defun calc-fleeing-exp-penalty (ch tch)

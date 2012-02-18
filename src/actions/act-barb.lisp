@@ -18,5 +18,5 @@ CREATURE-DIED condition."
              :subject-emit "You go berserk and attack $N!"
              :target-emit "$n attacks you in a BERSERK rage!!"
              :not-target-emit "$n attacks $N in a BERSERK rage!!")
-        (attack ch victim +type-undefined+)
+        (attack ch victim (get-next-weapon ch +type-undefined+) +type-undefined+)
         victim))))

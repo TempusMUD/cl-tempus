@@ -872,7 +872,7 @@
             ;; corpse in the room
             (let ((vict (master-of ch)))
               (stop-following ch)
-              (attack ch vict +type-undefined+)))
+              (attack ch vict (get-next-weapon ch +type-undefined+) +type-undefined+)))
            (t
             (act ch :item food :all-emit "$n devour$% $p, growling and drooling all over.")
             (let ((stuff-rm (or (and (is-tarrasque ch) (real-room 24919))
