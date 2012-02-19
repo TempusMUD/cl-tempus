@@ -507,6 +507,25 @@
               (is-obj-kind obj +item-scuba-mask+)
               (is-obj-kind obj +item-window+))))
 
+(defun perform-object-unlock (ch obj)
+  (cond
+    ((not (obj-is-openable obj))
+     (send-to-char ch "You can't unlock that!~%"))
+    ((not (logtest (aref (value-of obj) 1) +cont-locked+))
+     (send-to-char ch "But it's currently unlocked!~%"))
+    (t
+     (setf (aref (value-of obj) 1)
+           (logandc2 (aref (value-of obj) 1) +cont-locked+))
+     (act ch :item obj
+          :subject-emit "*Click*"
+          :place-emit "$n opens $p.")
+     (when (is-vehicle obj)
+       (let ((other-room (real-room (room-number obj))))
+         (when (people-of other-room)
+           (send-to-room other-room "The door of the ~a is unlocked from the outside.~%"
+                         (first-word (aliases-of obj))))))
+     (wait-state ch 30))))
+
 (defun perform-object-open (ch obj)
   (cond
     ((not (obj-is-openable obj))
@@ -663,6 +682,42 @@
          (wait-state ch (if (logtest (exit-info-of exit) +ex-heavy-door+)
                             30 15)))))))
 
+(defun has-key? (ch key-vnum)
+  (flet ((unbroken-match (obj)
+                 (and (= (vnum-of obj) key-vnum)
+                      (not (is-obj-stat2 obj +item2-broken+)))))
+    (or (find-if #'unbroken-match (carrying-of ch))
+        (and (get-eq ch +wear-hold+)
+             (unbroken-match (get-eq ch +wear-hold+))))))
+
+(defun perform-door-unlock (ch door)
+  (let* ((exit (exit ch door))
+         (doorname (if (keyword-of exit)
+                       (first-word (keyword-of exit))
+                       "door")))
+    (cond
+      ((not (logtest (exit-info-of exit) +ex-isdoor+))
+       (send-to-char ch "You can't unlock that!~%"))
+      ((not (logtest (exit-info-of exit) +ex-locked+))
+       (send-to-char ch "Oh.. it wasn't locked, after all...~%"))
+      ((and (not (has-key? ch (key-of exit)))
+            (not (immortalp ch)))
+       (send-to-char ch "You don't seem to have the proper key.~%"))
+      (t
+       (let* ((other-room (real-room (to-room-of exit)))
+              (return-exit (abs-exit other-room (aref +rev-dir+ door)))
+              (back (and other-room
+                         (when (eql (to-room-of return-exit) (number-of (in-room-of ch)))
+                           other-room))))
+         (setf (exit-info-of exit) (logandc2 (exit-info-of exit) +ex-locked+))
+         (when back
+           (setf (exit-info-of return-exit) (logandc2 (exit-info-of exit) +ex-locked+))
+           (send-to-room other-room "You hear the ~a being unlocked from the other side.~%" doorname))
+         (act ch
+              :subject-emit "*Click*"
+              :place-emit (format nil "$n unlocks the ~a." doorname))
+         (wait-state ch 30))))))
+
 (defcommand (ch "open") (:standing)
   (send-to-char ch "Open what?~%"))
 
@@ -696,3 +751,20 @@
        (let ((door (find-door ch target "open")))
          (when door
            (perform-door-close ch door)))))))
+
+(defcommand (ch "unlock") (:standing)
+  (send-to-char ch "Unlock what?~%"))
+
+(defcommand (ch "unlock" target) (:standing)
+  (let ((objs (resolve-alias ch target
+                             (append (carrying-of ch)
+                                     (contents-of (in-room-of ch))))))
+    (cond
+      ((cdr objs)
+       (send-to-char ch "You can only unlock one thing at a time.~%"))
+      (objs
+       (perform-object-unlock ch (first objs)))
+      (t
+       (let ((door (find-door ch target "unlock")))
+         (when door
+           (perform-door-unlock ch door)))))))
