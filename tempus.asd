@@ -94,7 +94,8 @@
                        (:file "olc-wld")
                        (:file "olc-zon")
                        (:file "olc")
-                       (:file "quest")))
+                       (:file "quest")
+                       (:file "voice")))
              (:module :textui
                       :components
                       ((:file "groups")
@@ -106,7 +107,8 @@
                       :components
                       ((:file "prog")
                        (:file "prog-compile")
-                       (:file "mobact")
+                       (:file "room-update")
+                       (:file "mob-update")
                        (:file "weather")))
              (:module :specials
                       :components

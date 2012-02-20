@@ -985,7 +985,9 @@
 
 
 (defun perform-monk-meditate (ch)
+  "TODO: implement perform-monk-meditate"
   nil)
 
 (defun mobile-battle-activity (ch)
+  "TODO: implement mobile-battle-activity"
   nil)
