@@ -882,7 +882,8 @@
 
 (defun get-char-random-vis (ch room)
   (random-elt (remove-if-not (lambda (tch)
-                               (can-see-creature ch tch))
+                               (and (not (eql tch ch))
+                                    (can-see-creature ch tch)))
                              (people-of room))))
 
 (defun get-char-vis (ch name)
