@@ -1,8 +1,10 @@
 (in-package #:tempus)
 
+(defparameter +criminal-reputation+ 300)
+
 (defun criminalp (ch)
   (and (is-pc ch)
-       (>= (reputation-of ch) 300)))
+       (>= (reputation-of ch) +criminal-reputation+)))
 
 (defun arena-questing-p (ch)
   "Returns T if ch is a member of a quest that has been set ARENA, otherwise returns NIL"
