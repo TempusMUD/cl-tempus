@@ -636,7 +636,7 @@
                              (is-evil ch)
                              (is-good ch)
                              (char-class-of ch)
-                             (clan-of ch)
+                             (if (is-pc ch) (clan-of ch) nil)
                              message))))
 
 (defcommand (ch #\; msg) (:resting)
