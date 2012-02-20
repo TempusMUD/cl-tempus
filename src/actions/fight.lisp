@@ -36,7 +36,7 @@
     ;; transfer equipment and inventory to corpse
     (loop
        for obj across (equipment-of ch)
-       when (and obj (or lose-eq (unrentablep obj))) do
+       when (and obj (or lose-eq (unrentable? obj))) do
          (unequip-char ch (worn-on-of obj) :worn t)
          (obj-to-obj obj corpse))
     (loop
@@ -47,12 +47,12 @@
 
     (loop
        for obj across (implants-of ch)
-       when (and obj (or lose-implants (unrentablep obj))) do
+       when (and obj (or lose-implants (unrentable? obj))) do
          (unequip-char ch (worn-on-of obj) :implant t)
          (obj-to-obj obj corpse))
 
     (dolist (obj (copy-list (carrying-of ch)))
-      (when (or lose-eq (unrentablep obj))
+      (when (or lose-eq (unrentable? obj))
         (obj-from-char obj)
         (obj-to-obj obj corpse)))
 

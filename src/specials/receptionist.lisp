@@ -30,22 +30,11 @@ implanted with, including objects in containers."
    (find-all-objects (remove nil (implants-of ch)))
    (find-all-objects (carrying-of ch))))
 
-(defun unrentablep (obj)
-  "Returns T if OBJ cannot be rented by a player."
-  (or
-   (is-obj-stat obj +item-norent+)
-   (not (approvedp obj))
-   (<= (vnum-of (shared-of obj)) -1)
-   (and (is-obj-kind obj +item-key+)
-        (zerop (obj-val-of obj 1)))
-   (and (is-obj-kind obj +item-cigarette+)
-        (not (zerop (obj-val-of obj 3))))))
-
 (defun extract-unrentables (obj-list)
   "Given OBJ-LIST, removes all unrentable objects in OBJ-LIST that cannot be rented"
   (dolist (obj (copy-list obj-list))
     (extract-unrentables (contains-of obj))
-    (when (and (unrentablep obj)
+    (when (and (unrentable? obj)
                (or (null (worn-by-of obj))
                    (not (is-obj-stat2 obj +item2-noremove+)))
                (not (is-obj-stat obj +item-nodrop+)))
@@ -77,7 +66,7 @@ implanted with, including objects in containers."
         (total-cost 0)
         (count 1))
     (dolist (obj (sort (rest obj-list) #'< :key 'vnum-of))
-      (unless (is-unrentable obj)
+      (unless (unrentable? obj)
         (incf total-cost (cost-per-day-of (shared-of obj)))
         (when displayp
           (cond
@@ -101,7 +90,7 @@ implanted with, including objects in containers."
                                                 (eql (func-of (shared-of tch)) 'receptionist))))
                                      (people-of room)))))
     (when receptionist
-      (incf factor (* (get-cost-modifier ch receptionist) 100))))
+      (incf factor (* (cost-modifier-of ch receptionist) 100))))
 
   (let* ((total-cost (tally-obj-rent ch (all-carried-objects ch) currency-str displayp))
          (level-adj (floor (+ (/ (* 3 total-cost (+ 10 (level-of ch))) 100)
@@ -122,7 +111,7 @@ implanted with, including objects in containers."
   (unless (immortal-level-p ch)
     (let ((forbid-renting nil))
       (dolist (obj (all-carried-objects ch))
-        (when (unrentablep obj)
+        (when (unrentable? obj)
           (act ch :subject-emit (format nil "You cannot rent while ~a $p!"
                                         (cond
                                           ((null (worn-by-of obj)) "carrying")
@@ -185,7 +174,7 @@ implanted with, including objects in containers."
            ((> cost money)
             (perform-tell recep ch "...which I see you can't afford."))
            ((eql factor +rent-factor+)
-            (rent-deadline ch recep cost)
+            (inform-rent-deadline ch recep cost)
             (act recep :target ch
                  :target-emit "$n stores your belongings and helps you into your private chamber."
                  :not-target-emit "$n helps $N into $S private chamber.")

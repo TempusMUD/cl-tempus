@@ -512,14 +512,16 @@
 (defun can-wear (obj pos)
   (logtest (wear-flags-of obj) pos))
 
-(defun unrentablep (obj)
-  (or (is-obj-stat obj +item-norent+)
-      (not (approvedp obj))
-      (minusp (vnum-of obj))
-      (and (is-obj-kind obj +item-key+)
-           (zerop (aref (value-of obj) 1)))
-      (and (is-obj-kind obj +item-cigarette+)
-           (plusp (aref (value-of obj) 3)))))
+(defun unrentable? (obj)
+  "Returns T if OBJ cannot be rented by a player."
+  (or
+   (is-obj-stat obj +item-norent+)
+   (not (approvedp obj))
+   (minusp (vnum-of (shared-of obj)))
+   (and (is-obj-kind obj +item-key+)
+        (zerop (obj-val-of obj 1)))
+   (and (is-obj-kind obj +item-cigarette+)
+        (not (zerop (obj-val-of obj 3))))))
 
 (defun hidden-obj-prob (ch obj)
   (+ (level-of ch)
