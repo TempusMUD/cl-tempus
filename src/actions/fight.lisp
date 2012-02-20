@@ -64,7 +64,7 @@
 (defun raw-kill (ch killer attacktype)
   (when (and (is-npc ch)
              (func-of (shared-of ch)))
-    (funcall (func-of (shared-of ch)) killer ch 0 nil :death))
+    (funcall (func-of (shared-of ch)) killer ch 0 nil 'death))
 
   (when (and (is-pc ch) (is-cyborg ch))
     (setf (total-dam-of ch) 0)
