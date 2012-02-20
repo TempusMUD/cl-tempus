@@ -136,7 +136,9 @@
    (keyword :accessor keyword-of :initarg :keyword :initform nil)
    (exit-info :accessor exit-info-of :initarg :exit-info :initform 0)
    (key :accessor key-of :initarg :key :initform -1)
-   (to-room :accessor to-room-of :initarg :to-room :initform nil)))
+   (to-room :accessor to-room-of :initarg :to-room :initform nil)
+   (damage :accessor damage-of :initarg :damage :initform 100)
+   (maxdam :accessor maxdam-of :initarg :maxdam :initform 100)))
 
 (defparameter +room-aff-flags+ +num-dirs+)
 (defparameter +room-aff-other+ (1+ +room-aff-flags+))
@@ -249,9 +251,11 @@
                   (= terrain +sect-freespace+))))))
 
 (defun can-enter-room (ch room)
+  "TODO: Implement can-enter-room"
   t)
 
 (defun affect-to-room (room aff)
+  "TODO: Implement affect-to-room"
   (error "Unimplemented"))
 
 (defun affect-from-room (room aff)
@@ -270,3 +274,19 @@
 
 (defun room-affected-by (room spell-id)
   (find spell-id (affects-of room) :key #'spell-kind-of))
+
+(defun open-door (room dir)
+  (setf (exit-info-of (abs-exit room dir))
+        (logandc2 (exit-info-of (abs-exit room dir)) +ex-closed+)))
+
+(defun close-door (room dir)
+  (setf (exit-info-of (abs-exit room dir))
+        (logior (exit-info-of (abs-exit room dir)) +ex-closed+)))
+
+(defun lock-door (room dir)
+  (setf (exit-info-of (abs-exit room dir))
+        (logior (exit-info-of (abs-exit room dir)) +ex-locked+)))
+
+(defun unlock-door (room dir)
+  (setf (exit-info-of (abs-exit room dir))
+        (logandc2 (exit-info-of (abs-exit room dir)) +ex-locked+)))

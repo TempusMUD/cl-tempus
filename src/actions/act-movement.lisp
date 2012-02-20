@@ -321,7 +321,7 @@
              :place-emit "$n drifts downward and stands on the ground.")))
      (setf (position-of ch) +pos-standing+))))
 
-(defcommand (ch "fly") (:sleeping)
+(defun perform-fly (ch)
   (cond
     ((and (aff3-flagged ch +aff3-gravity-well+)
           (>= (random-range 1 20) (str-of ch)))
@@ -348,6 +348,9 @@
     (t
      (act ch :all-emit "$n stop$% floating around and puts $s feet on the ground.")
      (setf (position-of ch) +pos-standing+))))
+
+(defcommand (ch "fly") (:sleeping)
+  (perform-fly ch))
 
 (defcommand (ch "rest") (:sleeping)
   (cond
@@ -526,6 +529,36 @@
                          (first-word (aliases-of obj))))))
      (wait-state ch 30))))
 
+(defun perform-object-pick (ch obj)
+  (let ((lockpick (find-lockpick ch)))
+    (cond
+      ((not (obj-is-openable obj))
+       (send-to-char ch "You can't unlock that!~%"))
+      ((not (logtest (aref (value-of obj) 1) +cont-closed+))
+       (send-to-char ch "But it's currently open!~%"))
+      ((not (logtest (aref (value-of obj) 1) +cont-locked+))
+       (send-to-char ch "But it's currently unlocked!~%"))
+      ((and (null lockpick)
+            (not (immortalp ch)))
+       (send-to-char ch "You need to be holding a lockpicking tool, you deviant!~%"))
+      ((> (random-range 2 101)
+          (+ (if lockpick (obj-val-of lockpick 1) 15)
+             (check-skill ch +skill-pick-lock+)))
+       (send-to-char ch "You failed to pick the lock.~%")
+       (wait-state ch 4))
+      (t
+       (setf (aref (value-of obj) 1)
+             (logandc2 (aref (value-of obj) 1) +cont-locked+))
+       (act ch :item obj
+            :subject-emit "The lock quickly yields to your skills."
+            :place-emit "$n skillfully picks the lock on $p.")
+       (when (is-vehicle obj)
+         (let ((other-room (real-room (room-number obj))))
+           (when (people-of other-room)
+             (send-to-room other-room "The door of the ~a is unlocked from the outside.~%"
+                           (first-word (aliases-of obj))))))
+       (wait-state ch 30)))))
+
 (defun perform-object-open (ch obj)
   (cond
     ((not (obj-is-openable obj))
@@ -682,10 +715,23 @@
          (wait-state ch (if (logtest (exit-info-of exit) +ex-heavy-door+)
                             30 15)))))))
 
-(defun has-key? (ch key-vnum)
+(defun find-key (ch key-vnum)
   (flet ((unbroken-match (obj)
-                 (and (= (vnum-of obj) key-vnum)
-                      (not (is-obj-stat2 obj +item2-broken+)))))
+                 (if (and (= (vnum-of obj) key-vnum)
+                      (not (is-obj-stat2 obj +item2-broken+)))
+                     obj
+                     nil)))
+    (or (find-if #'unbroken-match (carrying-of ch))
+        (and (get-eq ch +wear-hold+)
+             (unbroken-match (get-eq ch +wear-hold+))))))
+
+(defun find-lockpick (ch)
+  (flet ((unbroken-match (obj)
+                 (if (and (is-obj-kind obj +item-tool+)
+                          (= (obj-val-of obj 0) +skill-pick-lock+)
+                          (not (is-obj-stat2 obj +item2-broken+)))
+                     obj
+                     nil)))
     (or (find-if #'unbroken-match (carrying-of ch))
         (and (get-eq ch +wear-hold+)
              (unbroken-match (get-eq ch +wear-hold+))))))
@@ -698,9 +744,11 @@
     (cond
       ((not (logtest (exit-info-of exit) +ex-isdoor+))
        (send-to-char ch "You can't unlock that!~%"))
+      ((not (logtest (exit-info-of exit) +ex-closed+))
+       (send-to-char ch "But it's currently open!"))
       ((not (logtest (exit-info-of exit) +ex-locked+))
        (send-to-char ch "Oh.. it wasn't locked, after all...~%"))
-      ((and (not (has-key? ch (key-of exit)))
+      ((and (not (find-key ch (key-of exit)))
             (not (immortalp ch)))
        (send-to-char ch "You don't seem to have the proper key.~%"))
       (t
@@ -716,6 +764,50 @@
          (act ch
               :subject-emit "*Click*"
               :place-emit (format nil "$n unlocks the ~a." doorname))
+         (wait-state ch 30))))))
+
+(defun perform-door-pick (ch door)
+  (let* ((exit (exit ch door))
+         (doorname (if (keyword-of exit)
+                       (first-word (keyword-of exit))
+                       "door"))
+         (lockpick (find-lockpick ch)))
+    (cond
+      ((not (plusp (check-skill ch +skill-pick-lock+)))
+       (send-to-char ch "You don't know how.~%"))
+      ((not (logtest (exit-info-of exit) +ex-isdoor+))
+       (send-to-char ch "You can't pick that!~%"))
+      ((logtest (exit-info-of exit) +ex-tech+)
+       (send-to-char ch "This exit is not pickable to traditional means.~%"))
+      ((zerop (key-of exit))
+       (send-to-char ch "Odd - you can't seem to find a keyhole.~%"))
+      ((logtest (exit-info-of exit) +ex-pickproof+)
+       (send-to-char ch "It resists your attempts at picking it.~%"))
+      ((not (logtest (exit-info-of exit) +ex-closed+))
+       (send-to-char ch "But it's currently open!"))
+      ((not (logtest (exit-info-of exit) +ex-locked+))
+       (send-to-char ch "Oh.. it wasn't locked, after all...~%"))
+      ((and (null lockpick)
+            (not (immortalp ch)))
+       (send-to-char ch "You need to be holding a lockpicking tool, you deviant!~%"))
+      ((> (random-range 2 101)
+          (+ (if lockpick (obj-val-of lockpick 1) 15)
+             (check-skill ch +skill-pick-lock+)))
+       (send-to-char ch "You failed to pick the lock.~%")
+       (wait-state ch 4))
+      (t
+       (let* ((other-room (real-room (to-room-of exit)))
+              (return-exit (abs-exit other-room (aref +rev-dir+ door)))
+              (back (and other-room
+                         (when (eql (to-room-of return-exit) (number-of (in-room-of ch)))
+                           other-room))))
+         (setf (exit-info-of exit) (logandc2 (exit-info-of exit) +ex-locked+))
+         (when back
+           (setf (exit-info-of return-exit) (logandc2 (exit-info-of exit) +ex-locked+))
+           (send-to-room other-room "You hear the ~a being unlocked from the other side.~%" doorname))
+         (act ch
+              :subject-emit "The lock quickly yields to your skills.~%"
+              :place-emit (format nil "$n skillfully picks the lock on ~a." doorname))
          (wait-state ch 30))))))
 
 (defcommand (ch "open") (:standing)
@@ -768,3 +860,96 @@
        (let ((door (find-door ch target "unlock")))
          (when door
            (perform-door-unlock ch door)))))))
+
+(defcommand (ch "pick") (:standing)
+  (send-to-char ch "Pick what?~%"))
+
+(defcommand (ch "pick" target) (:standing)
+  (let ((objs (resolve-alias ch target
+                             (append (carrying-of ch)
+                                     (contents-of (in-room-of ch))))))
+    (cond
+      ((cdr objs)
+       (send-to-char ch "You can only pick one thing at a time.~%"))
+      (objs
+       (perform-object-pick ch (first objs)))
+      (t
+       (let ((door (find-door ch target "pick")))
+         (when door
+           (perform-door-pick ch door)))))))
+
+(defun perform-door-bash (ch door)
+  (let* ((exit (exit ch door))
+         (door-name (if (keyword-of exit)
+                        (first-word (keyword-of exit))
+                        "door")))
+    (cond
+      ((not (logtest (exit-info-of exit) +ex-isdoor+))
+       (send-to-char ch "You can't bash that!~%"))
+      ((not (logtest (exit-info-of exit) +ex-closed+))
+       (send-to-char ch "It's already open!~%"))
+      ((< (move-of ch) 20)
+       (send-to-char ch "You are too exhausted.~%"))
+      (t
+       (decf (move-of ch) 20)
+       (let ((door-damage (min (damage-of exit)
+                               (if (or (logtest (exit-info-of exit) +ex-pickproof+)
+                                       (minusp (damage-of exit))
+                                       (null (real-room (to-room-of exit))))
+                                   0
+                                   (* (dice 2 (floor (level-of ch) 4))
+                                      (if (< (check-skill ch +skill-break-door+)
+                                             (random-range 1 99))
+                                          2
+                                          1))))))
+         (decf (damage-of exit) door-damage)
+         (when (pref-flagged ch +pref-debug+)
+           (send-to-char ch "&c[BASH] door-damage: ~d, durability left: ~d&n~%"
+                         door-damage
+                         (damage-of exit)))
+         (damage-creature ch ch (dice 4 8) nil +type-undefined+ nil)
+
+         (cond
+           ((plusp (damage-of exit))
+            (if (is-dead ch)
+                (act ch
+                     :subject-emit (format nil "You kill yourself as you hurl yourself against the ~a!"
+                                           door-name)
+                     :place-emit (format nil "$n throws $mself against the ~a, $s last futile effort."
+                                         door-name))
+                (act ch
+                     :subject-emit (format nil "You slam yourself against the ~a!"
+                                           door-name)
+                     :place-emit (format nil "$n throws $mself against the ~a in an attempt to break it."
+                                         door-name)))
+            (send-to-room (in-room-of ch)
+                          "The ~a looks ~a.~%"
+                          door-name
+                          (let ((percent (/ (damage-of exit)
+                                            (maxdam-of exit))))
+                            (cond
+                              ((> percent 99/100)
+                               "untouched")
+                              ((> percent 90/100)
+                               "virtually unharmed")
+                              ((> percent 75/100)
+                               "pretty scratched up")
+                              ((> percent 50/100)
+                               "in poor shape")
+                              ((> percent 25/100)
+                               "completely battered")
+                              (t
+                               "on the verge of breaking"))))
+
+            )
+           (t
+            ;; success
+            (act ch
+                 :subject-emit (format nil "The ~a gives way under your powerful bash!" door-name)
+                 :place-emit (format nil "$n bashes the ~a open with a powerful blow!" door-name))
+            (open-door (in-room-of ch) exit)
+            (unlock-door (in-room-of ch) exit)
+            (when (and (not (is-dead ch))
+                       (> (random-range 0 20) (dex-of ch)))
+              (act ch :all-emit "$n stagger$% and fall$% down.")
+              (setf (position-of ch) +pos-sitting+)))))))))
