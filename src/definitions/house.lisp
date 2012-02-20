@@ -9,3 +9,9 @@
 (defun can-enter-house (ch room-id)
   (declare (ignore ch room-id))
   t)
+
+(defun save-house (house)
+  nil)
+
+(defun find-house-by-room (room)
+  nil)

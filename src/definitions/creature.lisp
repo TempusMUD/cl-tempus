@@ -972,7 +972,7 @@ control code."
                 (or (not (get-eq ch +wear-light+))
                     (aref (value-of (get-eq ch +wear-light+)) 0))))))
 
-(defun get-cost-modifier (ch seller)
+(defun cost-modifier-of (ch seller)
   "Returns a number from -44 to 44, indicating the percentage that
 should be added or removed from a transaction involving the two
 creatures."
@@ -988,3 +988,9 @@ creatures."
                 (eql (master-of ch)
                      target))
            (creature-trusts-idnum ch (idnum-of target)))))
+
+(defun remember (ch vict)
+  (push (idnum-of vict) (memory-of ch)))
+
+(defun forget (ch vict)
+  (setf (memory-of ch) (delete (idnum-of vict) (memory-of ch))))

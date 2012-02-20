@@ -100,4 +100,60 @@
   (find-distance-recurse start dest 0))
 
 (defun hunt-victim (ch)
+  "TODO: Implement hunt-victim"
   nil)
+
+(defun smart-mobile-move (ch dir)
+  (let* ((exit (exit ch dir))
+         (room (and exit (real-room (to-room-of exit)))))
+    (cond
+      ((or (null exit) (null room))
+       nil)
+      ((logtest (exit-info-of exit) +ex-closed+)
+       (cond
+         ((logtest (exit-info-of exit) +ex-special+)
+          ;; can't open here
+          nil)
+         ((logtest (exit-info-of exit) +ex-locked+)
+          (cond
+            ((find-key ch (key-of exit))
+             (perform-door-unlock ch dir))
+            ((and (> (check-skill ch +skill-pick-lock+) 30)
+                  (find-lockpick ch))
+             (perform-door-pick ch dir))
+            ((and (> (check-skill ch +spell-knock+) 30)
+                  (> (mana-of ch) (/ (max-mana-of ch) 2)))
+             (cast-spell ch nil nil dir +spell-knock+))
+            ((and (> (check-skill ch +skill-break-door+) 30)
+                  (> (hitp-of ch) (/ (max-hitp-of ch) 2)))
+             (perform-door-bash ch dir))))
+         (t
+          (perform-door-open ch dir))))
+      ((and (room-is-open-air room)
+            (/= (position-of ch) +pos-flying+))
+       (cond
+         ((can-travel-terrain ch (terrain-of room))
+          (perform-fly ch))
+         ((> (check-skill ch +spell-fly+) 30)
+          (cast-spell ch ch nil nil +spell-fly+))
+         ((> (check-skill ch +spell-air-walk+) 30)
+          (cast-spell ch ch nil nil +spell-air-walk+))
+         ((> (check-skill ch +spell-tidal-spacewarp+) 30)
+          (cast-spell ch ch nil nil +spell-tidal-spacewarp+))
+         ((randomly-true 10)
+          (emit-voice ch nil +voice-hunt-openair+))))
+      ((and (eql (terrain-of room)
+                 +sect-water-noswim+)
+            (/= (position-of ch)
+                +pos-flying+)
+            (can-travel-terrain ch (terrain-of room)))
+       (cond
+         ((aff-flagged ch +aff-inflight+)
+          (perform-fly ch))
+         ((> (check-skill ch +spell-waterwalk+)
+             30)
+          (cast-spell ch ch nil nil +spell-waterwalk+))
+         ((randomly-true 10)
+          (emit-voice ch nil +voice-hunt-water+))))
+      (t
+       (perform-move ch dir :walk t)))))

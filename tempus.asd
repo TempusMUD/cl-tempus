@@ -122,7 +122,8 @@
                        (:file "mystical-enclave")
                        (:file "receptionist")
                        (:file "bank")
-                       (:file "vendor")))))))
+                       (:file "vendor")
+                       (:file "cityguard")))))))
 
 
 (defsystem #:tempus.test
