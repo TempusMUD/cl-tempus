@@ -141,7 +141,7 @@
          ((> (check-skill ch +spell-tidal-spacewarp+) 30)
           (cast-spell ch ch nil nil +spell-tidal-spacewarp+))
          ((randomly-true 10)
-          (emit-voice ch nil +voice-hunt-openair+))))
+          (emit-voice ch nil 'hunt-openair))))
       ((and (eql (terrain-of room)
                  +sect-water-noswim+)
             (/= (position-of ch)
@@ -154,6 +154,6 @@
              30)
           (cast-spell ch ch nil nil +spell-waterwalk+))
          ((randomly-true 10)
-          (emit-voice ch nil +voice-hunt-water+))))
+          (emit-voice ch nil 'hunt-water))))
       (t
        (perform-move ch dir :walk t)))))
