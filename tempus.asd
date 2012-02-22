@@ -61,6 +61,7 @@
                       ((:file "char-class")
                        (:file "handler")
                        (:file "limits")
+                       (:file "objects")
                        (:file "paths")))
              (:module :actions
                       :components
@@ -77,6 +78,7 @@
                        (:file "act-wizard")
                        (:file "combat-messages")
                        (:file "combat-utils")
+                       (:file "cyborg-skills")
                        (:file "fight")
                        (:file "magic")
                        (:file "pvp")
@@ -105,7 +107,8 @@
                        (:file "combat-cmds")))
              (:module :engine
                       :components
-                      ((:file "prog")
+                      ((:file "obj-cmds")
+                       (:file "prog")
                        (:file "prog-compile")
                        (:file "room-update")
                        (:file "mob-update")
