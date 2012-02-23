@@ -1526,6 +1526,29 @@
         (to-target "Your head explodes with pain and you fall to the ground in agony!"))
     (to-room "$N suddenly falls to the ground, clutching $S head!")))
 
+(define-spell fly ()
+  (cond
+    ((<= (position-of target) +pos-sleeping+)
+     (act caster :target target :subject-emit "$E is in no position to be flying!"))
+    (t
+     (duration (+ 2 (floor level 8)))
+     (set-affbit 1 +aff-inflight+)
+     (to-target "Your feet lift lightly from the ground.")
+     (to-room "$n begins to hover above the ground.")
+     (setf (position-of target) +pos-flying+))))
+
+(define-spell air-walk ()
+  (cond
+    ((<= (position-of target) +pos-sleeping+)
+     (act caster :target target :subject-emit "$E is in no position to be flying!"))
+    (t
+     (duration (+ 2 (floor level 8)))
+     (set-affbit 1 +aff-inflight+)
+     (to-target "Your feet lift lightly from the ground.")
+     (to-room "$n begins to hover above the ground.")
+     (setf (position-of target) +pos-flying+))))
+
+
 (defun activate-vstone (caster stone)
   (let ((dest-room (real-room (obj-val-of stone 0))))
     (cond
