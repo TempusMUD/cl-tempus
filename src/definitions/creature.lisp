@@ -653,7 +653,8 @@
   (cond
     ((is-npc ch)
      (incf (wait-state-of ch)))
-    ((link-of ch)
+    ((and (link-of ch)
+          (not (immortalp ch)))
      (incf (wait-of (link-of ch)) pulses))))
 
 (defmethod wait-of ((ch mobile))
@@ -750,7 +751,7 @@
       (stop-hunting tch)))
 
   #+nil (destroy-attached-progs ch)
-  #+nil (char-arrest-pardoned ch)
+  (char-arrest-pardoned ch)
 
   (when (mounted-of ch)
     (perform-dismount ch))
@@ -994,3 +995,22 @@ creatures."
 
 (defun forget (ch vict)
   (setf (memory-of ch) (delete (idnum-of vict) (memory-of ch))))
+
+(defun strength-damage-bonus (str)
+  (floor (- (/ (* str str) 47) (/ str 10) 4)))
+
+(defun strength-hit-bonus (str)
+  (floor (- (/ str 3) 5)))
+
+(defun hands-free (ch)
+  (flet ((hands-used-by-pos (pos)
+           (let ((obj (get-eq ch pos)))
+             (cond
+               ((null obj) 0)
+               ((is-obj-stat2 obj +item2-two-handed+) 2)
+               (t 1)))))
+    (- 2
+       (hands-used-by-pos +wear-wield+)
+       (hands-used-by-pos +wear-wield-2+)
+       (hands-used-by-pos +wear-shield+)
+       (hands-used-by-pos +wear-hold+))))

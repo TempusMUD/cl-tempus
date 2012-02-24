@@ -690,6 +690,10 @@
        (or (= (+ (obj-val-of obj 3) +type-hit+) +type-stab+)
            (= (+ (obj-val-of obj 3) +type-hit+) +type-pierce+))))
 
+(defun slashing-weapon? (obj)
+  (and (is-obj-kind obj +item-weapon+)
+       (= (+ (obj-val-of obj 3) +type-hit+) +type-slash+)))
+
 (defun unserialize-object (container victim room object-node)
   (let* ((vnum (xml-attr object-node "vnum" :numeric t))
          (obj (if (plusp vnum)
