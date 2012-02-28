@@ -973,11 +973,15 @@ control code."
                 (or (not (get-eq ch +wear-light+))
                     (aref (value-of (get-eq ch +wear-light+)) 0))))))
 
-(defun cost-modifier-of (ch seller)
+(defun cost-modifier-of (buyer seller)
   "Returns a number from -44 to 44, indicating the percentage that
 should be added or removed from a transaction involving the two
 creatures."
-  (* (- (cha-of seller) (cha-of ch)) 2))
+  (* (- (cha-of seller) (cha-of buyer)) 2))
+
+(defun adjusted-cost (buyer seller base-cost)
+  (+ base-cost
+     (floor (* base-cost (cost-modifier-of buyer seller)) 100)))
 
 (defun creature-trusts-idnum (ch idnum)
   (or (find idnum (players-of (account-of ch)) :key 'idnum-of)
@@ -1014,3 +1018,6 @@ creatures."
        (hands-used-by-pos +wear-wield-2+)
        (hands-used-by-pos +wear-shield+)
        (hands-used-by-pos +wear-hold+))))
+
+(defun char-in-future? (ch)
+  (eql (time-frame-of (zone-of (in-room-of ch))) +time-future+))
