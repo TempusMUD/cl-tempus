@@ -49,6 +49,7 @@
                        (:file "login")
                        (:file "network")
                        (:file "random")
+                       (:file "resolvers")
                        (:file "sight")
                        (:file "utils")))
              (:module :persistence
