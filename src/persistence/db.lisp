@@ -252,10 +252,7 @@
 
   (if *mini-mud*
       (slog "HOUSE: Mini-mud detected. Houses not loading.")
-      (progn
-        (slog "HOUSE: Booting houses.")
-        (housing-load)
-        (housing-count-objects)))
+      (housing-load))
 
   (unless *no-initial-zreset*
     (reset-all-zones))

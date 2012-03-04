@@ -130,6 +130,8 @@
   (add-timer *event-base* (lambda () (update-rooms 'update-room-flows)) 1)
   (add-timer *event-base* (lambda () (update-rooms 'update-room-affects)) 5)
   (add-timer *event-base* (lambda () (update-rooms 'update-room-ambience)) 4)
+  (when *production-mode*
+    (add-timer *event-base* (lambda () (update-housing)) 60))
 
   (event-dispatch *event-base*))
 

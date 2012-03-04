@@ -254,6 +254,85 @@
        (save-room-special-assignments)
        (send-to-char ch "Room special set.~%")))))
 
+(defun create-room-extradesc (ch keywords)
+  (cond
+    ((find keywords (ex-description-of (in-room-of ch))
+           :test #'string-abbrev
+           :key 'keyword-of)
+     (send-to-char ch "~
+An extra description already exists with that keyword.
+Use the 'olc rexdesc remove' command to remove it, or the
+'olc rexdesc edit' command to change it.
+"))
+    (t
+     (setf (plr-bits-of ch) (logior (plr-bits-of ch) +plr-olc+))
+     (act ch :place-emit "$n begins to write an extra description.~%")
+     (start-text-editor (link-of ch)
+                        (in-room-of ch)
+                        "an extradesc"
+                        ""
+                        (lambda (cxn room buf)
+                          (push (make-instance 'extra-descr-data
+                                               :keyword keywords
+                                               :description buf)
+                                (ex-description-of room))
+                          (setf (plr-bits-of (actor-of cxn))
+                                (logandc2 (plr-bits-of (actor-of cxn)) +plr-olc+))
+                          (setf (state-of cxn) 'playing))
+                        (lambda (cxn room)
+                          (declare (ignore room))
+                          (setf (plr-bits-of (actor-of cxn))
+                                (logandc2 (plr-bits-of (actor-of cxn)) +plr-olc+))
+                          (setf (state-of cxn) 'playing))))))
+
+(defun edit-room-extradesc (ch keywords)
+  (let ((exd (find keywords (ex-description-of (in-room-of ch))
+                   :test #'string-abbrev
+                   :key 'keyword-of)))
+    (cond
+      ((null exd)
+       (send-to-char ch "No such description.~%"))
+      (t
+       (setf (plr-bits-of ch) (logior (plr-bits-of ch) +plr-olc+))
+       (act ch :place-emit "$n begins to write an extra description.~%")
+       (start-text-editor (link-of ch)
+                          exd
+                          "an extradesc"
+                          ""
+                          (lambda (cxn exd buf)
+                            (setf (description-of exd) buf)
+                            (setf (plr-bits-of (actor-of cxn))
+                                  (logandc2 (plr-bits-of (actor-of cxn)) +plr-olc+))
+                            (setf (state-of cxn) 'playing))
+                          (lambda (cxn exd)
+                            (declare (ignore exd))
+                            (setf (plr-bits-of (actor-of cxn))
+                                  (logandc2 (plr-bits-of (actor-of cxn)) +plr-olc+))
+                            (setf (state-of cxn) 'playing)))))))
+
+(defun add-key-to-room-extradesc (ch keyword more-keywords)
+  (let ((exd (find keyword (ex-description-of (in-room-of ch))
+                   :test #'string-abbrev
+                   :key 'keyword-of)))
+    (cond
+      ((null exd)
+       (send-to-char ch "No such description.~%"))
+      (t
+       (setf (keyword-of exd) (format nil "~a ~a" (keyword-of exd) more-keywords))
+       (send-to-char ch "Keywords added.~%")))))
+
+(defun remove-room-extradesc (ch keywords)
+  (let ((exd (find keywords (ex-description-of (in-room-of ch))
+                   :test #'string-abbrev
+                   :key 'keyword-of)))
+    (cond
+      ((null exd)
+       (send-to-char ch "No such description.~%"))
+      (t
+       (setf (ex-description-of (in-room-of ch))
+             (delete exd (ex-description-of (in-room-of ch))))
+       (send-to-char ch "Description removed.~%")))))
+
 (defcommand (ch "olc" "create" "room") (:immortal)
   (send-to-char ch "Create a room with what vnum?~%"))
 
@@ -482,80 +561,21 @@
 
 (defcommand (ch "olc" "rexdesc" "create" keywords) (:immortal)
   (when (check-can-edit ch (zone-of (in-room-of ch)) +zone-rooms-approved+)
-    (cond
-      ((find keywords (ex-description-of (in-room-of ch))
-             :test #'string-abbrev
-             :key 'keyword-of)
-       (send-to-char ch "~
-An extra description already exists with that keyword.
-Use the 'olc rexdesc remove' command to remove it, or the
-'olc rexdesc edit' command to change it.
-"))
-      (t
-       (setf (plr-bits-of ch) (logior (plr-bits-of ch) +plr-olc+))
-       (act ch :place-emit "$n begins to write an extra description.~%")
-       (start-text-editor (link-of ch)
-                          (in-room-of ch)
-                          "an extradesc"
-                          ""
-                          (lambda (cxn room buf)
-                            (push (make-instance 'extra-descr-data
-                                                 :keyword keywords
-                                                 :description buf)
-                                  (ex-description-of room))
-                            (setf (plr-bits-of (actor-of cxn))
-                                  (logandc2 (plr-bits-of (actor-of cxn)) +plr-olc+))
-                            (setf (state-of cxn) 'playing))
-                          (lambda (cxn room)
-                            (declare (ignore room))
-                            (setf (plr-bits-of (actor-of cxn))
-                                  (logandc2 (plr-bits-of (actor-of cxn)) +plr-olc+))
-                            (setf (state-of cxn) 'playing)))))))
+    (create-room-extradesc ch keywords)))
 
 (defcommand (ch "olc" "rexdesc" "remove") (:immortal)
   (send-to-char ch "Which extra description would you like to remove?~%"))
 
 (defcommand (ch "olc" "rexdesc" "remove" keywords) (:immortal)
   (when (check-can-edit ch (zone-of (in-room-of ch)) +zone-rooms-approved+)
-    (let ((exd (find keywords (ex-description-of (in-room-of ch))
-                     :test #'string-abbrev
-                     :key 'keyword-of)))
-      (cond
-        ((null exd)
-         (send-to-char ch "No such description.~%"))
-        (t
-         (setf (ex-description-of (in-room-of ch))
-               (delete exd (ex-description-of (in-room-of ch))))
-         (send-to-char ch "Description removed.~%"))))))
+    (remove-room-extradesc ch keywords)))
 
 (defcommand (ch "olc" "rexdesc" "edit") (:immortal)
   (send-to-char ch "Which extra description would you like to edit?~%"))
 
 (defcommand (ch "olc" "rexdesc" "edit" keywords) (:immortal)
   (when (check-can-edit ch (zone-of (in-room-of ch)) +zone-rooms-approved+)
-    (let ((exd (find keywords (ex-description-of (in-room-of ch))
-                     :test #'string-abbrev
-                     :key 'keyword-of)))
-      (cond
-        ((null exd)
-         (send-to-char ch "No such description.~%"))
-        (t
-         (setf (plr-bits-of ch) (logior (plr-bits-of ch) +plr-olc+))
-         (act ch :place-emit "$n begins to write an extra description.~%")
-         (start-text-editor (link-of ch)
-                            exd
-                            "an extradesc"
-                            ""
-                            (lambda (cxn exd buf)
-                              (setf (description-of exd) buf)
-                              (setf (plr-bits-of (actor-of cxn))
-                                    (logandc2 (plr-bits-of (actor-of cxn)) +plr-olc+))
-                              (setf (state-of cxn) 'playing))
-                            (lambda (cxn exd)
-                              (declare (ignore exd))
-                              (setf (plr-bits-of (actor-of cxn))
-                                    (logandc2 (plr-bits-of (actor-of cxn)) +plr-olc+))
-                              (setf (state-of cxn) 'playing))))))))
+    (edit-room-extradesc ch keywords)))
 
 (defcommand (ch "olc" "rexdesc" "addkey") (:immortal)
   (send-to-char ch "Which extra description would you like to add keys to?~%"))
@@ -566,15 +586,7 @@ Use the 'olc rexdesc remove' command to remove it, or the
 
 (defcommand (ch "olc" "rexdesc" "addkey" keyword more-keywords) (:immortal)
   (when (check-can-edit ch (zone-of (in-room-of ch)) +zone-rooms-approved+)
-    (let ((exd (find keyword (ex-description-of (in-room-of ch))
-                     :test #'string-abbrev
-                     :key 'keyword-of)))
-      (cond
-        ((null exd)
-         (send-to-char ch "No such description.~%"))
-        (t
-         (setf (keyword-of exd) (format nil "~a ~a" (keyword-of exd) more-keywords))
-         (send-to-char ch "Keywords added.~%"))))))
+    (add-key-to-room-extradesc ch keyword more-keywords)))
 
 (defcommand (ch "rlist") (:immortal)
   (let ((zone (zone-of (in-room-of ch))))

@@ -69,6 +69,26 @@
     (and group
          (find (idnum-of ch) (members-of group)))))
 
+(defgeneric authorized? (ch op &key &allow-other-keys))
+
+(defmethod authorized? :around (ch op &key)
+  (or (= (level-of ch) +lvl-grimp+)
+      (call-next-method)))
+
+(defmethod authorized? (ch (op (eql 'enter-houses)) &key)
+  (or (security-is-really-member ch "House")
+      (security-is-really-member ch "AdminBasic")
+      (security-is-really-member ch "WizardFull")))
+
+(defmethod authorized? (ch (op (eql 'edit-house)) &key house)
+  (or (security-is-really-member ch "House")
+      (and house
+           (eql (owner-idnum-of house)
+                (idnum-of (account-of ch))))))
+
+(defmethod authorized? (ch op &key)
+  nil)
+
 (defun can-admin-group (ch group-name)
   (let ((group (gethash group-name *access-groups-name*)))
     (and group

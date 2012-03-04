@@ -642,9 +642,9 @@
         (when (max-occupancy-of room)
           (send-to-char ch " [ Max: ~d ]" (max-occupancy-of room)))
 
-        #+nil        (let ((house (find-house-by-room (number-of room))))
-                       (when house
-                         (send-to-char ch " [ House: ~d ]" (id-of house)))))
+        (let ((house (find-house-by-room (number-of room))))
+          (when house
+            (send-to-char ch " [ House: ~d ]" (idnum-of house)))))
       (send-to-char ch "&c~a" (name-of room)))
 
   (send-to-char ch "&n~%")

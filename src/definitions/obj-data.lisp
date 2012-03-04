@@ -473,6 +473,9 @@
 (defmethod cost-of ((obj obj-data))
   (cost-of (shared-of obj)))
 
+(defmethod cost-per-day-of ((obj obj-data))
+  (cost-per-day-of (shared-of obj)))
+
 (defmethod obj-val-of ((obj obj-data) num)
   (aref (value-of obj) num))
 
