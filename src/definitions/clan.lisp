@@ -48,7 +48,7 @@
             :key 'name-of)))
 
 (defun clan-member-p (ch clan)
-  (find (idnum-of ch) (members-of clan)))
+  (find (idnum-of ch) (members-of clan) :key 'idnum-of))
 
 (defun add-clan-member (ch clan)
   (setf (clan-of ch) (idnum-of clan))
@@ -784,7 +784,7 @@
        (send-to-char ch "The bank account must be a positive number.~%"))
       (t
        (setf (bank-of clan) bank)
-       (postmodern:execute (:update 'clan :set 'bank bank :where (:= 'clan (idnum-of clan))))
+       (postmodern:execute (:update 'clans :set 'bank bank :where (:= 'idnum (idnum-of clan))))
        (send-to-char ch "You got it.~%")
        (slog "(cedit) ~a set clan ~a[~d] bank to '~a'"
              (name-of ch)
@@ -807,7 +807,7 @@
        (send-to-char ch "There is no such player as '~a'~%" owner-str))
       (t
        (setf (owner-of clan) owner-id)
-       (postmodern:execute (:update 'clan :set 'owner owner-id :where (:= 'clan (idnum-of clan))))
+       (postmodern:execute (:update 'clans :set 'owner owner-id :where (:= 'idnum (idnum-of clan))))
        (send-to-char ch "You got it.~%")
        (slog "(cedit) ~a set clan ~a[~d] owner to ~a[~d]"
              (name-of ch)
