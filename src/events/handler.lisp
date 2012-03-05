@@ -582,9 +582,9 @@
              when (bitp bits idx)
              collect descrip)))
 
-(defun is-alias-of (str alias)
+(defun is-alias-of (str alias &key test)
   (let ((aliases (cl-ppcre:split #/\s+/ alias)))
-    (member str aliases :test #'string-abbrev)))
+    (member str aliases :test (or test #'string-abbrev))))
 
 (defun get-obj-in-list-num (num list)
   "Search a given list for an object number, and return a ptr to that obj."

@@ -584,3 +584,8 @@ sequences in seq-list with the delimiter between each element"
                            :keyword (keyword-of exd)
                            :description (description-of exd)))
           (ex-description-of src)))
+
+(defun add-alias (object new-alias)
+  (unless (is-alias-of new-alias (aliases-of object) :test #'string=)
+    (setf (aliases-of object)
+          (concatenate 'string (aliases-of object) " " new-alias))))

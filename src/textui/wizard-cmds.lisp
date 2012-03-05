@@ -85,3 +85,29 @@ Commands:
       (t
        (account-reload (account-by-idnum account-id))
        (send-to-char ch "Account reloaded.~%")))))
+
+(defcommand (ch "addname") (:immortal)
+  (send-to-char ch "Usage: addname <target> <new alias>~%"))
+
+(defcommand (ch "addname" junk) (:immortal)
+  (declare (ignore junk))
+  (send-to-char ch "Usage: addname <target> <new alias>~%"))
+
+(defcommand (ch "addname" target-str new-alias) (:immortal)
+  (let* ((targets (resolve-alias ch target-str
+                                (append (carrying-of ch)
+                                        (people-of (in-room-of ch))
+                                        (contents-of (in-room-of ch)))))
+         (target (first targets)))
+    (cond
+      ((null targets)
+       (send-to-char ch "No such object or mobile around.~%"))
+      ((rest targets)
+       (send-to-char ch "You can only do this to one thing at a time.~%"))
+      ((is-pc target)
+       (send-to-char ch "You can only do this with NPCs.~%"))
+      ((is-alias-of new-alias (aliases-of target) :test #'string=)
+       (send-to-char ch "'~a' is already an alias.~%" new-alias))
+      (t
+       (add-alias target new-alias)
+       (send-to-char ch "Okay, you do it.~%")))))
