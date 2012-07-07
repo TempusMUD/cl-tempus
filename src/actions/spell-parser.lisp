@@ -37,6 +37,9 @@
                                     (remort-char-class-of ch) 4)))))
              mana)
         mana)))
+(defun pad-song (lyrics)
+  (let ((indent (- (position #\" lyrics) 4)))
+    (cl-ppcre:regex-replace-all "\\n" lyrics (format nil "~%~vt" indent))))
 
 (defun say-spell (ch spellnum tch tobj)
   (let ((to-char nil) (to-vict nil) (to-room nil))
@@ -71,6 +74,23 @@
           (setf to-char "You look at $N and make a calculation."
                 to-vict "$n closes $s eyes and alters the reality around you."
                 to-room "$n looks at $N and makes a calculation."))))
+      ((spell-is-bardic spellnum)
+         (let ((to-target (cond
+                            (tobj
+                             " to $p")
+                            ((or (null tch)
+                                 (eql tch ch))
+                             "")
+                            (t
+                             " to $N")))
+               (lyrics (lyrics-of (aref *spell-info* spellnum))))
+           (if (instrumentalp (aref *spell-info* spellnum))
+               (setf to-char (format nil "You begin to play ~a~a." lyrics to-target)
+                     to-vict (if (eql tch ch) nil (format nil "$n begins playing ~a~a." lyrics to-target))
+                     to-room (format nil "$n begins playing ~a~a." lyrics to-target))
+               (setf to-char (pad-song (format nil "You sing~a, &c\"~a\"&n" to-target lyrics))
+                     to-vict (if (eql tch ch) nil(pad-song (format nil "$n sings~a, &c\"~a\"&n" to-target lyrics)))
+                     to-room (pad-song (format nil "$n sings~a, &c\"~a\"&n" to-target lyrics))))))
       (t
        (let ((spell-name (translate-with-tongue (gethash 1 *tongues*)
                                                 (spell-to-str spellnum)
@@ -140,6 +160,9 @@
        "ability"))))
 
 (defun find-spell-targets (ch args mode)
+  "Given the caster, spell arguments, and mode of casting, returns the
+spellnum and a list of targets to be affected by the spell.  If the
+spell cannot be cast, returns NIL."
   (multiple-value-bind (spellnum spell-args)
       (parse-spell-name args)
     (let ((target-flags (and spellnum (targets-of (aref *spell-info* spellnum)))))
@@ -155,7 +178,13 @@
          (send-to-char ch "You are unfamiliar with that ~a.~%" (spell-kind-desc spellnum))
          nil)
         ((logtest target-flags +tar-ignore+)
-         spellnum)
+         (values spellnum nil))
+        ((logtest (flags-of (aref *spell-info* spellnum)) +mag-groups+)
+         (values spellnum (present-group-members ch)))
+        ((logtest (flags-of (aref *spell-info* spellnum)) +mag-masses+)
+         (values spellnum (fighting-of ch)))
+        ((logtest (flags-of (aref *spell-info* spellnum)) +mag-areas+)
+         (values spellnum ()))
         ((string= spell-args "")
          (cond
            ((logtest target-flags +tar-fight-self+)
@@ -282,9 +311,6 @@
                       ((spell-is-bardic spellnum) "song")
                       (t "spell"))))
     (cond
-      ((immortalp ch)
-       ;; Immorts can always cast
-       t)
       ((and (spell-is-magic spellnum)
             (not (or (is-mage ch)
                      (is-cleric ch)
@@ -347,21 +373,6 @@
           (send-to-char ch "You're too drunk to remember the tune.~%"))
          (t
           (send-to-char ch "Your mind is too clouded to cast any spells.~%")))
-       nil)
-      ((not (or (spell-is-magic spellnum) (spell-is-divine spellnum)))
-       (send-to-char ch "That is not a spell.~%")
-       nil)
-      ((and (null target)
-            (not (logtest (targets-of (aref *spell-info* spellnum)) +tar-door+)))
-       (cond
-         ((spell-is-psionic spellnum)
-          (send-to-char ch "Cannot find the target of your trigger!"))
-         ((spell-is-physics spellnum)
-          (send-to-char ch "Cannot find the target of your alteration!~%"))
-         ((spell-is-bardic spellnum)
-          (send-to-char ch "Cannot find the target of your song!~%"))
-         (t
-          (send-to-char ch "Cannot find the target of your spell!~%")))
        nil)
       ((and (plusp mana-cost)
             (> mana-cost (mana-of ch))
@@ -454,6 +465,18 @@
       ((and (spell-flagged spellnum +mag-nosun+)
             (room-is-sunny (in-room-of ch)))
        (send-to-char ch "This ~a cannot be used in sunlight.~%" spell-desc)
+       nil)
+      ((and (null target)
+            (not (logtest (targets-of (aref *spell-info* spellnum)) (logior +tar-ignore+ +tar-door+))))
+       (cond
+         ((spell-is-psionic spellnum)
+          (send-to-char ch "Cannot find the target of your trigger!"))
+         ((spell-is-physics spellnum)
+          (send-to-char ch "Cannot find the target of your alteration!~%"))
+         ((spell-is-bardic spellnum)
+          (send-to-char ch "Cannot find the target of your song!~%"))
+         (t
+          (send-to-char ch "Cannot find the target of your spell!~%")))
        nil)
       (t
        ;; Passed all tests
@@ -645,7 +668,9 @@
                                                        (,+cast-internal+ . ,+saving-none+))))
                                          +saving-breath+)))))
          (funcall func ch (or vict ovict dvict) level saved))
-       (when (and (violentp info)
+       (when (and (not (is-dead vict))
+                  (not (is-dead ch))
+                  (violentp info)
                   vict
                   (not (eql vict ch)))
          (pushnew vict (fighting-of ch)))))))
