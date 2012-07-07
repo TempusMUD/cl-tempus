@@ -106,11 +106,11 @@
                        (:file "interpreter")
                        (:file "nanny")
                        (:file "wizard-cmds")
-                       (:file "combat-cmds")))
+                       (:file "combat-cmds")
+                       (:file "obj-cmds")))
              (:module :engine
                       :components
-                      ((:file "obj-cmds")
-                       (:file "prog")
+                      ((:file "prog")
                        (:file "prog-compile")
                        (:file "room-update")
                        (:file "mob-update")
