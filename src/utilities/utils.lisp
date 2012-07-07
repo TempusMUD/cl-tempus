@@ -539,7 +539,7 @@ sequences in seq-list with the delimiter between each element"
 (defun describe-char (viewer subject)
   (cond
     ((is-visible-to subject viewer)
-     (get-disguised-name subject viewer))
+     (get-disguised-name viewer subject))
     ((immortalp subject)
      "a divine presence")
     (t
