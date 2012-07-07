@@ -220,9 +220,11 @@
     (when (and (plusp (flow-speed-of room))
                (not (null exit))
                (not (logtest (exit-info-of exit) +ex-closed+))
-               (not (logtest (exit-info-of exit) +ex-nopass+)))
+               (not (logtest (exit-info-of exit) +ex-nopass+))
+               (not (null (real-room (to-room-of exit)))))
       (dolist (ch (copy-list (people-of room)))
-        (flow-one-creature ch room (flow-speed-of room) (flow-dir-of room)))
+        (unless (is-dead ch)
+          (flow-one-creature ch room (flow-speed-of room) (flow-dir-of room))))
       (dolist (obj (copy-list (contents-of room)))
         (flow-one-object obj room (flow-speed-of room) (flow-dir-of room))))))
 
