@@ -74,7 +74,9 @@
           ("class"
            (setf (remort-gen-of ch) (xml-attr node "gen" :numeric t :default 0))
            (setf (char-class-of ch) (parse-player-class (xml-attr node "name")))
-           (setf (remort-char-class-of ch) (parse-player-class (xml-attr node "remort")))
+           (let ((remort-class (xml-attr node "remort")))
+             (when remort-class
+               (setf (remort-char-class-of ch) (parse-player-class remort-class))))
            (setf (total-dam-of ch) (xml-attr node "total_dam" :numeric t :default 0)))
           ("time"
            (setf (login-time-of ch) (unix-to-timestamp
