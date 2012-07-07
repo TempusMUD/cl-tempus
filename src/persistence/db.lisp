@@ -175,7 +175,7 @@
     (apply 'postmodern:connect-toplevel
            (if *production-mode*
                '("tempus" "realm" "" "localhost")
-               '("devtempus" "realm" nil "localhost"))))
+               '("devtempus" "realm" nil :unix))))
 
   (when *production-mode*
     (slog "Vacuuming old database transactions")
