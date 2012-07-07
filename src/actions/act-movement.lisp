@@ -953,3 +953,152 @@
                        (> (random-range 0 20) (dex-of ch)))
               (act ch :all-emit "$n stagger$% and fall$% down.")
               (setf (position-of ch) +pos-sitting+)))))))))
+
+(defcommand (ch "follow") (:standing)
+  (send-to-char ch "Whom do you wish to follow?~%"))
+
+(defcommand (ch "follow" target) (:standing)
+  (let ((targets (resolve-alias ch target (people-of (in-room-of ch)))))
+    (cond
+      ((null targets)
+       (send-to-char ch "You don't see that to follow.~%"))
+      ((cdr targets)
+       (send-to-char ch "You can only follow one thing at a time.~%"))
+      ((eql (first targets) (master-of ch))
+       (send-to-char ch "You are already following ~a.~%" (describe-char ch (first targets))))
+      ((and (aff-flagged ch +aff-charm+)
+            (master-of ch))
+       (send-to-char ch "You only feel like following ~a!~%" (describe-char ch (master-of ch))))
+      ((eql ch (first targets))
+       (stop-following ch))
+      ((circle-follow ch (first targets))
+       (send-to-char ch "You'd just be following each other in circles!~%"))
+      (t
+       (when (master-of ch)
+         (stop-following ch))
+       (setf (aff-flags-of ch) (logandc2 (aff-flags-of ch) +aff-group+))
+       (add-follower ch (first targets))))))
+
+(defun head-of-group? (ch)
+  (and (null (master-of ch))
+       (aff-flagged ch +aff-group+)))
+
+(defun desc-exp-tnl (ch)
+  (if (or (is-npc ch) (> (level-of ch) 49))
+      ""
+      (let ((tnl (- (aref +exp-scale+ (1+ (level-of ch))) (exp-of ch))))
+        (cond
+          ((minusp tnl)
+           "can remort")
+          ((> tnl 1000000)
+           (format nil "~dmil tnl" (floor tnl 1000000)))
+          ((> tnl 1000)
+           (format nil "~dk tnl" (floor tnl 1000)))
+          (t
+           (format nil "~d tnl" tnl))))))
+
+(defcommand (ch "group") ()
+  (cond
+    ((aff-flagged ch +aff-group+)
+     (send-to-char ch "Your group consists of:~%")
+     (let ((master (or (master-of ch) ch)))
+       (when (aff-flagged master +aff-group+)
+         (send-to-char ch "&g[&n~4dH ~4dM ~4dV ~4dA&g] [&n~10a&g] &r[&n~2d ~a&r]&n ~a &b(&cHead of group&b)&n~%"
+                       (hitp-of master)
+                       (mana-of master)
+                       (move-of master)
+                       (alignment-of master)
+                       (desc-exp-tnl master)
+                       (level-of master)
+                       (aref +char-class-abbrevs+ (char-class-of master))
+                       (describe-char ch master)))
+       (dolist (follower (followers-of master))
+         (when (aff-flagged follower +aff-group+)
+           (send-to-char ch "&g[&n~4dH ~4dM ~4dV ~4dA&g] [&n~10a&g] &r[&n~2d ~a&r]&n ~a~%"
+                         (hitp-of follower)
+                         (mana-of follower)
+                         (move-of follower)
+                         (alignment-of follower)
+                         (desc-exp-tnl follower)
+                         (level-of follower)
+                         (aref +char-class-abbrevs+ (char-class-of follower))
+                         (describe-char ch follower))))))
+    (t
+     (send-to-char ch "But you are not a member of a group!~%"))))
+
+(defun perform-group (ch target)
+  (when (and (not (aff-flagged target +aff-group+))
+             (can-see-creature ch target))
+    (setf (aff-flags-of target) (logior (aff-flags-of target) +aff-group+))
+    (if (eql ch target)
+        (act ch
+             :all-emit "$n creates an adventuring group.")
+        (act target :target ch
+             :subject-emit "You are now a member of $N's group."
+             :target-emit "$n is now a member of your group."
+             :not-target-emit "$n is now a member of $N's group."))
+    t))
+
+(defun disband-group (ch)
+  (send-to-char ch "You disband the group.~%")
+  (dolist (f (copy-list (followers-of ch)))
+    (when (aff-flagged f +aff-group+)
+      (setf (aff-flags-of f) (logandc2 (aff-flags-of f) +aff-group+))
+      (send-to-char f "~a has disbanded the group.~%" (describe-char f ch))
+      (stop-following f)))
+  (setf (aff-flags-of ch) (logandc2 (aff-flags-of ch) +aff-group+)))
+
+(defcommand (ch "group" target) ()
+  (cond
+    ((< (position-of ch) +pos-resting+)
+     (send-to-char ch "You need to be awake to do that.~%"))
+    ((master-of ch)
+     (send-to-char ch "You cannot enroll group members without being head of a group.~%"))
+    ((string-equal target "all")
+     (perform-group ch ch)
+     (when (notany 'identity (mapcar (lambda (f)
+                                       (perform-group ch f)) (followers-of ch)))
+       (send-to-char ch "Everyone following you is already in your group.~%")))
+    (t
+     (let ((targets (resolve-alias ch target (people-of (in-room-of ch)))))
+       (cond
+         ((null targets)
+          (send-to-char ch +noperson+))
+         (t
+          (dolist (target targets)
+            (cond
+              ((and (not (eql ch target))
+                    (not (eql (master-of target) ch)))
+               (send-to-char ch "~a must follow you to enter your group.~%" (describe-char ch target)))
+              ((eql ch target)
+               (disband-group ch))
+              ((aff-flagged target +aff-group+)
+               (send-to-char ch "~a is already in your group.~%" (describe-char ch target)))
+              (t
+               (perform-group ch target))))))))))
+
+(defcommand (ch "ungroup") ()
+  (if (head-of-group? ch)
+      (disband-group ch)
+      (send-to-char ch "But you lead no group!~%")))
+
+(defcommand (ch "ungroup" target) ()
+  (let ((targets (resolve-alias ch target (people-of (in-room-of ch)))))
+    (cond
+      ((null targets)
+       (send-to-char ch +noperson+))
+      ((not (head-of-group? ch))
+       (send-to-char ch "You cannot dismiss group members without being head of a group.~%"))
+      (t
+       (dolist (target targets)
+         (cond
+           ((eql ch target)
+            (disband-group ch))
+           ((aff-flagged target +aff-group+)
+            (setf (aff-flags-of target) (logandc2 (aff-flags-of target) +aff-group+))
+            (act target :target ch
+                 :subject-emit "You have been kicked out of $N's group!"
+                 :target-emit "$n has been kicked out of your group!"
+                 :not-target-emit "$n has been kicked out of $N's group!"))
+           (t
+            (perform-group ch target))))))))
