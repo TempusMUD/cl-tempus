@@ -26,7 +26,8 @@
                        (:file "defs" :depends-on ("defpackage"))
                        (:file "defcommand" :depends-on ("defpackage"))
                        (:file "config" :depends-on ("defpackage"))
-                       (:file "constants" :depends-on ("defpackage"))))
+                       (:file "constants" :depends-on ("defpackage"))
+                       (:file "cxml-patch")))
              (:module :definitions
                       :components
                       ((:file "clan")
