@@ -969,3 +969,50 @@ POS, given the BASE-DAMAGE."
            (act ch :all-emit "$n stagger$% and fall$% down.")
            (setf (position-of ch) +pos-sitting+)
            (gain-skill-proficiency ch +skill-break-door+)))))))
+
+(defun perform-rescue (ch target)
+  (let ((attacker (random-elt (fighting-of target))))
+    (cond
+      ((eql ch target)
+       (send-to-char ch "How about fleeing instead?~%"))
+      ((member target (fighting-of ch))
+       (send-to-char ch "How can you rescue someone you are trying to kill?~%"))
+      ((null (fighting-of target))
+       (send-to-char ch "But nobody is fighting ~a!~%" (him-or-her target)))
+      ((and (is-pc ch)
+            (is-pc attacker)
+            (not (pref-flagged ch +pref-pkiller+)))
+       (send-to-char ch "That rescue would entail attacking ~a, but you are flagged NO PK.~%"
+                     (describe-char ch attacker)))
+      ((> (random-range 1 101) (check-skill ch +skill-rescue+))
+       (act ch :target target
+            :subject-emit "You fail the rescue!"
+            :target-emit "$n attempts to rescue you, but fails!"
+            :not-target-emit "$n attempts to rescue $N, but fails!")
+       (wait-state ch (rl-sec 1)))
+      (t
+       (act ch :target target
+            :subject-emit "Banzai!  To the rescue..."
+            :target-emit "You are rescued by $n, you are confused!"
+            :not-target-emit "$n heroically rescues $N!")
+
+       (remove-combat attacker target)
+       (remove-combat target attacker)
+
+       (pushnew ch (fighting-of attacker))
+       (pushnew attacker (fighting-of ch))
+       (wait-state target (* 2 +pulse-violence+))
+       (gain-skill-proficiency ch +skill-rescue+)))))
+
+(defcommand (ch "rescue") (:standing)
+  (send-to-char ch "Whom do you want to rescue?~%"))
+
+(defcommand (ch "rescue" target) (:standing)
+  (let ((targets (resolve-alias ch target (people-of (in-room-of ch)))))
+    (cond
+      ((null targets)
+       (send-to-char ch "You don't see that person here.~%"))
+      ((cdr targets)
+       (send-to-char ch "You can only rescue one person at a time!~%"))
+      (t
+       (perform-rescue ch (first targets))))))
