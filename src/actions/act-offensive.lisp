@@ -957,6 +957,8 @@ POS, given the BASE-DAMAGE."
             (setf (exit-info-of exit) (logandc2 (exit-info-of exit) +ex-closed+))
             (setf (exit-info-of exit) (logandc2 (exit-info-of exit) +ex-locked+))
             (when (and dest-room (people-of dest-room) other-side)
+              (setf (exit-info-of other-side) (logandc2 (exit-info-of other-side) +ex-closed+))
+              (setf (exit-info-of other-side) (logandc2 (exit-info-of other-side) +ex-locked+))
               (act (first (people-of dest-room))
                    :all-emit (format nil "The ~a is bashed open from the other side!!"
                                      (or (name-of other-side) "door"))))))
