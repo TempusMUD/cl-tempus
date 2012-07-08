@@ -904,7 +904,8 @@ been displayed."
   nil)
 
 (defun gain-damage-exp (ch victim amount)
-  (when (eql (in-room-of ch) (in-room-of victim))
+  (when (and (eql (in-room-of ch) (in-room-of victim))
+             (not (eql ch victim)))
     (gain-exp ch (min (expt (level-of ch) 3)
                       (* (level-of ch) amount)))))
 
