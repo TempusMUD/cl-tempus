@@ -646,6 +646,7 @@ POS, given the BASE-DAMAGE."
          (cond
            ((< prob (random-range 1 120))
             ;; failure
+            (wait-state ch (floor wait 2))
             (damage-creature ch vict 0 weapon skill location)
             (unless (is-dead ch)
               (when fail-pos
@@ -654,22 +655,22 @@ POS, given the BASE-DAMAGE."
                   ;; 0.1 sec for every point below 50, up to 7
                   (incf wait (max (- 50 prob) 70))))
               (decf (move-of ch) (floor move 2))
-              (decf (mana-of ch) (floor mana 2))
-              (wait-state ch (floor wait 2))))
+              (decf (mana-of ch) (floor mana 2))))
            (t
             ;; success
             (decf (move-of ch) move)
             (decf (mana-of ch) mana)
             (gain-skill-proficiency ch skill)
             (wait-state ch wait)
+            (when (plusp vict-wait)
+              (wait-state vict vict-wait))
             (damage-creature ch vict dam weapon skill location)
             (unless (or (is-dead ch) (is-dead vict))
               (when (plusp vict-pos)
                 (setf (position-of vict) vict-pos))
-              (when (plusp vict-wait)
-                (wait-state vict vict-wait))
               (when (and affect (not (affected-by-spell vict (kind-of affect))))
-                (affect-to-char vict affect))))))))))
+                (affect-to-char vict affect))
+              (pushnew ch (fighting-of vict))))))))))
 
 (defun perform-hit (ch target)
   (cond
