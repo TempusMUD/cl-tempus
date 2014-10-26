@@ -139,7 +139,8 @@ closing the socket if it was being shutdown."
   (remove-fd-handlers *event-base* (socket-os-fd (socket-of cxn)) :write t)
   (setf (output-tail-of cxn) nil)
   ;; If we're disconnecting, go ahead and finish the disconnect
-  (unless (connectedp cxn)
+  (when (and (not (connectedp cxn))
+             (socket-connected-p (socket-of cxn)))
     (shutdown (socket-of cxn) :read t :write t)
     (close (socket-of cxn))))
 
