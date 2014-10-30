@@ -1,0 +1,158 @@
+* Event
+
+Events are changes to the game database.  They may fire from a timer,
+or they may be spawned by an action.  Every change to the game
+database must occur through an event.  Events are instantaneous in
+duration.
+
+** Name
+
+Unique identifier for an event
+
+** Pre-execution visibility
+
+Determines the creatures to whom the event is visible before
+execution.  The list of creatures returned will be notified of the
+event, either directly (in the case of mob AI) or by the description.
+
+** Pre-execution description
+
+Code that describes the event in English to those creatures that
+witness it.  Useful for events that change the visibility of the event.
+
+** Execution
+
+Code that makes the change to the game database.
+
+** Post-execution visibility
+
+Determines the creatures to whom the event is visible after execution.
+The list of creatures returned will be notified of the event, either
+directly (in the case of mob AI) or by the description.
+
+** Post-execution description
+
+Code that describes the event in English to those creatures that
+witness it.  Also determines the creatures who can detect the event.
+
+
+* Action
+
+Actions are efforts by creatures to make a particular event happen.
+They occur over time, so a single action may spawn multiple events.
+
+** Name
+
+Unique identifier for an action.
+
+** Preconditions
+
+Some actions are simply not possible, given the state of the world.
+The preconditions check to make sure that impossible actions aren't
+even attempted, by the mob AI or by the player.
+
+** Pre-execution Description
+
+A bit of code that sends a description of what is going to happen.
+Used for when the execution will change the visibility of the action,
+such as moving between rooms or becoming invisible.
+
+** Action description
+
+Generates a one-line description of what the creature is doing.  This
+is used for ldescs and as a footnote to full descs
+
+** Execution
+
+Code that describes the outcome of the action.  If the action changes
+the game world, it fires an event.  Otherwise, it may emit text
+directly to the witnesses.  This may be called multiple times if the
+action is ongoing.
+
+** Event description
+
+Code that describes an event which the action itself spawned.  The
+action may choose to decline the description, in which case a generic
+event description will be used.  Otherwise, it emits the particular
+flavor text for the action.
+
+* Example
+
+Snog the Barbarian wants to open a porticullis.  He starts the
+force-door action, which checks to make sure the target is a door and
+that he still has his arms and such.
+
+After the preconditions pass, the beginning-emit is run and people
+see:
+
+Snog sets his shoulder against the porticullis and lifts.
+
+Snog is fairly strong, but the porticullis is heavy.  On the first
+execution of the action, Snog fails his strength check.  It does
+nothing, so a timer is spawned to see if he might yet succeed.
+
+After a second, the action is executed again.  This time, Snog makes
+his strength check, and the open-door event is fired.
+
+The open-door event doesn't change any visibility during its
+execution, so it has no pre-execution phase.  The execution clears the
+CLOSED bit in the exit flags.  The post-execution visibility returns
+all the creatures in both rooms separated by the exit.
+
+The event descriptor of the action is called for every PC in
+the room, with the event as a parameter.
+
+For the subject, it emits:
+
+You yell in triumph as the eastern porticullis rises, allowing passage.
+
+For the people in the same room:
+
+Snog yells in triumph as he forces the eastern porticullis upwards.
+
+For the deaf people in the same room:
+
+Snog forces the eastern porticullis upwards.
+
+For the blind people in the same room:
+
+Snog yells in triumph.
+
+For the people in the opposite room:
+
+You hear a triumphant yell and the western porticullis rises.
+
+For the deaf people in the opposite room:
+
+The western porticullis rises.
+
+For the blind people in the opposite room:
+
+You hear a triumphant yell from the west.
+
+The force-door action is then removed from the creature and is
+completed.
+
+* Problems
+
+** Accounting for interruptions may be costly
+
+Death of the actor is the easiest to manage - the action is simply
+removed.  Nothing happens.  More complicated interruptions may be hard
+to manage, though.
+
+Someone walks off to the west, but before they actually leave, they're
+struck by an arrow.  Do they keep walking?
+
+With this model, timers are fairly easy to add.  Perhaps we should
+leave off on the time thing until this can be resolved.
+
+* Mob AI
+
+Instead of event descriptions, the mobiles just get the event placed
+in their queue.  When their AI activates, it looks at all the events
+in the queue and decides the appropriate action to take.  The mob's
+queue is then emptied.
+
+The mob selects from various actions based on the possibility
+predicate of the action and its possible outcome events.

@@ -1,0 +1,66 @@
+* Damage Types
+** Cutting
+** Piercing
+** Bludgeoning
+** Heat
+** Cold
+** Electric
+** Poison
+** Radiance
+** Decay
+** Asphyxiation
+** Radiation
+** Psychic
+
+* Resistances
+
+Every creature has a resistance or vulnerability to specific damage
+types.  Initially, this is determined by race.  This is affected also
+by equipment and affects.
+
+* Attitude
+
+Creatures may take a cautious, normal, or reckless attitude towards
+fighting.  A cautious attitude will result in fewer hits, but will
+expose the creature to fewer hits, as well.  A reckless attitude will
+result in more hits, but also more danger.
+
+* Making contact
+** Melee
+
+Melee is when one creature attempts to strike another creature.
+Weapon reach bonuses apply, but a lower chance to hit successfully
+than touching.
+
+** Touch
+
+Usually to confer a magic effect onto a creature.  A reckless touch
+attempt will always succeed.
+
+** Ranged
+
+At a significant penalty to hit if already in melee combat.  Can hit
+flying or otherwise unreachable creaccordinglyatures.  Caution doesn't matter
+with ranged attacks.
+
+** Group
+
+Affects all creatures that have grouped together.  Note that this
+could include enemy groups.
+
+** Area
+
+Affects everyone and everything in the room.
+
+* Combat Turn
+* Abilities
+** Sight
+** Hearing
+** Movement
+** Speech
+** Flight
+** Speed
+** Hitp regen
+** Mana regen
+** Move regen
+** Alignment

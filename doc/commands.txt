@@ -1,0 +1,602 @@
+ '
+ :
+ ;
+ >
+ access
+ add
+ admit
+ advance
+ affects
+ alias
+ alignment
+ anonymous
+ apologize
+ approve
+ ask
+ assert
+ assist
+ at
+ attach
+ auction
+ autodiagnose
+ autoexits
+ autopage
+ autoprompt
+ autowrap
+ babble
+ badge
+ bellow
+ brief
+ bug
+ buy
+ cash
+ cedit
+ chant
+ clanemote
+ claninfo
+ clanlist
+ clanmail
+ clansay
+ clear
+ close
+ cls
+ color
+ commands
+ compact
+ complain
+ conceal
+ coo
+ crawl
+ date
+ dc
+ debug
+ declare
+ demand
+ demote
+ describe
+ detach
+ dismiss
+ display
+ distance
+ donate
+ down
+ drawl
+ dream
+ drink
+ drop
+ dynedit
+ east
+ eat
+ echo
+ emote
+ empty
+ enroll
+ enthuse
+ equipment
+ examine
+ exclaim
+ expostulate
+ force
+ freeze
+ future
+ gagmiss
+ gecho
+ get
+ give
+ glance
+ gold
+ gossip
+ goto
+ groan
+ growl
+ grumble
+ grunt
+ guildsay
+ haggle
+ halt
+ help
+ hold
+ holler
+ holylight
+ howl
+ idea
+ immchat
+ implants
+ indicate
+ inews
+ intone
+ inventory
+ invis
+ jet_stream
+ jump
+ junk
+ list
+ look
+ mail
+ mlist
+ mload
+ moan
+ moods
+ more
+ mortalize
+ move
+ mourn
+ mumble
+ murmur
+ mutter
+ nasty
+ newbie
+ news
+ noaffects
+ noauction
+ noclansay
+ nodream
+ nogossip
+ nograts
+ noguildsay
+ nohaggle
+ nohassle
+ noholler
+ noimmchat
+ nomusic
+ nonewbie
+ nopetition
+ nopost
+ noproject
+ north
+ noshout
+ nospew
+ note
+ notell
+ notitle
+ notrailers
+ nowho
+ nowiz
+ olc
+ olist
+ oload
+ open
+ past
+ petition
+ plant
+ plead
+ pload
+ poofin
+ poofout
+ pour
+ prattle
+ project
+ promote
+ pronounce
+ purge
+ put
+ quit
+ quote
+ ramble
+ rant
+ rave
+ receive
+ remove
+ reply
+ request
+ reroll
+ resign
+ respond
+ rest
+ retell
+ retort
+ rlist
+ roomflags
+ sacrifice
+ save
+ say
+ sayto
+ score
+ sell
+ send
+ shout
+ shutdown
+ sing
+ sleep
+ smirk
+ snarl
+ sneak
+ sneer
+ socials
+ south
+ spew
+ split
+ stand
+ stat
+ state
+ stutter
+ suggest
+ tattoos
+ teleport
+ tell
+ thaw
+ threaten
+ time
+ title
+ toggle
+ transport
+ typo
+ unaffect
+ unalias
+ unapprove
+ up
+ uptime
+ users
+ utter
+ value
+ version
+ visible
+ vnum
+ vstat
+ wail
+ wake
+ wear
+ west
+ whimper
+ whine
+ whisper
+ who
+ wield
+ wiznet
+ worldwrite
+ yell
+ xlist
+ zonepurge
+ zreset
++account
++activate
++addname
++addpos
++afk
++alter
++alterations
++analyze
++appraise
++areas
++aset
++assemble
++assimilate
++attack
++attributes
++aucset
++autoloot
++autopsy
++autosplit
++backstab
++balance
++ban
++bandage
++bash
++battlecry
++bearhug
++beguile
++behead
++berserk
++bid
++bidlist
++bidstat
++bioscan
++bite
++board
++bodyslam
++bomb
++break
++breathe
++cast
++ceasefire
++cemote
++change_weather
++charge
++chat
++check
++choke
++cinfo
++circle
++clanhide
++claw
++clean
++cleave
++clothesline
++coderutil
++combine
++combo
++compare
++congrats
++congratulate
++consider
++convert
++corner
++cranekick
++crank
++crossface
++cry_from_beyond
++csay
++cyberscan
++de-energize
++deactivate
++deassimilate
++deathtouch
++defend
++defuse
++delete
++deposit
++diagnose
++disarm
++discharge
++disembark
++disguise
++dismount
++distrust
++dodge
++drag
++drive
++drone
++econvert
++edit
++elbow
++elude
++empower
++encumbrance
++enter
++evade
++evaluate
++exchange
++exit
++exits
++experience
++extinguish
++extract
++feed
++feign
++fight
++fill
++firstaid
++flee
++flip
++fly
++follow
++gain
++garotte
++gasify
++gore
++gouge
++grab
++grats
++groinkick
++group
++grunt
++gsay
++gtell
++guilddonate
++gunset
++hack
++hamstring
++handbook
++hcollection
++hcontrol
++headbutt
++headlights
++hedit
++hide
++hiptoss
++hit
++holytouch
++honk
++hook
++hotwire
++house
++ide
++ignite
++imbibe
++immhelp
++immlist
++immortals
++imotd
++impale
++improve
++increase
++infiltrate
++inject
++insert
++install
++insult
++intimidate
++jab
++kata
++kia
++kick
++kill
++kneethrust
++knock
++last
++learn
++leave
++lecture
++light
++listen
++load
++loadroom
++lock
++logall
++logdeaths
++login
++lungepunch
++makemount
++map
++me
++medic
++meditate
++motd
++mount
++mudwipe
++murder
++mute
++nervepinch
++nogecho
++nolocate
++objupdate
++offer
++order
++oset
++overdrain
++overhaul
++pack
++page
++palmstrike
++pardon
++park
++peace
++pelekick
++perform
++pick
++piledrive
++pinch
++pistolwhip
++pkiller
++place
++plead
++point
++policy
++pose
++practice
++prompt
++pry
++psiblast
++psidrain
++psilocate
++pull
++punch
++purchase
++push
++qcontrol
++qecho
++qlog
++qpoints
++qpreload
++qsay
++quaff
++quest
++qui
++rabbitpunch
++read
++reboot
++recharge
++recite
++recorporealize
++redeem
++refill
++register
++reload
++remort
++rename
++rent
++repair
++report
++rescue
++reset
++restore
++retreat
++retrieve
++return
++rev
++reward
++ridgehand
++ring
++roll
++roundhouse
++rstat
++rswitch
++rules
++scan
++scissorkick
++scream
++screen
++search
++searchfor
++selfdestruct
++set
++severtell
++shoot
++shoulderthrow
++show
++shower
++shutdow
++shutoff
++sidekick
++sip
++sit
++skills
++skillset
++skset
++slay
++sleeper
++sling
++slist
++smoke
++snatch
++snipe
++snoop
++soilage
++speak
++specializations
++specials
++spells
++spinfist
++spinkick
++stalk
++status
++steal
++stomp
++store
++strike
++stun
++swallow
++sweepkick
++switch
++syslog
++tag
++take
++taste
++taunt
++teach
++tester
++throatstrike
++throw
++toke
++tornado
++track
++train
++trample
++transfer
++translocate
++transmit
++trigger
++triggers
++trip
++trust
++tune
++unban
++undisguise
++ungroup
++uninstall
++unload
++unlock
++unwield
++uppercut
++use
++ventriloquize
++view
++weather
++weigh
++where
++whirlwind
++wimpy
++withdraw
++wormhole
++wrench
++write
